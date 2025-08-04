@@ -1,0 +1,610 @@
+
+
+--- Page 1 ---
+
+MPCC: A Novel Benchmark for Multimodal Planning with
+Complex Constraints in Multimodal Large Language Models
+Yiyan Ji Haoran Chen* Qiguang Chen
+jiyiiiyyy@gmail.com cshrchen@gmail.com qgchen@ir.hit.edu.cn
+Harbin Institute of Technology Harbin Institute of Technology Harbin Institute of Technology
+Harbin, Heilongjiang, China Harbin, Heilongjiang, China Harbin, Heilongjiang, China
+Chengyue Wu Libo Qin* Wanxiang Che
+wcy010805@gmail.com Ibqin@csu.edu.cn car@ir.hit.edu.cn
+The University of Hong Kong Central South University Harbin Institute of Technology
+a) Hong Kong, China School of Computer Science and Harbin, Heilongjiang, China
+N Engineering
+=< Changsha, Hunan, China
+S ABSTRACT Q: Plan a route from A to D. All Are Acceptable!
+= Multimodal planning capabilities refer to the ability to predict, i io o (O} ASBSD 4
+4 reason, and design steps for task execution with multimodal con- M@ ag ASBeC=D 4
+om) text, which is essential for complex reasoning and decision-making a co) ASCSB=D me
+across multiple steps. However, current benchmarks face two key na, Ae MLLM '
+m— challenges: (1) they cannot directly assess multimodal real-world
+—] planning capabilities, and (2) they lack constraints or implicit con- . . . ;
+UO straints across modalities. To address these issues, we introduce (a) Multimodal planning task without any constraint.
+Hh Multimodal Planning with Complex Constraints (MPCC), the first Textual Constraint
+O benchmark to systematically evaluate MLLMs’ ability to handle Q: Plan a meeting that John
+— multimodal constraints in planning. To address the first challenge, and Smith both have time Satisfy Constraints
+— MPCC focuses on three real-world tasks: Flight Planning, Calendar ° ae in the morning. ©} Mon. 8:00-10:00  &@
+F . : isual Constraint
+> Planning, and Meeting Planning. To solve the second challenge, we 0.0-0-0-0 0-0.0-0-0 (©9) Thu. 8:00-10:00 Xj
+N introduce complex constraints (e.g. budget, temporal, and spatial) in MLLM | | Tue: 10:00-12:00 Mj
+CO these tasks, with graded difficulty levels (EASY, MEDIUM, HARD) an et vs
+(ae) to separate constraint complexity from search space expansion. Schedule Schedule
+(oe) Experiments on 13 advanced MLLMs reveal significant challenges:
+N closed-source models achieve only 21.3% feasible plans, while open- (b) Multimodal planning task with multimodal constraints.
+t™ source models average below 11%. Additionally, we observe that
+ap) MLLMs are highly sensitive to constraint complexity and that tra- Figure 1: The example of multimodal planning tasks without
+WL ditional multimodal prompting strategies fail in multi-constraint any constraint (a) and with multimodal constraints (b).
+N scenarios. Our work formalizes multimodal constraints in planning,
+S provides a rigorous evaluation framework, and highlights the need
+= for advancements in constraint-aware reasoning for real-world
+< MLLM applications. challenges in complex real-world planning. To assess MLLMs’ plan-
+. ning capabilities, benchmarks like PlanBench [30] provide diverse
+ge) KEYWORDS missions and targeted assessments. Similarly, m&m’s [23] offers
+Multimodal Constraints, Planning Tasks, Benchmark Evaluation, roars spe la sae R [9] evaleate embodied planning
+Real-World Scenarios a . . .
+in simulated home environments using natural language instruc-
+tions [21]. Additionally, WebArena [45] and OSWorld [39] assess
+1 INTRODUCTION MLLM planning within websites and operating systems.
+Current multimodal large language models (MLLMs), such as Gem- Despite significant advancements in multimodal planning, cur-
+ini [28] and GPT-40 [1], demonstrate strong proficiency in pro- rent benchmarks primarily focus on expanding the planning search
+cessing diverse data modalities [22, 36, 37]. They have been widely space [15, 19, 27, 30, 44] or improving complex multimodal per-
+applied to tasks in multimodal understanding [42] and reasoning [8, ception [20, 24, 31, 41]. However, real-world planning complexity
+9, 40]. On this basis, recent studies [26, 34, 38, 41] have explored stems from satisfying intricate constraints across modalities. In the
+absence of constraints, almost any outcome could be deemed ac-
+“Equal Contribution ceptable. For example, when planning a route from A to D (Figure 1
++ Corresponding Author (a)), multiple paths can lead to the same goal, but only those that
+
+
+--- Page 2 ---
+
+Yiyan Ji et al.
+Table 1: Comparison of MPCC with other multimodal reasoning benchmarks. #Q represents the size of questions; #I represents
+the total number of images; Cons. represents different types of constraints.
+Dataset Task Type #Q #1 Real-world Graded Difficulties Multi-modal Cons. Composite Cons.
+MMMU [42] Understanding 11,550 11,264 x x x x
+SEED-Bench [18] Generation 19,242 - x x x x
+MLLM-CompBench [13] Reasoning 39,800 79,600 x x x x
+EgoPlan-Bench [6] Planning 4,939 - v x x x
+MPCC(ours) Planning 2,700 6,300 v v v v
+meet specific requirements are viable. A more critical challenge is e We conduct tests using conventional optimization methods
+managing these constraints across various factors. As shown in and analyze various factors that influence the performance of
+Figure 1 (b), real-world planning tasks, such as coordinating sched- MLLMs in complex constrained planning tasks, with the aim
+ules for multiple attendees, require careful consideration of spatial of inspiring further advancements in this area.
+and temporal constraints to generate a feasible plan. Unfortunately, To facilitate further research, resources are available at https:
+current benchmarks do not adequately address the resolution of //github.com/j-yyyyy/MPCC.
+practical and composite multimodal constraints, which are essential
+for reliable real-world planning with MLLMs. 2 MULTIMODAL CONSTRAINTS
+To address this gap, we propose a novel benchmark, Multimodal ; ; .
+Planning with Complex Constraints (MPCC), designed to sys- In this benchmark, we introduce three fundamental constraint cat-
+tematically evaluate the planning capabilities of MLLMs under com- egories that assess the planning capabilities of MLLMs.
+plex multimodal constraints. Specifically, our dataset is constructed .
+from real-world scenarios, generated using a code generator, and 2.1 Budget Constraints (8)
+then manually filtered to ensure accurate constraint specifications As shown in Figure 2 (a), budget constraints govern the total allo-
+and sufficient combinatorial diversity. For practical applications, cation of resources within a given plan. These constraints ensure
+MPCC encompasses three widely-used planning tasks, each involv- that the solution adheres to a predefined budget limit, a common
+ing progressively complex constraints: Flight Planning, Calendar requirement in numerous real-world tasks. Specifically, the budget
+Planning, and Meeting Planning. To more effectively assess plan- constraint dictates that the plan, p must satisfy the condition:
+ning capabilities, each task is categorized into three difficulty levels, m
+while ensuring a comprehensive evaluation of both the complexity 8B: » cost(rj|p) < Bmax; (1)
+of constraints and the challenges with search space expansion. jal
+Our evaluation reveals that MPCC presents a significant chal- ; ; ;
+lenge for state-of-the-art MLLMs. In the Easy Meeting Planning where r; denotes the booked resources (e.g., flight tickets or meeting
+task, the most advanced model, Claude-3.5V-Sonnet, achieves only rooms), Bmax represents the maximum allowable budget for the
+46.7% optimal plans. As task complexity and constraints increase, task, and cost(r;|p) refers to the exp enditure associated with the
+model performance declines by more than 10%. For tasks with resource rj under the plan p. A plan is deemed valid if the total
+higher constraint levels, model performance often drops below ran- expenditure does not exceed the predefined budget.
+dom chance. We also evaluated conventional optimization methods, .
+including In-Context Learning (ICL) [10] and Chain of Thought 2.2 Tempor al Constraints (7)
+(CoT) [16], which yielded several key insights: (1) Increasing con- Temporal constraints ensure that all activities in the plan are com-
+straint complexity reduces the effectiveness of CoT reasoning; (2) ICL pleted within a feasible time frame. These constraints are enforced
+significantly interferes with multimodal planning processes. through two primary mechanisms:
+In conclusion, our key contributions are summarized as follows: ; a . io .
+Sequential Coordination. : As illustrated in Figure 2 (c), sequential
+* We propose the concept of "multimodal constraint’ for the first coordination applies when the order of events is critical, such as
+time in the context of multimodal planning problems and pro- in flight connections, where the time between consecutive flights
+pose a novel benchmark, Multimodal Planning with Complex must fall within an allowable range. Formally, this is expressed as:
+Constraints (MPCC), for more effective evaluation of planning
+tasks in multimodal environments. k A TA
+e We demonstrate that MPCC represents a highly challenging Foeq 3 > tS maxy AE = fine ®)
+benchmark, highlighting the difficulties that existing multi- . . .
+modal models face when handling planning tasks with in- where At; represents the buffer time between consecutive flights,
+creased constraints. This observation encourages researchers fmin is the minimum interval between events, and Tmax is the max-
+to reconsider the development of MLLMs. imum allowable cumulative time for the tasks. This ensures that
+sufficient time is allocated for each leg of the journey, including
+waiting periods at airports.
+
+
+--- Page 3 ---
+
+MPCC: A Novel Benchmark for Multimodal Planning with Complex Constraints in Multimodal Large Language Models
+' Ef Plan A Et Plan B Ret Plan C ern i - oN © " -
+i} @ 50.008 ® 40.008 ® 35.008 1 QO i 2 a gab QO = Plan A /
+1} 2p 16.008 ab 21.008 Gb 13.008 PlanB, {ii { 153m [af c 20.1km 27.0km < 30km 1
+! va ta va -
+11.008 12.008 16.008 > 73 > '
+| Sues Sow Ses Fey | SNK Ol OR | GC SD) nme |!
+| ® Fixed Price (23g Transport Fares @ Additional Expense Zz Plan C ' 11.7km : 11.7km ig 31.8km > 30km x i
+' : . ; $64 f 1 | | Q: Which meeting place can be chosen to make \
+i\ __ Obed i" —— a ; 1 the total distance less than 30km? '
+(a) Budget Constraint (b) Spatial Constraint
+H Sequential Coordination Constraints t Concurrent Coordination Constraints \
+1 = fC * i
+I “> 7 Plan A ' Plan A '
+' anal sh = e+ lena Departure> Transit 1 he,
+1 Gia ss bf abet) Ea Transit Destination ' eh Meet i
+' . . 1 . '
+' Departure Lh Transit i} Destination Z4No.: LEI ' Jack Lily R&A 9:00-10:00 '
+(OS 24No.: A002 | 2g Swim (OS
+Flight Flight 00-9: '
+i S Departure>Transit S Transit—Destination |, > H 8:00-9:00 i’ a x \
+1 (©0) Plan B ' a Yoga (eo) Plan B '
+' KR Flight No.: A001 3 Flight No.: BOO1 Departure> Transit> ' ea) 9:00-10:00 '
+' Flight Time: 08:30-10:30} Flight Time: 08:30-10:30} Transit Destination ! \
+7g Might Nox A002 Flight No.: B002 -24No.: A001 Sy Meet
+| (SS Flight Time: 11:30-14:30} Pe Flight Time: 11:30-14:30 S4No.: B002] » | AEB 10:00-11:00 Sf
+' 1 i
+' Q: Which flights to take? ' Q: When to hold a 2-hr meeting? !
+(c) Temporal Constraint
+Figure 2: An overview of the categories of multimodal constraints featured in MPCC. These constraints are instantiated through
+both visual and textual inputs, demanding MLLMs to perform joint reasoning across modalities. MPCC adopts these realistic
+constraint categories to systematically evaluate models’ abilities in planning under complex, multimodal scenarios.
+Concurrent Coordination. : Concurrent coordination ensures that varying types of constraints. The comparison of our dataset with
+all participants are available at the same time for a particular activity other multimodal datasets is shown in Table 1. Referring to NATU-
+(see Figure 2 (c)), such as scheduling a meeting. Formally, this is RAL PLAN [44], our dataset contains three task categories: Flight
+represented as: Planning, Calendar Planning, and Meeting Planning. Each type of
+nr planning task consists of "EASY", "MEDIUM", and "HARD" levels of
+Teon : () Aj # ©, (3) difficulty to ensure a variety of problem formats and search spaces.
+i=1
+where Aj denotes participant i-th available time slots, and the in- 3.1 Composite Constraint Construction
+tersection of all these sets must be non-empty. This guarantees . . i. . .
+: : : : ae To construct complex interaction scenarios involving multiple com-
+that there is at least one time slot during which all participants can - : : : :
+attend the meeting or event. posite constraints, we design three representative multimodal plan-
+ning tasks grounded in real-world scenarios:
+2.3 Spatial Constraints (S) 3.1.1 Flight Planning. In flight planning, a common scenario is
+Spatial constraints address the feasibility of spatial distances as the absence of direct flights between two cities. Here, MLLMs help
+shown in Figure 2 (b). These constraints are relevant when the loca- users select connecting flights and generate a complete itinerary.
+tions of participants or resources must be considered. For instance, The composite constraint C combines a sequential temporal con-
+in meeting planning, the distance between meeting locations and straint Jseq, limiting transfer intervals, and a budget constraint 8,
+participants’ locations must not exceed a specified maximum travel restricting total cost. Formally, it is defined as:
+time. Formally, this is represented as:
+y: P C = Teeq ® B (5)
+S : d(U(pi), lmeet) < Di, (4)
+eum ‘ where ® denotes the joint enforcement of constraints. The interface
+where Imeet denotes the spatial location, and p; represents partic- follows Google Flights, with all flight data synthetically generated
+ipant i-th location. Dj; is the maximum distance participant i can and anonymized. Users’ flight schedules (Jzeq) and budgets (8) are
+travel, ensuring that no participant needs to travel an unreasonable randomly assigned, ensuring at least one feasible solution exists.
+distance to attend an activity.
+3.1.2 Calendar Planning. Calendar Planning tackles scheduling
+3 MULTIMODAL PLANNING COMPLEX multi-participant meetings under dynamic constraints. MLLMs
+must reconcile participants’ calendars with time, room availabil-
+CONSTRAINT (MPCC) BENCHMARK t ile participants’ calendars with ti ilabil
+; ; : ; ity, and costs. The composite constraint C combines a temporal
+We introduce the Multimodal Planning Complex Constraint (MPCC) y aes ome . P
+a : .. : coordination constraint Zeon and a budget constraint 8, defined as:
+benchmark, which is designed to evaluate the ability of multimodal
+models to extract information and perform planning tasks under C =Teon ® B. (6)
+
+
+--- Page 4 ---
+
+Yiyan Ji et al.
+The interface simulates Google Calendar with a synthesized sched- Table 2: Detailed statistics of our dataset.
+ule of events and time slots, reflecting the temporal coordination
+constraint Zeon. To incorporate the budget constraint 8, meeting Statistic Number
+rooms are assigned booking prices, and a randomly generated bud- “Flight Planning size —(i(<i*«és SCS
+get is introduced, which the meeting plan must satisfy. Calendar Planning size 900
+3.1.3 Meeting Planning. Meeting Planning simulates real-world _Meeting Planning size 900
+meeting organization and further expands composite constraints by EASY level size each domain 300
+introducing spatial constraints. The model must arrange meeting MEDIUM level size each domain 300
+: ; : ee sa: HARD level size each domain 300
+time and location while satisfying participant schedules, spatial dis- eee:
+tribution, and budget limits. The composite constraint C combines EASY average search space 27
+spatial constraints S, temporal coordination constraints Zcon, and MEDIUM average search space 184
+budget constraints 8, formally defined as: _HARD average search space 617
+g , y
+Average feasible plans account 38.09
+C =Toon ®@ S @ B. (7)
+This task uses a Google Maps-style interface to display randomly
+generated spatial backgrounds, participant locations, and potential 3.4 Human Recheck
+meeting venues, each with corresponding distances. It also provides To ensure the reliability of our dataset, we conduct a two-stage hu-
+local travel speeds and transportation costs to reflect the spatial man recheck involving three experts with backgrounds in NLP and
+constraint S. In the Meeting Planning task, participants’ schedules multimodal reasoning. The first stage checks whether visual and
+are set up similarly to Calendar Planning, but planners must also textual information aligns with the defined constraints; the second
+factor in round-trip travel time when selecting a meeting time. Ad- verifies that each instance admits at least one valid solution. Anno-
+ditionally, each venue has a unique booking cost, requiring planners tators follow standardized guidelines covering multimodal align-
+to consider both travel expenses and the venue fee. This setup com- ment, constraint consistency, and semantic clarity. Each instance
+bines spatial constraint S, temporal coordination constraint Zeon, is reviewed independently by the annotators. Disagreements are
+and budget constraint 8, resulting in a realistic planning scenario. resolved by majority vote or group discussion. The inter-annotator
+. . . agreement (Kappa = 0.83) indicates strong consistency. Less than
+3.2 Constraint Complexity Construction 10% of auto-generated instances are discarded due to issues like
+To rigorously assess multimodal planning under increasing con- ambiguous constraints or modality mismatch. This process ensures
+straint complexity, we adopt a progressive evaluation scheme based the dataset’s high quality and alignment with task objectives.
+on the concept of search space, which includes all valid plans under
+a task’s conditions. As task complexity increases, so do the variables 4 METRIC DESIGN
+and their combinations, making reasoning and op timization more In real-world planning tasks, multiple feasible plans often exist. To
+difficult. Rather than arbitrarily scaling constraints, we adjust sce- id ly rigid criteria for solution evaluation. we formalize two
+nario parameters that influence the plan space. In Flight Planning, avon oveny NE . ,
+; oo : categories of constrained plans.
+complexity depends on the number of transit cities, planning days,
+and flight options per route. In Calendar and Meeting Planning, Feasible Plan Rate. A feasible plan specifies the conditions that
+it depends on planning duration, venue availability, and schedule any valid plan must meet. In MPCC, these include: (1) upper bounds
+resolution. These adjustments are calibrated to ensure that valid on total expenditure (budget ceilings), (2) temporal coordination
+configurations grow consistently across tasks and difficulty levels requirements, and (3) spatial proximity limits (distance thresholds).
+with comparable search space sizes and task-specific semantics. A plan satisfying all such requirements is considered a feasible plan.
+To generate an optimal plan, a brute-force search is performed The rate at which MLLMs generate feasible plans indicates their
+for each task instance to explore all possible solutions within the ability to operate under complex constraints.
+constraints of budget, time, and space. Infeasible plans are discarded,
+and the optimal solution is selected. Instances without feasible solu- Optimal Plan Rate. While humans can easily select the best op-
+tions are eliminated, ensuring every task has a definitive solution. tion from feasible alternatives, this is more challenging for MLLMs.
+To assess their ability to explore and filter solutions, we use the
+3.3 Multimodal Constraints Ensurement budget as the optimization objective. A feasible plan minimizing
+To validate and enhance the challenge of multimodal constraints budget is considered an optimal P lan. The rate at which MLLMs
+in the MPCC dataset, we employ a systematic data construction generate such plans indicates their capacity for optimal planning
+process, as shown in Figure 2. Initially, interface frames from real- under complex constraints.
+world applications (e.g., Google Flights & Calendar) are collected .
+and used to generate diverse images through randomization states, 4.1 Data Analysis
+serving as multimodal inputs. To ensure each example meets both 4.1.1 Basic statistics. Our benchmark consists of 2.7K planning
+visual and textual constraints, we apply human pre-labeling to filter tasks, divided into three categories: Flight Planning, Calendar Plan-
+out cases where the optimal solution is clear from a single modality, ning, and Meeting Planning, with 0.9K instances per category. Each
+enforcing reliance on both modalities for optimal planning. task type is categorized into three difficulty levels.
+
+
+--- Page 5 ---
+
+MPCC: A Novel Benchmark for Multimodal Planning with Complex Constraints in Multimodal Large Language Models
+4.1.2. Search Space Analysis. To differentiate the dataset, we varied when,
+the search space size across levels. As shown in Table 2, the average Y,
+search space size increases from 27 in the Easy level to 617 in & | > Ness
+the Hard level, representing a 22-fold increase. This structured 8 j fi 6 \* | Multimodal Large
+: . . g 66 Language Models
+expansion allows us to assess model performance under increasing x i Al \, 7
+complexity. ool B hs z Le © Phe
+& oS5 =< © Gemini-2.0-Flash
+
+4.1.3 Sparse Feasible Regions. Figure 3 shows the distribution of 2 a x L © Claude-3.5V-Sonnet
+feasible plans within the search space. While the average number of Va | O IntemVL-78B
+feasible solutions is 38.09, the distribution is highly skewed across . joo 8 © Qwen2-VL-72B
+tasks and difficulty levels, indicating that feasible plans represent a , \
+small fraction of the total search space. This highlights the impor- Cai at
+tance of efficient reasoning and constraint satisfaction, as models —aeid se?
+must navigate large search spaces with few feasible solutions. aut
+5 EXPERIMENTS Figure 4: Performance of different models in feasible plan.
+5.1 Experiments Setting
+We evaluated a variety of state-of-the-art open- or closed-source shown in Table 3, even the most advanced op en-source models fail
+MLLMs including GPT-4o [1], Gemini-2.0-Flash-EXP [28], Claude- to exceed 11.0% average accuracy on MPCC tasks involving com-
+3.5V-Sonnet, Qwen2-VL series [33], InternVL series [7] and LLaVa- plex multimodal constraints—far below closed-source performance.
+OV series [17]. We also explore different prompt strategies, includ- The gap widens further as constraints increase. This highlights the
+ing Chain-of-Thought [35] and Plan-and-Solve [32]. Our evalua- need for open-source MLLMs to address constraint planning in
+tions were conducted based on VLMEvalKit [11], and the results multimodal scenarios better.
+were obtained through exact matching. 5.3 Analysis
+5.2 Overall Evaluation The complexity of constraints significantly affects the planning
+The results are given in Table 3, where we observe the following: ability of MLLMs. As shown in Table 3, mainstream MLLMs perform
+
+well on EASY-level Flight Planning, where constraints are simple.
+
+The MPCC can reveal significant challenges across tasks of varying However, as illustrated in Figure 4, their performance declines
+difficulty. As shown in Table 3, performance drops significantly as with increasing constraint complexity. For instance, most open-
+task complexity increases. Closed-source models like GPT-40 show source models, regardless of scale, struggle in Calendar Planning
+a sharp decline in Calendar Planning, from 24.0% (EASY) to 2.0% tasks. The challenge intensifies in Meeting Planning, where even
+(HARD) in generating feasible plans, revealing strong sensitivity to the best open-source model scores 0.7% below the Empirical Max
+growing constraints and search space. Even top closed-source mod- for feasible plan, revealing their limitations in handling complex
+els, such as Claude-3.5V-Sonnet (2.0%), fail to outperform random constraints. In contrast, among closed-source models, only Claude-
+selection. These results underscore the urgent need to improve rea- 3.5V-Sonnet actively uses Chain-of-Thought in Meeting Planning
+soning under nonlinear search spaces and conflicting constraints, and achieves a relatively high score (37.7%). Others show a clear
+especially for open-source models, which still lag far behind. decline as constraints increase.
+
+There is still a substantial gap between open- and closed-source Scaling law can improve the model performance. A clear trend
+MLLMs for planning with complex multimodal constraints. Many emerges from Table 3: larger models yield better optimal plan per-
+MLLM reports suggest that open-source models perform compa- formance, with gains notably exceeding those for feasible plans.
+rably to closed-source ones in multimodal reasoning. However, as We analyze the correlation between plan outcomes and model size.
+
+Figure 5 shows the ratio of optimal plans within feasible plans for
+05 Flight Planning across models. This suggests that scaling up MLLMs
+: : : improves their ability to balance constraints and optimization goals,
+S 04 ~ Flight Planning Calendar Planning bling broader solution exploration. Such findings may inform
+E03 the design of MLLMs that better emulate human planning.
+8 02 :
+5 5.4 Exploration
+* 01 5.4.1 Chain-of-thought prompting strategies are effective for feasible
+0 SA planning but limited in optimal planning. We examine the effective-
+0 5 10 15 20 25 30 35 40 45 50 55 60 65 ness of prompt strategies such as Chain-of-Thought [35] and Plan-
+# Number of Feasible Solutions and-Solve [32] in enhancing MLLM planning across tasks in MPCC.
+As shown in Table 4, their impact depends on task type and difficulty.
+Figure 3: Distribution of the number of feasible plans across These methods are especially useful in simpler scenarios. For in-
+different tasks. stance, in the EASY level of Flight Planning, GPT-40’s accuracy rises
+
+
+--- Page 6 ---
+
+Yiyan Ji et al.
+Table 3: Accuracy on feasible plan/optimal plan in evaluations of selected MLLMs. Empirical Max stands for the maximum
+accuracy attainable by exhaustively evaluating all options within the search space, where each option is uniformly applied to
+all tasks for a given difficulty level, MLLMs that scored below this value were not considered capable of solving the tasks.
+Model Flight Planning Calendar Planning Meeting Planning Average
+EASY MEDIUM HARD EASY MEDIUM HARD EASY MEDIUM HARD
+Empirical Max - - - 11.7/10.0 11.3/10.3 7.0/5.3 12.0/8.0 8.0/5.3 7.0/6.3 -
+Closed-source MLLMs
+GPT-40 65.0/33.0 16.7/1.7 2.7/0.0 24.0/21.0 9.0/7.7 2.0/1.0 17.7/16.0 7.7/5.3 4.0/3.3 16.7/9.9
+Gemini-2.0-Flash 53.3/27.0 11.7/1.0 0.7/0.0 21.0/12.0 5.7/1.7 3.3/1.0  25.0/23.0 6.7/4.3 4.0/2.7 14.6/8.1
+Claude-3.5V-Sonnet 75.3/46.7 34.0/4.7. 0.0/0.0 29.0/23.3 9.3/2.0 2.0/1.7. 37.7/34.3 2.7/1.7 2.0/1.7 21.3/12.9
+Open-source MLLMs
+InternVL-4B 18.0/3.3 0.0/0.0 0.0/0.0 4.3/3.3 7.0/0.3 2.0/2.0 9.0/5.3 6.3/5.0 4.3/1.0 5.7/2.2
+InternVL-8B 32.0/11.0 0.0/0.0 0.0/0.0 10.7/7.7 0.3/0.0 4.0/0.0 5.3/4.0 1.3/1.3 1.0/0.7 6.1/2.7
+InternVL-26B 31.7/10.0 1.3/0.3 0.3/0.0 13.7/7.3 5.0/0.7 5.7/2.0  11.3/10.0 8.0/7.0 4.3/4.0 9.0/4.6
+InternVL-38B 35.7/13.0 0.7/0.3 0.0/0.0 14.0/9.0 5.7/0.0 3.3/3.0 6.3/5.3 8.0/6.7 3.0/1.7 8.5/4.3
+InternVL-78B 37.3/15.0 1.7/0.0 0.3/0.3 7.3/3.3 5.7/1.0 3.0/3.0 7.3/6.3 7.7/6.7 3.0/2.7 8.1/4.3
+LLaVa-OV-0.5B 0.0/0.0 0.0/0.0 0.0/0.0 3.7/3.0 1.7/0.0 1.3/1.3 6.3/3.0 0.3/0.3 1.0/0.7 1.6/0.9
+LLaVa-OV-7B 6.7/2.7 0.0/0.0 0.0/0.0 9.0/6.3 5.7/0.0 2.3/0.0 7.7/4.0 7.3/4.0 2.3/1.3 4.6/2.0
+Qwen2-VL-2B 5.3/1.0 0.0/0.0 0.0/0.0 4.7/4.3 1.7/0.0 0.7/0.0 5.7/2.7 3.0/1.3 1.3/0.7 2.5/1.1
+Qwen2-VL-7B 32.0/8.7 0.0/0.0 0.0/0.0 12.7/9.0 7.3/0.0 6.3/0.3 9.0/4.0 7.0/3.7 4.7/3.0 8.8/3.2
+Qwen2-VL-72B 46.0/17.7 12.7/1.0 9.3/0.3 8.3/6.7 4.7/0.0 2.3/2.3 10.0/8.7 3.3/2.7 1.7/1.7 10.9/4.6
+50 S 1.0 a
+= 40 e| 40 € 0.8 A 0.742
+= 0 Le | 30 4 Ba 0.608]
+10 | pes | | || 20 & 0.4 a 4
+0 0.4 0.8 12 16 2.0 oe oe
+Logarithm of Scale (B) : | | b.026
+(a) Performance of Qwen2-VL series. °° 3 ° é 2 o ie >
+& § &§ §& & F SF
+50 eS s rs RS ef se & Ras
+40 7 40 5 i
+mH 99 l- | | 30 gs Figure 6: Simpson’s Concentration and Diversity Index of
+10 A | a a | 20 & responses for Meeting Planning HARD tasks.
+0 0.4 0.8 1.2 1.6 2.0
+Logarithm of Scale (B)
+(b) Performance of InternVL series. declines as complexity grows. This suggests that although prompt
+strategies aid basic constraint satisfaction, they fall short of sup-
+Figure 5: Selected open source model scales and their per- porting fine-grained optimization in complex multimodal settings.
+formance on Flight Planning EASY. Opt. in Fea.: Ratio of oo . . .
+optimal plan in feasible plan. 5.4.2 Smaller MLLMs exhibit significant planning bias during mul-
+timodal planning in MPCC. When constrained by Concurrent Co-
+ordination, we observe that MLLMs often generate infeasible plans,
+from 65.0% (Direct) to 74.0% (PS), showing effectiveness in meeting consistently favoring certain patterns, regardless of input. This
+initial constraints. However, as complexity grows—particularly in reveals a strong response bias. To further examine performance
+Calendar and Meeting Planning—the advantage narrows to 2.3% degradation, we quantify this tendency in Meeting Planning HARD
+or becomes negative, indicating that prompting benefits diminish tasks using ecological and statistical indices: Simpson’s Diversity In-
+with more complex multimodal constraints. dex and Concentration Index, which measure response dominance
+Conversely, improvements in optimal plan performance are less and variety. As shown in Figure 6, models with fewer parameters
+clear and consistent. While some models benefit from prompt strate- exhibit greater bias in unsolvable cases. This likely stems from the
+gies in low-constraint tasks, their ability to find the optimal solution limited reasoning capacity of smaller models, which struggle with
+
+
+--- Page 7 ---
+
+MPCC: A Novel Benchmark for Multimodal Planning with Complex Constraints in Multimodal Large Language Models
+Table 4: Evaluating results under different prompt strategies.
+Model Flight Planning Calendar Planning Meeting Planning Average
+EASY MEDIUM HARD EASY MEDIUM HARD EASY MEDIUM HARD
+Empirical Max - - - 11.7/10.0 11.3/10.3 7.0/5.3 12.0/8.0 8.0/5.3 7.0/6.3 -
+GPT-40
+Direct 65.0/33.0 16.7/1.7 2.7/0.0  24.0/21.0 9.0/7.7 2.0/1.0  17.7/16.0 7.7/5.3 4.0/3.3 16.7/9.9
+CoT 66.0/47.0 48.7/12.0 7.7/1.0  29.0/24.7 10.0/7.3 2.7/0.3. 16.0/15.0 5.3/5.0 3.3/3.0  21.0/12.8
+PS 74.0/56.0 50.0/10.3 4.3/0.3 26.3/22.3 9.3/7.0 0.7/0.0 16.3/15.0 6.7/6.0 4.3/4.0  21.3/13.4
+Gemini-2.0-Flash
+Direct 53.3/27.0 11.7/1.0 0.7/0.0  21.0/12.0 5.7/1.7 3.3/1.0  25.0/23.0 6.7/4.3 4.0/2.7 14.6/8.1
+CoT 71.3/54.3  38.3/10.3 2.0/0.0 —_27.7/21.3 5.0/0.3 4.0/3.0 — 26.7/24.3 6.3/5.7 5.0/4.0  20.7/13.7
+PS 69.3/61.7 37.3/7.7 3.0/0.3. 26.3/20.7 8.7/5.3 3.7/1.3 24.7/23.0 6.3/5.3 2.0/2.0  20.1/14.1
+Claude-3.5V-Sonnet
+Direct 75.3/46.7 34.0/4.7 0.0/0.0  29.0/23.3 9.3/2.0 2.0/1.7.  37.7/34.3 2.7/1.7 2.0/1.7 21.3/12.9
+CoT 76.7/44.7 45.7/7.3 0.3/0.0  37.3/30.3 6.7/1.3 1.7/0.3 32.3/28.7 5.7/5.0 2.7/2.0  23.2/13.3
+PS 81.0/46.0 38.7/6.7 0.0/0.0 29.0/23.7 9.3/2.3 0.7/0.7. 36.7/33.7 4.3/3.3 2.0/1.3 22.4/14.2
+35 ~ 70 57.0
+= 30 S° 46.0
+g 3 or Po 50 /
+& 20 ez 40
+3 15 2 30 23.0
+2 2
+% 10 es Z io 83 | 10.0 46
+fs ;
+; oO [ [ }
+0 1 2 3 4 Flight Planning Calendar Planning Meeting Planning
+shot (#) Tasks
+Figure 7: In-Context-Learning analysis on feasible plan per- Figure 8: Performance of QvQ-72B-Preview vs. Qwen2-VL-
+formance with text-only demonstrations. 72B at the EASY level for each task.
+complex problems. Enhancing their ability to plan under intricate
+multimodal constraints is therefore critical. despite having the same size of parameters. This suggests that
+5.4.3. The text-only in-context learning approach does not work advanced reasoning benefits simpler planning. (2) Complex con-
+effectively in MPCC. In addition to zero-shot evaluations, following straints can hinder MLLMs reasoning. Performance drop san
+Qin et al. [25], we conducted In-Context Learning experiments Meeting Planning with higher constraint comp lexity, suggesting
+on Calendar Planning EASY to explore ways to enhance model complexity may induce overthinking or rigid reasoning. Qualitative
+planning. Due to the limitations on image input, we use text-only analysis reveals two main failure modes: over-focusing on specific
+demonstrations to provide contextual information for in-domain constraints and premature termination from internal contradiction.
+tasks. As shown in Figure 7, ICL negatively impacts most closed- These findings show that reasoning MLLMs excel in low-constraint
+source models. Notably, GPT-40’s performance drops below the tasks but struggle with overthinking with complex constraints.
+Empirical Max. Moreover, for the two currently optimal MLLMs, . : ;
+performance declines significantly as the example shots increase. 5.4.5 Both Visual Under: standing and Comp lex Constraints Integra-
+This suggests the model fails to learn an effective approach for tion Cause Performance Degradation. To pinp joint why P erformance
+: : : : : falls from EASY to HARD, we run a control in the Flight Planning
+solving multimodal planning using text-only demonstrations. : : . :
+tasks by converting visual inputs into structured text to force mod-
+5.4.4 Reasoning MLLMs Exploration. Recent advancements in rea- els to depend solely on language reasoning. As shown in Figure 9,
+soning MLLMs have shown significant success [2—4, 12]. To assess MLLMs’ optimal plan accuracy rises, yet the drop from EASY to
+how reasoning affects multimodal tasks with complex constraints, HARD remains. We also measured OCR accuracy on Flight Plan-
+we evaluated QvQ-72B-Preview [29] on some MPCC tasks and ning images and found that Gemini-2.0-Flash reaches 98.8% on
+found that: (1) Improved reasoning mechanisms enhance per- HARD level, yet complex planning remains challenging, indicating
+formance in simpler multimodal tasks. As shown in Figure 8, that both visual comprehension and constraint integration drive
+QvQ outperforms Qwen2-VL-72B in tasks with fewer constraints, the decline. Addressing one in isolation is unlikely to close the gap.
+
+
+--- Page 8 ---
+
+Yiyan Ji et al.
+. —e—GPT-4o cross-disciplinary problem-solving with 11.5K expert-level ques-
+x0 —~e~Gemini-2.0-Flash tions, revealing significant gaps between MLLMs and human perfor-
+S95 =e InternVL-38B mance. SEED-Bench [18] uses a hierarchical evaluation framework
+= 20 2 Qwen2-VL-7B with annotated multiple-choice questions across 27 to 34 dimen-
+= 1s —e— QWven2-VL-72B sions. Benchmarks like MLLM-CompBench [13] and M3CoT [5],
+2 10 refine multimodal reasoning tasks, offer insights into the limita-
+————_S=
+os tions of MLLMs and drive progress in model development. XLRS-
+0 — . . . eee .
+TASY MEDIUM HARD Bench [31] introduces complex spatial relationships in high-resolution
+Task Level remote sensing images, challenging MLLMs’ reasoning capabili-
+ties. Some benchmarks focus on multimodal planning with implicit
+Figure 9: Performance of MLLMs on Flight Planning tasks constraints. Open3DVQA [43] tests spatial planning by implicitly
+in MPCC, where visual information has been converted into restricting spatial relationships. EgoPlan-Bench [6] constrains mod-
+textual input. els to first-person perspectives, while VisualWebArena [14] and
+OSWorld [39] involve interacting with real-world interfaces and
+following specific instructions through embodied planning.
+Flight
+7 CONCLUSION
+Calendar This study introduces the Multimodal Planning with Complex Con-
+straints (MPCC) benchmark, designed to evaluate multimodal large
+Meeting language models (MLLMs) on real-world planning tasks with com-
+plex multimodal constraints. Experiments with 13 state-of-the-art
+MLLMs revealed significant limitations: even advanced models like
+. 7 * 7 . - Claude-3.5V-Sonnet struggle with intricate constraints, and open-
+[Output Format error CJ Incomplete Program Search aude-o. onnet struggle with in mca € cons Taints, and open
+[Linguistic Logic Confusion [J Information Extraction Error source models show even greater deficiencies. We also explored
+EViolationofConstraints = the application of multiple strategies, and the results highlight the
+Budget Constraints EZ) Temporal Constraints [_] Spatial Constraints shortcomings of current prompting strategies in handling multi-
+ple constraints and emphasize the need for further development
+Figure 10: Manual analysis of incorrect responses. Over 40% in constraint-aware reasoning within MLLMs. MPCC provides a
+of incorrect responses were due to failure to meet constraints. robust framework for systematically evaluating MLLMs under di-
+verse real-world constraints to guide future research toward more
+capable and reliable multimodal planning systems.
+5.5 Case Studies
+ACKNOWLEDGMENTS
+This section presents a case study analyzing failures of the Claude-
+P . ney yang : . This work was supported by the National Natural Science Founda-
+3.5V-Sonnet model with Chain-of-Thought [35], to identify com- : ; :
+: tion of China (NSFC) via grant 62306342, 62236004, 62206078 and
+mon error causes and specific MLLM weaknesses. Errors are cate- . on
+. ; . : 62476073. This work was supported by the Scientific Research Fund
+gorized as follows: (1) Information Extraction Error: Failures _ . :
+; : : : : : : : of Hunan Provincial Education Department (24B0001). This work
+in extracting key visual details, such as misreading flight info or Lo .
+. or . . os was sponsored by the Excellent Young Scientists Fund in Hunan
+dates. (2) Linguistic Logic Confusion: Responses containing con- : . .
+ae oq: . . Province (2024JJ4070), the Science and Technology Innovation Pro-
+tradictions or logical inconsistencies. (3) Incomplete Program : .
+. . . gram of Hunan Province under Grant 2024RC3024 and CCF-Zhipu
+Search: Prematurely concluding no solution exists when further ; ;
+. . Large Model Innovation Fund (NO.CCF-Zhipu202406).
+exploration might find one. (4) Output Format Error: Correct
+responses that fail to follow the expected output format. (5) Vio-
+lation of Constraints: Critical errors where responses, though REFERENCES
+logically sound, fail to meet the constraints. [1] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Floren-
+an . cia Leoni Aleman, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal
+As shown in Figure 10, over 40% of errors result from Viola- Anadkat, et al. Gpt-4 technical report. 2023.
+tion of Constraints, with this percentage rising in tasks with more [2] Qiguang Chen, Libo Qin, Jinhao Liu, Dengyun Peng, Jiannan Guan, Peng Wang,
+complex constraints. This highlights the challenge of meeting di- Mengkang Hu, Yuhang Zhou, Te Gao, and Wangxiang Che. Towards reasoning
+. . oo, ; era: A survey of long chain-of-thought for reasoning large language models.
+verse and complex constraints as the main factor limiting MLLMs arXiv preprint arXiv:2503.09567, 2025.
+performance in multimodal planning tasks. [3] Qiguang Chen, Libo Qin, Jinhao Liu, Dengyun Peng, Jiagi Wang, Mengkang Hu,
+Zhi Chen, Wanxiang Che, and Ting Liu. Ecm: A unified electronic circuit model
+for explaining the emergence of in-context learning and chain-of-thought in
+6 RELATED WORK large language model. arXiv preprint arXiv:2502.03325, 2025.
+[4] Qiguang Chen, Libo Qin, Jiaqi Wang, Jingxuan Zhou, and Wanxiang Che. Un-
+The advancement of multimodal large language models (MLLMs) locking the capabilities of thought: A reasoning boundary framework to quantify
+has led to numerous benchmarks evaluating performance on realis- and optimize chain-of-thought. In Proc. of NeurIPS, 2024. ;
+. ks with Itimodal traints. Thi ti : isti [5] Qiguang Chen, Libo Qin, Jin Zhang, Zhi Chen, Xiao Xu, and Wanxiang Che. M
+tic tasks with multimodal constraints. This section reviews existing 3 cot: A novel benchmark for multi-domain multi-step multi-modal chain-of-
+benchmarks focused on multimodal reasoning. MMMU [42] tests thought. In Proc. of ACL, 2024.
+
+
+--- Page 9 ---
+
+MPCC: A Novel Benchmark for Multimodal Planning with Complex Constraints in Multimodal Large Language Models
+[6] YiChen, Yuying Ge, Yixiao Ge, Mingyu Ding, Bohao Li, Rui Wang, Ruifeng Xu, arXiv:2312.11805, 2023.
+Ying Shan, and Xihui Liu. Egoplan-bench: Benchmarking egocentric embodied [29] Qwen Team. Qvq: To see the world with wisdom, 2024.
+planning with multimodal large language models. CoRR, 2023. [30] Karthik Valmeekam, Matthew Marquez, Alberto Olmo, Sarath Sreedharan, and
+[7] Zhe Chen, Jiannan Wu, Wenhai Wang, Weijie Su, Guo Chen, Sen Xing, Muyan Subbarao Kambhampati. Planbench: An extensible benchmark for evaluating
+Zhong, Qinglong Zhang, Xizhou Zhu, Lewei Lu, et al. Internvl: Scaling up vision large language models on planning and reasoning about change, 2023.
+foundation models and aligning for generic visual-linguistic tasks. In Proc. of [31] Fengxiang Wang, Hongzhen Wang, Mingshuo Chen, Di Wang, Yulin Wang,
+CVPR, pages 24185-24198, 2024. Zonghao Guo, Qiang Ma, Long Lan, Wenjing Yang, Jing Zhang, Zhiyuan Liu, and
+[8] Zihui Cheng, Qiguang Chen, Xiao Xu, Jiaqi Wang, Weiyun Wang, Hao Fei, Yidong Maosong Sun. Xlrs-bench: Could your multimodal llms understand extremely
+Wang, Alex Jinpeng Wang, Zhi Chen, Wanxiang Che, et al. Visual thoughts: large ultra-high-resolution remote sensing imagery?, 2025.
+A unified perspective of understanding multimodal chain-of-thought. arXiv [32] Lei Wang, Wanyu Xu, Yihuai Lan, Zhiqiang Hu, Yunshi Lan, Roy Ka-Wei Lee, and
+preprint arXiv:2505.15510, 2025. Ee-Peng Lim. Plan-and-solve prompting: Improving zero-shot chain-of-thought
+[9] Zihui Cheng, Qiguang Chen, Jin Zhang, Hao Fei, Xiaocheng Feng, Wanxiang reasoning by large language models. arXiv preprint arXiv:2305.04091, 2023.
+Che, Min Li, and Libo Qin. Comt: A novel benchmark for chain of multi-modal [33] Peng Wang, Shuai Bai, Sinan Tan, Shijie Wang, Zhihao Fan, Jinze Bai, Keqin
+thought on large vision-language models. In Proc. of AAAI, 2025. Chen, Xuejing Liu, Jialin Wang, Wenbin Ge, Yang Fan, Kai Dang, Mengfei Du,
+
+[10] Qingxiu Dong, Lei Li, Damai Dai, Ce Zheng, Jingyuan Ma, Rui Li, Heming Xia, Xuancheng Ren, Rui Men, Dayiheng Liu, Chang Zhou, Jingren Zhou, and Junyang
+Jingjing Xu, Zhiyong Wu, Tianyu Liu, et al. A survey on in-context learning. Lin. Qwen2-vl: Enhancing vision-language model’s perception of the world at
+arXiv preprint arXiv:2301.00234, 2022. any resolution. arXiv preprint arXiv:2409.12191, 2024.
+
+[11] Haodong Duan, Junming Yang, Yuxuan Qiao, Xinyu Fang, Lin Chen, Yuan Liu, [34] Peng Wang, Yongheng Zhang, Hao Fei, Qiguang Chen, Yukai Wang, Jiasheng
+Xiaoyi Dong, Yuhang Zang, Pan Zhang, Jiaqi Wang, et al. Vimevalkit: An open- Si, Wenpeng Lu, Min Li, and Libo Qin. S3 agent: Unlocking the power of vllm
+source toolkit for evaluating large multi-modality models. In Proceedings of the for zero-shot multi-modal sarcasm detection. ACM Transactions on Multimedia
+32nd ACM International Conference on Multimedia, pages 11198-11201, 2024. Computing, Communications and Applications, 2024.
+
+[12] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin [35] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi,
+Xu, Qihao Zhu, Shirong Ma, Peiyi Wang, Xiao Bi, et al. Deepseek-r1: Incen- Quoc V Le, Denny Zhou, et al. Chain-of-thought prompting elicits reasoning in
+tivizing reasoning capability in llms via reinforcement learning. arXiv preprint large language models. In Proc. of NeurIPS, volume 35, pages 24824-24837, 2022.
+arXiv:2501.12948, 2025. [36] Chengyue Wu, Xiaokang Chen, Zhiyu Wu, Yiyang Ma, Xingchao Liu, Zizheng
+
+[13] Jihyung Kil, Zheda Mai, Justin Lee, Arpita Chowdhury, Zihe Wang, Kerrie Cheng, Pan, Wen Liu, Zhenda Xie, Xingkai Yu, Chong Ruan, et al. Janus: Decoupling
+Lemeng Wang, Ye Liu, and Wei-Lun Harry Chao. Mllm-compbench: A compara- visual encoding for unified multimodal understanding and generation. arXiv
+tive reasoning benchmark for multimodal llms. In Proc. of NeurIPS, 2024. preprint arXiv:2410.13848, 2024.
+
+[14] Jing Yu Koh, Robert Lo, Lawrence Jang, Vikram Duvvur, Ming Chong Lim, Po-Yu [37] Zhiyu Wu, Xiaokang Chen, Zizheng Pan, Xingchao Liu, Wen Liu, Damai Dai,
+Huang, Graham Neubig, Shuyan Zhou, Ruslan Salakhutdinov, and Daniel Fried. Huazuo Gao, Yiyang Ma, Chengyue Wu, Bingxuan Wang, et al. Deepseek-vl2:
+Visualwebarena: Evaluating multimodal agents on realistic visual web tasks. Mixture-of-experts vision-language models for advanced multimodal under-
+arXiv preprint arXiv:2401.13649, 2024. standing. arXiv preprint arXiv:2412. 10302, 2024.
+
+[15] Jing Yu Koh, Stephen McAleer, Daniel Fried, and Ruslan Salakhutdinov. Tree [38] Yijia Xiao, Edward Sun, Tianyu Liu, and Wei Wang. Logicvista: Multimodal llm
+search for language model agents, 2024. logical reasoning benchmark in visual contexts. arXiv preprint arXiv:2407.04973,
+
+[16] Takeshi Kojima, Shixiang Shane Gu, Machel Reid, Yutaka Matsuo, and Yusuke 2024.
+
+Iwasawa. Large language models are zero-shot reasoners, 2022. [39] Tianbao Xie, Danyang Zhang, Jixuan Chen, Xiaochuan Li, Siheng Zhao, Ruisheng
+
+[17] Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Cao, Jing Hua Toh, Zhoujun Cheng, Dongchan Shin, Fangyu Lei, et al. Osworld:
+Zhang, Peiyuan Zhang, Yanwei Li, Ziwei Liu, and Chunyuan Li. Llava-onevision: Benchmarking multimodal agents for open-ended tasks in real computer envi-
+Easy visual task transfer, 2024. ronments. In Proc. of NeurIPS, volume 37, pages 52040-52094, 2024.
+
+[18] Bohao Li, Yuying Ge, Yixiao Ge, Guangzhi Wang, Rui Wang, Ruimao Zhang, and [40] Zhengyuan Yang, Linjie Li, Jianfeng Wang, Kevin Lin, Ehsan Azarnasab, Faisal
+Ying Shan. Seed-bench: Benchmarking multimodal large language models. In Ahmed, Zicheng Liu, Ce Liu, Michael Zeng, and Lijuan Wang. Mm-react: Prompt-
+Proc. of CVPR, 2024. ing chatgpt for multimodal reasoning and action, 2023.
+
+[19] Chengshu Li, Ruchan Zhang, Josiah Wong, Cem Gokmen, Sanjana Srivastava, [41] Kaining Ying, Fanqing Meng, Jin Wang, Zhiqian Li, Han Lin, Yue Yang, Hao
+Roberto Martin-Martin, Chen Wang, Gabrael Levine, Michael Lingelbach, Jiankai Zhang, Wenbo Zhang, Yuqi Lin, Shuo Liu, et al. Mmt-bench: A comprehensive
+Sun, et al. Behavior-1k: A benchmark for embodied ai with 1,000 everyday multimodal benchmark for evaluating large vision-language models towards
+activities and realistic simulation. In Conference on Robot Learning, pages 80-93. multitask agi. arXiv preprint arXiv:2404. 16006, 2024.
+
+PMLR, 2023. [42] Xiang Yue, Yuansheng Ni, Kai Zhang, Tianyu Zheng, Ruoqi Liu, Ge Zhang,
+
+[20] Zhangheng Li, Keen You, Haotian Zhang, Di Feng, Harsh Agrawal, Xiujun Li, Samuel Stevens, Dongfu Jiang, Weiming Ren, Yuxuan Sun, et al. Mmmu: A
+Mohana Prasad Sathya Moorthy, Jeff Nichols, Yinfei Yang, and Zhe Gan. Ferret-ui massive multi-discipline multimodal understanding and reasoning benchmark
+2: Mastering universal user interface understanding across platforms, 2024. for expert agi. In Proc. of CVPR, 2024.
+
+[21] QiLv, Hao Li, Xiang Deng, Rui Shao, Michael Yu Wang, and Liqiang Nie. Robomp [43] Weichen Zhan, Zile Zhou, Zhiheng Zheng, Chen Gao, Jingiang Cui, Yong Li,
+2. A robotic multimodal perception-planning framework with multimodal large Xinlei Chen, and Xiao-Ping Zhang. Open3dvqa: A benchmark for comprehensive
+language models. arXiv preprint arXiv:2404.04929, 2024. spatial reasoning with multimodal large language model in open space, 2025.
+
+[22] Yiyang Ma, Xingchao Liu, Xiaokang Chen, Wen Liu, Chengyue Wu, Zhiyu Wu, [44] Huaixiu Steven Zheng, Swaroop Mishra, Hugh Zhang, Xinyun Chen, Minmin
+Zizheng Pan, Zhenda Xie, Haowei Zhang, Liang Zhao, et al. Janusflow: Harmo- Chen, Azade Nova, Le Hou, Heng-Tze Cheng, Quoc V. Le, Ed H. Chi, and Denny
+nizing autoregression and rectified flow for unified multimodal understanding Zhou. Natural plan: Benchmarking IIms on natural language planning, 2024.
+and generation. arXiv preprint arXiv:2411.07975, 2024. [45] Shuyan Zhou, Frank F Xu, Hao Zhu, Xuhui Zhou, Robert Lo, Abishek Srid-
+
+[23] Zixian Ma, Weikai Huang, Jieyu Zhang, Tanmay Gupta, and Ranjay Krishna. m har, Xianyi Cheng, Tianyue Ou, Yonatan Bisk, Daniel Fried, et al. Webarena:
+& m’s: A benchmark to evaluate tool-use for m ulti-step m ulti-modal tasks. In A realistic web environment for building autonomous agents. arXiv preprint
+Proc. of ECCV, pages 18-34. Springer, 2024. arXiv:2307. 13854, 2023.
+
+[24] Viorica Patraucean, Lucas Smaira, Ankush Gupta, Adria Recasens, Larisa Mar-
+keeva, Dylan Banarse, Skanda Koppula, Mateusz Malinowski, Yi Yang, Carl
+Doersch, et al. Perception test: A diagnostic benchmark for multimodal video
+models. In Proc. of NeurIPS, volume 36, pages 42748-42761, 2023.
+
+[25] Libo Qin, Qiguang Chen, Hao Fei, Zhi Chen, Min Li, and Wanxiang Che. What
+factors affect multi-modal in-context learning? an in-depth exploration. arXiv
+preprint arXiv:2410.20482, 2024.
+
+[26] Benjamin Ransford, Jacob Sorber, and Kevin Fu. Mementos: System support for
+long-running computation on rfid-scale devices. In Proceedings of the sixteenth
+international conference on Architectural support for programming languages and
+operating systems, pages 159-170, 2011.
+
+[27] Mohit Shridhar, Jesse Thomason, Daniel Gordon, Yonatan Bisk, Winson Han,
+
+Roozbeh Mottaghi, Luke Zettlemoyer, and Dieter Fox. Alfred: A benchmark for
+interpreting grounded instructions for everyday tasks. In Proc. of CVPR, 2020.
+
+[28] Gemini Team, Rohan Anil, Sebastian Borgeaud, Yonghui Wu, Jean-Baptiste
+Alayrac, Jiahui Yu, Radu Soricut, Johan Schalkwyk, Andrew M Dai, Anja Hauth,
+et al. Gemini: a family of highly capable multimodal models. arXiv preprint

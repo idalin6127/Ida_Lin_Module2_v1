@@ -1,0 +1,866 @@
+
+
+--- Page 1 ---
+
+PARROT: An Open Multilingual Radiology Reports
+Dataset
+Bastien Le Guellec*!?, Kokou Adambounou?, Lisa C. Adams*, Thibault Agripnidis®, Sung
+Soo Ahn®, Radhia Ait Chalal’, Tugba Akinci D’Antonoli*®, Philippe Amouyel!?, Henrik
+Andersson”, Raphaél Bentegeac!?!!, Claudio Benzoni!®, Antonino Andrea Blandino",
+Via) Felix Busch‘, Elif Can!®, Riccardo Cau!®, Armando Ugo Cavallo!’, Christelle Chavihot'®,
+oS Erwin Chiquete!?, Renato Cuocolo”?, Eugen Divjak”!, Gordana Ivanac”!, Barbara
+QI Dziadkowiec-Macek”*, Armel Elogne”*, Salvatore Claudio Fanni**, Carlos Ferrarotti?’,
+= Claudia Fossataro”®, Federica Fossataro?’, Katarzyna Fulek”>, Michal Futek?°, Pawel
+= Gaé*?, Martyna Gachowska”®, Ignacio Garcia-Judrez®!, Marco Gatti®?, Natalia Gorelik®® ,
+Vay Alexia Maria Goulianou*’, Aghiles Hamroun!®", Nicolas Herinirina®®, Quentin Holay®®,
+NX Felipe Kitamura®”**, Michail E. Klontzas®?, Anna Kompanowska”’, Rafal Kompanowski"",
+— Krzysztof Kraik*?, Dominik Krupka*”, Alexandre Lefévre!, Tristan Lemke*, Maximilian
+— Lindholz*?, Lukas Miller“, Piotr Macek??, Marcus Makowski*, Luigi Mannacio*?, Aymen
+eS Meddeb**, Antonio Natale*’, Béatrice Nguema Edzang!®, Adriana Ojeda*”, Yae Won Park®,
+3 Federica Piccione*?, Andrea Ponsiglione*®, Malgorzata Poreba**, Rafal Poreba®’, Philipp
+— Prucker!’, Jean-Pierre Pruvo!”, Rosa Alba Pugliesi!**°, Feno Hasina Rabemanorintsoa™,
+_ Vasileios Rafailidis®!, Katarzyna Resler*!, Jan Rotkegel?*, Luca Saba!®, Ezann Siebert™,
+e Arnaldo Stanzione*’, Ali Fuat Tekin®!, Liz Toapanta-Yanchapaxi®”, Matthaios
+Cr) Triantafyllou**, Ekaterini Tsaoulia®’, Evangelia Vassalou®*, Federica Vernuccio!*, Johan
+om Wassélius!?, Weilang Wang, Szymon Urban®, Adrian Wiodarczak®’, Szymon
+“ Whlodarczak®’, Andrzej Wysocki°’, Lina Xu*?, Tomasz Zatorski?®, Shuhang Zhang”,
+~ Sebastian Ziegelmayer*, Grégory Kuchcinski!”, and Keno K. Bressem+
+i)
+Q ' Department of Neuroradiology, Lille University Hospital, Salengro Hospital, Lille, France
+ee 2U1172 LilNCog, Lille Neuroscience & Cognition, Université Lille, Lille, France
+. = 3 Campus University Hospital Centre, Department of Radiology & Medical Imaging, Lomé, Togo
+< 4 Department of Diagnostic & Interventional Radiology, Klinikum rechts der Isar, TUM University
+Hospital, Technical University of Munich, Munich, Germany
+S ° Interventional Radiology, University Hospital Timone (AP-HM), Marseille, France
+° Department of Radiology & Research Institute of Radiological Science & Center for Clinical Imaging Data
+Science, Yonsei University College of Medicine, Seoul, South Korea
+"Department of Radiology, Bab El-Oued University Hospital, Algiers, Algeria
+8 Diagnostic & Interventional Neuroradiology, University Hospital Basel, Basel, Switzerland
+° Pediatric Radiology, University Children’s Hospital Basel, Basel, Switzerland
+1001167 RID-AGE, Pasteur Institute of Lille, Inserm, Lille University, Lille, France
+"1 Public Health — Epidemiology, Lille University Hospital Center, Lille, France
+12 Medical Imaging & Physiology, Skane University Hospital, Lund, Sweden
+13 Institute of AI & Informatics in Medicine (AIIM), TUM University Hospital, Technical University of
+Munich, Munich, Germany
+4 Radiology, Department of Biomedicine, Neuroscience & Advanced Diagnostics (BiND), University of
+Palermo, Palermo, Italy
+1
+
+
+--- Page 2 ---
+
+5 Diagnostic & Interventional Radiology, Medical Center — University of Freiburg, Faculty of Medicine,
+Freiburg, Germany
+16 Radiology, Azienda Ospedaliero-Universitaria (A.O.U.) di Cagliari, Monserrato, Cagliari, Italy
+'" Division of Radiology, Istituto Dermopatico dell’Immacolata (IDI) IRCCS, Rome, Italy
+18 Department of Radiology, Hépital Instruction des Armées, Libreville, Gabon
+19 Department of Neurology, Instituto Nacional de Ciencias Médicas y Nutricién Salvador Zubirén, Mexico
+City, Mexico
+20 Department of Medicine, Surgery & Dentistry, University of Salerno, Baronissi, Italy
+21 Department of Diagnostic & Interventional Radiology, University Hospital Dubrava, Zagreb, Croatia
+22 Department of Physiology & Pathophysiology, Wroclaw Medical University, Wroclaw, Poland
+23 Department of Radiology, Hopital Militaire d’Abidjan, Abidjan, Céte d’Ivoire
+24 Department of Translational Research, Academic Radiology, University of Pisa, Pisa, Italy
+25 Department of Diagnostic Imaging, CEMIC “Norberto Quirno”, Buenos Aires, Argentina
+26 Department of Ophthalmology, Catholic University “Sacro Cuore”, Rome, Italy
+27 Department of Ophthalmology, ASST Fatebenefratelli Sacco, Milan, Italy
+28 Department and Clinic of Otolaryngology, Head & Neck Surgery, Wroclaw Medical University, Wroclaw,
+Poland
+29 Department and Clinic of Diabetology, Hypertension & Internal Diseases, Institute of Internal Diseases,
+Wroclaw Medical University, Wroclaw, Poland
+3° Department of Radiology & Diagnostic Imaging, 4th Military Hospital, Wroclaw, Poland
+3! Department of Gastroenterology, Instituto Nacional de Ciencias Médicas y Nutricién Salvador Zubirdn,
+Mexico City, Mexico
+32 Department of Surgical Sciences, Radiology Unit, University of Turin, Turin, Italy
+33 Department of Radiology, McGill University Health Center, Montreal, Quebec, Canada
+34 Department of Medical Imaging, University Hospital of Heraklion, Heraklion, Greece
+35 Department of Radiology, Tanambao University Hospital, Antsiranana, Madagascar
+36 Department of Radiology, Sainte-Anne Teaching Military Hospital, Toulon, France
+37 Bunkerhill Health, San Francisco, CA, USA
+38 Department of Diagnostic Imaging, Universidade Federal de Séo Paulo (UNIFESP), Séo Paulo, Brazil
+39 AT & Translational Imaging Lab, Department of Radiology, University of Crete, Heraklion, Greece
+49 Department of Pediatrics, Klodzko County Hospital, Klodzko, Poland
+41 Orthopedics & Traumatology Department, Specialist Medical Centre, Polanica-Zdréj, Poland
+42 Faculty of Medicine, Wroclaw Medical University, Wroclaw, Poland
+43 Department of Radiology, Charité University Hospital Berlin, Berlin, Germany
+44 Department of Diagnostic & Interventional Radiology, University Medical Center — Johannes
+Gutenberg- University Mainz, Mainz, Germany
+45 Department of Advanced Biomedical Sciences, University of Naples Federico II, Naples, Italy
+46 Department of Neuroradiology, Charité University Hospital Berlin, Berlin, Germany
+47 Departamento de Neuroradiologéa, DMO, Rosario, Argentina
+48 Department of Paralympic Sport, Wroclaw University of Health and Sport Sciences, Wroclaw, Poland
+49 Division of Health Care Sciences, Dresden International University, Dresden, Germany
+5° Department of Radiology, Morafeno Toamasina University Hospital, Toamasina, Madagascar
+51 Department of Radiology, Basaksehir Cam & Sakura City Hospital, Istanbul, Turkey
+52 Department of Ophthalmology, Sir Charles Gairdner Hospital, Perth, Australia
+°3 Department of Radiology, Aristotle University of Thessaloniki, AHEPA University General Hospital,
+Thessaloniki, Greece
+54 Department of Radiology, Zhongda Hospital, Southeast University, Nanjing, China
+°5 Department of Cardiology, The Copper Health Center, Lubin, Poland
+*Corresponding author: bastien.leguellec@chu-lille.fr
+2
+
+
+--- Page 3 ---
+
+Abstract
+Rationale and Objectives: To develop and validate PARROT (Polyglottal Annotated
+Radiology Reports for Open Testing), a large, multicentric, open-access dataset of fictional
+radiology reports spanning multiple languages for testing natural-language-processing appli-
+cations in radiology.
+Materials and Methods: From May to September 2024, radiologists were invited to con-
+tribute fictional radiology reports following their standard reporting practices. Contributors
+provided at least 20 reports with associated metadata including anatomical region, imaging
+modality, clinical context, and—for non-English reports—English translations. All reports
+were assigned ICD-10 codes. A human-versus-AlI report-differentiation study was conducted
+with 154 participants (radiologists, healthcare professionals, and non-healthcare profession-
+als) assessing whether reports were human-authored or Al-generated.
+Results: The dataset comprises 2658 radiology reports from 76 authors across 21 countries
+and 13 languages. Reports cover multiple imaging modalities (CT 36.1%, MRI 22.8%, ra-
+diography 19.0%, ultrasound 16.8%) and anatomical regions, with chest (19.9%), abdomen
+(18.6%), head (17.3%), and pelvis (14.1%) being most prevalent. In the differentiation
+study, participants achieved 53.9% accuracy (95% CI 50.7,57.1) in distinguishing human
+from Al-generated reports, with radiologists performing significantly better (56.9%; 95% Cl
+53.3,60.6; p < 0.05) than other groups.
+Conclusion: PARROT represents the largest openly available multilingual radiology-report
+dataset, enabling development and validation of NLP applications across linguistic, geo-
+graphic, and clinical boundaries without privacy constraints.
+Keywords: ChatGPT; Large Language Models; Dataset; Multilingual; Artificial Intelli-
+gence
+1 Introduction
+Radiology reports are the communication bridge between radiologists and clinicians, captur-
+ing complex visual findings in actionable text that directly informs patient-care decisions [I].
+The quality and clarity of these reports significantly impact diagnostic accuracy and treat-
+ment outcomes, with communication breakdowns representing a notable source of medical
+errors [2] [3] 4].
+Large language models (LLMs) have demonstrated remarkable capabilities in enhancing radi-
+ology workflows [5} {6} [7]. Recent studies show that these models can automatically structure
+free-text findings into standardized formats suitable for data sharing [8} [9], simplify com-
+plex radiological terminology for non-specialists [LO], and detect inconsistencies and errors
+with performance comparable to expert radiologists [6]. Such capabilities hold substantial
+promise for improving communication efficiency and report quality in clinical practice.
+However, a considerable barrier to deploying LLMs is their English-language centricity.
+Widely used datasets such as MIMIC-IV and MIMIC-CXR contain thousands of radi-
+
+3
+
+
+--- Page 4 ---
+
+ology reports but represent only English-language practice [LI] [12]. Privacy concerns and
+stringent data-sharing regulations constrain studies involving non-English radiology reports
+to proprietary datasets that remain inaccessible to the wider research community [9]. This
+absence of openly available multilingual datasets undermines scientific reproducibility and
+comparability across different healthcare systems [13].
+The consequences of this linguistic bias extend beyond simple language barriers. Radiology
+reporting practices exhibit substantial diversity worldwide—not just in language but also in
+reporting styles, preferred formats, terminology, and conventions. These variations are so
+pronounced that evaluation metrics developed for one region often fail to generalize across
+reports from different countries [14]. Compounding the issue, even advanced LLMs show
+performance disparities across languages, with capabilities in low-resource languages lagging
+behind English [14] (15).
+Developing truly multilingual resources that reflect authentic native-language radiology prac-
+tice is therefore essential. Preserving language-specific medical terminology is crucial for clin-
+ical accuracy [16], while capturing diverse reporting conventions ensures that AI tools align
+with existing clinical workflows. Furthermore, as Al-generated reports become increasingly
+prevalent, it is important to know whether human-authored reports can be distinguished
+from AI text; evaluating models solely on synthetic reports may propagate subtle inaccura-
+cies.
+In this context, we introduce PARROT, a collaborative initiative designed to overcome
+multilingual barriers in radiology-AI research. By bringing together radiologists and AI re-
+searchers to curate expert-authored reports from diverse linguistic and clinical environments,
+PARROT provides an open benchmark for developing inclusive radiology-AI tools that can
+serve global healthcare needs effectively and equitably.
+2 Methods
+2.1 Study design and recruitment
+The PARROT initiative ran from May 2024 to September 2024. The project was advertised
+through social-media platforms, professional radiology societies, and direct networking. To
+ensure broad global representation—particularly from under-represented regions—we lever-
+aged the COMFORT-AI survey network, which connects with radiologists worldwide [17].
+Because the dataset consists entirely of fictional reports with no patient data, institutional-
+review-board approval was formally waived. Each contributor attested that all submitted
+reports were fabricated. The fictional nature of the corpus enables unrestricted sharing,
+modification, and augmentation under a CC-BY-NC-SA 4.0 licence. Unlike datasets con-
+taining real patient data, PARROT can be freely distributed across institutional and national
+boundaries, shared with cloud-based models, facilitating collaborative research without pri-
+vacy constraints.
+
+4
+
+
+--- Page 5 ---
+
+2.2 Submission requirements
+Contributors had to submit at least 20 fictional reports with no upper limit. Each submis-
+sion required the complete radiological report following the contributor’s typical reporting
+style for their language and region. Contributors were encouraged to use the format, termi-
+nology, and structure they would typically employ in clinical practice to capture authentic
+stylistic variations. Report metadata included anatomical region, imaging modality (CT,
+MRI, US, XR, etc.), brief clinical context/indication and report language. For non-English
+reports, contributors provided an English translation to facilitate cross-linguistic analysis.
+Contributors were given freedom to choose specialties and clinical scenarios according to
+their expertise. They were specifically instructed to create plausible but non-specific clinical
+scenarios, include typical incidental findings appropriate for the demographic, and incorpo-
+rate normal anatomic variants at realistic frequencies. This approach allowed for capturing
+authentic reporting styles while ensuring the dataset represents a realistic distribution of
+normal and pathological findings. ICD-10 codes were assigned either by the contributor or
+by B.Le Guellec with assistance from the 03-mini-high language model (OpenAI). Dis-
+crepancies were resolved via dialogue with contributors.
+2.3. Dataset organisation and processing
+The final dataset was organized in a standardized structure to facilitate research use (JSONL
+file). The entire dataset was version-controlled using Git, with the initial public release
+tagged as v1.0. The repository includes documentation and usage examples to facilitate
+adoption. This version control approach enables ongoing collaboration and contribution, al-
+lowing the dataset to grow and improve over time while maintaining traceability of changes.
+Future contributors can submit additional reports following the established protocols, en-
+hancing the linguistic and clinical diversity of the resource. The project is accessible at
+2.4 Human,versus,AI report differentiation study
+To validate the authenticity and distinctive characteristics of PARROT reports compared
+to Al-generated content, we conducted a discrimination study. We generated AI reports
+using GPT-ol (OpenAI) and selected a comparable number of PARROT reports for com-
+parison. Participants recruited through social media (LinkedIn) and professional networks
+(e.g., European Society of Medical Imaging Informatics) were asked to identify whether re-
+ports were human-authored or Al-generated. The study was conducted on English, German,
+Italian, French, Greek and Polish reports via Google Docs, where participants selected their
+language of practice, reviewed and voted on 10 reports, with 5 being Al-generated and 5
+human-authored from PARROT. Reports included MRI, CT, X-ray and echographic exam-
+inations from multiple anatomical regions. We specifically targeted a mix of radiologists,
+computer scientists, and general participants to assess whether professional expertise influ-
+enced the ability to distinguish authentic radiological reporting from AlI-generated content.
+5
+
+
+--- Page 6 ---
+
+This evaluation was motivated by concerns that researchers might use language models to
+generate synthetic radiology reports for testing purposes, potentially introducing subtle but
+important deviations from authentic clinical documentation. We hypothesized that those
+reports might be difficult to differentiate from human-generated content, but that domain
+experts such as radiologists would better recognize these differences than non-experts, high-
+lighting the value of professionally authored content in the PARROT dataset.
+2.5 Statistical analysis
+A descriptive analysis was performed to characterize the dataset. Country of origin and
+frequency of imaging modalities were summarized, and body regions were categorized to
+assess the diversity of the contributed scenarios. Preliminary maps of geographic origins
+were generated to visualize the global participation in PARROT. All statistical analyses and
+visualizations were carried out using R version 4.3.1. Key analytical steps included sum-
+marizing submission counts per country and language, enumerating modality usage across
+the dataset, grouping body regions under standardized terms, analyzing the distribution of
+normal versus abnormal findings, and categorizing reports by ICD-10 classification. The
+analysis focused on demonstrating the breadth and diversity of the dataset across linguistic,
+geographic, and clinical dimensions to establish its utility as a representative multilingual
+resource for radiology AI research. Differences in performance for the differentiation study
+were assessed with a x? test, with a significance level of a = 0.05.
+3 Results
+3.1 Report origin and linguistic diversity
+The PARROT dataset comprises 2658 fictional radiology reports contributed by radiologists
+in 21 countries across four continents. Poland provided the largest share (837 reports, 31.5
+%), followed by Germany (316; 11.9 %), Italy (285; 10.7 %), Croatia (200; 7.5 %), and France
+(173; 6.5 %). Figure{I]illustrates the geographic distribution, which is dominated by Europe
+but includes growing participation from Asia, South America, and Africa. Nations from the
+Global South—Argentina (71; 2.7 %), China (100; 3.8 %), and Mexico (75; 2.8 %)—together
+represent roughly 19 % of the collection.
+The PARROT dataset encompasses reports in 13 different languages. The distribution of
+languages reflects the geographical representation, with Polish, German, Italian, and French
+being the most prevalent. Notably, French-language reports originated from multiple coun-
+tries including Algeria, France, Ivory Coast, Madagascar, Togo, and Canada, highlighting
+regional variations in reporting practices within the same language. Similarly, Spanish-
+language reports were contributed from both Argentina and Mexico, capturing different
+regional medical terminologies and reporting conventions.
+
+6
+
+
+--- Page 7 ---
+
+3.2 Report content and structure
+Analysis of report content revealed diverse imaging modalities, with computed tomography
+(CT) representing 36.1% (n = 989) of the dataset, followed by magnetic resonance imaging
+(MRI) (22.8%, n = 625), conventional radiography (XR, 19.0%, n = 520), and ultrasound
+(US, 16.8%, nm = 461) as displayed in Figure [1]
+The anatomical distribution analysis demonstrated a predominance of reports covering chest
+(n = 677, 19.9%), abdomen (n = 631, 18.6%), head (n = 588, 17.3%), and pelvis (n =
+480, 14.1%) as detailed in Table |1) and visualized in Figure |2} Less-commonly represented
+regions included extremities and specialized areas such as the orbit or pituitary gland. The
+relationship between modalities and anatomical regions is shown in Supplementary Figure
+Sl.
+The median report length varied across languages. The longest reports were in Turkish
+(median length 382 words; interquartile range, IQR: 154.75 words), followed by Spanish
+(196; IQR 136.5) and French (172; IQR 130), with the shortest reports being in Afrikaans
+with a median word count of 36.5 (IQR 12.75). Further details on word count are provided
+in Table
+
+7
+
+
+--- Page 8 ---
+
+A B
+Global distribution of radiology reports origin Countries by number of reports
+one ee Cl ————————sus 67
+: : \S Ay ed FBT Togo 69
+=e a Pe. ae Madagascar 69
+IS By bon 54
+i South Africa 52
+: f . 2 Switzerland 50
+-50 Saas : : Canada 50
+Se 7 South Korea 43
+a. _aaiin von TRey 2
+= Alger 20
+-100 0 100 200 0 250 500 750 1,000
+Distribution of imaging modalities by country Distribution of imaged body areas by country
+geo ET set >
+Ns a Argentina
+Coo | 1] Cre, |
+Ce dE —
+Cott i | Cota I CCC *d
+(nc Ty France [Ld
+Gabon Td Gabon [En
+ne SS ny L__
+cee ee Greece Ed
+A tay Td
+voy Cot | y
+gsi 7 a
+io LE =p Madagascar [Ld
+| Mexico TT)
+South Aric a a
+Suhr ZZ ay +d South Korea [I
+Sweden TTT Cd Sweden GEE SE SS Eee)
+vend TT | Swierand ZZ
+(, oo] |
+Turkey [ogee] Turkey [ina]
+0% 25% 50% 75% 100% 0% 25% 50% 75% 100%
+. oO Angiography Oo Endoscopy Oo MR i | PET/CT i | X-Ray .
+Modality Dor il Mammography [i] Ophtnaimotogy I) utrasound Body Area [_] Abdomen [7] Chest [[] Head [Jj] Knee [i Spine
+Figure 1: Geographic distribution and characteristics of the PARROT dataset. A) World
+map showing the distribution of radiology reports by country of origin, with darker blue
+indicating higher numbers of reports. B) Bar chart displaying the count of reports by country,
+arranged in descending order. C) Distribution of imaging modalities by country, showing
+the percentage of each modality within countries. D) Distribution of five most imaged body
+areas by country, revealing regional preferences in anatomical focus.
+8
+
+
+--- Page 9 ---
+
+Table 1: Distribution of body areas in PARROT.
+Body Area Count Percentage (%)
+Chest 677 19.9
+Abdomen 631 18.6
+Head 588 17.3
+Pelvis 480 14.1
+Breast 176 5.2
+Neck 138 4.1
+Lumbar Spine 102 3.0
+Spine 95 2.8
+Orbit 79 2.3
+Cervical 71 2.1
+Knee 60 1.8
+Lower Extremity 50 1.5
+Shoulder 49 1.4
+Thoracic Spine 46 1.4
+Upper Extremity 30 0.9
+Foot 22 0.6
+Wrist 21 0.6
+Ankle 20 0.6
+Face 15 0.4
+Pituitary Gland 12 0.4
+Elbow 10 0.3
+Testis 8 0.2
+Whole Body 8 0.2
+Ear 4 0.1
+Hip 3 0.1
+Nose 2 0.1
+
+9
+
+
+--- Page 10 ---
+
+Table 2: Median word count of reports by language.
+
+Language Median (IQR) words
+
+Afrikaans 36.5 (12.8)
+
+Chinese 182.5 (137)
+
+Croatian 67 (41)
+
+Dutch 39.5 (15.3)
+
+French 172 (130)
+
+German 71.5 (79.3)
+
+Greek 86 (72)
+
+Italian 94 (87)
+
+Korean 43 (28)
+
+Polish 112 (145)
+
+Spanish 196 (136.5)
+
+Swedish 73 (73)
+
+Turkish 328 (154.8)
+3.3. Human,versus,AI report differentiation study
+To evaluate the authenticity of the human-authored reports in PARROT compared with
+Al-generated content, we conducted a differentiation study with 154 participants from di-
+verse backgrounds. Overall, participants achieved a mean accuracy of 53.9% (95% CI :
+50.7-57.1%) in distinguishing between human-authored and Al-generated reports, indicat-
+ing performance only slightly above chance level (Figure [2).
+Analysis by occupation revealed that radiologists performed better (56.9%, 95% CI : 53.3-60.6%)
+than non-healthcare professionals (49.7%, 95% CI : 41.4-58.0%) and other healthcare profes-
+sionals (48.3%, 95% CI : 40.1-56.5%), as shown in Figure [2| This difference was statistically
+significant (p < 0.05), suggesting that domain expertise provides some advantage in discern-
+ing report authenticity.
+Self-reported confidence showed only a weak association with actual performance. Partici-
+pants reporting the highest confidence levels (“Very confident” and “Completely confident”)
+achieved modestly higher accuracy (61.2% and 60.0%, respectively) compared with those
+with lower confidence ratings (Figure [2). However, the correlation between confidence and
+accuracy was relatively weak (r = 0.07), indicating poor metacognition in this task.
+Analysis of response bias revealed a slight tendency across all professional groups to classify
+reports as human-authored rather than Al-generated. Radiologists classified 43.8% of re-
+ports as Al-generated, while non-healthcare professionals and other healthcare professionals
+classified 42.3% and 41.8%, respectively (Figure [2). Logistic-regression analysis confirmed
+that professional background significantly influenced accuracy, with non-healthcare profes-
+sionals (estimate: —0.328, p = 0.018) and other healthcare professionals (estimate: —0.360,
+p = 0.008) performing worse than radiologists (Figure (3).
+
+10
+
+
+--- Page 11 ---
+
+Distribution of participant accuracy Accuracy by occupation
+; 0.018
+jean = 0.54
+30 " nS
+0.99
+100% q eo e
+20 bo °
+> o
+50% ---|---e------- -- ---
+10 =
+c@|a»
+aa
+OOo oje od
+| , ob ®
+0 ll , ° °
+0% 10% 20% 30% 40% 50% 60% 70% 80% 90% 100% Nota Other A
+healthcare healthcare radiologist
+professional professional
+Accuracy
+Cc ; D ;
+Mean accuracy by occupation Accuracy by confidence level
+100% 100%
+90% 90% 60%
+80% 80% 61%
+70% 70% 54%
+lo 57% > 54% ly
+F c0% 48% ae 8 60% sia 46%
+3 I 3
+8 50% -------|--------~---} --_--------------. ® 50% ---d-----4--- ---|----
+Sg S
+3 40% g 40%
+30% 30%
+20% 20%
+10% 10%
+0% 0%
+Other Nota A Very Completely Absolutely Not Moderately Confident
+healthcare healthcare radiologist confident confident not confident confident
+professional professional confident
+Figure 2: Results of the human vs. AI report differentiation study A) Distribution of
+participant accuracy in distinguishing between human-authored and Al-generated radiology
+reports, with dashed line representing chance level (50%). B) Box plots showing accuracy
+by occupation group, with radiologists performing significantly better than other groups.
+C) Effect sizes from logistic regression model showing factors associated with accuracy in
+the differentiation task. D) Accuracy by self-reported confidence level, revealing modest
+correlation between confidence and performance.
+11
+
+
+--- Page 12 ---
+
+A nccuracy heat-map by occupation and confidence level O Tendency to label reports as Al-generated
+100%
+radiologist ae
+3 75%
+g
+8
+Fs
+Nota a 25%
+healthcare 50% 30% 20% 40%
+professional n=t1 n=t 1=2 n=t
+0%
+Absolutely Not Moderately Confident Very Completely
+not confident confident confident confident Other Nota A
+confident healthcare healthcare radiologist
+Self-reported confidence level professional professional
+Effect sizes from logistic regression model
+Confidence: Very confident _—_—____ p=0.54
+Confidence: Completely confident ee p=0.7
+Confidence: Not confident Re Sp =
+Confidence: Moderately confident $F p=0.33
+Occupation: Non-HCP e———_—__ —— b = 0.018
+Occupation: Other HCP —————ie—_—_ p= 0.008
+Confidence: Confident TF. p =0.09
+-1.0 -0.5 0.0 0.5 1.0
+Log-odds ratio (positive = higher accuracy)
+Figure 3: Analysis of human vs. AI report differentiation performance A) Accuracy heat-
+map by occupation and confidence level, showing percentage accuracy for each combination
+with sample size indicated. Radiologists generally achieved higher accuracy across confi-
+dence levels compared to other groups. B) Tendency to label reports as Al-generated by
+occupation group, showing similar bias patterns across all groups with approximately 42-44%
+of reports identified as Al-generated, indicating a slight bias towards labeling a report as
+human generated. C) Effect sizes from logistic regression model analyzing factors associated
+with discrimination accuracy. Non-healthcare professionals (Non-HCP) and other health-
+care professionals (Other HCP) showed significantly lower accuracy compared to radiologists
+(p=0.018 and p=0.008 respectively), while confidence levels had varying but generally non-
+significant effects on performance.
+3.4. ICD-10 code distribution
+The dataset encompasses pathologies across all major I[CD-10 chapters, with notable predom-
+inance of codes from Chapter IX (Diseases of the circulatory system), Chapter X (Diseases
+of the respiratory system), Chapter XI (Diseases of the digestive system), and Chapter XIII
+(Diseases of the musculoskeletal system and connective tissue), which collectively account for
+53.9% of all coded reports. Among specific three-digit codes, 170 (Atherosclerosis) and 163
+(Infarction) represented the most frequent pathology categories, with 133 and 109 reports,
+respectively. Table [3] provides an overview of the distribution of codes across chapters, and
+12
+
+
+--- Page 13 ---
+
+Figure /4| presents a treemap illustrating the hierarchical distribution of codes grouped by
+chapter and three-digit classifications.
+a7 a2 D13 D33 ©? a4. cos 8 G93
+J93 C34 C64 E23 7S
+wile J84 imme C50 D17 cis c67 Wr oF
+| ae Get 835) bea
+C61 D32 C25
+J32 J43 J94
+ne
+c71 D18 D16
+J90 J98 D35 c78
+| keo | MMe | K82 | kes
+150 i56 Be |e ees ees es
+IX
+167 163 151
+170
+Figure 4: Treemap of ICD-10 Codes in the PARROT dataset, grouped by the chapter
+number and 3 digit ICD-10 code. Refer to Table $1 for a detailed overview of each code and
+its subcodes.
+13
+
+
+--- Page 14 ---
+
+Table 3: Overview of ICD-10 codes
+
+Chapter % of Codes 3-Digit ICD-10 Codes
+
+I 0.4 A15, A18, A40, A41, B00, B16, B25, B37, B44, B58, B69, B96
+
+Il 1.7 C16, C18, C19, C20, C22, C23, C24, C25, C32, C34, C37, C41, C45, C50,
+C53, C54, C61, C64, C67, C69, C70, C71, C73, C74, C77, C78, C79, C81,
+C85, C90, C91, C92, DO5, D10, D11, D13, D16, D17, D18, D24, D25, D28,
+D30, D31, D32, D33, D34, D35, D37, D41, D43, D45, D48
+
+ll 0.4 D50, D57, D62, D64, D73, D76, D82, D86
+
+IV 1.5 E03, E04, E06, E07, Ell, E14, £22, E23, £27, £34, E46, E66, E78, E84, E85,
+E87
+
+Ix 17.9 107, 110, [11, 112, 115, 121, 125, 126, 127, 128, 131, 133, 134, 135, 136, 137, 140,
+142, 146, 148, 149, 150, 151, 160, 161, 162, 163, 164, 165, 166, 167, 169, 170, I71,
+172, 173, 174, I77, 178, 180, 181, 182, 183, I87, 189, 195
+
+V 0.1 FO1, F03, F10, F33, F41, F79
+
+VI 1.5 G00, G06, G20, G23, G25, G30, G31, G35, G36, G37, G40, G41, G43, G45,
+G50, G51, G54, G56, G57, G70, G81, G83, G90, G91, G93, G96, G97
+
+VII 1.3 H02, H04, H11, H20, H21, H27, H33, H35, H43, H44, H47, H53, H54
+
+VIII 0.2 H61, H65, H66, H70, H71, H83, H90, H92, H93
+
+X 13.8 JO1, J11, J12, J15, J18, J20, J21, J31, 332, J33, J34, J35, J36, J38, J39, 540,
+J42, J43, J44, J45, J47, J68, J69, J80, J81, J84, J86, J9O, J92, J93, J94, J96,
+J98
+
+XI 8.9 K02, K04, K08, K09, K11, K21, K22, K25, K26, K31, K35, K38, K40, K41,
+K42, K43, K44, K50, K51, K52, K55, K56, K57, K58, K59, K60, K63, K65,
+K66, K70, K74, K75, K76, K80, K81, K82, K83, K85, K86, K91, K92
+
+XII 0.0 L59, L72
+
+XIII 9.8 M06, M07, M11, M13, M15, M16, M17, M18, M19, M21, M22, M23, M24,
+M25, M34, M35, M40, M41, M43, M45, M46, M47, M48, M50, M51, M53,
+M54, M61, M62, M65, M67, M70, M71, M75, M76, M77, M79, M80, M81,
+M84, M85, M87, M89, M93, M94, M96, M99
+
+XIV 74 N10, N11, N13, N15, N17, N18, N19, N20, N21, N28, N30, N32, N39, N40,
+N41, N42, N43, N44, N50, N60, N61, N63, N64, N80, N82, N83, N84, N85,
+N89, N91, N92, N93, N94, N97
+
+XIX 5.2 S00, $02, $03, S05, S06, $12, $13, $20, $22, $26, $27, $32, $33, $36, $42,
+$43, S52, S53, S62, S70, S72, S73, S82, S83, S90, $92, S93, T17, T18, T44,
+T78, T80, T81, T82, T83, T88, T91, T92
+
+XV 0.1 000, 007, 043, 045
+
+XVI 0.2 P07, P21, P22, P24, P29, P35, P36, P78
+
+XVII 2.2 Q00, QO1, QO2, QO4, QO7, Q17, Q18, Q21, Q24, Q25, Q26, Q27, Q28, Q39,
+Q40, Q43, Q44, Q53, Q61, Q62, Q63, Q65, Q67, Q74, Q75, Q76, Q78, Q79,
+Q82, Q85, Q86, Q89, Q90
+
+XVII 11.7 ROO, R04, ROS, ROG, RO7, R10, R11, R13, R16, R17, R18, R19, R20, R21,
+R22, R23, R25, R26, R27, R29, R30, R31, R33, R35, R40, R41, R42, R45,
+R47, R50, R51, R52, R55, R56, R58, R59, R60, R63, R64, R70, R74, R90,
+R93, R94
+
+XX 0.0 V99
+
+XXI 9.5 Z00, Z01, Z03, Z04, Z08, Z09, 231, 734, 242, 245, ZA7, Z72, Z80, Z85, Z90,
+Z92, Z93, Z94, Z95, Z96, Z98, Z99
+
+XXII 0.1 U07
+
+NA 0.0 U09
+
+14
+
+
+--- Page 15 ---
+
+4 Discussion
+In this work, we present PARROT, the largest openly available multilingual radiology-
+report dataset to date. Comprising 2658 fictional yet realistic reports contributed by 76 radi-
+ologists from 21 countries covering 13 languages, PARROT spans multiple imaging modalities
+(X-ray, ultrasound, CT, MRI) and nearly all major body regions. The collection’s synthetic
+nature enables open sharing without privacy concerns while preserving authentic clinical
+language and style. By capturing diverse reporting practices across languages, modalities,
+and anatomical regions, PARROT serves as a resource for developing and evaluating NLP
+applications in a multilingual context.
+Several open-access datasets for natural-language processing have been published in recent
+years, yet most remain limited in linguistic and geographic scope. The MIMIC-IV clinical
+database and its derivative MIMIC-CXR corpus represent among the largest collections
+of radiology reports, but they exclusively reflect English-language, U.S.-based practice [IT]
+[12]. This monolinguistic bias affects research development: a systematic review found that,
+among 164 radiology-NLP studies, 142 (86.6 %) focused exclusively on English reports, with
+minimal representation of other languages [14].
+Beyond language, openness and geographic diversity are critical considerations for dataset
+development. Many publicly available radiology-text datasets originate from a single country
+or healthcare system. The aforementioned collections, for instance, derive from U.S. hospital
+data [LI]. Privacy regulations governing clinical text—including HIPAA in the United States
+and GDPR in Europe—necessitate extensive de-identification protocols that often slow down
+or limit international data sharing. These constraints may lead to AI models being over-fitted
+to the phrasing, style, and clinical patterns of a limited context. Language and regional biases
+can therefore limit algorithm utility when confronted with different populations or reporting
+styles [18]. PARROT addresses these challenges by relying on fictional cases created by
+domain experts, offering a practical solution to data-accessibility issues.
+The ongoing development of increasingly potent large language models, such as Generative
+Pre-trained Transformers (GPT), offers another route to synthetic radiology reports. By
+prompting frontier models like GPT-ol [19], researchers could, in principle, generate artificial
+datasets tailored to specific use cases. However, this strategy may introduce subtle errors
+that are difficult to detect—especially for investigators without radiology expertise. Our
+differentiation experiment illustrates the risk: participants achieved only 53.9 % accuracy
+overall in distinguishing PARROT reports from GPT-generated alternatives, with radiolo-
+gists performing significantly better (56.9 %, p < 0.05) than other healthcare professionals
+(48.3 %) or non-healthcare participants (49.7 %). Because computer scientists conduct much
+of the NLP research, domain-specific errors in Al-generated reports might pass unnoticed
+[20]. PARROT offers expert-written text that embeds clinical-reasoning patterns current
+language models may not replicate fully, positioning it between purely synthetic corpora and
+real—but privacy-restricted—clinical records.
+
+15
+
+
+--- Page 16 ---
+
+4.1 Limitations
+
+Several limitations warrant consideration. First, the dataset is geographically imbalanced:
+Europe predominates, and only ~19 % of reports originate from the Global South. Broader
+participation is needed to capture additional languages, dialects, and regional reporting
+practices. Second, although fictional reports overcome privacy barriers, they lack links to
+real patient imaging and outcomes, limiting use in tasks that require image,text correlation
+or multimodal training. Recruitment through social media and professional networks may
+also introduce selection bias toward academically active contributors, potentially narrowing
+the range of clinical scenarios and styles represented. Finally, the current release includes
+only ICD-10 annotations; integrating domain-specific ontologies such as RadLex would enrich
+structured labels.
+
+4.2 Conclusion
+
+PARROT provides an open-access, multilingual collection of radiology reports that tack-
+les linguistic and accessibility constraints hindering NLP tool development in non-English
+contexts. By offering fictional yet radiologist-authored reports across multiple languages,
+PARROT serves as a valuable benchmark for creating and testing AI applications capable
+of functioning across diverse healthcare systems and languages.
+
+References
+
+[1] M. P. Hartung, I. C. Bickle, F. Gaillard, and J. P. Kanne. How to create a great
+radiology report. RadioGraphics, 40(6):1658-1670, 2020.
+
+(2) C. M. Hawkins, S. Hall, B. Zhang, and A. J. Towbin. Creation and implementation of
+department-wide structured reports: An analysis of the impact on error rate in radiology
+reports. Journal of Digital Imaging, 27(5):581-587, 2014.
+
+[3] J. M. Nobel, K. Van Geel, and S. G. F. Robben. Structured reporting in radiology: a
+systematic review to explore its potential. European Radiology, 32(4):2837-2854, 2022.
+
+[4] L. H. Schwartz, D. M. Panicek, A. R. Berk, Y. Li, and H. Hricak. Improving com-
+munication of diagnostic radiology findings through structured reporting. Radiology,
+260(1):174-181, 2011.
+
+[5] P. Keshavarz, S. Bagherieh, S$. A. Nabipoorashrafi, H. Chalian, A. A. Rahsepar, G. H. J.
+Kim, et al. Chatgpt in radiology: A systematic review of performance, pitfalls, and
+future perspectives. Diagnostic and Interventional Imaging, 105(7):251—265, 2024.
+
+[6] R. J. Gertz, T. Dratsch, A. C. Bunck, S. Lennartz, A.-I. Iuga, M. G. Hellmich, et al.
+Potential of gpt-4 for detecting errors in radiology reports: Implications for reporting
+accuracy. Radiology, 311:e232714, 2024.
+
+16
+
+
+--- Page 17 ---
+
+[7] B. Le Guellec, C. Bruge, N. Chalhoub, V. Chaton, E. De Sousa, Y. Gaillandre, et al.
+Comparison between multimodal foundation models and radiologists for the diagnosis
+of challenging neuroradiology cases with text and images. Diagnostic and Interventional
+Imaging, 2025.
+
+[8] L. C. Adams, D. Truhn, F. Busch, A. Kader, 5. M. Niehues, M. R. Makowski, et al.
+Leveraging gpt-4 for post hoc transformation of free-text radiology reports into struc-
+tured reporting: A multilingual feasibility study. Radiology, page e230725, 2023.
+
+[9] B. Le Guellec, A. Lefévre, C. Geay, L. Shorten, C. Bruge, L. Hacein-Bey, et al. Perfor-
+mance of an open-source large language model in extracting information from free-text
+radiology reports. Radiology: Artificial Intelligence, page e230364, 2024.
+
+[10] K.S. Amin, M. A. Davis, R. Doshi, A. H. Haims, P. Khosla, and H. P. Forman. Accuracy
+of chatgpt, google bard, and microsoft bing for simplifying radiology reports. Radiology,
+309:e232561, 2023.
+
+[11] A. E. W. Johnson, L. Bulgarelli, L. Shen, A. Gayles, A. Shammout, 5S. Horng, et al.
+Mimic-iv, a freely accessible electronic health record dataset. Scientific Data, 10:1, 2023.
+
+[12] A. E. W. Johnson, T. J. Pollard, S. J. Berkowitz, N. R. Greenbaum, M. P. Lungren,
+C. Deng, et al. Mimic-cxr, a de-identified publicly available database of chest radio-
+graphs with free-text reports. Scientific Data, 6:317, 2019.
+
+[13] J. Wu, X. Liu, M. Li, W. Li, Z. Su, S. Lin, et al. Clinical text datasets for medical
+artificial intelligence and large language models — a systematic review. NEJM AI, 1,
+2024.
+
+[14] O. Banerjee, A. Saenz, K. Wu, W. Clements, A. Zia, D. Buensalido, et al. Rexamine-
+global: A framework for uncovering inconsistencies in radiology report generation met-
+rics. In Biocomputing 2025, pages 185-198. World Scientific, 2024.
+
+[15] M. Al-Duwais, H. Al-Khalifa, and A. Al-‘Salman. A benchmark evaluation of multilin-
+gual large language models for arabic cross-lingual named-entity recognition. Electron-
+ics, 13(17):3574, 2024.
+
+[16] L. Campos, V. Pedro, and F. Couto. Impact of translation on named-entity recognition
+in radiology texts. Database, 2017, 2017.
+
+[17] F. Busch, L. Hoffmann, L. Xu, L. Zhang, B. Hu, I. Garcia-Judrez, et al. Multinational
+attitudes towards ai in healthcare and diagnostics among hospital patients. medRziv,
+2024.
+
+[18] Thanathip Suenghataiphorn, Narisara Tribuddharat, Pojsakorn Danpanichkul, and
+Narathorn Kulthamrongsri. Bias in large language models across clinical applications:
+A systematic review. arXiv, 2025.
+
+[19] OpenAl. Openai ol system card. https: //openai.com/index/
+openai-ol-system-card/, 2024. Accessed December 11, 2024.
+
+17
+
+
+--- Page 18 ---
+
+[20] J. Wang, H. Deng, B. Liu, A. Hu, J. Liang, L. Fan, et al. Systematic evaluation of
+research progress on natural language processing in medicine over the past 20 years:
+Bibliometric study on pubmed. Journal of Medical Internet Research, 22(1):e16816,
+2020.
+
+4.3. Supplementary figures
+
+Nose Nosot own
+Hip tin
+Ear caer con
+Whole Body vldiy-cr wae ofaUtasound
+Testis Tests$Uasound
+Pituitary Gland Pru abs-wn
+Face reser fea recdliray Fece-lidsouns
+Ankle hier nwiebienay ‘oti -ibsound
+Wrist wer w@e wily \it-tfascund
+Foot reoter reba rote Rey Foot-tiasouna
+« Upper Extremity Upper Mpiy-ot Upper nym i een Upper xe trescun Upper Extron(@-Angiogrophy
+£ Thoracic Spine "etesene-cr thor Be-ur Thor eX Foy Toa 8 Agoaraphy
+3 Shoulder =«iiker ols orale srliene
+Lower Extremity \»réeno-cr Lower £MlBiy-Mn Lower ih -¥-Ray Lomer Ext Utrasound Loner ExrolibArsioaraphy
+Knee ser Kowe-MA KodbRRpoy Knee sound keee-Aoaphy
+Cervical corea-cr Ceveal-ne confi ey Cereal resound ceniel-Abioraphy
+Orbit ordi orbt-Uinasodnd oni Gphanotay
+Spine sping-ot iM Spine X-Ray Sne-Uascund Stine Aoraphy
+Lumbar Spine wsnlersene-or Lunar Spine Lamba MBL Ray Lumbar Spi Utrassund Lumbar Sptlangooraphy
+Neck sadn néeeatin othcUesbind Nook Aaron
+Breast Sre@t.ct a Breadl-Ray mses Breast Mammography Sreast-Aiboaenhy
+Pelvis - Pie X-Ray Pobis-blvasound Peis. Maoarahy eis-Aiibraphy Peis scopy bonstPETOT
+Head ae - wm & smo Qe
+Abdomen bd Abiomen-MF a” Aeomen-ivasouns Abdometchngiovapry AomenEposcony AndoneBPETOT
+Chest often hes -X-Ray of. ces Arey chesPerer
+CT MR X-Ray Ultrasound Mammography Angiography Ophthalmology Endoscopy PET/CT
+
+Supplementary Figure $1. Bubble chart visualization displaying the frequency distri-
+
+bution of imaging examinations by anatomical region and modality. The bubble size and
+
+color intensity represent the number of reports for each combination, with larger, brighter
+bubbles indicating higher frequencies.
+18
+
+
+--- Page 19 ---
+
+—_ a | °77
+Abdomen ne 631
+Heed nn 5s
+
+Peis 2
+Breast 176
+Neck 138
+Lumbar Spine 102
+Spine 95
+Orbit 79
+Cervical 71
+Knee 60
+Lower Extremity 50
+Shoulder 49
+Thoracic Spine 46
+Upper Extremity 30
+Foot 22
+Wrist 21
+Ankle 20
+Face 15
+Pituitary Gland 12
+Elbow 10
+Whole Body 8
+Testis 8
+Ear 4
+Hip 3
+Nose 2
+0 200 400 600
+Supplementary Figure $2. Horizontal bar chart displaying the frequency of anatomical
+regions represented in the dataset. Chest (677), Abdomen (631),Head (588), and Pelvis
+(480) are the predominant areas, accounting for approximately 70 % of all reports.
+19

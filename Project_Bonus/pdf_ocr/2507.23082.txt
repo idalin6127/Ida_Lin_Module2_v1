@@ -1,0 +1,477 @@
+
+
+--- Page 1 ---
+
+Exploring In-Context Learning for Frame-Semantic Parsing
+Diego Garat, Guillermo Moncecchi, Dina Wonsever
+Facultad de Ingenieria,
+Universidad de la Republica,
+11300 Montevideo, Urugua
+Abstact: Frame Semantic Parsing (FSP) entails iden- | Large Language Models (LLMs) have recently shown
+
+Va) tifying predicates and labeling their arguments accord- —_ strong performance across diverse NLP tasks, often
+
+N ing to Frame Semantics. This paper investigates the | without modifying their architecture or parameters
+
+=< use of In-Context Learning (ICL) with Large Lan-
+
+— guage Models (LLMs) to perform FSP without model (2024). In in-context learning (ICL), a task description
+> fine-tuning. We propose a method that automati- and input-output examples are provided at inference
+
+cally generates task-specific prompts for the Frame — time to guide the model’s predictions. The number
+
+S Identification (FI) and Frame Semantic Role Label- of examples can vary from a few (few-shot) to thou-
+
+ing (FSRL) subtasks, relying solely on the FrameNet sands (many-shot)
+
+_] database. These prompts, constructed from frame def- (2024).
+
+O initions and annotated examples, are used to guide six This work investigates the effectiveness of applying
+a different LLMs. Experiments are conducted onasub- —_ ICL to the FSP task. Specifically, we examine whether
+(.) set of frames related to violent events. The method LLMscan leverage their pre-trained knowledge to per-
+
+—— achieves competitive results, with F, scores of 94.3% form this task and how their performance is influenced
+
+— for Fl and 77.4 % for FSRL. The findings suggest that by the number of provided examples. Our approach
+> ICL offers a practical and effective alternative to tra- _ relies exclusively on the frame definitions and anno-
+
+SS ditional fine-tuning for domain-specific FSP tasks. tations from the FrameNet project, and we evaluate
+
+=) it using six models: Claude Haiku 3.5, Claude Son-
+
+ag 1 Introduction net 3.5, GPT-40, GPT-40 Mini, Deepseek Chat, and
+t~ Frame Semantic Parsing (FSP) aims to detect and ex- Deepseek Reasoner.
+
+S tract semantic frames as defined by Fillmore’s Frame
+
+q Semantics theory (Fillmore, 1976), which posits that 2 FrameNet
+:* words evoke prototypical situations involving events, Ip the FrameNet project, each frame is described by
+
+ia participants, locations, and times. The FrameNet a definition and its possible frame elements (FEs).
+
+~< Project|'|developed at the International Computer Sci- These FEs are categorized into core and non-core el-
+=| ence Institute in Berkeley, defines over 1220 semantic ements: core FEs are essential to the meaning of the
+frames and more than 13600 lexical units forcontem- —_ frame, while non-core FEs are generally circumstan-
+porary English tial
+2020). It also provides over 200000 manually anno- For instance, the Killing fram¢?|is defined as “A Killer
+tated examples based on this theory. or Cause causes the death of the Victim”. The core
+The FSP task is typically divided into two subtasks: FEs for this frame are Killer, Cause, Victim, Instru-
+Frame Identification (FI) and Frame Semantic Role — ment and Means, while non-core FEs include entities
+Labeling (FSRL). FI involves detecting the presence _ such as the beneficiary, time, and place. In addition,
+and type of frames, while FSRL focuses on identify- there is a special attribute called Target, which signals
+ing predicates and their arguments, labeling each argu- _ the presence of the frame itself. The Target is repre-
+ment with the appropriate semantic role. In this con- _ sented in each sentence by a lexical unit that evokes
+text, predicates are lexical units that evoke semantic _the frame. Figure[I]shows an example for the Killing
+frames, and their arguments are annotated as frameel- _ frame.
+ements (FEs) (Gildea and Turafsky, 2000).
+a
+| fifeports/data/frane/ki Ving. x
+
+
+--- Page 2 ---
+
+They*er had killed”™8* or captured about a
+quarter of the enemy’s known leaders“, iiaihntainiiaet Task Solver
+Frames Prompt
+Figure 1: Annotation example of the Killing frame, | vom vee Wyre LLM
+rompt_T(F, E,
+extracted from FrameNet. campus =
+ED Task Input Task Output
+All examples in FrameNet database are classified by
+lexical unit, with each example consisting of a single
+sentence. Although a sentence may contain multiple .
+. . . Figure 2: In-context FSRL: FrameNet frames and lex-
+instances from the same frame or different frames, in ; : :
+. . ical units, the annotated examples, are combined to
+these examples only one frame instance is marked per ; .
+sentence construct a task-specific prompt. This prompt, along
+, with an input text, is provided to the LLM to generate
+the corresponding task output.
+3 In-Context FSRL
+3.1 Frame-Semantic Parsing Tasks
+t LLMs oft t le t tract 1 - . .
+Curren WS OED STUBBS tO extract Comprex Se We explore two alternative strategies. The first ad-
+mantic relations without explicit guidance. ICL is a . ; .
+dj that bles LLMs to 1 how t I dresses the task in a single step: given a text, the
+Paradyem mar enadies S fo learn DOW fo Solve LLM is expected to identify and label all detected
+a task by: (a) defining the task in natural language, frames for a predefined set of frames. The second
+and (b) providing input-output examples in the form strategy divides the task into two stages: (a) Frame
+of demonstrations. The primary advantage of ICL are & Target Identification, where the LLM detects the
+the absence of the need for fine-tuning, which can re- : - . .
+; ; _ frames evoked in the input text along with their lex-
+duce the size of the required training datasets (Dong). ; 3 pas
+etal 20241 Brown et al 2020) ical triggerd>} and (b) Argument Identification, where
+7 — ; the identified frames and targets are passed back to the
+Our primary goal is to apply ICL to solve the FSP | 1 Mf to guide the extraction of their corresponding ar-
+task by leveraging the knowledge available in the guments.
+FrameNet Project. Our solution automatically gener- Therefore, from the LLM perspective, we have three
+ates the LLM prompts including the task description —_gifferent types of tasks:
+and demonstration examples derived solely from the
+Frame definitions and Lexical Unit (LU) examples. A 1. Frame-Semantic Parsing (FSP): Detects all
+prompt, combined with new input texts, is then fed frames and their corresponding arguments in a
+into the LLM to produce the corresponding task out- text in a single call for a specific frame. The in-
+puts. Figure[2jillustrates the overall architecture of the put is a text, and the output is a list of detected
+solution. frames with their arguments.
+The primary limitation of this approach lies in the in-
+put length restrictions inherent to LLMs, which caps 2. Frame & Target Identification (FI): Identifies
+the number of frames and examples that can be in- Targets associated with different frames in a text.
+cluded in a single prompt. Furthermore, the number The input Is a text, and the expected output is a
+of usable examples is constrained by the availability of list of frame-target pairs.
+tated lexical units (LUs) for the different fi . . ;
+anno aren eee ant s (LUs) for the i" orem Frames 3. Argument Identification (FSRL): Identifies all ar-
+in the FrameNet project. In order to limit the prompt guments from a given text based on a list of
+size, we propose to reduce the prompt generation to a frames and targets. The input consists of a text
+bset of all f ilable in F Net. . , ; ;
+SHDSEL OF Ab Maes avaiable wy isTamene and a list of frame-target pairs, and the output is
+Each test item is processed individually: a test dataset the input list completed with the arguments.
+containing n elements results in exactly n calls to
+the LLM, regardless of how many examples (shots) —_[y the FSP task, since the frames present in the in-
+or frames are injected into the prompt. While batch- put are unknown, the prompt must include examples
+ing multiple test items into a single prompt could re-
+duce the number of calls, this strategy is intentionally 3This first stage combines the Target Detection and
+avoided to prevent potential interactions between ex- Frame Identification subtasks commonly found in prior
+amples that could bias the model’s outputs. work (Roth and Lapata, 2015}|Bastianelli et al., 2020).
+
+
+--- Page 3 ---
+
+for all selected frames, regardless of their actual pres- to prompt size limitations and is otherwise arbitrary.
+ence in the text. This limits the number of examples = Only core attributes are targeted in our experiments)
+per frame and restricts the ability to query multiple — For the FSRL task, evaluation is conducted through
+frames simultaneously. In contrast, the FSRL task two sets of experiments. Both use the same evaluation
+benefits from prior FI, allowing the prompt to be tai- _ texts but differ in how the input Frame-Target pairs
+lored specifically to the detected frames, with defini- _ are generated. In the first, these pairs are derived from
+tions and examples adapted accordingly. the annotated dataset, while in the second, they are the
+: output of the FI task. The latter serves as an end-to-
+3.2 Prompt Generation P . . raeer
+end evaluation, assessing the entire pipeline as an FSP
+Prompts are generated automatically for each task US- task resolver,
+ing frame definitions from FrameNet and by selecting
+test examples based on the required number of shots. 44 fEyaluation Metrics
+These components are formatted using a Jinja2 tem- ; ; .
+plate/#|which contains the task definition and the rules Following previous work, we adopt Precision (P ), Re-
+for rendering the various sections of the prompt. call (4), and F) scores USINg a MICO evaluation ap-
+We define three distinct prompt templates, corre- proach, where metrics are computed tor individual ar-
+sponding to the tasks described in Section [3.1] Each guments (e.g., Target, Agent, Victim)
+template consists of four main sections: Goal, Events, The evaluation is strict, meaning entity boundaries
+Guidelines, and Examples. must be precisely detected. Dataset inconsistencies,
+The Goal and Guidelines sections contain only mini- such as variations in the inclusion of frame elements,
+mal references to specific frames. The Goal sectionis 7 not accounted for. While methods like argument
+the simplest, stating the general objective of the task. | head matching could mitigate such inconsistencies,
+The Guidelines section provides detailed instructions _ they are not applied in these experiments.
+on how to perform the task while constraining the out-
+put format to reduce errors and facilitate downstream 4.2 Large Language Models
+processing. For the first task, we evaluate four different LLMs —
+In contrast, the Events and Examples sections are Claude Haiku 3.5, Claude Sonnet 3.5, GPT-40 Mini,
+frame-specific and built from frame definitions and an- —_ and GPT-40-. For the rest, we expand the evaluation
+notated examples. The Events section includes each __ to include DeepSeek Chat, and DeepSeek Reasoner.
+frame’s definition, an illustrative sentence, and a list Aj] LLM parameters are set to their default values, ex-
+of all associated FEs, each with its corresponding def- _cept for the temperature, which is set to 0.01. This low
+inition. The Examples section contains input-output —_ temperature is chosen to minimize the randomness of
+pairs (i.e., the example shots) drawn from the anno- the model’s output and make the outcome more pre-
+tated dataset. While the number of examples may  dictable.
+vary, it is ultimately constrained by the model’s input
+size and the availability of examples in FrameNet. 4.3 Datasets
+4 Experimental Settings Two datasets are constructed for all experiments: one
+. . for prompt generation (ICL examples) and one for
+The objectives of these experiments are twofold: first, P . pe ( ples) us
+vay: evaluating LLM outputs. To ensure a balanced distri-
+to assess the performance and feasibility of our ap- . . .
+. bution of targets, samples are selected using stratified
+proach, and second, to evaluate the impact of the num- . . .
+. . sampling based on lexical unit frequency. A total of
+ber of shots in the prompt on model performance in
+. 150 examples are used for ICL and 100 separate ex-
+the FSP task. Table [I] summarizes the setup for each .
+. amples for evaluation.
+experiment. All iments share th data partiti t
+While our framework is designed to be applicable to experiments S are © same ala P am tons, excep
+. for the FSP task: a simplified scenario is considered,
+any set of frames, the experiments focus on a subset ; _. ;
+. . . focused on a single frame, Killing, but with a larger
+related to violent events. Specifically, we consider the ber of traini jes (400
+frames Abusing, Killing, Rape, Robbery, Shoot Pro- number of training examples (400).
+jectiles, and Violencd>| This selection is solely due
+For instance, in the Killing frame, we consider Target,
+‘Jinja2 is a template rendering engine for Python. See: Killer, Cause, Victim, Instrument, and Means.
+https://palletsprojects.com/p/jinja/ 7Unlike a macro evaluation, which considers an in-
+A detailed list of frames can be found at: |https:// stance correct only if all its attributes are correctly iden-
+framenet.icsi.berkeley.edu/frameIndex tified.
+
+
+--- Page 4 ---
+
+Claude, Abusing,Killing,
+Deepseek, | ___ Rape, Robbery,
+GPT Shoot Projectiles, Violence
+Table 1: Overview of the experiments. Claude, GPT and Deepseek refers to both models tested for each (Haiku
+3.7 and Sonnet 3.7, GPT-40 and GPT-40 mini, and Chat and Reasoner, respectively).
+4.4 Prompt Examples 5.1 Experiment 1: FSP Task
+To evaluate the effect of the number of ICL examples The first experiment involves detecting instances of
+on model performance, we test each model with an the Killing Frame and their arguments. In this ex-
+increasing number of examples. This applies to all periment, the number of shots varies between 0 and
+tasks except for the FSRL task in the end-to-end setup, 400, and four LLMs are evaluated: Claude Haiku 3.5,
+where the number of examples is fixed at 150 for both Claude Sonnet 3.5, GPT-40 mini, and GPT-4o.
+the FI and FSRL prompts. Figure |3] (left) shows micro F scores as a function
+For each task, the same example subsets, and thus of the number of shots, considering both Target and
+the same generated prompts, are used across all mod- related attributes. Claude Sonnet achieves the high-
+. . est performance at 250 shots, attaining an F, score of
+els. Examples are added incrementally in a fixed or- : ;
+der: the first nm examples remain consistent across 82.9%, while GPT-40 reaches its peak of 80.2% at
+all prompts containing at least n shots. However, 400 shots. Sonnet consistently outperforms GPT-40
+. at all shot counts and surpasses GPT-40’s peak perfor-
+not all shot configurations are evaluated for every
+model. Larger models are tested with fewer config- | ™ance beyond 250 shots. As expected, smaller models
+. underperform compared to their larger counterparts.
+urations than smaller ones. The number of examples : ; oo
+for smaller models is 0, 5, 10 and 25, followed by in- Claude Haiku achieves Its highest Fi score of 71.1%
+crements of 25, while larger models start from 0 and at 275 shots, while GPT-40 Mini peaks at 68.7 7 with
+increase in steps of 50. 375 shots. .
+With the addition of examples, all four models show
+significant improvements in precision and recall com-
+5 Results pared to their zero-shot counterpart, with F, gains
+ranging from 30 to 41 points. This suggests that the
+As detailed in Section |4| a total of four experiments knowledge embedded in the LLMs’ pretraining alone
+are conducted (see Table[I). The best F results for ig insufficient to complete the task using only frame
+these experiments are presented in Table [2 definitions.
+Although a direct comparison with previous work Table [3] summarizes the best results for each of the
+is not feasible due to differing experimental setups, arguments. Target and Victim are the most accu-
+the results obtained in our experiments are nonethe- rately extracted arguments, achieving peak F’, scores
+less promising. Prior studies report fF scores for — of 97.0% and 83.3 %, respectively. For Target, larger
+the FSRL task ranging between 75.56 % and 77.06% — models consistently score above 95.0 % regardless of
+on the FrameNet 1.7 dataset, using gold targets and the number of positive shots.
+frames In a second performance tier are Killer and Cause.
+(Ai and Tu, 2024). Incon- Killer reaches 71.4% with GPT-40, while Cause
+trast, our best F, score reaches 77.4%, achieved by _ peaks at 68.1% with Claude Sonnet. Smaller models
+the DeepSeek Reasoner model with 150 shots. score below 51.4 % and 45.8 %, respectively.
+In (Bastianelli et al., 2020), the authors also report a —_ Finally, performance on the remaining arguments is
+76.8% F, score for the Target Identification task and = comparatively low. The best F) scores for these ar-
+a 90.1% accuracy for Frame Identification, the latter | guments reach only 50.0% for larger models and fall
+assuming gold targets. In our joint FI task, we achieve below 22.2% for smaller ones. Location is the only
+a best F, score of 94.3%, with individual scores of | argument not annotated in any of the 100 evaluated
+95.3 % for Frame and 94.3 % for Target Identification, | examples.
+using the DeepSeek Chat model with 100 shots. Some values, especially for arguments other than
+
+
+--- Page 5 ---
+
+expt] Exp.2 [Exp 3a_| Exp 3b (FSR) | Exp 3b (FIFFSRI) |
+DeepSeek Chat | - | 00943 150) 723} 86 | TBS
+DeepSeek Reasoner | - | 6935 | Us 74| 749 |S
+“GPE4 | 400) 80.2 | 100)92.9 | to) 739| 69 «| SRO C*
+Table 2: Micro F across experiments. Best shots are shown for FSP (Experiment 1), FI (Experiment 2) and
+FSRL with the true Frame-Target pairs as input (Experiment 3a); FSRL with the output of FI (Experiment 3b) is
+evaluated for 150 shots. The highest scores are bold, while the second-highest scores are underlined.
+J Haiku33 | ___ Sonnet 33 [ GPT-4o Mini | ___GPT-40
+“Means 275)2.2 > G00)50.0 | __—_—0.0 | _ 400) 50.0 |
+“Instrument 275)33.3) _ 250,400)50.0 | 0.0 | 30.400) 2222 |
+Table 3: F, scores for each attribute across different models for Experiment 1. Numbers in parentheses indicate
+the shot count at which the peak performance was achieved.
+JP Name-Target [Name [Target
+Table 4: F, for Experiment 2 by Pair and by its components Name and Target separately. Numbers in parentheses
+indicate the shot count at which the peak performance was achieved.
+7 i f 50 / © GPT-4o.
+i 40 /
+Figure 3: Micro F; results by number of shots for Experiment 1 (left) and Experiment 3a (right).
+
+
+--- Page 6 ---
+
+a. They" tried to assassinate™8* her"; and They" tried to assassinate?”8% her’; and
+killed off two of her closest political friends, Airey killed”’8* off two of her closest political friends,
+Neave and Ian Gow. Airey Neave and Ian Gow“? ,
+
+b. After a while they" kidnap and murder™’8“ After a while they<””*" kidnap and murder!“’8
+a young boy“ for kicks, bashing him over the a young boy"“"”" for kicks, bashing him over the
+head with a blunt instrument. head with a blunt instrument”<2”’,
+
+c. A professional assassin who‘“*" climbed the walls A professional assassin*“" who climbed the walls
+and murdered!“8@ the woman” ., , and murdered!“"8“ the woman |,
+
+Figure 4: Annotation examples of the Killing frame extracted from FrameNet (left), and made by Claude Sonnet
+3.5 with 250 shots (right). In (a) there are two instances of Killing, but only one is marked in FrameNet; in (b)
+the model correctly identifies Means, missing in the annotated text; (c) shows an LLM error, where the model
+misses the pronoun who, although the detected killer is semantically correct.
+
+a. Last year the president” was killed” by Figure [3] (right) shows fF scores by shot count. As
+
+rebels whom the Americans did not try to stopX#r, summarized in Table [2] larger models achieve higher
+
+Le cave Tul aKiller lieaTarget a. -....Victim pa micro F{ scores, ranging from 73.9 % to 77.4 %, while
+b. He says Tutilo killed the man he smaller models peak between 67.1% and 72.3%.
+tricked into helping him to steal away your saint. As in Experiment 1, larger models outperform their
+Figure 5: Examples extracted from FrameNet with Smaller colaverpars by 8 . 7 points, although the
+different boundaries for relative clauses. MATS TS SUSALY NAOWeE NET
+5.4 Experiment 3b: FI + FSRL Tasks
+Killer and Victim, arise from discrepancies in the Building on Experiment 3a, this experiment also ad-
+gold-standard annotations. Figures |4] and [5] illustrate dresses the FSRL task, but uses Frame-Target pairs
+inconsistencies, such as in the annotation of relative predicted in Experiment 2, thereby evaluating full FSP
+clauses. These issues point to potential errors or omis- via ICL. All six LLMs are included, each evaluated
+sions in the gold standard, underscoring the need for —_ with 150 shots for both FI and FSRL tasks. No cross-
+thorough validation, an aspect that falls beyond the — model evaluation is conducted; each model’s output
+scope of this study. serves as input to its own argument extraction.
+5.2 Experiment 2: FI Task As expected, all models perform better in Exper-
+. iment 3a, which uses gold-standard Frame-Target
+The second experiment evaluates model performance . . .
+. pairs, compared to the end-to-end setup in Experi-
+on the FI task, limited to the set of Violent Frames. .
+; . . ment 3b. As shown in Table |2} the DeepSeek mod-
+All six LLMs are included, with the number of shots . . .
+. els demonstrate notable consistency, with only minor
+varying from 0 to 150. . . .
+drops in Ff, 2.5 points for Reasoner and 3.7 points for
+Table |4| reports the best F; scores for full Frame- . us :
+. . . Chat, while other models exhibit larger declines.
+Target pairs, as well as for Name and Target identifica- ;
+tion separately. Notably, all models achieve over 90 % Beyond the FSRL task, the chained FI and FSRL setup
+on Frame-Target extraction, with DeepSeek models also addresses the broader FSP objective of Experi-
+leading at 94.3% and 93.5 %. ment 1 within an ICL framework. Table [2|shows F;
+Consistent with earlier results, all models show im- SCS reflecting both targets and arguments across all
+proved F, scores with more examples. However, models. Larger models achieve scores between
+given the already high initial scores, gains are mod- 78.0% and 82.5%, while smaller ones range from
+est, ranging from 1.4 to 8.7 percentage points. 66.8 % to 78.5%.
+Since the set of frames and evaluation data differ from
+5.3 Experiment 3a: FSRL Task Experiment 1, direct comparison of results is not pos-
+In this experiment, the task is Argument Identifica- sible. However, even when evaluating on multiple
+tion based on the input text and a list of gold-standard frames instead of only the Killing frame, all models
+frame-target pairs derived from annotated data. perform competitively with substantially fewer shots.
+
+
+--- Page 7 ---
+
+5.5 Ablation 7 Conclusions
+To assess the impact of FrameNet-derived information This paper introduces a framework for solving the FSP
+on model performance across tasks, we consider two _ task using LLMs, leveraging the semantic information
+additional prompting setups. In the first, prompts in- —_ from the FrameNet Project via ICL. Although ICL has
+clude only task descriptions and general instructions, been explored in several NLP tasks
+without any FrameNet-specific content. In the second, —_ {Agarwal et al., 2024), to our knowledge, there are no
+prompts are extended to include the definition of the existing experiments that apply this paradigm to FSP.
+relevant frame, but omit any details or examples of its Our framework automatically generates prompts for
+associated arguments. specific sub-tasks and frame sets, querying LLMs to
+Table |5} reports the results for these configurations, detect frames, targets, and their attributes. Prompt
+alongside those obtained using both frame and argu- _ generation relies exclusively on definitions and exam-
+ment definitions: zero-shot prompting, and best-shot _ ples from the FrameNet database. Due to input length
+prompting with in-context examples. constraints, we evaluate the approach on a subset of
+Overall, the experiments show that including frame = FrameNet frames using six different LLMs on anno-
+definitions generally improves performance, espe- tated texts.
+cially for the FSP task. For simpler tasks, like FI task, All models showed improvements with task-specific
+DeepSeek models match or exceed zero-shot perfor- examples, emphasizing that the models’ intrinsic
+mance even with limited frame information. Notably, knowledge alone is insufficient to solve these tasks us-
+in the End-to-End task, DeepSeek Reasoner outper- _ing only frame definitions and a single example. The
+forms its zero-shot baseline when provided with only —_ degree of improvement varied based on both model
+task and frame definitions. These results suggest that —_ type and task complexity.
+the benefit of frame information depends on task com- Our experiments show that ICL can achieve competi-
+plexity and model capabilities. tive F scores of 94.3% for FI and 77.4% for FSRL
+on a limited set of frames. This suggests that ICL is a
+6 Related Work viable alternative to training new models from scratch,
+Since the early 2000s, FSRL has received consider- _ particularly in domain-specific scenarios focusing on
+able attention and has been featured in several shared a small set of relevant frames.
+tasks at major NLP conferences. A wide range of | While the results are promising, further fine-grained
+methods has been explored over the years, including — evaluation is needed to address annotation inconsis-
+rule-based systems, Support Vector Machines, ma- _ tencies, including relative clause boundaries, missing
+chine reading comprehension techniques, and pre- _ attributes, and the single-instance-per-example limita-
+trained language models tion.
+fet al., 2007} [Das et al., 2014} {Roth and Lapata, 2015). Agarwal, R., Singh, A., Zhang, L. M., Bohnet, B.,
+An example of a two-step solution can be found in Rosias, L., Chan, S., Zhang, B., Anand, A., Abbas,
+(Bastianelli et al., 2020): first they identify the spans Z., Nova, A., Co-Reyes, J. D., Chu, E., Behbahani,
+in the input’s constituency tree, training a Graph Con- F., Faust, A., and Larochelle, H. (2024). Many-shot
+volutional Network, and then they assign them a role in-context learning.
+label by using two CRFs, one for identifying argu- Ai, C. and Tu, K. (2024). Frame semantic role label-
+ments and the other to label them. They achieved a ing using arbitrary-order conditional random fields.
+75.56 % of F| score in FrameNet 1.5 dataset with gold Proceedings of the AAAI Conference on Artificial
+targets and frames. Intelligence, 38(16):17638—17646, Mar.
+AGED is a query-based frame- Baker, C. F. and Lorenzi, A. (2020). Exploring
+work that exploits definitions for frames in FrameNet: crosslinguistic frame alignment. In Tiago T. Tor-
+texts and frames definitions are concatenated and used rent, et al., editors, Proceedings of the International
+as input examples to train a language model; FE def- FrameNet Workshop 2020: Towards a Global,
+initions are used as slots that should be filled by the Multilingual FrameNet, pages 77-84, Marseille,
+extracted arguments. This framework gets a 76.91% France, May. European Language Resources Asso-
+of F, score in FrameNet 1.7 dataset. In ciation.
+(Tu, 2024), they follow the AGED model but, for Baker, C. F.,, Fillmore, C. J., and Lowe, J. B. (1998).
+each frame, they build a Conditional Random Field to The Berkeley FrameNet project. In 36th Annual
+model the relation between frame arguments; 77.06 % Meeting of the Association for Computational Lin-
+of F, score in FrameNet 1.7 dataset. guistics and 17th International Conference on Com-
+
+
+--- Page 8 ---
+
+Task Model a. Zero-shot _b. Zero-shot — c. Zero-shot d. Best-shot
+No Frame Info. Frame Def. All Frame Info All Frame Info
+Claude Haiku 0.0 0.0 40.6 (275) 71.1
+Exp. 1 Claude Sonnet 0.0 0.0 48.4 (250) 82.9
+FSP GPT-40 Mini 0.0 0.0 34.1 (375) 68.7
+GPT-40 0.0 0.0 38.8 (400) 80.2
+Claude Haiku 69.9 74.5 83.7 (100) 90.9
+Claude Sonnet 82.2 83.1 90.0 (150) 93.1
+Exp. 2 | DeepSeek Chat 90.4 91.7 91.1 (100) 94.3
+FI DeepSeek Reasoner 92.6 92.2 92.1 (50) 93.5
+GPT-40 Mini 67.3 63.5 81.8 (125) 90.5
+GPT-40 74.1 71.3 90.7 (100) 92.9
+Claude Haiku 22.2 33.0 32.4 (75) 68.9
+Claude Sonnet 35.0 39.1 39.1 (150) 76.3
+Exp. 3a DeepSeek Chat 28.0 42.4 44.6 (150) 72.3
+FSRL = DeepSeek Reasoner 41.3 50.9 48.3 (150) 77.4
+GPT-40 Mini 3.9 36.4 39.3 (150) 67.1
+GPT-40 25.6 32.1 39.5 (100) 73.9
+Table 5: F{ scores by model and prompting strategy across ablation for Experiments 1, 2 and 3a. (a) Zero-
+shot without frame information; (b) zero-shot with frame definitions only; (c) zero-shot with both frame and
+argument definitions; (d) best-shot with full frame and argument information, with the number of in-context
+examples shown in parentheses. For each task and model, the best score is in bold, and the second-best is
+underlined.
+putational Linguistics, Volume I, pages 86-90, beling. In Ido Dagan et al., editors, Proceedings
+Montreal, Quebec, Canada, August. Association for of the Ninth Conference on Computational Natu-
+Computational Linguistics. ral Language Learning (CoNLL-2005), pages 152-
+Baker, C., Ellsworth, M., and Erk, K. (2007). 164, Ann Arbor, Michigan, June. Association for
+SemEval-2007 task 19: Frame semantic structure Computational Linguistics.
+extraction. In Eneko Agirre, et al., editors, Pro- Das, D., Chen, D., Martins, A. F. T., Schneider, N.,
+ceedings of the Fourth International Workshop on and Smith, N. A. (2014). Frame-semantic parsing.
+Semantic Evaluations (SemEval-2007), pages 99— Computational Linguistics, 40(1):9-56, March.
+104, Prague, Czech Republic, June. Association for — Dong, Q., Li, L., Dai, D., Zheng, C., Ma, J., Li, R.,
+Computational Linguistics. Xia, H., Xu, J., Wu, Z., Chang, B., Sun, X., Li, L.,
+Bastianelli, E., Vanzo, A., and Lemon, O. (2020). and Sui, Z. (2024). A survey on in-context learn-
+Encoding syntactic constituency paths for frame- ing. In Yaser Al-Onaizan, et al., editors, Proceed-
+semantic parsing with graph convolutional net- ings of the 2024 Conference on Empirical Methods
+works. in Natural Language Processing, pages 1107-1128,
+Brown, T. B., Mann, B., Ryder, N., Subbiah, M., Ka- Miami, Florida, USA, November. Association for
+plan, J., Dhariwal, P., Neelakantan, A., Shyam, P., Computational Linguistics.
+Sastry, G., Askell, A., Agarwal, S., Herbert-Voss, Fillmore, C. J. (1976). Frame Semantics and the Na-
+A., Krueger, G., Henighan, T., Child, R., Ramesh, ture of Language. Annals of the New York Academy
+A., Ziegler, D. M., Wu, J., Winter, C., Hesse, C., of Sciences, 280(1):20—32, October.
+Chen, M., Sigler, E., Litwin, M., Gray, S., Chess, Gildea, D. and Jurafsky, D. (2000). Automatic label-
+B., Clark, J., Berner, C., McCandlish, S., Radford, ing of semantic roles. In Proceedings of the 38th
+A., Sutskever, I., and Amodei, D. (2020). Lan- Annual Meeting of the Association for Computa-
+guage models are few-shot learners. In Proceed- tional Linguistics, pages 512-520, Hong Kong, Oc-
+ings of the 34th International Conference on Neu- tober. Association for Computational Linguistics.
+ral Information Processing Systems, NIPS ’20, Red — Litkowski, K. (2004). Senseval-3 task: Automatic
+Hook, NY, USA. Curran Associates Inc. labeling of semantic roles. In Proceedings of
+Carreras, X. and Marquez, L. (2005). Introduction SENSEVAL-3, the Third International Workshop on
+to the CoNLL-2005 shared task: Semantic role la- the Evaluation of Systems for the Semantic Analysis
+
+
+--- Page 9 ---
+
+of Text, pages 9-12, Barcelona, Spain, July. Associ-
+ation for Computational Linguistics.
+
+Radford, A., Wu, J., Child, R., Luan, D., Amodei, D.,
+and Sutskever, I. (2019). Language models are un-
+supervised multitask learners.
+
+Roth, M. and Lapata, M. (2015). Context-aware
+frame-semantic role labeling. Transactions of the
+Association for Computational Linguistics, 3:449—
+460.
+
+Wei, J., Wang, X., Schuurmans, D., Bosma, M.., Ichter,
+B., Xia, F., Chi, E. H., Le, Q. V., and Zhou, D.
+(2024). Chain-of-thought prompting elicits reason-
+ing in large language models. In Proceedings of the
+36th International Conference on Neural Informa-
+tion Processing Systems, NIPS ’22, Red Hook, NY,
+USA. Curran Associates Inc.
+
+Zheng, C., Wang, Y., and Chang, B. (2023). Query
+your model with definitions in framenet: An effec-
+tive method for frame semantic role labeling. Pro-
+ceedings of the AAAI Conference on Artificial Intel-
+ligence, 37(11):14029-14037, Jun.

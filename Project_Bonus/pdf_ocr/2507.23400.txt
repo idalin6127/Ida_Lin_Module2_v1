@@ -1,0 +1,593 @@
+
+
+--- Page 1 ---
+
+MRGSEM-Sum: An Unsupervised Multi-document Summarization Framework
+based on Multi-Relational Graphs and Structural Entropy Minimization
+Yongbing Zhang, Fang Nan, Shengxiang Gao, Yuxin Huang, Kaiwen Tan*, Zhengtao Yu*
+Faculty of Information Engineering and Automation, Kunming University of Science and Technology, Kunming, China
+Yunnan Key Laboratory of Artificial Intelligence, Kunming, China
+* Corresponding authors: kwtan @kust.edu.cn, ztyu @hotmail.com
+a Abstract MaMiReaton Graph ering Based on 2D SE bast on Position: Aware
+ween nn nee _ ~ Minimization _ Compression
+N The core challenge faced by multi-document summarization ( 9 o i ON Ne : 6 fe!
+) is the complexity of relationships among documents and the ’ ' ie ee yo 02 Figg ia!
+N presence of information redundancy. Graph clustering is an Matte Qe g iQ ® 3 1 Bev o. x i “(2
+—_ effective paradigm for addressing this issue, as it models the L ' ly ° 1 ger ne
+5 complex relationships among documents using graph struc- ' ot ey) 1 oY 4] \
+= tures and reduces information redundancy through cluster- ie CS
+— ing, achieving significant research progress. However, ex- oo MRGSEM-Sum_ a
+xa) isting methods often only consider single-relational graphs TS
+and require a predefined number of clusters, which hinders _ Gran Construction | Graph Clustering Cluster Compression
+—= their ability to fully represent rich relational information and / ‘ ‘ \ c a.
+—] adaptively partition sentence groups to reduce redundancy. / ; PY eee 1 | @® \
+Ss To overcome these limitations, we propose MRGSEM-Sum, Matt @ Qi bey >| oun
+‘ an unsupervised multi-document summarization framework om rot er sae, (ee
+N based on multi-relational graphs and structural entropy min- — ous © °
+O imization. Specifically, we construct a multi-relational graph ee oe!
+that integrates semantic and discourse relations between sen- SummPip
+tences, comprehensively modeling the intricate and dynamic . . .
+— : :
+> connections among sentences across documents. We then ap- Figure 1: Model architecture comparison between
+Oo ply a two-dimensional structural entropy minimization algo- MRGSEM-Sum and the existing gr aph-based multi-
+S rithm for clustering, automatically determining the optimal document summarization method (i.e., Sumpip)
++ number of clusters and effectively organizing sentences into
+cr coherent groups. Finally, we introduce a position-aware com-
+fon pression mechanism to distill each cluster, generating concise ;
+
+° and informative summaries. Extensive experiments on four In response, researchers have conducted in-depth stud-
+| a benchmark datasets (Multi-News, DUC-2004, PubMed, and ies. Among them, unsupervised methods eliminate the need
+So WikiSum) demonstrate that our approach consistently outper- for annotated data and instead leverage the intrinsic struc-
+a) forms previous unsupervised methods and, in several cases, ture and semantic relationships within document clusters to
+N achieves performance comparable to supervised models and automatically generate summaries. This not only reduces
+
+> ge language models. aan ee Semon tnt data acquisition costs but also provides stronger generaliza-
+° e summaries generate -oSum exnibd1 d : tet : :
+
+A consistency and coverage, approaching human-level quality, ton cap abilities, enabling th ese methods to flexibly adapt
+< to various topics and domains (Vogler et al. 2022). There-
+=| fore, unsupervised MDS methods have become a focal point
+Introduction in recent MDS research. Existing unsupervised methods
+Multi-Document Summarization (MDS) is designed to cre- can be categorized into autoencoders (Vogler et al. 2022),
+ate compact and informative summaries from collections of rane sed ap P roaches Camsiyat “i oe Ors oe
+documents that revolve around specific subjects, facilitating ct al. 2 ), and grap Clustering memos (Zhao e a ,
+: : “oe oy: : Alami et al. 2021). While autoencoders can effectively re-
+
+users in efficiently gaining essential information. (Ma et al. tain detailed d t inf tion. th ften st le t
+2022; Roy and Kundu 2023; Li, Qi, and Lau 2023). How- file etal h ocument mrorma ef cy Olen SITUEEIC 4
+
+ever, due to the large number of documents, the relationships ter out the core content required for summarization an
+between documents are highly complex, and there is also the face challenges with long input sequences (Zhao et al. 2020).
+: : : ° : Ranking-based methods, while able to identify salient sen-
+
+issue of information redundancy among documents, leading rarer :
+
+to suboptimal results with existing methods. tences, are usually grounded in rigid prior assumptions, such
+as semantic relevance and diversity, which may not always
+Copyright © 2026, Association for the Advancement of Artificial hold in practice. In contrast, graph clustering methods, such
+Intelligence (www.aaai.org). All rights reserved. as Sumpip (Zhao et al. 2020), model the complex rela-
+
+
+--- Page 2 ---
+
+tionships between documents by constructing a graph of {d),d2,...,dn}, we first construct a multi-relational graph
+relationships between sentences and then reducing redun- G = {V,E,,, E,, } utilizing both semantic relationship and
+dancy among documents through clustering. This method discourse relationship, as illustrated in Figure 2A. The two
+can straightforwardly address the complexities of relation- types of relationships, approached from different perspec-
+ships and information redundancy in MDS and has become tives, complement each other, thereby modeling the complex
+a current research hotspot. However, existing methods face relationships between documents.
+two limitations: First, existing graph structures are typ- Specifically, semantic relationship based edges E,; are
+ically limited to modeling single-relation connections, determined by calculating the cosine similarity between
+constraining their ability to capture the complex and het- frequency-inverse document frequency (TF-IDF) represen-
+erogeneous relationships that naturally arise in multi- tations of sentences. The weight of these edges reflects the
+document scenarios, such as semantic, discourse, and similarity at the content level, providing a quantitative mea-
+pragmatic links. Second, traditional clustering frame- sure of the potential associations between sentences. Dis-
+works often require the number of clusters to be prede- course relationship based edges E,2 are established based
+fined, increasing model complexity and inflexibility. on the method proposed by Cristensen et al.(Christensen
+To address these limitations, we propose an unsuper- et al. 2013). We consider features such as discourse mark-
+vised multi-document summarization framework based on ers, coreference, and entity linking to establish discourse
+multi-relational graphs and structural entropy minimiza- relationships between sentences. These edges capture not
+tion, named MRGSEM-Sum. Specifically, we first construct only the structural connections of sentences within the doc-
+a multi-relational graph that captures semantic and dis- uments but also reveal their logical and rhetorical relation-
+course relationships among sentences. We then utilize a two- ships. The nodes V are sentences from the input document
+dimensional (2D) structural entropy (SE) minimization al- cluster, we select a pre-trained sentence embedding model
+gorithm to cluster the sentence graph in an unsupervised SBERT to initialize the representation of nodes, thereby ob-
+manner, automatically determining the optimal number of taining high-dimensional node representations X.
+clusters and grouping highly relevant sentences together. Fi-
+nally, we introduce a position-aware compression strategy Multi-relation Graph Clustering Based on 2D SE
+to further refine and condense each cluster, resulting in co- Minimization
+herent and comprehensive summaries. A visual comparison — ; , i
+of the model architectures of MRGSEM-Sum and the ex- Existing unsupervised summarization methods often utilize
+isting graph-based multi-document summarization method clustering models on document relation graphs to aggregate
+(i.e., Sumpip) is illustrated in Figure 1. In summary, our key similar sentences and reduce redundancy (Alami etal. 2021;
+contributions are as follows: Wang et al. 2021). However, these approaches typically re-
+. . quire predefined cluster numbers, which is impractical for
+
+* We propose a novel unsupervised multi-document Sum- real-world applications. To address this limitation, we pro-
+marization framework that addresses the complexities of pose an adaptive clustering method based on 2D SE mini-
+relationships and information redundancy in MDS. mization that automatically determines the optimal cluster
+
+e We designed a multi-relational graph construction structure, as illustrated in Figure 2B.
+method, combined with the 2D SE minimization clus- Since the 2D SE cannot be directly applied to multi-
+tering approach and position-aware compression mech- relational graphs, we need to first merge the relationships
+anism, to capture the intrinsic complex relationships within the multi-relational graphs to form an integrated
+between documents, eliminate information redundancy, graph. The merging process is as follows:
+and enhance the quality of summaries.
+
+e We conduct extensive experiments on four bench- Alii] = {pees [is], Ap, [‘J{¥]) if Aw,, [eZ] 40
+mark MDS datasets, including Multi-News, DUC-2004, 0 otherwise
+PubMed, and WikiSum. The results demonstrate that (1)
+MRGSEM-Sum outperforms state-of-the-art unsuper- where A’ represents the adjacency matrix of the integrated
+vised baselines significantly in both automatic metrics graph G- {V, E}, and A [i][7] indicates the weight of the
+and human evaluation, showing competitiveness with su- edge from node i to node j. The elements Ap, {i]|j] and
+pervised methods and large language models. Ag, |¢|[j] correspond to the weights of the edges between
+
+node 7 and 7 under the relationship types /,; and F,2, re-
+
+Methodology spectively, J Piypss or m
+
+As shown in Figure 2, MRGSEM-Sum consists of three key Then, we apply a clustering algorithm based on 2D SE
+
+modules: A. multi-relational graph construction; B. multi- minimization to the integrated graph G’ = {V, E}, as shown
+
+relation graph clustering based on 2D SE minimization; C. in Algorithm 1. Specifically, each sentence initially resides
+
+summary extraction based on position-aware compression. in its own cluster (line 1). Subsequently, these clusters are
+
+The details are as follows: combined into subsets of size n (line 3), and each subset
+
+. . . is transformed into a subgraph G’, = {V’, E’} (lines 5-7).
+
+A. Multi-relational Graph Construction Then, each subgraph is converted into an encoding tree T’
+
+To capture the complex and diverse relationships be- (lines 9-14). The constructed encoding tree adheres to the
+tween documents in the input document cluster D = following definition (Li and Pan 2016):
+
+
+--- Page 3 ---
+
+------- ViQ Oo
+! ae “gf \W| ° yO BG Ove
+{__--OFiginal Documents nay a, —
+Vg (c* =2)
+Precessed Documents se -- Q _B.. y :
+Sentence Relationship 1 qi He, _ QI a O-- Q! Ova Oo, Vg---- .
+\ Extraction yi © oO, Oo! fo) K°) ra 6 6 oO c° Ove) im) v0. 0 °° °
+V1 V2 V3 4 6 fVg V7 Vo tanto eee ~“V6_-V7
+' ' ! ' , K-shortest Paths
+1 tt ! Algorithm and
+' rt ' a Q ue Q Es Rank
+64 it \OES Ons otra [=
+emantic Relationship! {Discourse Relationshi ae amen \ eeceto tao eee
+c NAD ‘ | Sentence Concatenation
+| Le x
+\ Integrated Graph G’ = VE) / COOOO OOOOO Output Summary
+Nass enna? V5 VeV7V9 V4 VgV1V_ V3
+A. Multi-Relation Graph Construction B. Multi-relation Graph Clustering Based C. Summary Extraction Based on
+on 2D SE Minimization Position-Aware Compression
+
+Figure 2: The framework of MRGSEM-Sum. A. Multi-relational Graph Construction. First, a multi-relational graph is con-
+
+structed with sentences from multiple documents as nodes, based on sentence semantic similarity and discourse relations across
+
+the documents. B. Multi-relation Graph Clustering Based on 2D SE Minimization. Based on the constructed multi-relational
+graph and following the principle of SE minimization, an optimal 2D encoding tree is established. Sentences are assigned to
+different subtrees on the encoding tree, thereby partitioning the original multi-relational graph into subgraphs. C. Summary
+
+Extraction Based on Position-Aware Compression. The subgraphs of sentences are then compressed using a position-aware
+
+compression method to generate the final summary text.
+
+1. Let T’ be a encoding tree structure over the set V’, where Under a greedy strategy, 2D SE minimization iteratively
+each node a in T” is linked to a subset T”, C V’. The root merges the pair of nodes in T’ that produces the largest
+node is denoted by X, contains the entire set, i.e., T) = |AS'E|, until no merge yields a negative AS'F (lines 17-30),
+V’. In contrast, each leaf node + corresponds uniquely The calculation of ASE between two nodes is as follows:
+toa srele node from V’, such that T/ = {v} for some ASEij =SEnew — SEoia
+VE :
+
+2. For any node a in T’ with children (),..., 6%, the sets =SE.q,, — (SEa; + SEa,;)
+
+Ty, >+--, 1%, form a partition of TY. —_ Jon _ jo vol (Qn) _ vol(ai) , vol(ai)
+FT 809 Ty 199
+
+3. For every node a in T’, we define its height as h(a). The vol(A) vol() vol(A)  ~ vol(an)
+height of a leaf node + is set to zero, i.e., h(y) = 0. For vol(aj) vol(a;) Jai | vol(a;)
+any node a, the height of its parent a~ is defined as one 7 vol(X) og vol(an) T vol(X) 9 vol(X)
+plus the height of a, that is, h(a~) = h(a) + 1. The vol(a;)
+height of 7’, h(T’) = h(). 4 F825 Jyg VNC)
+
+By applying Eq. (2) and Eq. (3), the SE of each node vol(r) vol(r)
+; ; (4)
+
+a is calculated, after which the computed SE, values are where a;, a; is non-root nodes in encoding tree T", the op-
+
+appended to the set SEs (lines 15-16). eration ME RG E(a;, a;) inserts a new node a,, into T’ and
+
+IT. | remove ai; and Ou from T’. an satisfies: 1) its children con-
+
+HY = — S~ dj log d; (2) sist of all the children of a; and a; 2) its parent is the root
+
+o “~~ vol(X) vol(X) node, i.e., a, = A. The process is repeated until no more
+
+1 clusters can be merged. (lines 32-33). If no clusters can be
+
+SE, =-— Go jog Voll) 4+ HO) (3) merged in any subset, n is increased so that each subset con-
+
+vol(A) ~ vol(X) ° tains more clusters, making further merges possible (lines
+
+where vol(A) denotes the sum of degrees of all nodes within 34-35). Finally, a complete encoding tree T of the integrated
+
+T), Ja represents the total weight of the cut edges by Ty, graph G’ is generated, and the leaf nodes of each subtree of
+
+and d; indicates the degree of node 7, where 2 € Ty. the root node in 7’ form a sentence cluster. We denote the
+
+
+--- Page 4 ---
+
+Algorithm 1: Multi-relation Graph Clustering via 2D SE document, its positional importance is defined as:
+minimization
+pos, ; —1
+Input: Integrated graph G’ = (V,£), n: number of Wpos (i,j) = 1 — “Ne 1)
+nodes in each subgraph. a
+Output: A partition P of V. where posi; represents the position index of the sentence
+1: Pe {{s}|seV} in original document, and N; denotes the total number of
+2: while Truce do sentences in that document. Subsequently, we calculate the
+3: Ps < take clusters from P in groups of size sum of Wpos for all sentences in each sentence cluster (e.g.,
+min(n, |remaining clusters in P\) with- C;) to obtain the positional-aware importance Scoréyos(C;)
+out replacement. of that cluster:
+4: for each P, € Ps do +).
+5: V’ < union of all the clusters in P, Scorepos(Ci) = yy Wpos(s)
+6: E’ < get all edges relate to V’ in E sec
+7: G'.« (V',E’) Then, we rank all clusters based on this metric to obtain the
+8: SEs < @ sorted clusters {C{,C%,...,C/}, and retain the top c* clus-
+9: T’ <add a root tree node \ ters, namely {C},C4,...,Cl.}. Finally, following the ap-
+10: for each cluster C € P, do proach of Boudin and Morin (2013), we use the K-shortest
+ll: Add anode a to T’, s.t.a7 =A,T, =C paths algorithm to find shortest paths as compression can-
+12: for each sentence s € C'do didates {su VC, in cluster Cj. We calculate scores based
+13: Add a leaf node ¥ to T”, s.t. on keyphrases to rank the compression candidates, and con-
+14: y =a,T, = {s} catenate the Top-1 compression candidate from each cluster
+15: Caculate SE, via Eq. (3) in sequence to obtain the final summary.
+16: Append SE, to SEs . .
+17: while True do Experimental Settings
+18: P’< {a|laeT, h(a) = 1} Datasets
+19: ASE <— 00 We conducted experiments on four datasets. DUC-2004 and
+20: foreacha;¢ Pdo Multi-News (Fabbri et al. 2019) are two commonly used
+21: for each a; € P, j > ido news MDS datasets, primarily used to validate the effective-
+22: ASE;; <— Eg. (4), w/o actually ness of MRGSEM-Sum. Additionally, to further validate the
+. merging a; and a; generalization ability of MRGSEM-Sum, we also conducted
+23: if ASE;; < ASE then experiments on PubMed (Cohan et al. 2018) and WikiSum
+24: ASE — ASE;; (Liu et al. 2018). PubMed is a dataset consisting of long doc-
+25: Qo, — A uments, while WikiSum is a multi-document dataset from a
+26: og <~ Oj non-news domain. Detailed statistics of these four datasets
+27: if ASE < 0 then can be found in Table 1.
+28: MERGE(d5, , Qo) .
+29: else Table 1: Test dataset statistics.
+30: Break SSS
+31: Append P’ to P Datasets ‘Test Dataset Size Average Document Docs Per Average Summary
+32: if |Ps| = 1 then Length Cluster Length
+33: . break ; oo, Multi-News 5622 2103.49 2.16 263.66
+34: if P is unchanged since the last iteration then DUC-2004 50 5078.2 10.0 107.04
+35: n < 2n PubMed 5025 3224.5 1.0 209.5
+36 return PO WikiSum 2000 2238.2 40.0 101.2
+final clustering result as {C,, C2, .., Cc}. Automatic Evaluation Metrics
+In the model’s automatic evaluation process, we followed
+: eye the setup by Fabbri et al.(Fabbri et al. 2019) and used the
+Summary Extraction Based on Position-Aware automatic metric ROUGE to assess the quality of the final
+Compression : :
+generated summaries. Specifically, we reported three key
+; metrics: ROUGE-1 (R-1), ROUGE-2 (R-2), and ROUGE-
+To further extract summary sentences reflecting the core SU (R-SU). ROUGE-1 and ROUGE-2 represent the n-gram
+content of the input multi-document based on the above overlap between the generated summary and the reference
+sentence clusters, we propose a position-aware compression summary, while ROUGE-SU further integrates skip-gram
+method for summary extraction, as shown in Figure 2C. and unigram considerations to evaluate the similarity be-
+Specifically, for the j-th sentence s;; in the 7-th original tween the generated summary and the reference summary.
+
+
+--- Page 5 ---
+
+Experimental Results and Analysis Table 2: The comparison between MRGSEM-Sum and base-
+lines on news MDS datasets Multi-News and DUC-2004
+E1. Comparative Experiments (Bold values are optimal among all methods; underlined val-
+We compared MRGSEM-Sum with a series of strong base- ues are best among unsupervised methods),
+line methods. Specifically, we selected two graph-based un- Ss > ___—
+supervised extractive methods, LexRank (Erkan and Radev Models ___ Multi-News DUC-2004
+2004) and TextRank (Mihalcea and Tarau 2004), which RI R2  RSU RI R2 RSU
+capture key information in the document through graph Unsupervised
+models. In addition, we considered two similarity-based un- LexRank 38.27 12.70 13.20 35.56 7.87 11.86
+supervised methods, MMR (Carbonell and Goldstein 1998) TextRank 38.44 13.10 13.50 33.16 6.13 10.16
+and Centroid (Radev et al. 2004), which focus on comput- wR d ee bes eg 8 fe ae
+ing the similarity between text units (such as sentences) to SummPip 4232 1328 1620 3630 847 11.55
+extract summaries. To further enrich the comparison scope, MRGSEM-Sum 43.21 14.66 16.99 49.23 15.36 23.47
+we introduced several supervised strong baseline models, in- Supervised
+cluding PG-Original (See, Liu, and Manning 2017), PG- PG-Originll =———S41.85 12.91 16.46 31.43 6.03 10.01
+MMR (Lebanoff, Song, and Liu 2018), Copy-Transformer PG-MMR 40.55 12.36 15.87 3642 9.36 13.23
+bri et al. 2019). Furthermore, given the advantages of cur- HieMAP 43.47 14.89 U7AT 35.78 8.90143
+rent large language models (LLMs) in text generation, we LLMs
+specifically selected GPT-3.5-turbo-16k and GPT-4-32k, GPT-3.5-turbo-16k 37.78 9.77, 12.98 35.27, 10.22.—-11.60
+two LLMs capable of handling long texts, to test our method GPT-4-32k 39.87 UNSd 1417 36.44 1192 1134
+against LLMs.
+The experimental results are shown in Table 2 . We can : :
+observe that: (1) MRGSEM-Sum outperforms other unsu- The experimental results are shown in Table 3. We can
+pervised models. Specifically, on Multi-News, compared observe that: (1) MRGSEM-Sum consistently outperforms
+to the classic graph-based unsupervised extractive baseline unsupervised baseline models on these two datasets, par-
+model LexRank, MRGSEM-Sum achieved improvements ticularly demonstrating significant improvements on the
+of over 4.94, 1.96, and 3.79 on R-1, R-2, and R-SU, re- PubMed dataset. Compared to the Centroid, MRGSEM-
+spectively. There are also substantial improvements com- Sum achieved improvements of 11.34, 8.47, and 8.1
+pared to the similarity-based unsupervised methods MMR on R-I, R-2, and R-SU, respectively. Even when com-
+and Centroid. Additionally, compared to the powerful graph pared with the powerful unsupervised baseline model
+clustering baseline model SummPip, MRGSEM-Sum also SummPip, MRGSEM-Sum still achieved substantial per-
+shows improvement, with increases of 0.89, 1.38, and 0.79 formance gains. These results indicate that MRGSEM-
+on R-1, R-2, and R-SU, respectively, and our model does Sum not only exhibits significant advantages on tradi-
+not require pre-specifying the number of clusters in the tional news multi-document summarization datasets but also
+extraction process. (2) Compared to supervised methods, demonstrates strong adaptability and generalization ability
+MRGSEM-Sum also demonstrates strong competitiveness. on long document and non-news domain multi-document
+Notably, on Multi-News, MRGSEM-Sum even outperforms datasets like PubMed and WikiSum. (2) The performance
+the PG-Original and PG-MMR models, with an increase of of MRGSEM-Sum is comparable to LLMs and, in some
+1.36 on R-1 compared to PG-Original, and an increase of cases, even superior. For instance, on the WikiSum dataset,
+2.66 on R-1 compared to PG-MMR. These results indicate our model showed an improvement of 2.52 on the R-1 com-
+that our model achieves performance comparable to super- pared to GPT-4-32k. This further confirms the advantages of
+vised models without the need for large-scale training data MRGSEM-Sum over LLMs.
+or complex training processes. (3) In the experiments with . .
+LIMs, we called the online API interfaces of these LLMs, FE3. Ablation Experiments
+and our standardized prompt was ’Summarize the above ar- To better understand the contributions of different modules
+ticle:’”. From the experimental results, it can be seen that to the model performance, we conducted ablation experi-
+the performance of MRGSEM-Sum on the Multi-News and ments on Multi-News and PubMed datasets. Firstly, we re-
+DUC-2004 datasets is comparable to that of LLMs, while placed the multi-relation graph with the approximate dis-
+our model is more compact. course graph (ADG) used in SummPip (i.e., w/o multi-
+relation graph). Secondly, we replaced the 2D SE with spec-
+E2. The Performance in Long Documents and tral clustering method and set the number of clusters ac-
+. : cording to the experimental configuration by Zhao et al.
+Non-news Domain MDS Datasets. (2020) (i.e., w/o 2D SE clustering). Lastly, we replaced the
+In order to further validate the generalization ability of position-aware compression method with a more general
+MRGSEM-Sum, we conducted comparative experiments on compression method proposed by Boudin and Morin (2013)
+PubMed and WikiSum datasets with unsupervised methods (i.e., w/o position-aware).
+LexRank, TextRank, Centroid, and SummPip, as well as The results are shown in Table 4, it can be observed
+LLMs GPT-3.5-turbo-16k and GPT-4-32k. that when removing the multi-relation graph, 2D SE clus-
+
+
+--- Page 6 ---
+
+Table 3: The comparison between MRGSEM-Sum and base- Table 5: The Impact of Position-aware Compression
+lines on PubMed and WikiSum (Bold values are optimal
+among all methods; underlined values are best among un- . Multi-News
+supervised methods). © RL R-2 R-SU-
+ALL 42.06 14.12 15.69
+Models PubMed WikiSum 7 39.66 12.14 14.31
+a _ 8 41.01 12.77. 15.35
+RR RSU RD OR? RSU 9 41.93 13.25 16.06
+Unsupervised 10 42.60 13.69 16.58
+LexRank 28.77 8.16 744 36.60 9.40 13.03 11 42.97 13.99 16.85
+TextRank 27.73, 7.47 6.88 36.89 8.79 12.98 12 43.18 14.26 16.98
+MMR 28.31 8.54 740 32.91 6.85 9.98 13 43.26 14.50 16.90
+Centroid 26.62 6.57 6.32 36.37 8.08 12.53 14 43.21 14.66 16.99
+SummPi 29.67 = 12.63 746 37.84 9.95 13.11
+SCRE son 286 igbs 152 307 OL 15 $30 478 1678
+LLMs 17. 42.74 14.97 16.38
+GPT-3.5-turbo-16k 39.30. 11.60 14.57 32.15 6.46 9.69 18 42.57 15.03 16.20
+GPT-4-32k 41.78 1335 13.35 3655 9.06 12.29 19 42.43 15.06 16.05
+tering, and position-aware modules, MRGSEM-Sum’s R-1, ES. Human Evaluation
+R-2, and R-SU scores all exhibited varying degrees of de- In addition to automatic evaluations, we also conducted hu-
+cline. Removing the multi-relation graph and 2D SE clus- man evaluations for MRGSEM-Sum. We recruited three
+tering modules led to significant performance drops on both graduate students with excellent English reading and writing
+datasets. For instance, on the Multi-News dataset, removing skills as evaluators, who independently rated 100 randomly
+the multi-relation graph module resulted in a 4.25 decrease selected summaries generated by each model in the Multi-
+in R-1, while removing the 2D SE clustering module led to a News test set, including TextRank, Centroid, SummPip,
+5.35 decrease in R-1. Additionally, we noticed that removing GPT-3.5-turbo-16k, GPT-4-32k, and MRGSEM-Sum. The
+the position-aware module had a more significant impact on evaluators were instructed to rate the generated summaries
+the PubMed dataset, which we speculate is due to PubMed based on three criteria: Fluency, Consistency, and Coverage,
+being a dataset of long documents, making it more sensitive using a 5-star scale where | star represents the worst perfor-
+to positional information during the summarization process. mance and 5 stars the best, and the average score from the
+evaluators represents the final score.
+Table 4: Ablation experiments on Multi-News and PubMed. Figure 3 displays the distribution of human evalua-
+tion scores for these six models. It can be observed that
+—NultiNews ~=PubMed MRGSEM-Sum has a significantly higher proportion of 5-
+Models RI R2 RSU RI R2 RSU star ratings in Consistency and Coverage compared to the
+MRGSEMSum-4321.«*414.66 16.99 3796 15.04 14.32 other methods, particularly LLMs. In terms of Fluency, the
+w/o multi-relation graph 38.96 11.86 13.54 30.77 11.35 9.60 performance of MRGSEM-Sum is comparable to LLMs and
+w/o 2D SE clustering 37.86 11.65 13.05 34.94 14.12 11.45 significantly better than other unsupervised summarization
+w/o position-aware 42.06 14.12 15.69 23.37 11.97 4.20 models. These findings further validate the effectiveness of
+the proposed MRGSEM-Sum. Additionally, an interesting
+observation is that both the cluster-based unsupervised sum-
+oe . marization model SummPip and MRGSEM-Sum exhibit ex-
+E4. The Impact of Position-aware Compression cellent performance in the Coverage metric, indicating that
+In ablation experiment, we have validated the effectiveness the approach of clustering sentences first and then compress-
+of position-aware compression. Next, we designed an ex- ing them can significantly enhance the coverage of generated
+periment to further explore the impact of position-aware summaries.
+compression. Specifically, for the clusters {C|, C4, ..., Cl.
+sorted and truncated based on « oltioes nate itanee E6. Case Study
+we selected c* = 7,8,...,19 as inputs to the method pro- To provide a more intuitive demonstration of the perfor-
+posed by Boudin and Morin (2013), and observed the qual- mance of MRGSEM-Sum, we conducted a case study. We
+ity of the generated summaries. The results are presented in randomly selected an example from the results generated by
+Table 5, where it can be observed that under the position- the baseline model and MRGSEM-Sum on the Multi-News
+aware importance sorting, even when only a portion of clus- test set for qualitative analysis.
+ters participated in the subsequent summary generation, it As shown in Figure 4, compared to other models, the sum-
+still yielded satisfactory results. Additionally, an increase in mary generated by MRGSEM-Sum contains more detailed
+the number of clusters led to a decrease in summary quality. information and is closer to the reference summary. For ex-
+This once again underscores the necessity of position-aware ample, the summary generated by MRGSEM-Sum includes
+compression. key event elements, such as “A 6.5-magnitude earthquake
+
+
+--- Page 7 ---
+
+= 2 -? ot Input : A 6.5 magnitude earthquake struck Eureka at around 4:30 p.m. Saturday ,
+Fluency leaving much of the city without power and police scanners buzzing with reports of
+| | | | | damage and injuries . The quake , which lasted for around 30 seconds , had power
+60 poles waving back and forth along Eureka streets and brought panicked residents
+2 ao out of their homes . The Bayshore Mall , as of 5:30 p.m. , had been closed off to
+a i i i i i customers and employees . It was unclear how many people were injured there , but
+20 one employee reported that several people were picked up by ambulances ...
+} Reference: — communities in humboldt county in northern california are cleaning
+= & o oo ss up today after a 6.5-magnitude earthquake rocked the coastal area yesterday
+& e = & & afternoon . " it was like the street was breakdancing , " a local resident who was
+re As driving when the temblor struck around 4 : 30pm told the times-standard of eureka ,
+; 33 miles from the epicenter . there were numerous reports of power outages and
+Consistency property damage , but no serious injuries and no tsunami warning . " it was a
+monstrous one , " a eurekar restaurateur told the los angeles times ...
+40 LexRank About 30 people visited hospitals for minor injuries , but therewere no
+8 reports of major injuries caused by the magnitude-6.5 temblor, which struck
+” 20 offshore at 4:27 p.m. about 33 miles southwest of thecoastal city of 26,000.More
+than 25,000 people were initially without power , but electricity was restored to
+0 everyone shortly after 6 a.m., according to David Eisenhauer , spokesman for
+x & € se 3s Pacific Gas & ElectrieC
+« PS s S < < acific ectricCo ...
+roa TextRank: At the 124-year - old St. Bernard 's Roman Catholic Church in Eureka ,
+& parishioners were busy picking up pieces of plaster that hadfallen from the ceiling
+Coverage and climbing ladders to 2) All along Broadway , Eureka 's busiest thoroughfare ,
+lights wereout and traffic was heavy as people attempted to get out of town ...
+40 Centroid: About 30 people visited hospitals for minor injuries , but therewere no
+2 i i | i i reports of major injuries caused by the magnitude-6.5 temblor, which struck
+35 : : offshore at 4:27 p.m. about 33 miles southwest of thecoastal city of 26,000.More
+than 25,000 people were initially withoutpower , but electricity was restored to
+} everyone shortly after 6 a.m., according to David Eisenhauer , spokesman for
+< RS RY oY ss Pacific Gas & ElectricCo ...
+& & a = ra s SumnmPip: the media is slooooooo0w says michael van poppel , who heads up the
+ro Rs bno team twitter feed . arcata , near humboldt state university , had power , and
+residents of mckinleyville also reported reporting from los angeles and eureka ,
+. : calif. - the day after a powerful earthquake rocked the northern california city of
+Figure 3: Human Evaluation. eureka , residents woke today to a mess : toppled chimneys , downed traffic signals
+and shattered nerves as minor aftershocks continued to rattle windows ...
+GPT-3.5-turbo-16k: The articles describe a 6.5 magnitude earthquake that struck
+struck eureka at around 4:30 p.m. saturday” and “without burek eliomia. oom sign rheant ismupiion ang Gomer: Ue Gaurae
+” . . . afternoon, affecting power lines, causing structural damage
+power’. These elements are highly consistent with both the like fallen light fixtures and ceiling chunks at locations such as Bayshore Mall and
+input documents and the reference summary. Furthermore, Eureka Natural Foods ...
+MRGSEM-Sum also captures additional important details, CHE The article reports on a 6.5 magnitude earthquake that hit Eureka at
+such as “around 30 seconds” and “as of 5:30 p.m.”, which, approximately 4:30 p.m. ona Saturday. The earthquake caused widespread power
+. . . outages and significant damage, with reports of injuries. The quake lasted around
+although not in the reference summary, are present in the in- 30 seconds and caused power poles to sway and residents to evacuate their homes
+put documents and relatively significant. Even compared to in panic. Bayshore Mall was closed off to customers and employees by 5:30 p.m.,
+LLs, the summary generated by MRGSEM-Sum is more in- and there were reports of injuries, although specific numbers were not yet clear ...
+formative. In contrast, unsupervised summarization models MUSED EE) @ (Oo) MO SUUTS Grau EAL GAMES CTS GL ENON ID (i
+: : : « : saturday , leaving much of the city without power and police scanners buzzing with
+like Summ Pip miss key elements, such as “A 6.5 -magnitude reports of damage and injuries . the quake , which lasted for around 30 seconds ,
+earthquake”, and extract irrelevant information not related to had power poles waving back and forth along eureka streets and brought panicked
+the news topic, such as “‘the media is sloooo0000W’’. residents out of their homes . the bayshore mall , as of 5:30 p.m. , had been closed
+off to customers and employees . employees also reported light fixtures falling out
+. of the ceiling and floor tiles popping up off the ground . another employee reported
+Conclusion seeing chunks of the ceiling fall onto customers ...
+We present MRGSEM Sum, an unsupervised multi Figure 4: Case Study.
+document summarization framework that addresses the dual
+challenges of complex relationships and information redun-
+dancy in MDS through three key innovations: (1) a multi- methods and LLMs in summary quality, as validated by
+relational graph integrating both semantic and discourse re- ROUGE scores and human evaluations.
+lations to model sentence connections more comprehen-
+sively than single-relation approaches; (2) a 2D structural Acknowledgments
+entropy minimization algorithm for adaptive, parameter- . ; : . .
+free clustering that automatically groups sentences while Thank the reviewers for their meticulous review of this pa-
+minimizing redundancy; and (3) a position-aware compres- per.
+sion mechanism to distill salient information from clus-
+ters. Extensive experiments on Multi-News, DUC-2004, References
+PubMed, and WikiSum demonstrate that MRGSEM-Sum Alambo, A.; Lohstroh, C.; Madaus, E.; Padhee, S.; Foster,
+outperforms unsupervised baselines and rivals supervised B.; Banerjee, T.; Thirunarayan, K.; and Raymer, M. 2020.
+
+
+--- Page 8 ---
+
+Topic-centric unsupervised multi-document summarization Liu, P. J.; Saleh, M.; Pot, E.; Goodrich, B.; Sepa-
+
+of scientific and news articles. In 2020 IEEE International ssi, R.; Kaiser, L.; and Shazeer, N. 2018. Generating
+
+Conference on Big Data (Big Data), 591-596. TEEE. wikipedia by summarizing long sequences. arXiv preprint
+
+Alami, N.; Meknassi, M.; En-nahnahi, N.; El Adlouni, Y.; arXiv:1801.10198.
+
+and Ammor, O. 2021. Unsupervised neural networks for au- Ma, C.; Zhang, W. E.; Guo, M.; Wang, H.; and Sheng, Q. Z.
+
+tomatic Arabic text summarization using document cluster- 2022. Multi-document summarization via deep learning
+
+ing and topic modeling. Expert Systems with Applications, techniques: A survey. ACM Computing Surveys, 55(5): 1-
+
+172: 114652. 37.
+
+Boudin, F.; and Morin, E. 2013. Keyphrase extraction for Mihalcea, R.; and Tarau, P. 2004. Textrank: Bringing order
+
+n-best reranking in multi-sentence compression. In North into text. In Proceedings of the 2004 conference on empiri-
+
+American Chapter of the Association for Computational cal methods in natural language processing, 404-411.
+
+Linguistics (NAACL). Radev, D. R.; Jing, H.; Stys, M.; and Tam, D. 2004.
+
+Carbonell, J.; and Goldstein, J. 1998. The use of MMR, Centroid-based summarization of multiple documents. Jn-
+
+diversity-based reranking for reordering documents and pro- formation Processing & Management, 40(6): 919-938.
+
+ducing summaries. In Proceedings of the 21st annual inter- Roy, P.; and Kundu, S. 2023. Review on Query-focused
+
+national ACM SIGIR conference on Research and develop- Multi-document Summarization (QMDS) with Comparative
+
+ment in information retrieval, 335-336. Analysis. ACM Computing Surveys, 56(1): 1-38.
+
+Christensen, J.; Soderland, S.; Etzioni, O.; et al. 2013. To- See, A.; Liu, P. J.; and Manning, C. D. 2017. Get To The
+
+wards coherent multi-document summarization. In Proceed- Point: Summarization with Pointer-Generator Networks. In
+
+ings of the 2013 conference of the North American chapter Proceedings of the 55th Annual Meeting of the Associa-
+
+of the association for computational linguistics: Human lan- tion for Computational Linguistics (Volume 1: Long Papers),
+
+guage technologies, 1163-1173. 1073-1083.
+
+Cohan, A.; Dernoncourt, F; Kim, D. S.; Bui, T.; Kim, S.; Vogler, N.; Li, S.; Xu, Y.; Mi, Y.; and Berg-Kirkpatrick,
+
+Chang, W.; and Goharian, N. 2018. A Discourse-Aware At- T. 2022. An unsupervised masking objective for abstrac-
+
+tention Model for Abstractive Summarization of Long Doc- live multi-document news summarization. arXiv preprint
+
+uments. In Proceedings of NAACL-HLT, 615-621. arXiv:2201.02321. .
+
+Erkan, G.; and Radev, D. R. 2004. LexRank: graph-based Wang, i. wan , i Jin, 1: and 2 S. a fi wns
+
+lexical centrality as salience in text summarization. Journal Petvised’ grapive't ves O21 Ine vetional OF Hmancra
+Artificial Intelligence Research, 22(1): 457-479. news summarization. In 2021 International Conference on
+
+of 8 Data Mining Workshops (ICDMW), 719-726. IEEE.
+
+Multi-News: A Large-Scale Multi-Document Summariza- H.; and Haffari, G. 2020. Summpip: Unsupervised multi-
+
+ton Dataset and Abstractive Hierarchical Model. In Pro- document summarization with sentence graph compression.
+
+ceedings of the 57th Annual Meeting of the Association for In Proceedings of the 43rd international acm sigir confer-
+
+Computational Linguistics, 1074-1084. ence on research and development in information retrieval,
+
+Gehrmann, S.; Deng, Y.; and Rush, A. M. 2018. Bottom- 1949-1952.
+
+Up Abstractive Summarization. In Proceedings of the 2018
+
+Conference on Empirical Methods in Natural Language
+
+Processing, 4098-4109.
+
+Lamsiyah, S.; El Mahdaouy, A.; Espinasse, B.; and Ouatik,
+
+S. E. A. 2021. An unsupervised method for extractive multi-
+
+document summarization based on centroid approach and
+
+sentence embeddings. Expert Systems with Applications,
+
+167: 114152.
+
+Lebanoff, L.; Song, K.; and Liu, F. 2018. Adapting the
+
+Neural Encoder-Decoder Framework from Single to Multi-
+
+Document Summarization. In Proceedings of the 2018 Con-
+
+ference on Empirical Methods in Natural Language Pro-
+
+cessing, 4131-4141.
+
+Li, A.; and Pan, Y. 2016. Structural information and dynam-
+
+ical complexity of networks. [EEE Transactions on Infor-
+
+mation Theory, 62(6): 3290-3339.
+
+Li, M.; Qi, J.; and Lau, J. H. 2023. Compressed heteroge-
+
+neous graph for abstractive multi-document summarization.
+
+In Proceedings of the AAAI Conference on Artificial Intelli-
+
+gence, volume 37, 13085-13093.

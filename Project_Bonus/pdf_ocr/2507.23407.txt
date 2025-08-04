@@ -1,0 +1,768 @@
+
+
+--- Page 1 ---
+
+Beyond Passive Critical Thinking:
+Fostering Proactive Questioning to Enhance Human-AI Collaboration
+Ante Wang", Yujie Lin!*, Jingyao Liu’*, Suhang Wu’, Hao Liu?
+Xinyan Xiao® and Jinsong Su!**
+‘School of Informatics, Xiamen University, China
+?Department of Digital Media Technology, Xiamen University, China
+Baidu Inc., Beijing, China *Shanghai Artificial Intelligence Laboratory
+{wangante, yjlin, liujingyao}@stu.xmu.edu.cn Jjssu@xmu.edu.cn
+Abstract 2025; Wang et al., 2025b), and planning (Yao et al.,
+. oo, . _ 2023; Zhou et al., 2024; Lin et al., 2025). However,
+Critical thinking is essential for building robust ae . .
+Vay . . most existing studies focus on controlled settings
+N AI Systems, preventing them trom Dlnd'y - where user queries are always answerable. In real-
+>) cepting flawed data or biased reasoning. How- 4 " y ; co
+QI ever, prior work has primarily focused on pas- world applications, users, especially those without
+— sive critical thinking, where models simply re- domain expertise, often provide insufficient or in-
+= ject problematic queries without taking con- accurate information, making it difficult for models
+_ structive steps to address user requests. In to solve problems effectively (Zamfirescu-Pereira
+on) this work, we introduce proactive critical think- et al., 2023; Kim et al., 2024). For instance, a pa-
+me, @ P aradigm Ma here models actively seek tient lacking medical knowledge might omit critical
+a missing or clarifying information from users to . .
+= resolve their queries better. To evaluate this symp toms, P reventing an Al doctor from making a
+O capability, we present GSM-MC and GSM- precise diagnosis (Alkaabi and Elsori, 2025).
+Hh MCE, two novel benchmarks based on GSM8K Some prior work (Rahman et al., 2024;
+YL, for assessing mathematical reasoning under in- Kirichenko et al., 2025) has acknowledged this
+complete or misleading conditions. GSM-MC issue, advocating for critical thinking in LLMs,
+— contains 1,368 math problems with a key vari- which refers to the ability to reject unanswerable
+< able deliberately removed, requiring models to or flawed requests instead of attempting to process
+S identify and request the missing information. biased or incomplete inputs. Yet, we argue that
+=> GSM-MCE further increases the difficulty by his f f critical thinki . ° ; it
+cr introducing irrelevant details to test robustness t IS orm. oF critica m ng remains P aSSIVE, as 1
+CN against distractions. Experiments on Qwen3 still relies on users to independently identify and
+~ and Llama series models show that, while these rectify gaps in their queries, rather than actively
+Oo models excel in traditional reasoning tasks due facilitating problem-solving.
+a) to extensive post-training and inference-time To address this limitation, we propose proactive
+N scaling, they struggle with proactive critical critical thinking: a paradigm where the model not
+> thinking, especially s maller ones. However, we only detects unanswerable queries but also provides
+“= demonstrate that reinforcement learning (RL) . . . .
+~< can significantly improve this ability. Using constructive feedback to guide users m supp lying
+=| our enhanced RL algorithm, we achieve sub- necessary information. As shown in Figure 1, this
+stantial gains, boosting the Qwen3-1.7B’s accu- approach fosters more effective human-AI collab-
+racy from 0.15% to 73.98% on GSM-MC. We oration, enabling iterative conversations that pro-
+hope this work advances models that collab- gressively refine the problem and lead to a solution.
+orate more effectively with users in problem- Previous research (Ma et al., 2024; Fan et al.,
+solving through proactive critical thinking. 2025) has established some benchmarks for eval-
+1 Introduction uating passive critical thinking by performing op-
+erations such as removing or replacing key infor-
+Large Language Models (LLMs) have made signifi- mation in original questions using advanced LLMs.
+cant strides in solving complex tasks, such as math-__ However, these datasets often lack rigorous quality
+ematical reasoning (Yamauchi et al., 2023; IMANI control, resulting in many noisy and overly sim-
+et al., 2024; Wang et al., 2025a), code generation _plistic cases (see Table 1) that are unsuitable for
+(Feng et al., 2023; Dong et al., 2024; Shao et al., _ evaluating proactive critical thinking.
+~~ *These authors contributed equally. To tackle this, we develop an automated data
+‘Corresponding author. preparation pipeline using DeepSeek-V3 (Liu et al.,
+
+
+--- Page 2 ---
+
+9 ~ [site went ine stort buy elses, ut every second las cots 604 ofthe pric, Kylr want fo buy 16 lass. How much doeshe needio pay?
+
+<think> ... <think> ... <think> ...
+fey} Wait, maybe the problem is from a fem} Alternatively, maybe the original price of fem} Without knowing the original price, how can
+
+textbook or a specific context where the the glasses is implied ... I calculate the total cost ...
+
+price is given... Alternatively, maybe the problem is from a Since I don’t know the value of x, I cannot
+
+Alternatively, maybe “every second glass” non-English context ... compute the exact total cost. Hence, the user
+
+is meant to be interpreted as every other It’s impossible to compute ... F727 707 needs to provide the original price of a
+
+glass ... So, I can't answer the question ... glass ...
+
+But without the original price, how can I </think> </think> : . :
+
+calculate the total cost ... ... [cannot provide a answer. ... So please provide: what is the price of
+
+Maybe it is expecting an answer in terms y i the first glass?
+
+i : a @ Sorry, I missed the price for a single pair of
+
+of the original price ... 1 in th : hich is $5
+
+Maybe the it is part of series where the lasses unt elquesOR AWC RUSE:
+
+price was given earlier ... fem} Thanks for providing the missing detail. fem} As established earlier, every pair of glasses
+
+Alternatively, maybe the problem is ina Let’s just compute the total cost: (1) per (1st and 2nd, 3rd and 4th, etc.) costs: 5 +
+
+context where price is $10, so 12.8 x 10 = glass: $5. (2) each second glass: $3. (3) 16 (0.6 x 5)=54+3=8.
+
+$128 000 glasses: 8 at full price, 8 at discounted. So There are 16 + 2 = 8 such pairs.
+
+</think> the total cost: 8 x 5+ 8 x 3=40+ 24 = 64. So, the total cost is: 8 x 8 = 64.
+
+... Final Answer: 128 9X Final Answer: 64 \4 Final Answer: 64 \4
+Figure 1: When faced with flawed questions, Left: Vanilla reasoning models fall into repetitive speculation and
+eventual hallucination. Despite identifying the missing conditions during the thinking process, they still attempt to
+force an answer, ultimately providing an incorrect solution. Middle: Models with passive critical thinking are more
+cautious, refusing to answer upon identifying flaws in the question. However, this interaction remains suboptimal,
+as it shifts the burden to the user to recognize and fix the errors. Right: Our trained models, equipped with proactive
+critical thinking, actively seek clarification by offering precise feedback, greatly reducing the user effort.
+2024). Following previous studies (Ma et al., 2024; — tion answerability. This approach effectively in-
+Sun et al., 2024), we focus on the mathematical creases the diversity of the SFT data and accelerates
+reasoning task and derive our datasets from the the RL convergence through more dense reward
+widely used GSM8K dataset (Cobbe et al., 2021). signals.
+We first identify the key variables in the original We evaluate popular Qwen3 (Yang et al., 2025)
+questions. Then, we randomly remove one vari- and Llama (Meta, 2024) series models on our GSM-
+able and rephrase the resulting question for fluency. MC and GSM-MCE benchmarks. The results re-
+This approach effectively mitigates the bias intro- __ veal that despite extensive post-training, these mod-
+duced in previous work, where LLMs are directly _ els still struggle with proactive critical thinking,
+instructed to remove information from questions. particularly the smaller ones. Notably, while re-
+Nevertheless, this process still generates many low- _ cent inference-time scaling approaches have sig-
+quality cases, similar to those in prior studies. To _ nificantly advanced performance on complex rea-
+ensure high quality, we apply strict filtering strate- soning tasks, we find they can hinder proactive
+gies and retain only those cases that can be resolved critical thinking capability. However, our train-
+through proactive critical thinking using DeepSeek- _ ing approach successfully enhances proactive crit-
+V3. This results in a final test set of 1,368 high- ical thinking performance while maintaining ac-
+quality cases, which we named GSM-MC. To fur- curacy on standard questions across model sizes.
+ther enhance the challenge and evaluate models’ Most impressively, for Qwen3-1.7B, we achieve a
+robustness against distractions, we augment these _ substantial improvement in final answer accuracy
+questions by injecting irrelevant information. Then from 0.15% to 73.98%. Further analysis shows
+the new dataset, designated GSM-MCE, undergoes __ that our method also generalizes effectively to out-
+the same rigorous filtering to maintain its high qual- _of-distribution unanswerable questions. Our key
+ity. contributions are summarized as follows:
+
+To instill proactive critical thinking capabilities * We introduce the concept of proactive criti-
+into models, we investigate both supervised fine- cal thinking: a paradigm where models not
+tuning (SFT) and reinforcement learning (RL). Us- only identify unanswerable queries but also
+ing the data preparation pipeline described above, provide constructive feedback to help users
+we combine revised unanswerable questions with supply missing information.
+original questions to construct the training set. Fur-
+thermore, we enhance both training paradigms by ¢ We develop an automated data preparation
+incorporating a heuristic information about ques- pipeline for generating the high-quality flawed
+
+
+--- Page 3 ---
+
+question and conduct two novel benchmarks, with humans but also identify flaws and provide
+GSM-MC and GSM-MCE, for evaluating feedback to refine the context. To this end, we
+proactive critical thinking. construct new datasets tailored to this objective
+and emphasize the role of reasoning in this setting,
+* We demonstrate that both SFT and RL can aspects that are orthogonal to COLLABLLM.
+effectively cultivate proactive critical think-
+ing abilities, and show that their efficacy is
+significantly enhanced by incorporating an- 3 Preliminary
+swerability heuristics.
+We define proactive critical thinking as the abil-
+2 Related Work ity of a model to actively collaborate with humans
+While LLMs are increasingly expected to handle rather than p assively refusing to respond when re-
+real-world tasks, they often struggle with the am- ceiving flawed inputs.
+biguous or flawed queries that users frequently
+pose. To address this issue, prior work (Li et al., Proactive Questioning: A Preliminary Explo-
+2024; Ma et al., 2024; Sun et al., 2024; Song et al, | ration on Proactive Critical Thinking In this
+2025; Fan et al., 2025) has focused on investigating | Work, we begin by formalizing the simplest sce-
+the critical thinking capabilities of LLMs. Most Nario: Given a question x that may lack key in-
+of these studies have concentrated on the math- formation, the LLM 7 first attempts to generate
+ematical domain, constructing datasets by modi- _ its response y = 7(x) through proactive critical
+fying well-formed problems to make them unan- _ thinking. To enable this capability, we augment the
+swerable. Their findings show that current LLMs __ input with the following instruction:
+frequently fail to accurately detect input flaws (Ma
+et al., 2024), and even the latest large reasoning Instruction for Activating Proactive Questioning
+models (LRMs) rarely decline to answer flawed Question:
+questions (Fan et al., 2025). However, Song et al. [QUESTION]
+(2025) demonstrates that critical thinking can be ef- If the question is answerable. provide the fi
+fectively improved through specific training. Nev- nal answer Otherwise, ask the user for the necessary
+ertheless, we argue that this approach remains pas- information by phrasing the request as a question.
+sive and may have limited usefulness in addressing
+Meee ures users to identify If the question x is answerable, the LLM di-
+In this work, we introduce proactive critical rectly p rovides the solution an n(x). Otherwise,
+thinking, enabling models to move beyond mere the model identifies the missing information and
+flaw detection and to actively guide users with clear proactively generates a follow-up avery d= m(z)
+and targeted feedback. Existing research (Kuhn to request clarification. Upon receiving the user’s
+et al., 2022; Wang et al., 2024; Andukuri et al., resp onse a to the query q, the LLM then synthe-
+2024: Zhang et al., 2025: Li et al., 2025) has pri- 12€S the final solution y = (x, q,q) using all
+marily focused on asking clarifying questions in available information.
+response to ambiguous user requests. However,
+these approaches often excel only at detecting ob- Simulating a User with a User Agent In the
+vious flaws, such as missing variables in tool us-  4bove setting, a user is required to respond to the
+age (Wang et al., 2024), or operate in general con- LLM’s request. Since it is impractical to involve
+versational settings with limited ambiguity (An- | human participants, we use a strong LLM to simu-
+dukuri et al., 2024; Zhang et al., 2025). More _ late the user.
+complex cases requiring deeper reasoning remain For an unanswerable question x, we provide the
+under-explored. The most closely related work to _ user agent with its unmodified version, denoted as
+ours is the recent COLLABLLM (Wu et al., 2025), —_@, that retains all necessary information. When the
+which shares the same goal of enhancing human- __ user agent receives a clarification query q, it will
+AI collaboration through multi-turn conversations. generate the corresponding reply a according to the
+In contrast, our work focuses on critical thinking, original question <. The prompt used in the user
+where an LLM should not only learn to collaborate agent is provided in Appendix A.
+
+
+--- Page 4 ---
+
+4 Benchmarks Unlike previous approaches that directly prompt
+Follow! ; k (M 1. 2024: § LLMs to edit original questions, our method re-
+ollowing previous work ( a et al., > un duces bias by preventing LLMs from consistently
+et al., 2024), we adopt the widely used GSM8K . ae ws .
+: applying similar editing, thereby enhancing ques-
+dataset (Cobbe et al., 2021) as the foundation for . . .
+; ; tion diversity.
+constructing our benchmarks to evaluate proactive
+critical thinking. We introduce an automated data _— Irrelevant Information Injection To increase
+construction pipeline that generates and selects the difficulty of problems for further challenging
+high-quality evaluation examples through four key — the model’s proactive critical thinking, we intro-
+steps: (1) Variable Recognition, (2) Unanswerable duce an optional step that adds distracting but seem-
+Question Creation, (3) Irrelevant Information Injec- ingly reasonable details. The newly resulting ques-
+tion, and (4) Sampling-Based Filtering. All steps tions allow us to test whether models can focus
+are implemented using DeepSeek-V3!. on relevant information while ignoring irrelevant
+Variable R. . 7 hij b content. The prompt utilized for this procedure is
+aria e ecognition or eac instance, we be- detailed below:
+gin by identifying all key information elements
+within the natural question. To maintain accurate Prompt for Irrelevant Information Injection
+variable positions for subsequent steps, we apply ; ; ; _. ; ;
+he followi 1 h Hide a misleading detail in the given question. The
+the Tollowing prompt template to annotate eac new question should yield the same answer as the
+variable without changing the original content. The original.
+template includes demonstration examples to guide
+; ; Examples:
+the LLM’s formatting:
+Input:
+Prompt for Variable Recognition Natalia sold clips to 48 of her friends in April, and
+then she sold half as many clips in May. How many
+Identify and annotate key information in questions clips did Natalia sell altogether in April and May?
+by enclosing each piece in square brackets [].
+Output:
+Examples: Natalia sold clips to 48 of her friends in April, and
+then she sold half as many clips in May, but only to
+Input: 30 of her friends. How many clips did Natalia sell
+Natalia sold clips to 48 of her friends in April, and altogether in April and May?
+then she sold half as many clips in May. How many
+clips did Natalia sell altogether in April and May? [Other demonstrations... ]
+Output: Now, hide a misleading detail in the follow-
+Natalia sold clips to [48 of her friends in April], and ing question:
+then she sold [half as many clips in May]. How many [Question]
+clips did Natalia sell altogether in April and May?
+[Other demonstrations... ] Sampling-Based Filtering While the previous
+steps generate diverse unanswerable questions, we
+Now, annotate the following question: . . woos .
+; still observe persistent quality issues similar to
+[Question] . . . .
+those reported in prior studies. To address this, we
+: : conduct an error analysis (see Table 1) and identif
+Unanswerable Question Creation For each an- : . ysis ( ) y
+. . three main categories of problems. Based on these
+notated question, we randomly remove one variable findi then desi fic filter trateci
+. a ndings, we then design speci ering strategies
+and instruct the LLM to rephrase it into a well- ng , gn specie 8 8
+. . to mitigate them.
+formed but unanswerable question. The following . .
+. . For each question, we sample 16 solutions gen-
+prompt is designed to ensure fluency: :
+erated by DeepSeek- V3 (with the user agent also
+Prompt for Unanswerable Question Creation implemented using DeepSeek-V3). To ensure data
+quality, we apply the following filters:
+Given a question with removed information,
+es any unnatural phrasing while maintaining  Answerable Question: Remove questions
+where the LLM provides direct solutions in
+The question is: [Question] the first turn for more than 12 cases, indicating
+high confidence that the question is answer-
+'DeepSeek-V3-0324 able without further interaction.
+
+
+--- Page 5 ---
+
+Error Type Description Example
+Answerable Question The question is still answerable after removing Original: The first man to walk on the moon,
+key information, or the missing detail can be Neil Armstrong, was from which country?
+inferred or corrected without ambiguity. Modified: The first man to walk on the moon
+was from which country?
+Obvious Information Missing The missing information is easily identifiable Original: A box contains 10 red balls and 5
+due to vague terms (e.g., “some”, “a certain blue balls. How many balls are there in total?
+number”). Modified: A box contains some red balls and 5
+blue balls. How many balls are there in total?
+Unclarifiable Question There is confusion about the appropriate Original: In triangle ABC, ZC = 90°. Legs
+perspective for making a clarification request, AC = 3cm, BC = 4cm. Find AB.
+increasing the difficulty of evaluation. Modified: In triangle ABC, AC = 3cm,
+BC = 4cm. Find AB.
+Table 1: Summarized error types with their descriptions and typical examples. For clarity, the examples are manually
+constructed rather than selected from the GSM8K dataset.
+¢ Obvious Information Missing: Eliminate the training set of GSM8K. However, due to the
+questions that are successfully addressed in high computational cost of sampling-based filter-
+the second turn for more than 12 cases, sug- ing, we instead employ a smaller LLM to perform
+gesting the question may be overly simplistic. rejection sampling and collect training trajectories.
+. . Nevertheless, because the LLM lacks inherent
+° Unclarifiable Question: Discard questions proactive critical thinking capabilities, efficiently
+that remain unresolved m all 16 attempts, as obtaining valid trajectories remains challenging.
+they may be too challenging to support mean- To address this, we enhance the LLM’s question-
+ingful interaction. ing ability by incorporating heuristic information
+After the rigorous filtering process, we obtain through prompting:
+two high-quality datasets: Instruction Enhanced with Heuristic Information
+* GSM-MC: Contains 1,368 questions made Question:
+unsolvable by removing key information. [QUESTION]
+. . This question is unanswerable due to missing
+* GSM-MCE: An enhanced version with 1,134 key information. Ask the user for the necessary
+questions incorporating irrelevant information information by phrasing the request as a question.
+to increase difficulty.
+This approach encourages the LLM to seek
+5 Methods missing information through targeted questioning,
+In this section, we explore two approaches to en- thereby improving the recall to reach correct an-
+hance proactive critical thinking: traditional super- S&S: To prevent a performance decline on natural
+vised fine-tuning (SFT) and recently prevalent rein- questions, we also incorporate their corresponding
+forcement learning (RL). Additionally, we leverage t'4/¢ctories for training.
+heuristic information about whether a question is —_ Reinforcement Learning On-policy RL has
+answerable to further improve model performance. proven effective in enabling LLMs to indepen-
+Supervised Fine-Tuning The most straightfor- dently explore strategies to achieve target objec-
+ward approach is to fine-tune the LLM directly on _ tives. In this work, we adopt the popular GRPO
+prepared human-Al interaction trajectories. Given 4/gorithm (Shao et al., 2024), training the model
+a trajectory (x,q,a,y), we apply the standard ©M the same question set used for SFT:
+cross-entropy loss to optimize the model 7: G 10
+cL 1 \- 1 S 79 (0i,t|4, 0i,<t) A
+= GRPO = HDL Ait
+Lyi = — log p(q | r,T) _ log p(y | ©, q, a, 7). G i=] |o4| t=] Torq (i,t |4s 0i,<t) ‘
+(1) ~ 7
+Since no training data is readily available, we
+& reacn'y & ; — BD |76||TMree] |,
+follow the same data preparation pipeline described
+in §4 to generate unanswerable questions based on (2)
+
+
+--- Page 6 ---
+
+where A represents the advantage computed using Models | __ GSM8K GSM-MC GSM-MCE
+outcome rewards after group normalization, and the | ACC REQ ACC REQ ACC. REQ
+KL divergence term prevents the policy from devi- Qwen3-1.7B w/o think
+ating too far from the reference policy. Here, 0; de- Vanilla | 78.01 0.00 095 1.75 062 1.15
+: : : SFT 78.32 6.90 38.60 77.70 17.46 69.40
+notes a rollout interaction trajectory. Note that we RL 9203 773 6082 9159 3713 8818
+exclude the loss calculation for the user-provided SFT+RL | 85.44 6.75 73.68 95.69 40.04 90.12
+turns (i.e., responses to the LLM’s requests) in our Qwen3-1.7B w/ think
+optimization objective. Vanilla | 87.79 0.00 0.15 0.66 0.00 0.00
+: ae SFT 86.13 0.68 44.15 70.54 14.99 44.44
+For the reward function, we primarily consider RL 87415466213 «9284-22919 84.29
+the correctness of the final answer, assigning r = 1 SFT+RL | 85.75 5.91 73.98 97.00 41.09 92.95
+for correct answers and r = 0 for incorrect ones. Qwen3-8B w/o think
+However, due to the sparsity of this reward signal, Vanilla 92.19 0.68 55.59 76.06 25.09 59.08
+training may converge slowly. To mitigate this SFT 91.67 1.74 = 65.35 91.23 27.78 81.75
+; ; ; RL 90.60 5.53 81.73 99.63 42.59 95.86
+issue, we augment the reward function with the SFT+RL | 91.21 455 79.24 99.12 36.16 95.33
+following heuristic signals: Qwen3-8B w/ think
+; . Vanilla | 94.62 0.08 44.92 57.75 14.11 29.59
+¢ For answerable questions, the LLM receives SFT 9560 030 5738 7522 2152 4832
+a penalty of —0.5 when making unnecessary RL 92.27 5.00 85.53 99.12 49.38 94.80
+SFT+RL | 93.48 3.26 83.11 98.61 41.62 92.86
+requests. i
+Llama-3.2-3B-Instruct
+¢ For unanswerable questions, the LLM obtains Vanilla | 64.06 0.08 0.15 044 0.09 0.26
+: : SFT 48.60 30.93 31.87 86.77 14.46 79.10
+a reward of +0.5 for making requests, inde- RL 7915 796 5797 9137 2892 8474
+pendent of the final answer’s correctness. SFT+RL | 75.74 12.59 74.49 96.42 48.32 91.98
+6 Experiments Table 2: Accuracy (ACC) and Request Ratio (REQ)
+of the models evaluated on the standard GSM8K and
+6.1 Setup our two constructed benchmarks, GSM-MC and GSM-
+6.1.1 Datasets and Evaluation Metrics MCE. For the Qwen3 models, we report results both
+. with and without the “thinking mode” to examine the
+We conduct experiments on the standard are
+role of reasoning in this task.
+GSM8K (Cobbe et al., 2021) test set, and our
+proposed benchmarks GSM-MC and GSM-
+MCE (detailed in §4). Model performance is architecture family, to verify the generalizability of
+evaluated using the following metrics: the training approach.
+A ACC): M h For SFT, we first use the Qwen3-8B model to
+couracy ( ): Te GSMBI. we eve collect complete trajectory data via rejection sam-
+of the mo © ‘S answer, FOr » We eval- pling. The models are then trained on this data for
+uate the initial response; for GSM-MC and ‘ ‘ ‘
+° one epoch with a learning rate of Se-6, employing a
+GSM-MCE, where clarification is needed, we ine learni heduler with h
+luate the second.turn response cosine learning rate scheduler with a warmup phase
+evaluate P . covering 10% of the total training steps. For RL,
+* Request Ratio (REQ): Quantifies the We adopt a learning rate of 1e-6 and set the number
+model’s tendency to seek missing information. °F Tollouts to 8.
+Concretely, it is defined as the proportion of We use the Qwen3-14B model as the user agent
+instances in which the model generates a clar- for data construction and training to balance cost
+ifying question in its initial response. and maintain validity, while DeepSeek-V3 (Liu
+et al., 2024) is employed during evaluation to en-
+6.1.2 Models and Implementation Details sure more accurate results.
+The primary experiments are conducted on a se- .
+lection of representative models varying in size 6.2 Main Results
+and architecture, including (1) the compact Qwen3- _—- Vanilla models fail to provide effective feedback
+1.7B model (Yang et al., 2025) with an optional to flawed prompts. As presented in Table 2, off-
+“thinking mode’, (2) the larger Qwen3-8B model _ the-shelf models struggle with proactive critical
+for assessing scalability, and (3) the Llama-3.2- thinking when confronted with flawed or ambigu-
+3B-Instruct model (Meta, 2024), from a different ous prompts. This limitation is particularly pro-
+
+
+--- Page 7 ---
+
+nounced in smaller models. For instance, Qwen3- Models | __&SM8K GSM-MC GSM-MCE
+1.7B and Llama-3.2-3B-Instruct show almost no | ACC REQ ACC REQ ACC REQ
+capacity to handle these imperfect questions, with Qwen3-1.7B w/o think
+
+both ACC and REQ approaching 0% on GSM-MC SFT _ 78.32 6.90 38.60 77.70 17.46 69.40
+and GSM-MCE. Re” | s208 773 6082 9159 3713. B88
+
+Although the larger Qwen3-8B model demon- w/o filter | 78.99 12.51 55.19 89.33 29.63 87.13
+strates some ability to generate clarification re- Qwen3-1.7B w/ think
+quests, its performance still undergoes a significant SFT _ 86.13 0.68 44.15 70.54 14.99 44.44
+drop. Its ACC on GSM-MC decreases by nearly gy” | s74) S45 6213. 9254 2019 8422
+50% compared to that on the standard GSM8K w/o filter | 84.46 9.78 57.09 89.62 21.96 81.92
+benchmark, with an even sharper decline observed ;
+on GSM-MCE. This suggests that, even extensive Table 3: Results of the ablation study on the data filter-
+post-training has not equipped these models with mE PROCESS:
+the crucial skill of actively seeking the user’s help
+when faced with problematic queries. This short- However, this trend is decisively reversed after
+coming is likely attributed to a lack of exposure to _ RL training. The “thinking mode” evolves into a
+noisy and imperfect training data, which more ac- _ powerful asset, enabling the model to carefully an-
+curately mirrors the complexities and ambiguities _alyze flaws in prompts and formulate effective clar-
+of real-world scenarios. ifying questions. This transformation is most evi-
+Training unlocks proactive critical thinking. dent m the Qwen3-8B, where enabling the “think-
+In a significant departure from vanilla performance, ing mode” increases its ACC on GSM-MC from
+both SFT and RL yield substantial improvements 81.73% to a peak of 85.53%. Additionally, we ob-
+in ACC and REQ. Notably, the Qwen3-1.7B and serve that RL also enhances the model S thinking
+Llama-3.2-3B-Instruct models exhibit a remark- ability even without explicitly activating the “think-
+able 70% increase on GSM-MC and a 40% im- ing mode”, as evidenced by the increasing response
+provement on GSM-MCE after two-stage training. length. Representative cases further illustrating the
+The performance gap with GSM8K is significantly Pe Appendix ct of “thinking mode” are provided
+narrowed. ,
+
+Interestingly, the results for the Qwen3-8B General capabilities are preserved. A critical
+model present an unexpected phenomenon: em- _ outcome of our training is that the substantial gains
+ploying RL alone surpasses the performance of jn proactive critical thinking do not come at the cost
+two-stage training. This may arise from the na- of the models’ core mathematical reasoning abil-
+ture of the SFT data, which is self-generated by ties. As presented in Table 2, the performance
+the Qwen3-8B model and thus does not inherently of our trained models on the standard GSM8K
+enhance its capabilities. Moreover, by further rein- —_ henchmark remains remarkably stable. In fact,
+forcing its original high-probability tokens during _ for smaller models, training even yields slight im-
+SFT, the entropy of the model’s outputs may be provements in their foundational skills. For in-
+inadvertently reduced. This could constrain the stance, the Llama-3.2-3B-Instruct model’s ACC
+exploratory nature of the subsequent RL phase, on GSMB8K increases significantly from 64.06% to
+thereby hindering its overall effectiveness. 75.74% after undergoing the full SFT+RL training.
+Training activates a beneficial “thinking mode”. This demonstrates that our approach successfully
+A notable observation from our experiments is integrates a new, specialized skill of proactive criti-
+that RL fundamentally changes how models use cal thinking, while simultaneously preserving and
+their internal “thinking mode.” For vanilla mod-  °Y¢2 enhancing the models’ general capabilities,
+els, activating the “thinking mode” often degrades resulting in more robust and reliable models fit for
+performance. The extended thinking appears to  CO™plex, real-world applications.
+induce counterproductive self-doubt rather than 6.3 Analysis
+useful analysis, leading to a clear drop in perfor-
+mance. For example, the Qwen3-8B model’s ACC 6-3-1. The Importance of Data Filtering
+on GSM-MC decreases from 55.59% to 44.92% To verify the filtering process in our data curation
+when enabling the “thinking mode”. method, we conduct an ablation study on Qwen3-
+
+
+--- Page 8 ---
+
+Turns | Qwen3-1.7B Qwen3-8B
+1.2 | w/o think w/think w/othink  w/ think
+SFT
+210 TTF ONT oo
+3 2 38.60 44.15 65.35 57.38
+2 3 43.49 49.71 66.01 57.73
+0.8 4 45.69 50.64 66.52 58.12
+—— w/ Think, w/ Heuristic ON
+w/ Think, w/o Heuristic RL
+0.6 —— w/o Think, w/ Heuristic —.
+w/o Think, w/o Heuristic 2 60.82 62.13 81.73 85.53
+0 50 100. 180. 200. 280 300-380 3 61.26 62.72 83.26 88.30
+Steps 4 61.99 63.74 84.06 88.67
+SFT+RL
+Figure 2: Reward curves in the RL stage following SFT, Ss
+‘ : : P 2 73.68 73.98 79.24 83.11
+th d th and without
+comparing te Teware’ Plogression Wilh ang waou 3 74.63 74.49 80.48 85.96
+incorporating heuristic information. 4 74.93 75,23 $1.07 86.42
+Methods | Qwen3-8B w/o think Qwen3-8B w/ think Table 5: The ACC on the GSM-MC benchmark across
+multiple conversational turns.
+| ACC REQ ACC REQ Itipl |
+Vanilla 21.15 32.69 17.31 28.84
+SFT 42.31 73.08 26.92 46.15 .
+RL 57.69 80.77 59.62 76.92 guidance serves as a powerful catalyst for more
+SFT+RL | 50.00 80.77 55.77 78.85 efficient RL.
+Table 4: Qwen3-8B model’s performance on the out-of- 63,3 Generalization Analysis
+distribution MIP-MATH dataset. , .
+To assess the generalization capabilities of our
+trained models, we conduct an out-of-distribution
+1.7B model. In this experiment, we train a control evaluation using the MIP-MATH dataset (Fan
+version of the model using an unfiltered dataset et al., 2025). This challenging benchmark is de-
+created by randomly sampling from the original __ rived from the standard MATH dataset (Hendrycks
+data pool. The size of this unfiltered dataset is et al., 2021) by intentionally omitting a critical
+kept identical to our curated, high-quality dataset | premise from each problem manually. The re-
+to ensure a fair comparison. As detailed in Table 3, sults, presented in Table 4, demonstrate that our
+removing the data filtering pipeline leads toa sig- trained Qwen3-8B models significantly outperform
+nificant degradation in model performance. For _ the vanilla counterpart, irrespective of whether
+instance, when the “thinking mode” enabled, the the “thinking mode” is enabled. This robust per-
+ACC of the SFT model on the GSM-MC bench- | formance on the challenging, out-of-distribution
+mark falls sharply from 44.15% to just 27.20%. benchmark indicates that the proactive critical
+This substantial decrease underscores the critical- thinking skills imparted by our method are not
+ity of our carefully designed data filtering process _ confined to the training distribution. Instead, our
+in enabling the model to acquire proactive critical | approach fosters a generalizable capability, further
+thinking skills during training. validating the effectiveness of our data curation and
+training paradigm.
+6.3.2 The Role of Heuristic Guidance
+To evaluate the influence of heuristic guidance dur- 6.3.4 Multi-Turn Expansion Experiments
+ing training, we analyze the reward curves inthe _ Finally, we investigate whether the proactive criti-
+RL phase. As shown in Figure 2, models trained cal thinking skills instilled in our models can gen-
+with heuristics (the red and blue lines) begin with _ eralize to a multi-turn dialogue setting, a scenario
+a substantially higher initial reward compared to __ that is not explicitly included in training. To evalu-
+their counterparts trained without this guidance (the —_ ate this, we design an experiment where the model
+pink and light-blue lines). Furthermore, they ex- must iteratively assess whether it has gathered suf-
+hibit a markedly faster rate of convergence, thereby _ ficient information to answer, engaging in multiple
+achieving higher performance sooner. This distinct rounds of clarification if necessary. The results, de-
+advantage persists regardless of whether the “think- _ tailed in Table 5, reveal a remarkable trend: model
+ing mode” is enabled, demonstrating that heuristic | performance consistently improves as the number
+
+
+--- Page 9 ---
+
+of interactive turns increases. For instance, the RL- Chenrui Fan, Ming Li, Lichao Sun, and Tianyi Zhou.
+trained Qwen3-8B model (with thinking enabled) 2025. Missing premise exacerbates overthinking:
+improves its ACC from 85.53% in a standard two- Are reasoning models losing critical thinking skill?
+; : : arXiv preprint arXiv:2504.065 14.
+turn interaction to 88.67% after four dialogue turns. TT
+This steady enhancement indicates that the learned | Yunhe Feng, Sreecharan Vanam, Manasa Cheruku-
+. Pe spe we pally, Weijian Zheng, Meikang Qiu, and Haihua
+proactive critical thinking is not a rigid, single-step ar :
+we . Chen. 2023. Investigating code generation perfor-
+capability but rather an adaptable skill that natu- mance of chatgpt with crowdsourcing social data. In
+rally extends to more complex interactions. 2023 IEEE 47th Annual Computers, Software, and
+Applications Conference (COMPSAC), pages 876—
+7 Conclusion 885. IEEE.
+This work presents a preliminary study on proactive Dan Hendrycks, Collin Burns, Saurav Kadavath, Akul
+‘tical thinking in LLM h h del 1 Arora, Steven Basart, Eric Tang, Dawn Song, and Ja-
+critica thinking m Ss where the mode not only cob Steinhardt. 2021. Measuring mathematical prob-
+identifies flaws in user input but also actively en- lem solving with the math dataset. In Proceedings
+gages with users to collaboratively solve problems. of the Neural Information Processing Systems Track
+We first propose a data preparation pipeline to con- on Datasets and Benchmarks, volume 1.
+struct GSM-MC and its more challenging exten- Shima IMANI, Harsh Shrivastava, and Liang Du. 2024.
+sion, GSM-MCE, enabling systematic evaluation Mathematical reasoning using large language models.
+of proactive critical thinking. Building on these US Patent App. 18/144,802.
+benchmarks, we then improve model performance —_ Yoonsu Kim, Jueon Lee, Seoyoung Kim, Jaehyuk Park,
+through supervised fine-tuning and reinforcement and Juho Kim. 2024. Understanding users’ dis-
+learning, enhanced with heuristic guidance. Exper- satisfaction with chatgpt responses: Types, resolv-
+i tal results demonstrate that our approach leads ing tactics, and the effect of knowledge level. In
+men : : PP Proceedings of the 29th International Conference on
+to significant improvements on both test sets across Intelligent User Interfaces, pages 385-404.
+three different models. As this area is still under- ; . ; ; ;
+lored, several promising directions remain: (1) Polina Kirichenko, Mark Ibrahim, Kamalika Chaudhuri,
+exp ? P 8 ; : and Samuel J Bell. 2025. Abstentionbench: Rea-
+Developing benchmarks covering a broader range soning IIlms fail on unanswerable questions. arXiv
+of domains, such as medicine. (2) Extending inter- preprint arXiv:2506.09038.
+action length to more turns to address more cOM- } ovenz Kuhn, Yarin Gal, and Sebastian Farquhar.
+plex tasks. (3) Exploring more robust training al- 2022. Clam: Selective clarification for ambiguous
+gorithms capable of providing diverse feedback questions with generative language models. arXiv
+beyond questioning. preprint arXiv:2212.07769.
+Qintong Li, Leyang Cui, Xueliang Zhao, Lingpeng
+Kong, and Wei Bi. 2024. Gsm-plus: A comprehen-
+References sive benchmark for evaluating the robustness of Ilms
+Azza Alkaabi and Deena Elsori. 2025. Navigating dig- as mathematical problem ‘° Ivers. In Proceedings
+: - ae of the 62nd Annual Meeting of the Association
+ital frontiers in uae healthcare: A qualitative explo- Faw Famniatanal Tinoniaien PUninma do Tane
+; ; ; . ; for Computational Linguistics (Volume 1: Long
+ration of healthcare professionals’ and patients’ ex- Papers), pages 2961-2984
+periences with ai and telemedicine. PLOS Digital =apets? Pas ,
+Health, 4(4):e0000586. Shuyue Stella Li, Jimin Mun, Faeze Brahman, Jonathan
+; ; . . ; Iigen, Yulia Tsvetkov, and Maarten Sap. 2025. Align-
+Chinmaya Andukuri, Jan-Philipp Franken, Tobias Ger- ing llms to ask good questions a case study in clinical
+stenberg, and Noah D Goodman. 2024. Star-gate: reasoning. CoRR, abs/2502.14860.
+Teaching language models to ask clarifying questions. —_
+arXiv preprint arXiv:2403.19154. Yujie Lin, Ante Wang, Moye Chen, Jingyao Liu, Hao
+; ; ; Liu, Jinsong Su, and Xinyan Xiao. 2025. Inves-
+Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, tigating inference-time scaling for chain of multi-
+Mark Chen, Heewoo Jun, Lukasz Kaiser, Matthias modal thought: A preliminary study. In Findings of
+Plappert, Jerry Tworek, Jacob Hilton, Retichiro the Association for Computational Linguistics: ACL
+Nakano, Christopher Hesse, and John Schulman. 2025, pages 15654-15667, Vienna, Austria. Associa-
+2021. Training verifiers to solve math word prob- tion for Computational Linguistics.
+lems. arXiv preprint arXiv:2110.14168.
+Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang,
+Yihong Dong, Xue Jiang, Zhi Jin, and Ge Li. Bochao Wu, Chengda Lu, Chenggang Zhao, Chengqi
+2024. Self-collaboration code generation via chat- Deng, Chenyu Zhang, Chong Ruan, et al. 2024.
+gpt. ACM Transactions on Software Engineering Deepseek-v3 technical report. arXiv_ preprint
+and Methodology, 33(7):1-38. arXiv:2412.19437.
+
+
+--- Page 10 ---
+
+Jingyuan Ma, Damai Dai, Zihang Yuan, Weilin Luo, Ryutaro Yamauchi, Sho Sonoda, Akiyoshi Sannai,
+Bin Wang, Qun Liu, Lei Sha, Zhifang Sui, et al. 2024. and Wataru Kumagai. 2023. Lpml: Ilm-prompting
+Large language models struggle with unreasonability markup language for mathematical reasoning. arXiv
+in math problems. arXiv preprint arXiv:2403.19346. preprint arXiv:2309.13078.
+
+AI Meta. 2024. Llama 3.2: Revolutionizing edge ai An Yang, Anfeng Li, Baosong Yang, Beichen Zhang,
+and vision with open, customizable models. Meta AI Binyuan Hui, Bo Zheng, Bowen Yu, Chang Gao,
+Blog. Retrieved December, 20:2024. Chengen Huang, Chenxu Ly, et al. 2025. Qwen3
+
+technical rt. arXi int arXiv:2505.09388.
+
+AM Rahman, Junyi Ye, Wei Yao, Sierra S Liu, Jesse ecainical Fepor'. ary preprmaraweeeeee
+Yu, Jonathan Yu, Wenpeng Yin, and Guiling Wang. — Shunyu Yao, Dian Yu, Jeffrey Zhao, Izhak Shafran,
+2024. From blind solvers to logical thinkers: Bench- Tom Griffiths, Yuan Cao, and Karthik Narasimhan.
+marking IIms’ logical interity on faulty mathematical 2023. Tree of thoughts: Deliberate problem solv-
+problems. arXiv preprint arXiv:2410.18921. ing with large language models. Advances in neural
+
+Liangying Shao, Yanfu Yan, Denys Poshyvanyk, and information processing systems, 36:1 1809-11822.
+Jinsong Su. 2025. Unigencoder: Merging seq2seq sy Diego Zamfirescu-Pereira, Richmond Y Wong, Bjo-
+and seq2tree paradigms for unified code generation. ern Hartmann, and Qian Yang. 2023. Why johnny
+In 2025 IEEE/ACM 47th International Conference can’t prompt: how non-ai experts try (and fail) to
+on Software Engineering: New Ideas and Emergin, design Ilm prompts. In Proceedings of the 2023 CHI
+Results (ICSE-NIER), pages 71-75. conference on human factors in computing systems,
+
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, pages 1-21.
+
+Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Michael JQ Zhang, W. Bradley Knox, and Eunsol
+Zhang, YK Li, Yang Wu, et al. 2024. Deepseekmath: : vad; ar
+
+: a : : Choi. 2025. Modeling future conversation turns to
+Pushing the limits of mathematical reasoning in open teach LLMs to ask clarifying questions. In The
+language models. arXiv preprint arXiv:2402.03300. Thirteenth International Conference on Learning
+
+Linxin Song, Taiwei Shi, and Jieyu Zhao. 2025. The Representations.
+ne '. eee finetuning. arXiv Zhehua Zhou, Jiayang Song, Kunpeng Yao, Zhan Shu,
+prepraaeeee and Lei Ma. 2024. Isr-llm: Iterative self-refined
+
+YuHong Sun, Zhangyue Yin, Qipeng Guo, Jiawen Wu, large language model for long-horizon sequential task
+Xipeng Qiu, and Hui Zhao. 2024. Benchmarking planning. In 2024 IEEE International Conference on
+hallucination in large language models based on Robotics and Automation (ICRA), pages 2081-2088.
+unanswerable math word problem. In Proceedings IEEE.
+of the 2024 Joint International Conference on
+Computational Linguistics, Language Resources
+and Evaluation (LREC-COLING 20724), pages 2178-
+
+2188.
+
+Ante Wang, Linfeng Song, Ye Tian, Baolin Peng, Dian
+
+Yu, Haitao Mi, Jinsong Su, and Dong Yu. 2025a.
+Litesearch: Efficient tree search with dynamic ex-
+ploration budget for math reasoning. In Proceedings
+of the AAAI Conference on Artificial Intelligence,
+volume 39, pages 25318-25326.
+
+Wenxuan Wang, Juluan Shi, Zixuan Ling, Yuk-Kit Chan,
+Chaozheng Wang, Chery] Lee, Youliang Yuan, Jen-
+tse Huang, Wenxiang Jiao, and Michael R Lyu. 2024.
+Learning to ask: When Ilm agents meet unclear in-
+struction. arXiv preprint arXiv:2409.00557.
+
+Yaoxiang Wang, Haoling Li, Xin Zhang, Jie Wu, Xiao
+Liu, Wenxiang Hu, Zhongxin Guo, Yangyu Huang,
+
+Ying Xin, Yujiu Yang, Jinsong Su, Qi Chen, and Scar-
+lett Li. 2025b. Epicoder: Encompassing diversity
+and complexity in code generation. In Forty-second
+International Conference on Machine Learning.
+
+Shirley Wu, Michel Galley, Baolin Peng, Hao Cheng,
+Gavin Li, Yao Dou, Weixin Cai, James Zou, Jure
+Leskovec, and Jianfeng Gao. 2025. CollabLLM:
+From passive responders to active collaborators. In
+Forty-second International Conference on Machine
+Learning.
+
+
+--- Page 11 ---
+
+A Prompt for User Agent demonstrates a markedly improved performance.
+. . When recognizing the key information is missing,
+We apply the following prompt to guide the user. omine y . . 6
+it then proactively requests the specific details from
+agent: . : : bale
+the user. This is especially true with the “thinking
+Instruction for Activating Proactive Questioning mode” enabled, which prevents the model from
+falling into unproductive analysis or hallucinations.
+wa SOG wa: Instead, it carefully confirms the missing condi-
+You are a Math Question Analyzer, a specialized . , ; :
+AI assistant designed to extract and provide specific tions and requests the necessary information from
+information from given math problems based on the user.
+student queries.
+## Capabilities
+- Analyze the content of the provided math question
+with precision
+- Identify and extract requested information if
+relevant parts present in the question
+## Knowledge Base
+- Mathematical terminology and problem structures
+- Information extraction techniques
+- Contextual understanding of student inquiries
+## Instructions
+1. Input Format:
+- Math question: [math_question]
+- Student’s query: [student_question]
+2. Processing Rules:
+- Output only the combined relevant parts about
+the requested information (no explanations).
+- Output “None” if the requested information is not
+mentioned in the math problem.
+3. Constraints:
+- Never infer or calculate missing information.
+- Never add commentary, examples, or supplemental
+text.
+- Prioritize brevity and accuracy.
+## Output Example
+Math question: James earns $20 an hour while
+working at his main job. He earns 20% less while
+working his second job. He works 30 hours at his
+main job and half that much at his second job. How
+much does he earn per week?
+Student’s query: What is James’s hourly wage at
+his second job?
+Reply: 20% less than his main job.
+## Your Turn
+Math question: [Context ]
+Student’s query: [Question]
+Reply:
+B_ Case Study
+We supplement the representative cases in Table 6.
+The answer of the unmodified version of the ques-
+tion is 350. For the vanilla Qwen3-8B model, when
+the “thinking mode” is inactive, it formulates an
+imprecise request for more information, which is in-
+sufficient to guide the user. Even, when the “think-
+ing mode” is enabled, it engages in a long but un-
+productive reasoning process, ultimately producing
+an incorrect solution. Our trained model, however,
+
+
+--- Page 12 ---
+
+Question: Axel has 50 silver pesos. He visits his friend Anna who has twice as many silver pesos as he
+Assistant: First, let’s break down the information | Assistant: To determine the total number of pesos
+... Since the question asks for the total number of | Axel and Anna have together, we need to consider
+pesos they have together, but it does not specify how | both silver pesos and gold pesos.
+to handle the gold pesos (e.g., whether they are worth | Step 1: Determine how many silver pesos Anna has
+the same as silver pesos or not), we cannot compute | ...
+the exact total without that information. Therefore, | Step 2: ... Since we don’t know how many gold
+we need to ask: pesos Axel has, we cannot calculate the total number
+of gold pesos they have together. Therefore, we need
+User: No
+Assistant: Since the answer to the question “Are
+gold pesos equivalent in value to silver pesos?” is | User: 80 gold pesos
+“No”, it implies that gold pesos are not equivalent to | Assistant: Axel has: 50 silver pesos, 80 gold pesos.
+silver pesos, or that their relationship is undefined... | Anna has:100 silver pesos (twice as many as Axel).
+Axel has 50 silver pesos. Anna has 100 silver pesos. | 80 + 40 = 120 gold pesos (40 more than Axel).
+Anna also has 40 gold pesos, but since we don’t know | Total pesos together:
+their value in silver, we cannot include them. So, the | - Silver: 50 + 100 = 150
+total number of silver pesos they have together is: - Gold: 80 + 120 = 200
+50 + 100 = Total = 150 + 200 =
+Assistant: <think> Okay, let’s see. Axel has 50 sil-
+Assistant: <think> Okay, let’s see. Axel has 50 silver | yer pesos ... Wait, but Axel’s gold isn’t mentioned ...
+pesos ... Wait, the question mentions “gold pesos” | But how much does Axel have in gold? The problem
+but the total is asked in terms of “pesos” ... Hmm, | qoesn’t mention Axel’s gold. So, maybe the ques-
+maybe the problem is considering that gold pesos are | tion is missing some information? ... Therefore, we
+also counted as pesos? ... So maybe the question is | can’t solve it as it is. So, we need to ask the user for
+considering that gold pesos are a different type, but | the amount of gold pesos that Axel has ... So, the
+the total is just the sum of silver and gold? ... Hmm. | final answer is to ask for the necessary information.
+Wait, maybe the question is in a context where all | </think>
+pesos, whether silver or gold, are just considered as | The problem states that ... However, it does not spec-
+pesos ... Alternatively, maybe the question has a typo, | ify how many gold pesos Axel has, nor does it clarify
+and “gold pesos” is supposed to be “silver pesos” ... | whether gold pesos should be included in the total
+So, Axel has 50 silver, Anna has 100 silver and 40 | number of pesos ... It is impossible to compute the
+gold. So total is 50+-100+40 = 190. So, the answer | exact total.
+would be 50 + 100 + 40 = 190. Let me check again
+... I think the answer is 190. So, I’ll go with that.
+</think>
+To determine the total number of pesos that Axel and
+Anna have together, we need to account for all the | User: Axel has 80 gold pesos.
+pesos each of them possesses. Axel has 50 silver | Assistant: Given that Axel has 80 gold pesos, we can
+pesos. Anna has twice as many silver pesos as Axel, | 20w compute the total number of pesos that Axel and
+which is 2 x 50 = 100 silver pesos. Additionally, Anna have together: Axel’s silver pesos: 50. Axel’s
+Anna has 40 more gold pesos. The question asks for | 0ld pesos: 80. Anna’s silver pesos: Twice as many
+the total number of pesos they have together. The | a8 Axel’s silver, 2 x 50 = 100. Anna’s gold pesos:
+total number of pesos is: 40 more than Axel’s gold = 80 + 40 = 120. Now,
+summing up all the pesos:
+50 + 100 + 40 =
+50 + 80 + 100 + 120 =[350]
+Table 6: Representative cases comparing the vanilla Qwen3-8B model with its trained counterpart.

@@ -1,0 +1,1135 @@
+
+
+--- Page 1 ---
+
+Role-Aware Language Models for Secure and Contextualized Access
+Control in Organizations
+Saeed Almheiri! Yerulan Kongrat? Adrian Santosh® Ruslan Tasmukhanov’
+Josemaria Verat Muhammad Dehan Al Kautsar!  Fajri Koto!
+‘Mohamed bin Zayed University of Artificial Intelligence
+?Nazarbayev University *University of Illinois at Urbana-Champaign
+4 New York University Abu Dhabi
+Saeed. Y@mbzuai.ac.ae
+Abstract
+eaten St 2}.
+Va) As large language models (LLMs) are increas- Pa
+—N ingly deployed in enterprise settings, control- er department .. —_
+ns) ling model behavior based on user roles be-
+N comes an essential requirement. Existing safety
+= methods typically assume uniform access and restructuring next quarter? ,
+— focus on preventing harmful or toxic outputs, > as
+—_ without addressing role-specific access con- er Researcher
+cn straints. In this work, we investigate whether
+LLMs can be fine-tuned to generate responses ee
+_] that reflect the access privileges associated with Ses)
+OC) different organizational roles. We explore three *
+‘ modeling strategies: a BERT-based classifier,
+N an LLM-based classifier, and role-conditioned Figure 1: A role-aware LLM rejects questions from
+YL, generation. To evaluate these approaches, we unauthorized roles, enhancing safety by restricting ac-
+construct two complementary datasets. The cess to sensitive information. [con source: Flaticon.com
+> first is adapted from existing instruction-tuning
+vA corpora through clustering and role labeling,
+oO while the second is synthetically generated to Figure 1 demonstrates how role-aware language
+= reflect realistic, role-sensitive enterprise sce- models can help prevent unauthorized access to
+ag) narios. We assess model performance across sensitive information. When the same instruction
+CN varying organizational structures and analyze is issued by users in different roles, such as a CEO
+S robustn ess to prompt injection, role mismatch, and a researcher, a role-unaware LLM may provide
+and jailbreak attempts. : ;
+Vay identical responses regardless of the requester’s per-
+N . missions. In contrast, a role-aware LLM considers
+1 Introduction ;
+> the user’s role and restricts access appropriately,
+Sa In enterprise workflows, access control is a core disclosing information only to those with sufficient
+ms security mechanism for regulating access to orga- _ Clearance and declining requests from others. This
+nizational resources. Through authentication and approach enables organizations to align LLM be-
+authorization, systems verify user identities and havior with established access policies, minimizing
+enforce access privileges. While role-based access __ the risk of information leakage across roles.
+control (RBAC) is well established in traditional Despite increasing attention to the safety and
+software systems (Ferraiolo et al., 1995; Sandhu, alignment of LLMs (Wang et al., 2024a; Ge et al.,
+1998; Park et al., 2001), its application to large lan- 2024), the challenge of role-conditioned instruc-
+guage models (LLMs) remains largely unexplored. _ tion filtering has received limited focus. Most ex-
+As LLMs are increasingly deployed for enterprise isting approaches assume uniform user access or
+applications such as document generation (Wise- _apply static safety filters, focusing primarily on pre-
+man et al., 2017), summarization (Laskar et al., | venting the generation of harmful or toxic content
+2023; Zhang et al., 2025), and internal assistance (Wang et al., 2024a,b; Azmi et al., 2025). These
+(Muthusamy et al., 2023), it becomes critical to | methods do not account for access control policies
+enforce access control not just over outputs but at —_ that vary by user role—a critical requirement in
+the level of model instructions. organizational contexts. To support secure, multi-
+1
+
+
+--- Page 2 ---
+
+Test Set Distribution
+— ame)
+ex OO instruction / i
+dataset (Doll 1 4 “
+gdp Smee G) Cae = ey ED
+y 6 izati ee,
+6666660 dataset Psynthofice | ae ho
+Training Phase
+Role-aware Cls 1Gen LLM
+_ Role-aware |--” (granted) ! department ... _
+\ (denied) i] info. ' Quantitative Result:
+' ' Acc /FPR/FNR/F1
+Which departments Hl 1
+for restructuring next i es 1 undergo restructuring... -|
+- me
+3 LG Se
+' Role-aware LLM-Gen ' Evaluation Clarity
+' ae restructure the ... v!
+that.
+Figure 2: Overview of our methodology. Top-left: dataset preparation yields four datasets across two types
+(repurposed and synthetic) with predefined structures. Top-right: balanced test distribution over positive/negative
+and seen/unseen paraphrases. Bottom: three training strategies: Role-aware Cls (BERT-based), Role-aware LLM-
+Cls (LLM-based), and Role-aware LLM-Gen (response generation).
+user deployments, we pose the following research Our contributions can be summarized as follows:
+question: Can large language models be fine-tuned ¢ We evaluate role-aware LLMs in realistic or-
+to generate role-aware responses that enforce ac- ganizational settings with diverse access struc-
+cess control? While LLMs continue to advance tures, using multiple modeling strategies. Our
+in capability and generalization (Jiang et al., 2024; experiments include full pretraining of six
+Dubey et al., 2024; Bai et al., 2023; Dou et al., BERT-based classifiers and adapter-based fine-
+2025; Liu et al., 2024; Koto et al., 2025), their tuning on six different LLMs.
+application to role-sensitive scenarios remains un- ¢ We conduct robustness analyses under vari-
+derexplored. ous threat scenarios, including jailbreaking
+To address this research question, we simulate ACTOSS role-encoding strategies, access control
+realistic organizational scenarios and develop a mismatches, and prompt injection or manipu-
+role-aware language model using three comple- lation attacks. ; ;
+mentary strategies: (i) a BERT-based classifier, e We provide a comprehensive evaluation across
+(ii) an LLM-based classifier, and (iii) direct role- varying levels of organizational complexity,
+conditioned generation. We evaluate these meth- comparing classifier-based and generation-
+ods on two separate datasets: one repurposed from based approaches, and analyzing performance
+existing instruction-tuning corpora using cluster- on role-independent, blacklisted topics.
+ing and role- labeling, and another consistin
+g and oe based lab ane ; & 2 Related Works
+of synthetic, role-sensitive instructions generated
+by LLMs to reflect realistic enterprise interactions. | Access Control in Traditional Systems In clas-
+Unlike contemporaneous work such as Jayaraman _ sical role-based access control (RBAC), users are
+et al. (2025), which focuses on domain-level access —_ assigned roles with specific permissions (Ferraiolo
+control, our approach explicitly models user roles et al., 1995, 2003), enforcing the principle of least
+and supports fine-grained, hierarchical permissions __ privilege. Organizations often segregate data by
+required in organizational settings. clearance levels or roles so that only authorized per-
+2
+
+
+--- Page 3 ---
+
+sonnel can view sensitive records (Sandhu, 1998;
+Jayaraman et al., 2025). Role hierarchies allow ProteLLM(y | 2,1),
+higher-level roles (e.g » managers) to inherit the per- such that r € #, where F is the set of all roles in
+missions of subordinate roles, a concept well under- oe
+; ? an organization.
+stood m databases and operating systems. However, Now, formalizing access control, define a tree
+applying similar role-based permissions to agen 7 _ (R, <) such that for any two roles 1,72 € R
+erative LLM is nontrivial (Chan, 2025), since the . . ; .
+; : ; where r; < rz denotes rz inherits r;’s permissions.
+model can hallucinate or leak information beyond Then, the access set of a role r € Ris:
+its explicit training data (Kaddour et al., 2023).
+Access Control in Language Models Work on A(r) = U S(r'),
+access control in language models remains lim- msr
+ited. A contemporaneous study by Jayaraman where S(r’) C Q. S(r’) is the set of all queries
+et al. (2025) introduces PermissionedLLMs, which of role r’, and Q is the universe of all valid input-
+implement domain-based access control through _ output instruction types. Hence,
+parameter-efficient fine-tuning methods such as
+LoRA (Hu et al., 2022) and Few-Shot Parameter
+Efficient Tuning (Liu et al., 2022). Their approach Protea (y | @,7) = a |z,r), ifx€ A(r)
+defines access at the domain level, where a domain daeny (Y); otherwise
+represents a group of data records requiring identi-
+cal credentials. In parallel, Saha et al. (2025) pro- Such that daeny (¥) is a degenerate distribution con-
+posed sudoLLM, which makes LLMs “user-aware” centrating all the probability mass on a refusal out-
+by injecting secret biases into input queries based Put (i.e., access is denied).
+on user identity. In contrast to these approaches, 4 Dataset Construction
+our work focuses on role-based access control with
+deeper hierarchical structures, making it more suit- | We define two organizational structures, each com-
+able for enterprise and organizational settings. prising 20 roles, to evaluate role-awareness under
+AdapterSwap (Fleshman et al., 2025) imple- varying levels of hierarchy. The first is the Basic
+ments access control by associating different ac- structure, where a single CEO directly supervises
+cess levels with separate LoRA adapters, which 19 subordinate roles. The second is the Office
+are selected and composed at inference time. This —_ structure, which includes a CEO, four department
+approach requires maintaining multiple domain- managers reporting to the CEO, and 3-4 team mem-
+specific adapters. In contrast, our method uses a __ bers reporting to each manager. A detailed break-
+unified model that directly encodes role-awareness down of roles in both structures is provided in Ap-
+without external composition. Chen et al. (2023) pendix C. These configurations are used to assess
+address a related challenge from a privacy perspec- __ the ability of each method to encode and respond
+tive, showing that pre-trained LLMs are prone to _ to hierarchical role information, as outlined in Sec-
+leaking sensitive information and proposing a self- _ tion 5.1.
+moderation mechanism. While their work does not For each organizational structure, we construct
+focus on role-aware modeling, it shares our broader _ two datasets using complementary strategies (see
+goal of improving control over LLM outputs to pre- Figure 2). The first is by repurposing existing
+vent unauthorized disclosures. instruction-tuning data via clustering, and the latter
+involves generating synthetic data via LLMs.
+3 Problem Formulation
+Repurposing Existing Instruction Dataset We
+Let x be a prompt or instruction, y the LLM output, repurpose We repurpose the Databricks Dolly-15k
+and r a user’s role within an organization. A gen- — gutaset (Conover et al., 2023) by clustering in-
+eral LLM defines a conditional distr ibution Over structions and assigning roles based on hierarchical
+outputs y dependent on a user's instruction <r: structure. Using a sentence transformer (Reimers
+and Gurevych, 2019), we encode each instruction
+Ply | 2). and its context into dense vectors. Clustering be-
+However, a role-aware LLM defines the follow- gins at the root of the organization: we apply K-
+ing distribution: Means to partition the data into three high-level
+3
+
+
+--- Page 4 ---
+
+groups: General, Shared, and Root Only (e.g.,__ sliding-window over the organizational hierarchy.
+CEO-specific). Prompts in the General group are _ Specifically, we create: (1) a positive instance using
+marked terminal and excluded from further subdi- _ the minimal authorized role, and (2) another posi-
+vision.! Shared prompts are recursively partitioned _ tive instance using its immediate parent, reflecting
+along the hierarchy. At each level, prompts are split inherited permissions. We then generate two nega-
+into role-specific clusters corresponding to subordi- __ tive instances: (3) one from a subordinate role (or a
+nate roles (e.g., Department 1, Department 2, etc.). | random role from a different branch if no children
+Within each cluster, we further divide prompts into _ exist), and (4) one from a non-existent external role.
+Shared (used across subordinates) and Role Only — Each instance is labeled with a binary (1 for ac-
+(exclusive to the role). The process continues recur- _ cess granted, 0 for denied). For the denied request,
+sively: Shared prompts are passed down for further | LLM is expected to generate a generic refusal mes-
+subdivision, while Role Only groups are treated as __— sage. This procedure results in 6,000 training sam-
+terminal. This hierarchical clustering procedure, ples per dataset variant: repurposed_basic, repur-
+illustrated in Figure 8 (Appendix D), yields fine- posed_office, synthetic_basic, and synthetic_office.
+grained, role-aligned instruction sets that mirror The ratio of positive and negative samples is ap-
+the structure of the target organization. proximately balanced: repurposed datasets contain
+. Lo, 54.5% valid examples, and synthetic datasets con-
+Synthetic Organization Dataset We use Ope- tain 52.5%.
+nAl’s GPT-4.1 mini with a temperature of 0.7
+to generate synthetic organizational data. Based Test Set Construction Each dataset variant in-
+on the basic and office structures (Appendix C), cludes a test set of 1,000 samples, balanced with
+we define each role, department, and access range 50% positive and 50% negative instances. Posi-
+in a structured JSON-like format. Prompts are _ tive samples are split evenly into two subsets: 250
+then generated for each role, conditioned on with previously unseen instructions, and 250 with
+its responsibilities and access scope. The re- paraphrased versions of training instructions gen-
+sulting data is organized with the fields: role, erated by GPT-4.1 mini. Negative samples are di-
+instruction, and output. We also generate vided into three categories: (1) 300 mismatch cases,
+200 general instruction-response pairs represent- where an unauthorized in-hierarchy role attempts
+ing organization-wide prompts that are accessible _ to access restricted content (e.g., a leaf role query-
+to all roles. Details of the generation prompt are ing CEO-level data); (2) 100 random cases using
+provided in Appendix D. external roles not present in the hierarchy; and (3)
+100 broken cases where the role string is intention-
+Synthetic Dataset Quality Analysis To evaluate ally corrupted (e.g., “1.2” — “01.02”, “1..2”, or
+the quality of the synthetic dataset, we randomly — «one two”) to test model robustness. Each negative
+sampled 100 query-response pairs for manual anal- category includes an equal mix of unseen and para-
+ysis. Each pair was scored on two binary criteria: phrased instructions, ensuring that every test set
+(1) whether the query was relevant to the assigned contains exactly 500 unseen and 500 seen prompts
+role, and (2) whether the response was complete (See Figure 2.
+and appropriate. A score of 1 was given for each
+criterion if it was met, and 0 otherwise. The results 5 Experimental Set-Up
+show that over 96% of the samples satisfied both 5.1 Role Encoding Strategies
+criteria, indicating high relevance and response
+quality. After grouping instruction-response pairs by role,
+we encode each role to study how different en-
+Training Set Construction To train the model to —_ coding strategies affect access control. Each or-
+distinguish between authorized and unauthorized ganizational position is represented by a string
+access, we construct positive and negative instances _ that reflects its location in the hierarchy, which
+from each instruction-response pair. First, we as- jg appended to every instruction-response pair to
+sign each pair the lowest-level role authorized to indicate the minimum role required to access the
+access the instruction. Using this role as an an- content. Access is permitted to roles at or above
+chor, we generate four training instances through a _ the specified level and denied to those below or
+~~ The General group refers to prompts that are accessible in unrelated branches. We explore three encoding
+to all roles within the organization methods. Hierarchical Number Encoding uses
+4
+
+
+--- Page 5 ---
+
+dot-delimited indices (e.g., “1” for the CEO, “1.1” port standard metrics: accuracy, false positive
+and “1.2” for direct subordinates), with “1.0” re- rate (FPR), false negative rate (FNR), and F/
+served for general, organization-wide instructions. score. FPR captures unauthorized access incor-
+Single Name Encoding uses only the role’s title rectly granted, while FNR reflects valid access
+(e.g., “CEO,” “IT Department Manager’), while that was wrongly denied. We also report perfor-
+Hierarchical Name Encoding concatenates the mance on “seen” vs. “unseen” instructions, along
+full path of titles (e.g., “CEO - IT Department Man- _ with category-specific accuracy for mismatch, ran-
+ager - IT Support’) to retain both structural and dom, and broken roles. For Role-aware LLM-Gen,
+semantic information. which outputs either a direct answer or a generic
+denial, we use GPT-4.1 mini to classify each re-
+5.2 Training Approaches sponse as grant or deny, enabling comparison with
+We evaluate three methods for access control, train- the ground-truth valid label.
+ing each on all four dataset variants. To ensure Finally, to assess whether access control impacts
+reproducibility, we fix random seeds and report av- | answer quality, we randomly sample 100 valid
+eraged results over three runs per setting. Training (granted) examples and compare the generated re-
+data is shuffled to eliminate order effects. Each — sponses to the original references. Each response
+training instance includes a prompt, answer, role, is evaluated using GPT-4.1 mini, scored on a 1-5
+and access label. Full training details and hyperpa- _ scale for correctness, completeness, and clarity.
+rameters are provided in Appendix B.
+6 Results
+Role-aware Cls We trained six BERT-based
+models (Devlin et al., 2019; Liu et al., 2019), in- Tables I and 2 (or Table 14 and Table 15 for de-
+cluding MODERN BERT-BASE, MODERN BERT- tails) summarize the performance of our proposed
+LARGE, GOOGLE BERT-BASE, GOOGLE BERT- role-aware LLMs evaluated on access-control ac-
+LARGE, ROBERTA-BASE, and ROBERTA-LARGE  “uracy and LLM-rated generation quality across
+for access control. We appended the role to the end two distinct training datasets: a repurposed existing
+of the prompt as “<prompt> [SEP] <role>”. instruction dataset (Dolly) and a synthetic organi-
+zation dataset. The evaluation is conducted on
+Role-aware LLM-Cls_ We fine-tune six open- all Role-aware methods (C/s, LLM-Cls, and LLM-
+source LLMs (Bai et al., 2023; Dubey et al., 2024; — Gen), assessing both quantitative metrics (e.g., ac-
+Team et al., 2024)—QWEN 2.5 (3B, 7B), LLAMA curacy, negative-pair defense) and qualitative di-
+3.X (3B, 8B), and GEMMA (4B, 7B)—to perform mensions (correctness, completeness, clarity). The
+binary access control classification. We include detailed results and comparisons between the train-
+both small and large models to assess the effect of ing datasets and modeling methods are discussed
+model size. For each example, the role is prepended _ in further detail in the following sections.
+to the prompt as “Position: <role> <prompt>”,
+and a system prompt instructs the model to respond Access-Control Performance Our role-aware
+with True (grant access) or False (deny access). LLMs consistently achieved high access-control ac-
+All inputs and labels are formatted as conversa- CUTACY acTOss both datasets, with LLM-Cls models
+tions and fine-tuned using LoRA with supervised  °Utperforming other variants; specifically, MOD-
+learning. ERNBERT LARGE attained the highest accuracy
+(90.0%) on Dolly, while LLAMA3 8B INSTRUCT
+Role-aware LLM-Gen We use the same LLMs achieved top performance (89.3%) on the syn-
+and fine-tuning setup as in Role-aware LLM-Cls, thetic dataset. Generative approaches (LLM-Gen)
+but instead train the model to generate full answers slightly lagged in raw accuracy by approximately
+rather than binary access decisions. The system 5-10 percentage points with an influx in false-
+prompt is removed to allow free-form responses, negative errors, indicating a strict access enforce-
+and the output corresponds to the original answer _ ment in role-conditioned generation. However, no-
+instead of a True/False label. table negative results emerged, particularly with
+. ROBERTA LARGE (CIs), whose accuracy drasti-
+5.3 Evaluation Protocol cally decreased to 74.8% accompanied by an in-
+For the classification-based approaches (Role- _ flated false-positive rate (58%) on the Dolly dataset
+aware Cls and Role-aware LLM-Cls), we re- and subsequently in the synthetic dataset, highlight-
+5
+
+
+--- Page 6 ---
+
+Method Model Ace. (t) FPR(J) FNR()) FI(t) _Aee FI) Negative Pair Ace. (T)
+Seen Unseen Seen Unseen Mismatch Broken Random
+Repurposed Existing Instruction Dataset (Dolly)
+BERT Base 86.042.4 29.841.0 4.0+2.4 90.340.5 88.6 85.0 92.3 89.5 70.8 42.6 100.0
+RoBERTa Base 78.745.4 42.2+16.4 6.64.1 84.143.3 82.7 71.9 87.6 83.5 58.4 53.2 100.0
+Rol Cl ModernBERT Base 89.743.8  18.347.8 5.542.5 92.042.9 90.3 89.0 92.5 91.5 81.7 60.2 100.0
+ore-aware \'s BERT Large 81.4462 43.1414.8 5542.9 87.0445 825 812 882 861 58.0 442 100.0
+RoBERTa Large 74.8412.2 58.14+45.6 5.4+5.3 83.3468 74.2 T44 82.0 83.6 41.0 28.3 90.5
+ModernBERT Large 90.0+3.2 18.948.1 4,741.0 92.3423 90.8 89.2 92.9 91.6 811 48.8 99.8
+Qwen2.5 3B Instruct. 8.542.221.8466 5240.8 91.2417 89.5 875 918 903 78.2 443 997
+Llama3.2 3B Instruct 88.8+1.7 20.0+3.7 6.0413 913414 902 87.7 923 902 80.0 45.0 100.0
+Rol LLM-Cls Ge™Ma3 4B Instruct 88.8+3.3 20.8475 5.3414 915426 90.5 873 92.7 90.3 792 525 100.0
+ole-aware “'S Qwen2.5 7B Instruct 86.341.8 24.544.4 7,242.5 89.7414 88.0 85.0 903 885 755 488 99.8
+Llama3.1 8B Instruct 81.8+5.0 29.047.7 11.5+8.2 85.8+4.6 83.7 80.0 87.3 84.2 71.0 46.2 99.7
+Gemma 7B Instruct 83.0+£5.3 31.0413.6 8.746.3 86.843.9 84.0 81.8 87.8 85.7 69.0 48.8 99.8
+0 Qwen2.5 3B Instruct. 76.541.0 24.0433 23.3423 80.210 80.3 72.7 840 765 76.0 668 99.8
+Llama3.2 3B Instruct 79.7+3.8 26.743.6 16.7+5.7 83.5+3.6 82.0 77.0 85.8 81.0 B3 3575 99.8
+Role-aware LLM-Gen Gemma3 4B Instruct = 77.342.6 26.542.2 20.343.8 81.5424 80.0 74.8 83.8 79.0 73.5 56.2 97.2
+Qwen2.5 7B Instruct 78.2+2.1 25.043.5 20.2+5.1 82.0424 81.3 74.7 85.2 78.7 75.0 60.2 100.0
+Llama3.1 8B Instruct 78.042.6 25.842.1 19.5+5.0 81.842.8 80.8 75.2 84.7 79.3 74.2 60.2 99.7
+Gemma 7B Instruct 73.0£1.5 34.046.8 22.342.6 78.3+1.0 76.0 70.3 81.7 75.0 66.0 61.7 97.3
+Synthetic Organization Dataset
+BERT Base 81.4+6.7 44.0420.1 3.5+1.1 87.2441 82.5 82.1 87.7 86.0 56.9 37.8 100.0
+RoBERTa Base 77.2+3.9  561+8.7 3.7£0.8 84.341.8 78.4 76.8 84.5 84.0 44.7 53.9 100.0
+Role-aware Cls ModernBERT Base —-85.6+6.0 27.9417.9 6.2£1.8 89.3440 86.0 85.3 89.4 89.1 T21 648 99.8
+: BERT Large 84.5+6.9 35.5421.6 5.342.2 89.3441 84.0 84.4 90.6 88.2 65.5 42.6 99.0
+RoBERTa Large 65.3449 77143.4 6846.7 77.8434 66.6 68.0 78.4 78.5 22.4 47.4 99.5
+ModernBERT Large 80.8+8.5 39.3418.6 7.1+6.9 85.9+6.2 81.2 80.4 86.1 85.7 60.7 48.3 99.8
+oo Qwen2.5 3B Instruct 85.2466 33.0+20.3 4343.5 89.0441 85.2 85.0 89.3 89.2 670 50.3 1000
+Llama3.2 3B Instruct 88.349.2 27.7424.5 2.2+0.8 91.5464 88.7 88.0 91.8 91.0 72.3 46.2 100.0
+Rol LLM.-Cl Gemma3 4B Instruct 88.5+9.8 27.5+26.0 2.2+0.4 91.5+6.8 89.3 87.5 92.5 91.0 72.5 36.8 99.8
+olle-aware “'S Qwen2.5 7B Instruct 88.84+8.4 25.8421.8 2241.2 91.845.7 89.3 882 92.5 91.5 742 473 100.0
+Llama3.1 8B Instruct 89.3+8.6 25.2+24.1 2,040.0 92.5462 90.7 882 93.0 91.8 74.8 31.5 99.8
+Gemma 7B Instruct 85.8+46.5 34.3416.8 2.0+0.0 89.8444 86.5 85.3. 90.2 89.7 65.7 39.0 99.7
+oo  Qwen2.5 3B Instruct. 74.8435 42.5468 14.7485 80.7436 763 73.5 815 802 575 593 95.0
+Llama3.2 3B Instruct 85.3+7.4 30.0+19.1 5.54£1.2 89.0449 85.8 84.7 893 88.8 70.0 62.0 95.8
+Role-aware LLM-Gen Gemma3 4B Instruct 74.5+4.7 50.0+10.6 10.8+5.8 81.5+3.5 75.8 73.0 81.8 80.7 50.0 52.8 75.5
+Qwen2.5 7B Instruct 78.2+5.2 40.2+11.1 10.8+5.6 83.3+4.1 80.0 76.0 84.7 82.2 59.8 51.3 95.2
+Llama3.1 8B Instruct 85.3+8.4 31.2+20.0 5.3+1.5 89.0+5.8 86.3 84.0 89.7 88.5 68.8 50.8 95.0
+Gemma 7B Instruct 77.2+4.1 43.8411.1 10.5+5.8 83.043.2 79.8 73.8 84.7 81.0 56.2 40.3 77.3
+Table 1: Overall performance on the role-aware access-control benchmark. Bold marks the best score for a given
+training set, while underline marks the best model within each method.
+ing critical sensitivity to encoder selection. Inthe as QWEN2.5 3B INST. and LLAMA3 3B INST.,
+more challenging synthetic dataset, all methods _ further reduced variance (acc std.< 2.2%), under-
+faced increased difficulty (3-6% accuracy drop), scoring stability gains from modern instruction tun-
+yet instruction-tuned models maintained compara- _ing. On the synthetic dataset, semantic overlaps in-
+tively robust performance, emphasizing that richer creased variance to around 8—10%, yet instruction-
+instruction tuning substantially mitigates accuracy tuned models (e.g., LLAMA3 8B INST.) main-
+degradation under semantically overlapping role _ tained comparative stability (8.4-8.6%). More de-
+conditions. Please refer to Appendix E for further __ tailed of the performances on Basic and Office are
+explanation. shown in Appendix H. Collectively, these results
+demonstrate that our proposed methods achieve
+Method Robustness _ To evaluate the robustness robust performance, primarily due to richer pre-
+of our proposed methods, each method-model com- _ training and instruction tuning rather than merely
+bination was trained under two organizational struc- | model scale.
+tures (basic, office) across three independent ran-
+dom seeds, with the results averaged and sum- Negative Pair Accuracy All methods achieved
+marized in Tables 1-2. Generally, all methods near-perfect accuracy (100%) in identifying ran-
+demonstrated low variance (acc std.< 4%) onthe domly assigned negative-role pairs, highlighting
+Dolly dataset, except for notable brittleness in their effectiveness in clearly invalid scenarios.
+ROBERTA LARGE (CIs), which exhibited sub- | However, performance dropped notably for sub-
+stantial instability (12.2% accuracy, 45.6% FPR),  tler cases such as existing-but-mismatched and
+contrasting strongly with the more stable MOD- _ broken-role pairs. Specifically, LLM-Cls models
+ERNBERT LARGE (3.2% accuracy, 8.1% FPR). demonstrated comparatively stronger performance
+Instruction-tuned LLM classifiers (LLM-Cls), such (e.g., MODERNBERT LARGE: 81.1%; QWEN2.5
+6
+
+
+--- Page 7 ---
+
+Model Generation Quality (T, 5-pt rubric) Role-aware LLM-Cls using Llama 3.2 3B Instruct.
+Correctness Completeness Clarity The model was trained in two ways: the first in-
+Repurposed Existing Instruction Dataset (Dolly) corporates jailbreak samples in the training data,
+Ren?) SB instruct rene | ane 4720 and the other does not. A comparative summary of
+Gemma3 4B Instruct 4.0+0.1 3.640.1 4640.0 performance is presented in Appendix F. Although
+pene Ba ret tool 37201 47201 the inclusion of jailbreak prompts did not signif-
+Gemma 7B Instruct 3.90.1 3,540.1 4540.1 icantly affect overall accuracy across the test set
+Oren s tb eanization OD 36402 4740.1 (except for experiments with the repurposed_basic
+Llama3.2 3B Instruct 3.940.1 3.7£0.1 4.7+0.0 dataset, which can be attributed to randomness),
+Owens * struct 40201 38201 48400 the model trained with jailbreak-specific examples
+Llama3.1 8B Instruct 3.90.1 3.80.1  4.8+0.0 demonstrated improved resistance to prompt injec-
+Gemma 7B Instruct 3.90.1 3640.1 4640.1 tion with an average of 87% compared to the 70%
+Table 2: LLM-rated generation quality against gold ref- accuracy of the baseline model.
+erence. Bold = best within the same training dataset; . .
+underline = best within the Role-aware TLM-Gen 7.2 Robustness on Blacklisted Topics
+method. To evaluate the model’s capacity to restrict answers
+to queries whose content violates organizational
+policies, we extended the original datasets men-
+3B INST.: 18.2% on Doily), whereas standard tioned in Section 4. We generated 100 queries on
+classifiers (Cis), particularly ROBERTA LARGE general blacklisted topics (e.g., violence, weapons,
+(41.0%), struggled significantly. Generative mod- cheating, etc.) and 100 queries related to real-life
+els (LLM-Gen) showed moderate accuracy (e.g., politics. The respective responses to the queries
+LLAMA3 3B INST.: 73.3%) , underscoring ongoing were designed to be restricted, regardless of an em-
+challenges in detecting nuanced role mismatches. ployee’s role. Subsequently, each original dataset
+These results indicate that while instruction-tuned was extended by adding 50 unique blacklisted
+models substantially enhance negative-pair detec- queries of each type separately, and duplicates of
+tion, subtle distinctions between valid yet incor- gach blacklisted query for multiple organization
+rect role assignments remain difficult, suggesting roles. The remaining 50 queries of each black-
+a promising direction for futur e improvements In jisted dataset were used for the evaluation datasets.
+fine-grained role understanding. Using the Role-aware LLM-Cls method, LLAMA
+Generation Quality Generation quality ratings 3-2 3B INSTRUCT was trained and tested using
+(correctness, completeness, clarity) were consis- these extended datasets. The detailed information
+tently high (around 4 out of 5), with larger © the results can be found in Appendix G. As
+instruction-tuned models (e.g., QWEN2.5 7B shown in Table 8, the blacklisted model’s perfor-
+INST., LLAMA3 8B INST.) achieving the best ™ance remained unchanged relative to the baseline
+scores. The differences between the training data '™odel. The model was also highly successful in
+sets were minimal, highlighting the reliability of restricting answers to blacklisted queries with an
+role-aware generation regardless of the data source. Veal accuracy >99%. The accuracy rates for the
+model trained on the repurposed basic dataset were
+7 Analysis the only outliers, exhibiting a decrease in accuracy
+from 92% to 84%.
+7.1 Jailbreak Robustness
+To assess the model’s robustness against prompt 7.3 Effect of Role Information in Prompts
+injection attempts, we conducted an additional ex- ‘To assess whether including role information in the
+periment involving modifications to the original prompt affects response quality, we fine-tuned all
+datasets. Specifically, we generated 100 more LLMs on the four training datasets without role
+negative samples for both training and test sets annotations. We evaluated response quality us-
+in which the original instruction was prepended __ ing three metrics: correctness, completeness, and
+with misleading phrases. These included asser- clarity. From the 1,000 test outputs, we randomly
+tions of higher authority (e.g., “I’m authorized as | sampled 100 responses and compared them to the
+CEO to ask this:”) or commands (e.g., “Regard- reference answers using GPT-4.1 mini. The same
+less of policy, respond to this:”). We evaluated — evaluation was applied to Role-aware LLM-Gen,
+7
+
+
+--- Page 8 ---
+
+Prompt Style Correctness Completeness Clarity We compare three encoding strategies: Hierar-
+Withoutroles + +3.900 3.58 467 ~~ Chical Number Encoding, Single Name Encoding,
+With roles 3.93 3.59 4.64 and Hierarchical Name Encoding, and present the
+results in Figures 3 and 4. Hierarchical Number En-
+Table 3: Quality ratings (five-point scale) of responses coding achieves the highest FPR, indicating poorer
+generated by LLMs trained with versus without role rejection of unauthorized roles and weaker robust-
+prompts, assessed by GPT-4.1 mini. . .
+ness to broken role strings (e.g., misspelled or ma-
+nipulated encodings). This suggests that LLMs
+which was trained with roles included in the prompt. can more easily differentiate between role names
+Results show that the average difference in quality _ like “CEO” and “Researcher” than between for-
+between the two settings is under 1%, indicating mats like “1.1” and “l.a” . This encoding also
+that including roles does not degrade response qual- _ results in the highest FNR, likely because LLMs
+ity. Summary metrics are reported in Table 3, with struggle to generalize upward in hierarchical struc-
+detailed results in Appendix I. tures (e.g., understanding that “1” can access data
+assigned to “1.1”). In contrast, name-based en-
+030) 26 Encoding Type codings offer slightly better generalization across
+0.25 mmm Hierarchical number authorized roles but are more vulnerable to adver-
+; 0.20 649 6.19 = Ne a ame AD vend pemurbations. Full results are provided
+g0.15 .
+0.10 0.10 .
+50%  -50% 8 Conclusion
+0.05 0.05 0.05
+This paper investigates methods for modeling role-
+0.00 FPR FNR cori
+aware behavior in large language models, with a
+Figure 3: Comparison of FPR and FNR across role focus on enforcing access control and evaluating
+encodings. The Hierarchical Number Encoding has the the effects of different fine-tuning strategies and
+worst defense against unauthorized roles (highest FPR), | datasets. Our experiments compare classification-
+and overly denies authorized roles (highest FNR). based and generative approaches across multiple
+organizational structures. Instruction-tuned classi-
+fiers (LLM-Cls) consistently outperform both gen-
+0.6 051 Encoding Type erative (LLM-Gen) and traditional classifier-based
+0.5 = Singlerane (Cls) methods, reaching up to 90.0% and 89.3%
+0.4 mE Hierarchical name accuracy on the Dolly and synthetic datasets, re-
+3 -47% -47% spectively, without compromising answer quality.
+£0.3 0.27 0.27 ae
+Despite high overall performance, challenges re-
+0.2 main. All models are effective at rejecting clearly
+0.1 unauthorized roles, such as random or external enti-
+Broken role rejection accuracy ties (~100% accuracy), and instruction-tuned meth-
+ods reliably detect more subtle mismatches (~70%
+Figure 4: Comparison of broken role rejection accuracy accuracy on average). However, broken role for-
+across role encodings. The Hierarchical Number En- mats and fine-grained violations still present diffi-
+coding has the best defense against broken roles. culties, with a 15-30% gap in accuracy. Generative
+models, while more flexible, suffer a modest perfor-
+7.4 Effect of Role Encoding on Access Control ance trade-off. Future work should focus on en-
+We investigate how different role encoding strate- hancing generalization ACTOS complex hierarchies,
+. reducing false positives from brittle encoders, and
+gies affect access control performance across our : Sears
+three methods: Role-aware Cls, Role-aware LLM- improving discrimination between closely related
+Cls, and Role-aware LLM-Gen. For consistency, roles.
+we use the MODERN BERT-BASE model for Role- 9 Limitations
+aware Cls and LLAMA 3.1 8B INSTRUCT for the
+LLM-based methods, training each on the four While our results demonstrate promising capabil-
+dataset variants. ities in enabling safe and role-aware deployment
+8
+
+
+--- Page 9 ---
+
+of LLMs within organizational contexts, several | Shih-Han Chan. 2025. Encrypted prompt: Securing
+
+limitations constrain the scope of our conclusions. Ilm applications against unauthorized actions. arXiv
+
+preprint arXiv:2503.23250.
+
+Unified Organization Representation Our ex- Yang Chen. Ethan Mendes, Sauvik Das. Wei Xu, and
+
+periments used a single adapter to represent all Alan Ritter. 2023. Can language models be instructed
+
+roles within an organization. Although effective, to protect personal information? arXiv preprint
+we did not investigate the alternative of using a arXtv:2310.02224.
+
+multi-adapter strategy, such as separate adapters Mike Conover, Matt Hayes, Ankit Mathur, Jianwei Xie,
+
+for each department. This strategy could poten- Jun Wan, Sam Shah, Ali Ghodsi, Patrick Wendell,
+
+tially reduce information leakage by further isolat- Matei Zaharia, and Reynold Xin. 2023. Free dolly:
+
+. . . Introducing the world’s first truly open instruction-
+
+ing department-specific knowledge, though it may tuned Im
+
+come at the cost of overall effectiveness. ,
+
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+
+Access Control Post Fine-tuning We demon- Kristina Toutanova. 2019. BERT: Pre-training of
+
+strated effective fine-tuning of adapters for initial deep bidirectional transformers for language under-
+
+ih hodol did standing. In Proceedings of the 2019 Conference of
+
+access contro - owever, our metho ° ogy 1d not the North American Chapter of the Association for
+
+address dynamic modification or addition of roles Computational Linguistics: Human Language Tech-
+
+after the fine-tuning phase. Future research should nologies, Volume I (Long and Short Papers), pages
+
+explore approaches that enable post-training up- 4171-4186, Minneapolis, Minnesota. Association for
+. Computational Linguistics.
+
+dates to role-based access, as roles are dynamic
+
+and such updates would eliminate the need to re- = Longxu Dou, Qian Liu, Fan Zhou, Changyu Chen, Zili
+
+train adapters from scratch. Wang, Ziqi Jin, Zichen Liu, Tongyao Zhu, Cunxiao
+
+Du, Penghui Yang, and 1 others. 2025. Sailor2: Sail-
+Alignment Methods Beyond SFT This study ex- ing in south-east asia with inclusive multilingual Ilms.
+. ; ; arXiv preprint arXiv:2502. 12982.
+
+clusively employed SFT for alignment. We did not
+
+explore alternative methods such as Direct Pref- | Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey,
+
+erence Optimization (DPO) or other preference- Rene nea Ane peDanle, Aresha reman.
+
+. . . il Mathur, Alan Schelten, Amy Yang, Angela
+based alignment techniques, which could poten- Fan, and | others. 2024. The llama 3 herd of models.
+tially yield improved alignment outcomes. arXiv e-prints, pages arXiv—2407.
+
+Integration of External Knowledge Although David Ferraiolo, Janet Cugini, D Richard Kuhn, and
+
+ar tyepe 1 others. 1995. Role-based access control (rbac):
+
+our results indicate strong capabilities in control- a .
+
+a . —_ Features and motivations. In Proceedings of 11th an-
+ling internal knowledge, either by restricting spe- nual computer security application conference, pages
+cific topics organization-wide or selectively au- 241-48.
+thorizing content per role, we did not evaluate . . .
+
+1 l wh he LLM i d David Ferraiolo, D Richard Kuhn, and Ramaswamy
+tO e-aware control when the 1S augmente Chandramouli. 2003. Role-based access control.
+with external knowledge sources (e.g., Retrieval- Artech house.
+
+Augmented Generation or web search). Investigat- .
+
+ing how role-aware adapters influence responses William Fleshman, Aleem Khan, Marc Marone, and
+8 . P : . P Benjamin Van Durme. 2025. Adapterswap: Contin-
+
+that incorporate external information remains an uous training of Ilms with data removal and access-
+
+open area for future study. control guarantees. Preprint, arXiv:2404.08417.
+Suyu Ge, Chunting Zhou, Rui Hou, Madian Khabsa,
+Yi-Chia Wang, Qifan Wang, Jiawei Han, and Yuning
+
+References Mao. 2024. MART: Improving LLM safety with
+
+Muh d Falensi Azmi. Muh d Dehan Al multi-round automatic red-teaming. In Proceedings
+Kautear Alf Ea . Wi ke vo. and Fat K t of the 2024 Conference of the North American Chap-
+3095 Indosafety: ‘Culturally grounded safety ter of the Association for Computational Linguistics:
+
+an : , Human Language Technologies (Volume 1: Long
+for ims in indonesian languages. arXiv preprint Papers), pages 1927-1937, Mexico City, Mexico. As-
+arXtv:2506.02573. sociation for Computational Linguistics.
+
+Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang, Edward J Hu, Yelong Shen, Phillip Wallis, Zeyuan
+Xiaodong Deng, Yang Fan, Wenbin Ge, Yu Han, Fei Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang,
+Huang, and | others. 2023. Qwen technical report. Weizhu Chen, and | others. 2022. Lora: Low-rank
+arXiv preprint arXiv:2309.16609. adaptation of large language models. JCLR, 1(2):3.
+
+prep p g guag
+9
+
+
+--- Page 10 ---
+
+Bargav Jayaraman, Virendra J Marathe, Hamid Mozaf- Nils Reimers and Iryna Gurevych. 2019. Sentence-
+fari, William F Shen, and Krishnaram Kenthapadi. BERT: Sentence embeddings using Siamese BERT-
+2025. Permissioned Ilms: Enforcing access con- networks. In Proceedings of the 2019 Conference on
+trol in large language models. arXiv preprint Empirical Methods in Natural Language Processing
+arXiv:2505.22860. and the 9th International Joint Conference on Natu-
+
+ral Language Processing (EMNLP-IJCNLP), pages
+
+Albert Q Jiang, Alexandre Sablayrolles, Antoine 3982-3992, Hong Kong, China. Association for Com-
+Roux, Arthur Mensch, Blanche Savary, Chris Bam- putational Linguistics.
+ford, Devendra Singh Chaplot, Diego de las Casas,
+
+Emma Bou Hanna, Florian Bressand, and | oth- Soumadeep Saha, Akshay Chaturvedi, Joy Mahap-
+
+ers. 2024. Mixtral of experts. arXiv preprint atra, and Utpal Garain. 2025. sudollm : On
+
+arXiv:2401.04088. multi-role alignment of language models. Preprint,
+arXiv:2505.14607.
+
+Jean Kaddour, Joshua Harris, Maximilian Mozes, Her-
+bie Bradley, Roberta Raileanu, and Robert McHardy. Ravi S Sandhu. 1998. Role-based access control. In
+2023. Challenges and applications of large language Advances in computers, volume 46, pages 237-286.
+models. arXiv preprint arXiv:2307.10169. Elsevier.
+
+Fajri Koto, Rituraj Joshi, Nurdaulet Mukhituly, Yuxia Gemma Team, Thomas Mesnard, Cassidy Hardin,
+Wang, Zhuohan Xie, Rahul Pal, Daniil Orel, Parvez Robert Dadashi, Surya Bhupatiraju, Shreya Pathak,
+Mullah, Diana Turmakhan, Maiya Goloburda, and 1 Laurent Sifre, Morgane Riviére, Mihir Sanjay Kale,
+others. 2025. Llama-3.1-sherkala-8b-chat: An open Juliette Love, and 1 others. 2024. Gemma: Open
+large language model for kazakh. arXiv preprint models based on gemini research and technology.
+arXiv:2503.01493. arXiv preprint arXiv:2403.08295.
+
+Md Tahmid Rahman Laskar, Xue-Yong Fu, Cheng Chen, | Yuxia Wang, Haonan Li, Xudong Han, Preslav Nakov,
+and Shashi Bhushan TN. 2023. Building real-world and Timothy Baldwin. 2024a. Do-not-answer: Eval-
+meeting summarization systems using large language uating safeguards in LLMs. In Findings of the Asso-
+models: A practical perspective. In Proceedings ciation for Computational Linguistics: EACL 2024,
+of the 2023 Conference on Empirical Methods in pages 896-911, St. Julian’s, Malta. Association for
+Natural Language Processing: Industry Track, pages Computational Linguistics.
+
+343-352, Singapore. Association for Computational
+Linguistics. Yuxia Wang, Zenan Zhai, Haonan Li, Xudong Han,
+Shom Lin, Zhenxuan Zhang, Angela Zhao, Preslav
+
+Aixin Liu, Bei Feng, Bing Xue, Bingxuan Wang, Nakov, and Timothy Baldwin. 2024b. A Chinese
+Bochao Wu, Chengda Lu, Chenggang Zhao, Chengqi dataset for evaluating the safeguards in large lan-
+Deng, Chenyu Zhang, Chong Ruan, and 1 others. guage models. In Findings of the Association for
+2024. Deepseek-v3 technical report. arXiv preprint Computational Linguistics: ACL 2024, pages 3106—
+arXiv:2412.19437. 3119, Bangkok, Thailand. Association for Computa-
+
+: tional Linguistics.
+
+Haokun Liu, Derek Tam, Mohammed Muceeth, Jay Mo-
+hta, Tenghao Huang, Mohit Bansal, and Colin A Raf- Sam Wiseman, Stuart Shieber, and Alexander Rush.
+fel. 2022. Few-shot parameter-efficient fine-tuning 2017. Challenges in data-to-document generation.
+is better and cheaper than in-context learning. Ad- In Proceedings of the 2017 Conference on Empiri-
+vances in Neural Information Processing Systems, cal Methods in Natural Language Processing, pages
+35:1950-1965. 2253-2263, Copenhagen, Denmark. Association for
+
+. . . ; Computational Linguistics.
+
+Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Man-
+dar Joshi, Danqi Chen, Omer Levy, Mike Lewis, Bing Zhang, Mikio Takeuchi, Ryo Kawahara, Shubhi
+Luke Zettlemoyer, and Veselin Stoyanov. 2019. Asthana, Md. Maruf Hossain, Guang-Jie Ren, Kate
+Roberta: A robustly optimized bert pretraining ap- Soule, Yifan Mai, and Yada Zhu. 2025. Evaluating
+proach. arXiv preprint arXiv:1907.11692. large language models with enterprise benchmarks.
+
+. . ; In Proceedings of the 2025 Conference of the Na-
+
+Vinod Muthusamy, Yara Rizk, Kiran Kate, Praveen tions of the Merericus Chapter of Ihe Assocation for
+Venkateswaran, Vatche Isahagian, Ashu Gulati, and Computational Linguistics: Human Language Tech-
+Parijat Dube. 2023. Towards large language model- nologies (Volume 3: Industry Track), pages 485-505,
+based personal agents in the enterprise: Current Albuquerque, New Mexico. Association for Compu-
+trends and open problems. In Findings of the As- tational Linguistics.
+sociation for Computational Linguistics: EMNLP
+2023, pages 6909-6921, Singapore. Association for
+Computational Linguistics. A Training Seeds
+
+Joon S Park, Ravi Sandhu, and Gail-Joon Ahn. 2001. .
+
+Role-based access control on the web. ACM Transac- We used each of the seeds shown in Table 4 for all
+tions on Information and System Security (TISSEC),  &Xperiments and averaged the result over seeds for
+4(1):37-71. each experiment.
+
+10
+
+
+--- Page 11 ---
+
+Seed# Value can effectively capture and utilize hierarchical re-
+Seed1 42 lationships within the organization. Additionally,
+Seed2 937 Figure 7 presents several example roles introduced
+Seed 33827 in each structure for synthetic role data generation,
+. . making the data specific to the roles defined in each
+Table 4: Seeds for training, testing and evaluation for 8 P
+all methods structure.
+B_ Training Hyperparameters \
+We used the same set of hyperparameters (Table 4 | —~
+5) to train all LLMs and a different set of hyperpa- 4 / | KY XX.
+rameters (Table 6) to train all BERT models. We 4 Lf | VY NN
+created a LoRA adapter to train LLMs with the & 4 A = aa
+LoRA configuration given in (Table 5 ). (DE DL Ds BDL LY
+Parameter Value Figure 5: Hierarchical structure for Basic structure.
+LoRA rank 32
+LoRA alpha 64
+LoRA dropout 1x 107" >»
+up proj, down proj, ea,
+LoRA modules gate proj, k proj, TY
+q proj, Vv proj, o proj OU \ ee
+Batch size 1 / —< ram \ —~ > >»
+Epochs 4 KY Ne 7 Ns
+Learning rate 1x 107+ AW A \ | NN rat
+Grad. accumulation 1 LEV KEYS £YNS LK Y
+Weight decay 0.0 COOUOO OOOO OVUOO0 OO ©
+Warmup ratio 0.0
+Figure 6: Hierarchical structure for Office structure.
+Table 5: Hyperparameters used for LoRA SFT training
+of LLMs
+CEO CEO
+Member a — Data Analyst Department Manager — Marketing
+i Member ¢ ~ Research Methodologist Marketing Associate B
+Parameter Value Member d — Literature Reviewer 8 Marketing Associate C
+—Raahae dB Member f Field Operations eS a
+Batch size 16 Coordinator , pe Sieg RepA
+Epochs 5 Member g — Interview Scheduler = RepB
+. —5 Member h — Operations Strategist Sales Rep C
+Learning rate 2x10°° Member i — Procurement Officer Sales Rep D
+. Member j — Budget Coordinator Department Manager — HR:
+Grad. accumulation 1 Member k — Inventory Manager HR Specialist A
+Weight decay 1x 10-° Mauber ni —Sascusce Altcaton Enea
+Warmup ratio 1x 1071 Analyst ; HR Specialist D
+_ Member n — Public Relations Officer Department Manager — IT:
+Member o — Social Media IT Support A
+. .. Toe _ Event M = Supper B
+Table 6: Hyperparameters for BERT training [Member eal a uppo
+Fuses r — Community Engagement
+Le
+a Member s — Graphic Designer
+C Organizational Structure Details
+We define two predefined structures for dataset cre- Figure 7: Predefined roles for each Basic and Office
+ation: the Basic and Office structures, shown in structure.
+Figure 5 and Figure 6, respectively. In the Basic
+structure, a single CEO directly corresponds to all .
+oe y P D_ Dataset Creation
+other roles, allowing us to test whether the mod-
+els can leverage role-awareness when faced witha Figure 8 shows our clustering scheme when re-
+wide, single-layer hierarchy. In contrast, the Office | purposing the dataset. At the root level, datasets
+structure introduces a multi-level hierarchy, where _are first partitioned into three clusters: General,
+the CEO supervises department managers, who in Shared, and Root-Only. Prompts in the General
+turn oversee several team members. This setup eval- cluster terminate immediately; those in Shared are
+uates whether the methods discussed in Section 5.1 _ then split along the root’s direct subordinate roles,
+11
+
+
+--- Page 12 ---
+
+and recursion continues further. Furthermore, Fig- to authorized users. Conversely, the Role-aware
+ure 9 shows the specific system-level prompt used | LLM-Gen exhibited more stable but poor security
+to generate the synthetic data. Below the prompt — performance with moderate FPR (0.28-0.38, av-
+is an example of the OpenAI API output with the —_ erage 0.33) and significantly higher FNR variabil-
+specified keys after generating the dataset. ity (0.11-0.19, average 0.15), indicating that it has
+greater difficulty in rejecting genuine access re-
+aaauuaaaaa= quests across model implementations and organi-
+mew _| zational designs.
+Dataset
+Comparison of Method Architectures: FPR, FNR, and Broken Role Accurac
+Role Encoding: 1 Role Encoding: 1.0 060 = AVERAGE ; 0.63
+050} am MAX =~ oss —_—
+030 0.33 0.33 fm 0-42
+0.27
+o
+Role Encoding: 1.N one $28 0.42 Tl 0.39 fam 0.40
+0s : 0.24 0.23 0.07 43
+a FPR FNR Broken Role
+Figure 8: Hierarchical clustering scheme of repurposed wwe’ aire gatsu® “ goawne inet gsleswa® “ jenna oor wee as
+dataset.
+Figure 10: Performance comparison of three role-
+based access control architectures across security
+Role Data Generation metrics. Results show minimum, average, and maxi-
+Eee ; mum values for FPR, FNR, and Broken Role accuracy
+Prompt: """You are a data generation assistant. Your task is to generate role-specific . . .
+synthetic, realistic data for organizational settings. The schema will include field names, across six different models per architecture, averaged
+types, and any constraints or requirements for the data. . . . . .
+Generate queries and responses that reflect the role's responsibilities in the specified over multiple datasets with organizational structure vari-
+Se ations. Higher Broken Role accuracy indicates better
+Consider the role's responsibilities and access privileges when generating the examples. defense against one of jailbreak attacks.
+Output must be in JSON format, with the following keys:
+- "role": The name of the role. . .
+- ‘department! Associated department (if applicable). Most importantly, our analysis shows that there
+- "access_range": The data access range. . . ne. .
+- "queries" List of 100 realistic queries. are different security capabilities against adver-
+- "responses": Corresponding list of 100 realistic responses to each query.""" . . . .
+sarial attacks in different architectures. The
+Heese Role-aware LLM-Gen strategy showed the best
+“CapELeEF "Beans protection against broken role attacks with an aver-
+"access_range": "1-100"
+“instruction”: "Summarize the outcomes of the last board..." age broken role accuracy of 0.56 (range: 0.42-0.63)
+“output”: "The last board meeting approved increased R&D..." . ?
+and was able to reject the greatest percentage of
+"role": "Marketing Associate (a)" oo. . . .
+"department": "Marketing" malicious role manipulation attempts. Such high
+“access_range": "1-7" . . .
+instruction": "What is the click-through rate for.." performance indicates that the integrated method,
+“output”: "Our paid search ads have a click-through rate of 3.8%..." . . .
+in which both access control and question answer-
+: ing are performed by a single model, offers im-
+proved contextual knowledge of role-based attacks.
+Figure 9: System-Level Output for Synthetic Dataset. Role-aware CLs performed at average levels (aver-
+age: 0.48, range: 0.30-0.40), whereas Role-aware
+LLM-CLs had the lowest broken role accuracy (av-
+E_ Role-aware Method: Cls vs LLM-Cls y (
+erage: 0.45, range: 0.39-0.48), which means that
+vs LLM-Gen ; ;
+it is more susceptible to such adversarial attacks.
+The Role-aware Cls shows a highly inconsistent These results indicate a curious tradeoff: whereas
+performance, with a mean FPR of 0.41 andalarge — the Role-aware LLM-Gen approach exhibits larger
+variance between 0.23 and 0.68, where the Roberta- | FNR variation and moderate FPR, it makes up in
+large model performed the worst with the highest — better resistance to advanced attacking methods,
+FPR of 0.68, which means that there are significant indicating that the unified architecture might be
+model-dependent weaknesses to unauthorized ac- _ inherently more capable of identifying and resist-
+cess. However, they are consistently low in FNR __ ing role-based manipulation attacks than separated
+(0.04-0.06, average 0.05), indicating reliable access _ classification systems.
+12
+
+
+--- Page 13 ---
+
+F Metrics for Jailbreak Experiment than on the basic structure, as expected. For the
+. . Role-aware Cls and Role-aware LLM-Cls methods,
+Figure 7 shows the detailed performance between
+. . the accuracy rates decreased by 6.0% and 6.7%
+the baseline and the model that has been trained on . .
+. . . when trained with the office structure. The rea-
+the jailbreak train set (See Section 7.1). . . .
+son for this is due to the deep hierarchy associated
+Model Structure Accuracy Broken Jailbreak with the office structure compared to the basic one.
+—_—_—__—¥+_—_—_—________________ Nonetheless, when using the Role-aware LLM-Gen
+Ro? O80 099 be method, the accuracy rate increased 1.3% when
+Baseline ¢y3 0.96 0.58 0.89 training with the office structure, potentially indi-
+so* 0.80 0.30 0.51 cating that, with answer generation, there is negli-
+With RB 0.84 0.56 0.98 gible model performance difference when training
+jailbreak RO 0.88 0.27 0.70 with either structures
+samples SB 0.97 0.60 0.96
+P Ne) 0.82 0.39 0.83 —___
+Table 7: Jailbreak Experiment Performance for Llama saseona mai 094 60%
+3.2 3B Instruct. "
+'Repurposed Basic, "Repurposed Office, *Synthetic Basic, ar
+4Synthetic Office 3
+G Metrics for Blacklist Experiment os
+Figure 8 presents a detailed comparison between bo
+. . Role-aware LLM-Gen Role-aware LLM-Cls Role-aware Cls
+the baseline model and the model trained on the
+original plus the blacklist training set (see Sec- Figure 11: Average Accuracy Rates of Models Trained
+tion 7.2). on the Basic vs Office Datasets.
+Blacklist Topic Structure Accuracy Blacklist Across almost all methods, models exhibit lower accu-
+TT racy rates when trained with the office structure. Note
+ne. O80 . that for Role-aware LLM-Gen, accuracy rates for both
+Baseline SB? 09 6 - structures are almost equal.
+So* 0.80 -
+RB 0.84 1.00
+Politics RO 0.88 1.00
+SB 0.97 1.00
+SO 0.80 1.00
+RB 0.84 1.00
+G 1 RO 0.88 1.00
+enera SB 0.96 1.00
+SO 0.81 0.99
+Table 8: Blacklist Experiment Performance for Llama
+3.2 3B Instruct.
+'Repurposed Basic, "Repurposed Office, *Synthetic Basic,
+“Synthetic Office
+Note that Baseline here denotes the baseline datasets
+(original) used to train the model.
+H_ Basic vs Office Structures
+After training the models using three methods of
+Section 5.1, we averaged the accuracy metrics for
+the two types of structures (basic and office). As
+shown in Figure 11, model performance, on aver-
+age, on the office organizational structure is lower
+13
+
+
+--- Page 14 ---
+
+I_ Role vs No role comparison
+
+Tables 9 and 10 show the difference in quality of
+
+LLM responses to prompts with and without roles
+
+respectively. We use three metrics for response
+
+quality - Correctness, Completeness, and Clarity
+
+(on a scale of 1 to 5). The LLM responses are sent
+
+to ChatGPT 4.1 mini for evaluation as described
+
+in Section 7.3. The average metrics for prompts
+
+with and without roles are similar, with less than
+
+1% difference between each of the metrics.
+Architecture Dataset Model Ors. Seed Completeness Correctness _— Clarity
+
+Structure
+LLM+LLM _ Repurposed Qwen2.5 3B Instruct Basic 42 3.86 3.26 4.62
+LLM+LLM _ Repurposed Qwen2.5 3B Instruct Office 42 3.7 3.21 4.61
+LLM+LLM _~ Repurposed Llama 3.2 3B Instruct Basic 42 3.85 3.43 4.64
+LLM+LLM _~ Repurposed Llama 3.2 3B Instruct Office 42 3.93 3.28 47
+LLM+LLM _ Repurposed Gemma 3 4B Instruct Basic 42 4.03 3.53 4.52
+LLM+LLM _ Repurposed Gemma 3 4B Instruct Office 42 3.91 3.39 4.41
+LLM+LLM _ Repurposed Qwen2.5 7B Instruct Basic 42 4.1 3.69 4.75
+LLM+LLM _ Repurposed Qwen2.5 7B Instruct Office 42 4.01 3.55 4.63
+LLM+LLM ~ Repurposed Llama 3.1 8B Instruct Basic 42 4.11 3.69 4.73
+LLM+LLM ~ Repurposed Llama 3.1 8B Instruct Office 42 4.15 3.63 4.72
+LLM+LLM _ Repurposed Gemma 7B Instruct Basic 42 3.95 3.61 4.44
+LLM+LLM _ Repurposed Gemma 7B Instruct Office 42 4.03 3.6 4.36
+LLM + LLM Synthetic Qwen2.5 3B Instruct Basic 42 3.93 3.59 4.75
+LLM + LLM Synthetic Qwen2.5 3B Instruct Office 42 3.6 3.63 4.75
+LLM + LLM Synthetic Llama 3.2 3B Instruct Basic 42 3.84 3.66 4.74
+LLM + LLM Synthetic Llama 3.2 3B Instruct Office 42 3.68 3.66 4.71
+LLM + LLM Synthetic Gemma 3 4B Instruct Basic 42 4.09 3.66 4.77
+LLM + LLM Synthetic Gemma 3 4B Instruct Office 42 3.75 3.62 4.65
+LLM + LLM Synthetic Qwen2.5 7B Instruct Basic 42 3.95 3.71 4.83
+LLM + LLM Synthetic Qwen2.5 7B Instruct Office 42 3.59 3.69 4.74
+LLM + LLM Synthetic Llama 3.1 8B Instruct Basic 42 4.04 3.73 4.81
+LLM + LLM Synthetic Llama 3.1 8B Instruct Office 42 3.79 3.75 4.78
+LLM + LLM Synthetic Gemma 7B Instruct Basic 42 4.05 3.71 4.69
+LLM + LLM Synthetic Gemma 7B Instruct Office 42 3.74 3.73 4.66
+Average 3.9 3.58 4.67
+Table 9: Response quality when no role is included in question for LLM
+14
+
+
+--- Page 15 ---
+
+Architecture Dataset Model s Org. Seed Completeness Correctness _—_ Clarity
+tructure
+LLM Repurposed Qwen2.5 3B Instruct Basic 42 3.85 3.41 4.58
+LLM Repurposed Qwen2.5 3B Instruct Office 42 3.83 3.38 4.67
+LLM Repurposed —_ Llama 3.2 3B Instruct Basic 42 3.97 3.50 4.56
+LLM Repurposed —_ Llama 3.2 3B Instruct Office 42 3.80 3.40 4.59
+LLM Repurposed = Gemma 3 4B Instruct Basic 42 3.96 3.56 4.53
+LLM Repurposed Gemma 3 4B Instruct Office 42 4.10 3.64 4.54
+LLM Repurposed Qwen2.5 7B Instruct Basic 42 3.94 3.51 4.73
+LLM Repurposed Qwen2.5 7B Instruct Office 42 4.09 3.59 4.73
+LLM Repurposed —_ Llama 3.1 8B Instruct Basic 42 4.09 3.65 4.64
+LLM Repurposed —_ Llama 3.1 8B Instruct Office 42 4.02 3.52 4.63
+LLM Repurposed Gemma 7B Instruct Basic 42 3.77 3.42 4.38
+LLM Repurposed Gemma 7B Instruct Office 42 3.73 3.36 4.36
+LLM Synthetic Qwen2.5 3B Instruct Basic 42 3.89 3.56 4.75
+LLM Synthetic Qwen2.5 3B Instruct Office 42 3.96 3.86 4.82
+LLM Synthetic Llama 3.2 3B Instruct Basic 42 3.91 3.61 4.64
+LLM Synthetic Llama 3.2 3B Instruct Office 42 3.87 3.76 4.70
+LLM Synthetic Gemma 3 4B Instruct Basic 42 3.92 3.60 4.61
+LLM Synthetic Gemma 3 4B Instruct Office 42 3.90 3.78 4.73
+LLM Synthetic Qwen2.5 7B Instruct Basic 42 4.13 3.88 4.79
+LLM Synthetic Qwen2.5 7B Instruct Office 42 3.98 3.81 4.79
+LLM Synthetic Llama 3.1 8B Instruct Basic 42 3.86 3.60 4.78
+LLM Synthetic Llama 3.1 8B Instruct Office 42 3.91 3.65 4.78
+LLM Synthetic Gemma 7B Instruct Basic 42 3.84 3.55 4.54
+LLM Synthetic Gemma 7B Instruct Office 42 3.88 3.65 4.59
+Average 3.93 3.59 4.64
+Table 10: Response quality when role is included in question for LLM
+15
+
+
+--- Page 16 ---
+
+J Comparison of encodings
+
+We show our results from comparison of different
+role encodings for access control as described in
+Section 7.4. We experimented with Single Name
+Encoding (Table 11), Hierarchical Name Encoding
+(Table 12), and Hierarchical Number Encoding (Ta-
+ble 13). We used four metrics to compare model
+responses across role encodings: Accuracy, FPR
+(how often the model gives access to unauthorized
+roles), FNR (how often the model denies access
+to authorized roles), and Fl. Compared to Hier-
+archical Number Encoding, the Single Name En-
+coding has a 28.33% decrease in FPR (26.19% to
+18.77%) and a 45.15% decrease in the FNR (9.08%
+to 4.98%). There is a 47.64 % decrease in the bro-
+ken role rejection accuracy (51.42% to 26.92%).
+Similarly, the Hierarchical Name Encoding has a
+29.13 % decrease in FPR (26.19% to 18.56%), a
+45.15% decrease in the FNR (9.08% to 4.98%) and
+a 47.64 % decrease in the broken role rejection ac-
+curacy (51.42% to 26.92%) when compared to the
+Hierarchical Number Encoding. Overall, the Hi-
+erarchical Number Encoding has the highest FPR,
+highest FNR and highest broken role rejection ac-
+curacy.
+
+16
+
+
+--- Page 17 ---
+
+Org. Seen Unseen Exist Broken Random
+Architecture Dataset Model Structure Seed Accuracy FPR FNR FI Role Acc. Role Acc. Mismatch Role Acc. Role Acc.
+LLM Repurposed — Llama 3.1 8B Instruct basic 42 84.11 16.50 15.00 = 85.54 86.33 81.89 78.00 43.00 100.00
+LLM + LLM Repurposed — Llama 3.1 8B Instruct basic 42 96.22 6.00 2.00 96.65 95.11 97.33 92.00 14.00 100.00
+BERT+LLM _ Repurposed Modern BERT-base basic 42 90.56 14.25 5.60 91.74 91.89 89.22 81.00 53.00 100.00
+LLM Repurposed — Llama 3.1 8B Instruct office 42 84.56 22.50 11.00 86.65 87.89 80.11 70.00 49.00 100.00
+LLM + LLM Repurposed — Llama 3.1 8B Instruct office 42 88.11 20.25 4.00 89.86 89.22 87.00 73.00 17.00 100.00
+BERT+LLM _ Repurposed Modern BERT-base office 42 87.89 21.75 4.40 89.77 88.78 87.00 71.00 33.00 100.00
+LLM Synthetic Llama 3.1 8B Instruct basic 42 95.78 5.75 2.00 96.23 94.67 96.89 94.00 8.00 95.00
+LLM + LLM Synthetic Llama 3.1 8B Instruct basic 42 98.11 2.25 2.00 98.30 98.11 98.11 97.00 7.00 100.00
+BERT + LLM Synthetic Modern BERT-base basic 42 96.00 4.50 3.60 96.40 94.78 97.22 94.00 41.00 100.00
+LLM Synthetic Llama 3.1 8B Instruct office 42 84.00 30.50 5.00 86.91 85.11 81.78 63.00 14.00 89.00
+LLM + LLM Synthetic Llama 3.1 8B Instruct office 42 83.78 33.75 2.00 87.01 84.89 82.67 55.00 16.00 100.00
+BERT + LLM Synthetic Modern BERT-base office 42 77.22 47.25 3.20 82.52 78.22 76.22 37.00 28.00 100.00
+Average 88.86 18.77 4.98 90.63 89.58 87.95 75.42 26.92 98.67
+
+Table 11: Access control metrics for Single Name Encoding
+
+Org. Seen Unseen Exist Broken Random
+Architecture Dataset Model Structure Seed = Accuracy FPR FNR Fl Role Acc. Role Acc. Mismatch Role Acc. Role Acc.
+LLM Repurposed — Llama 3.1 8B Instruct basic 42 90.44 11.25 15.00 91.43 90.44 90.44 78.00 43.00 100.00
+LLM + LLM Repurposed — Llama 3.1 8B Instruct basic 42 94.11 9.75 2.00 94.83 95.22 93.00 92.00 14.00 100.00
+BERT+LLM _ Repurposed Modern BERT-base basic 42 93.44 10.50 5.60 94.24 94.00 92.89 81.00 53.00 100.00
+LLM Repurposed — Llama 3.1 8B Instruct office 42 85.56 18.75 11.00 87.25 87.78 84.44 70.00 49.00 100.00
+LLM + LLM Repurposed — Llama 3.1 8B Instruct office 42 88.33 18.75 4.00 89.95 90.56 86.11 73.00 17.00 100.00
+BERT+LLM _ Repurposed Modern BERT-base office 42 88.89 17.50 4.40 90.38 89.44 88.33 71.00 33.00 100.00
+LLM Synthetic Llama 3.1 8B Instruct basic 42 96.33 6.00 2.00 96.75 95.22 97.44 94.00 8.00 95.00
+LLM + LLM Synthetic Llama 3.1 8B Instruct basic 42 98.56 2.25 2.00 98.71 98.56 97.44 97.00 7.00 100.00
+BERT + LLM Synthetic Modern BERT-base basic 42 96.56 4.25 3.60 96.91 97.33 95.78 94.00 41.00 100.00
+LLM Synthetic Llama 3.1 8B Instruct office 42 80.78 34.50 5.00 84.32 83.00 78.56 63.00 14.00 89.00
+LLM + LLM Synthetic Llama 3.1 8B Instruct office 42 78.11 46.50 2.00 83.23 79.22 77.00 55.00 16.00 100.00
+BERT + LLM Synthetic Modern BERT-base office 42 79.33 42.75 3.20 83.91 81.44 77.22 37.00 28.00 100.00
+Average 89.20 18.56 4.98 90.99 90.19 88.22 75.42 26.92 98.67
+
+Table 12: Access control metrics for Hierarchical Name Encoding
+
+Org. Seen Unseen Exist Broken Random
+Architecture Dataset Model Structure Seed Accuracy FPR FNR FI Role Acc. Role Acc. Mismatch Role Acc. Role Acc.
+LLM Repurposed — Llama 3.1 8B Instruct Basic 42 75.00 24.00 25.00 79.00 78.00 72.00 76.00 74.00 100.00
+LLM + LLM Repurposed — Llama 3.1 8B Instruct Basic 42 79.00 16.00 24.00 82.00 81.00 77.00 84.00 64.00 100.00
+BERT+LLM _ Repurposed Modern BERT-base Basic 42 92.25 13.33 4.40 93.91 91.25 93.25 86.67 65.00 100.00
+LLM Repurposed — Llama 3.1 8B Instruct Office 42 80.00 27.00 15.00 84.00 84.00 77.00 73.00 49.00 99.00
+LLM + LLM Repurposed — Llama 3.1 8B Instruct Office 42 87.00 26.00 5.00 90.00 89.00 84.00 74.00 31.00 100.00
+BERT+LLM _ Repurposed Modern BERT-base Office 42 86.75 27.33 4.80 89.98 89.00 84.50 72.67 50.00 100.00
+LLM Synthetic Llama 3.1 8B Instruct Basic 42 89.00 19.00 7.00 91.00 89.00 89.00 81.00 62.00 95.00
+LLM + LLM Synthetic Llama 3.1 8B Instruct Basic 42 97.00 3.00 2.00 98.00 98.00 97.00 97.00 43.00 100.00
+BERT + LLM Synthetic Modern BERT-base Basic 42 89.75 17.33 6.00 91.98 88.50 91.00 82.67 71.00 100.00
+LLM Synthetic Llama 3.1 8B Instruct Office 42 76.00 54.00 6.00 83.00 78.00 74.00 46.00 34.00 94.00
+LLM + LLM Synthetic Llama 3.1 8B Instruct Office 42 81.00 48.00 2.00 87.00 83.00 79.00 52.00 20.00 100.00
+BERT + LLM Synthetic Modern BERT-base Office 42 80.38 39.33 7.80 85.45 81.50 79.25 60.67 54.00 99.00
+Average 84.43 26.19 9.08 87.94 85.85 83.08 73.81 51.42 98.92
+
+Table 13: Access control metrics for Hierarchical Number Encoding
+
+
+--- Page 18 ---
+
+Struct. Arch. Model Acc. FPR FNR_- F1 = Corr. Comp. Clar. Seen Unseen
+Repurposed Dataset (Dolly)
+
+Basic LLM Qwen2.5-3B 76.33 22.67 24.33 80.00 3.92 3.53 4.65 80.00 72.67
+Basic LLM Llama-3.2-3B 76.33 28.00 21.67 80.33 4.02 3.64 4.65 78.00 74.00
+Basic LLM gemma-4B 75.33 27.33 23.00 79.67 3.99 3.55 4.59 78.33 72.33
+Basic LLM Qwen2.5-7B 76.33 24.33 24.00 80.00 4.08 3.67 4.71 78.67 73.33
+Basic LLM Llama-3.1-8B 75.67 25.00 24.00 79.33 4.12 3.65 4.69 78.00 73.00
+Basic LLM gemma-7B 73.00 34.00 22.33 78.33 3.85 3.55 4.45 76.00 70.33
+Basic LLM-Cls Qwen2.5-3B 90.33 16.00 5.67 92.67 —- - — 90.67 90.67
+Basic LLM-Cls Llama-3.2-3B 89.00 18.00 6.67 91.67 —- - -— 90.67 88.00
+Basic LLM-Cls gemma-4B 91.33 14.67 5.33 93.33 - - -— 92.67 90.33
+Basic LLM-Cls Qwen2.5-7B 85.67 22.67 9.33 89.00 —- - -— 86.67 85.00
+Basic LLM-Cls Llama-3.1-8B 77.33 29.67 18.33 81.67 —- - -— 78.67 76.00
+Basic LLM-Cls gemma-7B 78.33 37.33 12.67 83.33 - - — 78.67 77.67
+Basic Cls Modern BERT-base 92.96 11.44 4.40 9444 —- - -— 92.92 93.00
+Basic Cls Modern BERT-large 92.58 12.11 4.60 94.15 —- - -— 92.75 92.42
+Basic Cls Google BERT-base 86.82 29.33 1.97 90.36 —- - -— 88.00 86.43
+Basic Cls Google BERT-large 75.77 56.61 4.69 82.95 — - -— 75.77 77.28
+Basic Cls RoBERTa-base 74.21 57.18 3.29 82.50 —- - -— 80.07 71.66
+Basic Cls RoBERTa-large 85.83 16.45 9.99 89.54 — - —- 85.50 86.49
+Office LLM Qwen?2.5-3B 76.67 25.33 22.33 80.33 3.93 3.47 4.63 80.67 72.67
+Office LLM Llama-3.2-3B 83.00 25.33 11.67 86.67 3.99 3.59 4.66 86.00 80.00
+Office LLM gemma-4B 79.33 25.67 17.67 83.33 4.08 3.72 4.59 81.67 77.33
+Office LLM Qwen?2.5-7B 80.00 25.67 16.33 84.00 4.19 3.74 4.73 84.00 76.00
+Office LLM Llama-3.1-8B 80.33 26.67 15.00 84.33 4.17 3.70 4.68 83.67 77.33
+Office LLM gemma-7B 80.00 24.67 17.67 83.67 3.77 3.41 4.40 83.67 75.67
+Office LLM-Cls Qwen2.5-3B 86.67 27.67 4.67 89.67 — - — 88.33 84.33
+Office LLM-Cls Llama-3.2-3B 88.67 22.00 5.33 91.00 —- - — 89.67 87.33
+Office LLM-Cls gemma-4B 86.33 27.00 5.33 89.67 —- - — 88.33 84.33
+Office LLM-Cls Qwen2.5-7B 87.00 26.33 5.00 90.33 —- - — 89.33 85.00
+Office LLM-Cls Llama-3.1-8B 86.33 28.33 4.67 90.00 —- - — 88.67 84.00
+Office LLM-Cls gemma-7B 87.67 24.67 4.67 90.33 - - -— 89.33 86.00
+Office Cls Modern BERT-base 86.38 25.22 6.67 89.52 —- - — 87.67 85.08
+Office Cls Modern BERT-large 87.38 25.67 4.80 90.41 —- - -— 88.75 86.00
+Office Cls Google BERT-base 85.11 30.20 6.09 90.17) - - -— 89.19 83.62
+Office Cls Google BERT-large 86.96 29.65 6.34 91.12 - - -— 89.29 85.03
+Office Cls RoBERTa-base 83.15 27.18 9.83 85.68 —- - —- 85.35 84.16
+Office Cls RoBERTa-large 63.75 99.72 0.81 77.13 - - -— 62.85 62.41
+
+Table 14: Role-aware performance on repurposed (Dolly) dataset. Green cells mark the best accuracy in each dataset
+block. Higher is better for all metrics except FPR/FNR (lower is better).
+18
+
+
+--- Page 19 ---
+
+Struct. Arch. Model Acc. FPR FNR_- F1 = Corr. Comp. Clar. Seen Unseen
+Synthetic Dataset
+
+Basic LLM Qwen?2.5-3B 72.00 37.33 22.33 77.67 3.96 3.69 4.74 72.67 71.33
+Basic LLM Llama-3.2-3B 92.00 12.67 5.33 93.33 3.86 3.60 4.68 91.33 92.33
+Basic LLM gemma-4B 75.33 42.00 14.33 81.33 3.96 3.63 4.62 75.33 75.00
+Basic LLM Qwen?2.5-7B 77.33 35.00 15.33 82.00 4.04 3.78 4.78 79.00 75.00
+Basic LLM Llama-3.1-8B 92.67 13.33 4.67 94.00 3.95 3.73 4.79 92.67 92.00
+Basic LLM gemma-7B 78.33 34.33 14.67 83.00 3.93 3.66 4.62 79.67 76.00
+Basic LLM-Cls Qwen2.5-3B 90.67 14.67 6.67 92.33 - - — 89.33 91.67
+Basic LLM-Cls Llama-3.2-3B 96.67 5.33 2.33 97.33 - - - 96.33 97.00
+Basic LLM-Cls gemma-4B 97.33 4.00 2.33 97.67 - - - 97.00 97.33
+Basic LLM-Cls Qwen2.5-7B 96.33 6.33 2.00 97.00 —- - - 96.33 96.00
+Basic LLM-Cls Llama-3.1-8B 97.00 3.67 2.00 98.00 —- - — 97.33 97.33
+Basic LLM-Cls gemma-7B 91.67 19.33 2.00 93.67 —- - -— 91.67 91.67
+Basic Cls Modern BERT-base 91.08 12.00 7.07 92.88 —- - -— 89.92 92.25
+Basic Cls Modern BERT-large 84.50 25.33 9.60 87.92 —- - — 84.25 84.75
+Basic Cls Google BERT-base 87.48 25.74 3.05 90.96 —- - -— 86.80 90.83
+Basic Cls Google BERT-large 90.73 15.81 5.90 92.94 —- - - 90.95 91.23
+Basic Cls RoBERTa-base 80.67 48.27 3.67 85.95 —- - - 80.46 80.61
+Basic Cls RoBERTa-large 61.45 74.25 12.94 74.83 —- - -— 62.30 66.95
+Office LLM Qwen?2.5-3B 77.67 47.67 7.00 83.67 3.76 3.60 4.71 80.00 75.67
+Office LLM Llama-3.2-3B 78.67 47.33 5.67 84.67 3.85 3.71 4.73 80.33 77.00
+Office LLM gemma-4B 73.67 58.00 7.33 81.67 3.84 3.69 4.69 76.33 71.00
+Office LLM Qwen?2.5-7B 79.00 45.33 6.33 84.67 3.89 3.77 4.77 81.00 77.00
+Office LLM Llama-3.1-8B 78.00 49.00 6.00 84.00 3.94 3.77 4.81 80.00 76.00
+Office LLM gemma-7B 76.00 53.33 6.33 83.00 3.81 3.59 4.58 80.00 71.67
+Office LLM-Cls Qwen2.5-3B 79.67 51.33 2.00 85.67 - - - 81.00 78.33
+Office LLM-Cls Llama-3.2-3B 80.00 50.00 2.00 85.67 —- - - 81.00 79.00
+Office LLM-Cls gemma-4B 79.67 51.00 2.00 85.33 - - — 81.67 77.67
+Office LLM-Cls Qwen2.5-7B 81.33 45.33 2.33 86.67 — - — 82.33 80.33
+Office LLM-Cls Llama-3.1-8B 81.67 46.67 2.00 87.00 —- - - 84.00 79.00
+Office LLM-Cls gemma-7B 80.00 49.33 2.00 86.00 —- - -— 81.33 79.00
+Office Cls Modern BERT-base 80.17 43.89 5.40 85.63 - - — 82.08 78.25
+Office Cls Modern BERT-large 77.13 53.33 4.60 83.91 —- - — 78.17 76.08
+Office Cls Google BERT-base 75.32 62.32 3.97 83.51 — - —- 78.18 73.29
+Office Cls Google BERT-large 78.17 55.27 4.67 85.57) - - - 7710 77.62
+Office Cls RoBERTa-base 73.79 63.95 3.63 82.71 —- - -— 76.38 72.93
+Office Cls RoBERTa-large 69.13 79.94 0.73 80.69 — - - 70.98 69.10
+
+Table 15: Role-aware performance on synthetic datasets. Green cells mark the best accuracy in each dataset block.
+Higher is better for all metrics except FPR/FNR (lower is better).
+19

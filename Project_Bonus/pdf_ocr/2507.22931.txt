@@ -1,0 +1,934 @@
+
+
+--- Page 1 ---
+
+Enhancing RAG Efficiency with Adaptive Context Compression
+Shuyu Guo Zhaochun Ren
+Shandong University Leiden University
+Qingdao, China Leiden, The Netherlands
+guoshuyu225@gmail.com z.ren@liacs.leidenuniv.nl
+Abstract What album is sacrifice by elton john on?
+. . Document: Sacrifice (song) is a ballad performed
+Vey Retrieval-augmented generation (RAG) en- by musician Elton John. The song appears on the
+hances large language models (LLMs) with Vanilla RAG 1989 album "Sleeping with the Past’ ...
+a external knowledge but incurs significant in Output: Sleeping with the Past AS a sou nell
+7 . jocumen
+N ference costs due to lengthy retrieved contexts.
+s While context compression mitigates this is- Document: PX] D4 Dd Pd Bd Pd Pd _ dundant
+= sue, existing methods apply fixed compres- Output: Sleeping with the Past AS document
+sion rates—over-compressing simple queries with Context | _______ embeddings
+a . Compression | pocyument: x]
+N or under-compressing complex ones. We pro- Insufficient
+pose Adaptive Context Compression for RAG Output: Too Low for Zero x document
+(ACC-RAG), a framework that dynamically ad- =VVrs
+_ justs compression rates based on input com- with Adaptive | Document: [XJ [X] [X] [X]
+O plexity, optimizing inference efficiency with- Context | tout: Sleeving with the Past ~ aerrect
+is out sacrificing accuracy. ACC-RAG combines Compression pam seeping embeddings
+a hierarchical compressor (for multi-granular
+embeddings) with a context selector to retain Figure 1: A case of the retrieval augmented model with
+— minimal sufficient information, akin to human different context compression methods.
+> skimming. Evaluated on Wikipedia and five . .
+= QA datasets, ACC-RAG outperforms fixed-rate 2024a); and (2) Embedding-based compression,
+O methods and matches/unlocks >4x faster infer- which encodes text into dense embeddings (Ge
+N ence versus standard RAG while maintaining et al., 2024) for inference. Embedding-based meth-
+N or improving accuracy. ods have been proven more efficient and effec-
+(~ . tive (Cheng et al., 2024), typically employing a
+- 1 Introduction compressor trained in two phases: first through pre-
+. traini .g., Via aut di ] d-
+—N Large Language Models (LLMs) are pre-trained on ramming (¢.g., via autoenco ms or anguage mo
+. . was eling) to preserve contextual information (Cheva-
+= massive datasets, encoding vast knowledge within lier et al., 2023), followed by fine-tuning (
+; vay: . ier et al., , followe ne-tuning (e.g.,
+< billions of parameters. While they excel at many ar . y us “8
+. . with instruction follow-up or self-distillation) to
+— tasks, their parametric knowledge often falls short
+© for knowledge-intensive applications. Retrieval adapt to downstream tasks (Rau et al., 2024). Ex-
+e . PP ; rae isting embedding-based approaches fix the com-
+Augmented Generation (RAG) addresses this limi- ression rate (.e., token-to-embedding ratio), lead
+tation by extending the model’s knowledge bound- a fo trade offs: hich rates tisk ha sin essen
+aries through external context retrieval (Gao et al., ti ‘ inf fi ; hi he 1 t tai - d
+. . . ial information, while low rates retain redundan-
+2023). However, integrating lengthy retrieved con- . . vs . .
+texts into . . cies (Figure 1). Additionally, inconsistent evalua-
+prompts increases inference costs and : : .,
+may exceed LLMs’ context window limits (Cheva- tion benchmarks—varying training data scales and
+hieeet al., 2023)2 tasks across baselines—hinder fair comparisons.
+Context compression mitigates this issue by We propose an adaptive context compression
+transforming long contexts into shorter input se- | framework for RAG that dynamically adjusts the
+quences. Existing methods fall into two cate- number of compressed embeddings during infer-
+gories: (1) Lexical-based compression, which re- ence. The framework decouples offline compres-
+duces input length by preserving key tokens (Wang _ sion (fixed-rate hierarchical embeddings) from on-
+et al., 2023b) or generating summaries (Xu et al., _ line selection (dynamic embedding feeding, halted
+
+
+--- Page 2 ---
+
+once sufficient context is accumulated), mimicking __ solution to mitigate efficiency degradation in RAG
+human selective reading. We establish a unified — systems (Li et al., 2024). Methods fall into two cat-
+benchmark (Wikipedia corpus + five QA datasets) — egories: lexical-based, which reduce input context
+to ensure fair evaluation. Our method outperforms length by extracting tokens (Wang et al., 2023b)
+other compression techniques in effectiveness and or summarizing context (Xu et al., 2024a), and
+efficiency, matches or exceeds standard RAG ac- —embedding-based, which encode the context into
+curacy on four datasets with 4x faster inference, | embeddings to replace textual input (Mu et al.,
+and demonstrates significant potential for adaptive 2023). Embedding-based methods currently outper-
+compression via compressor analysis. form lexical-based due to their flexible information
+In summary, our contributions include: (1) A storage. Embedding-based methods have shown
+novel adaptive context compression framework for strong performance. Bulatov et al. (2022) seg-
+RAG, improving inference efficiency while main- | mented long context into chunks and encoding their
+taining retrieval augmentation benefits. (2) Train- | information into memory tokens. Wingate et al.
+ing strategies for a hierarchical compressor and = (2022) introduced context compression and applied
+adaptive selector, enabling multi-granularity com- _ it to toxicity reduction. Mu et al. (2023) proposed
+pressed embedding generation and automatic con- _ using gist tokens to generalize context compression.
+text selection. (3) A unified benchmark for context | Chevalier et al. (2023) compressed long contexts
+compression methods, resolving evaluation biases into summary vectors. Ge et al. (2024) employed
+caused by inconsistent training data and task setups —_ autoencoding and language modeling objectives to
+in prior works. (4) Experimental results showing _ pretrain compressors. Cheng et al. (2024) projected
+our method as the best under context compression, _ retrieval embeddings into context embeddings to
+with comparable results to regular RAG but with achieve extreme compression. Rau et al. (2024)
+improved efficiency. (5) Further analysis highlight- jointly optimized the compressor and decoder, ex-
+ing the significant potential of adaptive context tending the compression capability to multiple doc-
+compression. uments. Notably, existing methods rely on static
+compression strategies that cannot adapt to vary-
+2 Related Work ing question difficulty. Additionally, differences in
+2.1 Retrieval-Augmented Generation training data scales and task mixtures across stud-
+ies impede fair comparison. Our work resolves
+Retrieval-augmented generation (RAG) improves _ both limitations.
+model performance across tasks (Gao et al., 2023;
+Asai et al., 2023), including language model- 3 Adaptive Context Compression for
+ing (Min et al., 2023; Wang et al., 2023a), question RAG
+answering (Lewis et al., 2020; Shi et al., 2024;
+Xu et al., 2024b; Xiong et al., 2024), machine A RAG framework typically consists of a re-
+translation (Khandelwal et al., 2021; Cheng et al., _ triever 7 and a decoder D. The retriever builds
+2022), code generation (Zhang et al., 2023b,a), and =a search index J containing dense representations
+more. Various approaches have been proposed, of all documents from a collection. For a given
+including end-to-end optimization of model and _— query Q, FR retrieve the top-k relevant documents
+retriever (Guu et al., 2020), enhanced integration D = {dj,d2,...,d,}by matching Q’s embedding
+with non-parametric knowledge (Borgeaud et al., | against J via similarity search. The query Q and
+2022; Cheng et al., 2023a), improved alignment documents D are concatenated and fed into the de-
+between model and retriever (Shi et al., 2024; Lin coder D to generate a response R. This increases
+et al., 2024), and the integration of a self-reflection the input size to the decoder, reducing inference
+mechanism (Cheng et al., 2023b; Asai et al., 2024). efficiency as |D| >> |Q|.
+However, most focus on improving effectiveness, Existing embedding-based compression meth-
+neglecting efficiency degradation from incorporat- ods employ a fixed-rate compressor to convert
+ing external knowledge. documents into embedding sequences, which are
+. subsequently fed into the decoder for answer gen-
+2.2 Context Compression eration instead of the original documents. How-
+Context compression aims to shorten model in- _ ever, this fixed-ratio approach lacks adaptability
+put text, improving inference speed. It’s a key — to query complexity. The ACC-RAG framework
+
+
+--- Page 3 ---
+
+1) Document Embeddings Bp Lestiayer hidden states O Trainabie So Sufficient 4
+iBcvesionembedsings Bconctrate ____ Bowen HE Inui
+Sd
+“Let Me Love You” is a song recorded by French DJ and
+==) | “a4 #
+Canadian singer Justin Bieber. The song was released ...
+Figure 2: Overview of Adaptive Context Compression for RAG pipeline. The workflow is as follow: Context
+Retrieval —> Hierarchical Compression — Adaptive Context Selection —> Response Generation.
+introduces a hierarchical compressor C C and an former enables the compressor to preserve maxi-
+adaptive selector S working together to support mal contextual information, while the latter facili-
+dynamic compression. The former encodes docu- tates adaptation to downstream tasks. During pre-
+ments into multi-granular document embeddings, training, the compressor learns to encode text into
+enabling variable information density across seg- | embeddings through two tasks (Ge et al., 2024):
+ments. The latter progressively feeds embeddings _—__ (1) auto-encoding, where the decoder reconstructs
+into the decoder and halts once sufficient context the original text from the compressed embeddings
+is reached, effectively controlling input sequence —_ alone, and (2) language modeling, where the de-
+length. This mechanism allows variable-length de- coder generates text continuations conditioned on
+coder inputs, thereby realizing dynamic compres- the embeddings. Formally, given a task instruc-
+sion. The full workflow is illustrated in Figure 2. tion @, compressed sequence F,, and target re-
+sponse R = {ri,...,7n} (either original text or
+3.1 Hierarchical Compressor continuation), both tasks optimize the negative log-
+The compressor C processes each document d; into _ likelihood (NLL) loss:
+a multi-granular embedding sequence. Specifically, h
+the input text is concatenated with m; = |L;/T| L(6c) = — Ss. log Pon(re | Q, Beret) (2)
+special compression tokens, where L, is the doc- tI
+ument length and 7 is a fixed compression rate.
+These compression tokens are encoded, and their Only the compressor parameters @¢ are updated,
+final-layer embeddings form the compressed se- while the decoder parameters 0p remain frozen.
+quence E;: During fine-tuning, we employ a self-distillation
+task (Allen-Zhu and Li, 2023), where the origi-
+E; = C(d;) = [e\?, bees el) (1) nal RAG model acts as a teacher to preserve de-
+coder capabilities. Given a query Q, context C,
+3.1.1 Fix-rated Preprocessing and target response R, the teacher distribution is
+The compressor employs a fixed compression ra- Preacher (Tt | Q, C, r<z), and the student distribution
+tio: higher ratios yield shorter compressed se- is Potudent(Tt | Q, Fc, r<t). The training minimizes
+quences with reduced information retention. The — the KL divergence between these distributions:
+entire compression process operates offline, with
+all documents pre-processed into their embedding L = Dxu (Peacher || Pstuaent) (3)
+sequences for instant access during retrieval.
+Notably, the fine-tuning approach avoids
+3.1.2 Training Strategy instruction-following tasks, preventing the com-
+The compressor is trained through a widely adopted — pressed embeddings from altering the decoder’s
+two-stage process: pretraining and fine-tuning. The _ original generation pattern.
+
+
+--- Page 4 ---
+
+3.1.3 Multi-granularity Compression 3.2.1 Training Data Synthesis
+In addition to encoding useful information, the The selector S is trained on synthesized decision
+compressor must also learn hierarchical informa- _ tuples. Given an instruction J, context C’, and gold
+tion organization. We define granularity b as the __ response R, for each granularity b € B, the hidden
+starting position of an embedding sequence. The states Hy and generated responses R, are obtained
+compressed sequence should exhibit varying in- _ through inference with the decoder, while the label
+formation densities across subsequences truncated —_ yp is derived by evaluating Ry against R:
+at different granularity levels. To achieve multi- 1b
+granular compression, we optimize across multi- Hy = DI, E.”)
+ple granularities during both pretraining and fine- Ry = Dgen(L, Et) (9)
+tuning. Formally, given a training granularity se- yp = eval(R, Ry)
+quence B = {bj,...,b,}, the training objective
+combines reconstruction errors at all granularities; The training data 7; consists of pairs:
+n
+£(6) = —S>S > 108 Pop (re | Q, EX, ret) mS Tlooyy) SPE BY OO)
+beB t=1 A fixed decoder requires only a unified selector, as
+(4) the generation mode remains the same.
+where E!? = [e1,..., 5]. This method ensures C
+allocates crucial information early and maintains 3.2.2 Reinforcement Learning
+complementary details in later positions. The selector is trained using reinforcement learning,
+. optimized via policy gradient with trajectory-based
+3.2 Adaptive Selector rewards. During inference, we stop adding context
+The adaptive selector S dynamically controls de- embeddings and generate the response once the
+coder input by progressively accumulating and ver- __ selector predicts "sufficient". For each episode with
+ifying context embeddings during inference. The granularities by < -+- < by:
+query is encoded into a query embedding sequence ;
+Eq = Dembea(q), while the context embedding Trajectory: 7 = ($1,41),.--, (87, ar)
+sequence is obtained by concatenating all com- State: s, = Concat(H7, Hp,)
+pressed document sequences in retrieval order: i sufficient (11)
+E. = Concat(E,..., E,). The selector iterates Action: a; =
+. . 0 continue
+through granularity levels from the inference gran-
+ularity sequence B = {by,..., bx}. Ateach step where H; and Hy, refer to the hidden states of
+t the instruction J and the truncated embedding se-
+1. Extract the subsequence F}.,, = [e1,...,¢,] | quence Et, respectively.
+from £,, then concatenate with E,, to construct The trajectory terminates when the action is | or
+the current input: all granularities are traversed. The reward is:
+X; = Concat( Eq, E1:»,) (5) R(r) = +1 ifdt:a=1lAyw, =1 Db
+2. Feed X; into the decoder D to obtain the last ()= —1 otherwise (12)
+layer hidden states:
+The policy 79 parameters are updated via the RE-
+Hy = D(Xt) (6) NFORCE algorithm (Williams, 1992):
+3. Feed H; into the selector S to verify if the con- T
+text information is sufficient: VoJ(0) =Er~ng Co S- Vo log mo(az | »)
+f sufficient t=1
+S(Ht) = , ; (7) (13)
+0 insufficient where 7g shares parameters with S.
+This process continues until S(H;) = 1 ort = .
+k. The final input X is determined based on the 4 Experimental Setup
+termination state: 4.1 Datasets
+x= a S(H;y) =1 (8) To ensure a fair comparison of different compres-
+Concat(Eq, Ec) t=k sion methods, we train and evaluate all methods on
+
+
+--- Page 5 ---
+
+unified datasets. For the retrieval corpus, we use the | LLM for all methods and apply identical LoORA
+Wikipedia corpus from Dec. 20, 2018, standardized = parameters for LORA-based fine-tuning.
+by Karpukhin et al. (2020) using the preprocessing
+from Chen et al. (2017). The corpus is split into 43 Evaluation Metrics
+multiple, disjoint text blocks of 128 tokens as doc- We evaluate model performance from two dimen-
+uments, resulting in 21,015,324 documents in the __ sions: effectiveness and efficiency. For effective-
+end. For finetuning, we conduct experiments on _ ness, we use the Match (M) metric, which mea-
+five commonly used open-domain QA benchmarks, sures whether the reference answer appears in the
+namely Natural Questions (NQ) (Kwiatkowski —model’s generated output. We do not use the Ex-
+et al., 2019), TriviaQA (Joshi et al., 2017), We- act Match (EM) metric due to verbose responses
+bQuestions (WQ) (Berant et al., 2013), Curat- from LLMs affecting its calculation. As for Effi-
+edTREC (TREC) (Baudis and Sedivy, 2015), and ciency, we use First Token Inference Time (FTIT)
+SQuAD v1.1 (Rajpurkar et al., 2016). All question- _as the metric. Unlike widely-adopted Total Infer-
+answer pairs are ensured to have supporting docu- —_ ence Time (TIT) (Cheng et al., 2024; Rau et al.,
+ments available in the retrieval corpus. For pretrain- | 2024), FTIT focuses on the time to the first token,
+ing, we select all supporting documents from the _ isolating the impact of compression methods on
+training set of QA and randomly sample additional __ efficiency rather than generation performance.
+documents from the retrieval corpus, resulting in a
+total of 1 million documents for training. 4.4 Implementation Details
+4.2 Baselines We use Mistral-7B-Instruct (Jiang et al., 2023) as
+the backbone LLM for all methods, with a decod-
+We compare our method with two categories of ing temperature of 0 for deterministic generation.
+compression approaches: plug-in methods and full- We apply LoRA (Hu et al., 2022) to the model as
+tuning methods. Plug-in methods train additional _the compressor, disabling it during inference as the
+compressors without modifying the decoder param- decoder. All experiments are implemented using
+eters, resulting in low training costs and preserving — pyTorch and Transformers. The default retrieval
+the original performance of the decoder. Baseline — model is CoIBERT (Santhanam et al., 2022), us-
+methods in this category include: ing the top-5 ranked documents for fine-tuning and
+ICAE (Ge et al., 2024): Pretrains the compro- _ eyaluation. Pretraining is done on single documents
+ssor with same task as ours but finetunes through = while fine-tuning is performed on five documents.
+instruction-following. We implemented ICAE mod- For selector training, we generate 15,000 training
+els with multiple compression rates for evaluation. samples and 2,000 test samples from the QA train
+XRAG (Cheng et al., 2024): Maps retrievalem- set, The selector employs a 4-layer/4-head trans-
+beddings into compression embeddings forextreme —_ former encoder with 256D projection, followed by
+compression. Performs only auto-encoding dur-  g 2-layer MLP classifier, incorporating segment
+ing pretraining and combines instruction-following —_ embeddings for instruction-context differentiation
+with self-distillation during finetuning. and contextual granularity in final features. More
+Full-tuning methods adopt an end-to-end ap- details are provided in Appendix C.
+proach, jointly training the compressor and decoder
+for better alignment and performance, but at in- 5 Experimental Results
+creased training costs and changes to the original
+decoder performance. Baseline methods in this 5.1 Main Results
+category include: The main results for ACC-RAG are presented in
+Autocompressor (Chevalier et al., 2023): Trains Table 1. Our ACC-RAG method, trained and in-
+the compressor only with language modeling. We _—ferenced with a granularity sequence of [1,32],
+use the pretraining-only COCOM model as asim- _ balances effectiveness and efficiency. Detailed re-
+plified version. sults for other ACC-RAG configurations are in Sec-
+COCOM (Rau et al., 2024): Similar to ICAE _ tion 5.4. The experimental results demonstrate that
+but jointly optimizes the compressor and decoder. | ACC-RAG significantly (Paired t-test, p < 0.05)
+Our method is implemented solely as a plug-in —_— outperforms all compression baselines in M score
+method, offering lower cost, better scalability, and | while maintaining superior efficiency. Notably, un-
+strong performance. We use the same backbone der our unified benchmark, most methods (e.g.,
+
+
+--- Page 6 ---
+
+Table 1: The main results between ACC-RAG and other compression methods. CR stands for Compression Rate. For
+each dataset, two columns represent Match (M) and First Token Inference Time (FTIT), with the highest M bolded
+and the second-highest underlined. * indicates statistical non-significance (p>0.05) with respect to ACC-RAG.
+Method cR tases
+NQ TriviaQA WQ TREC SQuAD Average
+LLM - 34.79 180 20.93 391 43.36° 172 34.29" 235 20.92 210 30.86 238
+RAG - 44.49 3264 23.82 3529 41.78 3334 33.43 3374 47.34 3356 38.17 3371
+Full-Tuning Methods
+AutoCompressor x4 24.13 1007 14.81 1242 28.15 1015 23.49 1085 15.79 1057 21.27 1081
+COCOM x4 26.73 1007 18.83 1242 23.92 1015 31.56 1085 25.60 1057 25.33 1081
+Plug-in Methods
+xRAG x 128 5.93 269 861 485 12.60 265 17.00 324 7.77 301 10.38 328
+ICAE x128 23.30 269 18.11 485 23.57 265 30.55 324 1847 301 22.8 328
+x16 27.04 440 19.23 667 23.97 436 3141 502 23.95 476 25.12 504
+x4 27.53 1007 19.63 1242 2451 1015 31.41 1085 27.58 1057 26.13 1081
+ACC-RAG(ours) adaptive 41.11 630 23.33 878 42.91 620 33.43 689 35.37 666 35.23 697
+—e- ACC-RAG —e- w/o language modeling gation. Notably, cumulative M scores assume a
+—®- w/ instruction following —®— w/o auto-encoding rf i bl f i hi : h
+—@- w/o self-distillation —@- w/o pretrain pe ect selector capa’ € of accurate y Cc oosing the
+0.500 Ne optimal granularity for each instruction. While this
+® does not exist, this section focuses solely on evalu-
+g 0400 ating the compression capacity of the compressor.
+2 0.300 : i
+§ jo nl 5.2.1 Compression Rate Analysis
+TriviaQa The result of different compression rates for com-
+g 0.250 pressor is shown in Appendix D. It can be observed
+3 025 that compressors with smaller compression rates
+5 0200 achieve higher final cumulative M scores, demon-
+3 strating stronger information encoding capabilities.
+124 8 Granularity 32 However, compressors with higher compression
+rates exhibit accelerated M score accumulation,
+Figure 3: Ablation on different training strategies. where the information density becomes more con-
+a: . centrated at the smaller granularity despite total
+xRAG, COCOM) exhibit lower effectiveness com- . & y P
+Le Lo information loss.
+pared to their original reports, primarily due to
+their reliance on larger-scale training data and task- 5.2.2. Training Strategy Ablation
+specific tuning. In contrast, ACC-RAG achieves The result of ablation of different training strate-
+a balanced trade-off between effectiveness and ef- gies for the compressor is shown in Figure 3. Our
+ficiency: compared to direct generation, it signifi- training strategy achieves the highest cumulative M
+cantly improves M scores on NQ, TriviaQA, and _ scores on two datasets, demonstrating its effective-
+SQUAD (p<0.05) with minimal drop on WQ and pegs. In ablation experiments, replacing the self-
+TREC (p>0.05). Meanwhile, it matches or exceeds —_igtillation task with instruction following signif-
+vanilla RAG’s accuracy on four datasets while re- icantly degraded compression performance. This
+ducing FTIT by over 4x. is likely because instruction following guides the
+52 C Analvsi compressor to encode information into embeddings
+. ompressor “Analysis that do not align with the decoder’s original gener-
+In this section, we investigate factors influencing _ ation distribution, impairing the decoder’s genera-
+compressor performance. Experiments are con- _ tion ability. This could explain the suboptimal per-
+ducted under the top-1 retrieval setting for analy- formance of previous works. Without pretraining,
+sis. We adopt cumulative M scores across different | the compressor exhibits faster M-score accumula-
+granularities as the evaluation metric rather than _ tion at smaller granularities but slower progression
+M scores at a single granularity, as the compressor at larger granularities. Both language modeling
+compresses hierarchical information into position- and auto-encoding tasks contribute to performance
+aware embedding sequences for dynamic aggre- gains, as their individual removal degrades perfor-
+
+
+--- Page 7 ---
+
+-e GO -e Gl «@ -e@ Table 2: The results of different compressors w/ or w/o a
+NQ selector during inference. For each dataset, two columns
+2 0.500 represent Match (M) and First Token Inference Time
+ri (FTIT). GO-G3 denote different granularity sequences.
+3 0.400 ——
+5 Compressors Selector ___ Datasets
+Tiviada NQ TriviaQA
+5 0.275 ACC-GO x 40.19 1007 23.21 1242
+§ 0.250 ACC-GO Y 41.33 786 23.38 984
+Z 0.225 ACC-G1 x 40.86 1007 23.62 1242
+2 0200 ACC-G1 Ys ALAL +630 23.33 878
+~ SF " > ACC-G2 X 39.94 1007 23.20 1242
+Granularity ACC-G2 v 39.39 622 23.07 895
+ACC-G3 x 41.27 1007 23.32 1242
+Figure 4: Results of different granularity sequences for ACC-G3 v 40.17 631 22.58 878
+compressor. In the legend, GO-G3 denote [32], [1, 32],
+[1, 2, 8, 32], [1, 2,4, 8, 16, 32] respectively. error propagation leading to sequence-level failure
+ae . due to overemphasis on individual classification.
+mance. The self-distillation proves critical for NQ In addition, the attention mechanism also plays a
+performance but negligible for TrivialQA, suggest- key role in enhancing the selector, while the in-
+ing its crucial role in certain scenarios. troduction of segment embeddings and granularity
+5.2.3 Granularity Sequence Selection slightly further improves performance.
+We investigate the impact of different training gran- 5,3.2 Inference Verification
+ularity Sequences on Compressor performance dur- To validate the effectiveness of the selector during
+ing training. We present results for the inference actual inference, we compare different compressors
+granularity sequence [1, 2,4,8, 16, 32], with addi- ith and without the selector using the inference
+tional results in Appendix E. As shown in Figure 4, granularity sequence [1, 32]. As shown in Table 2,
+with the granularity sequence becoming increas- ACC_GO and ACC-G1 with the selector outper-
+ingly dense from GO to G3, the overall trend in- formed the versions without the selector on nearly
+dicates a slight decrease in the final accumulated all datasets with superior efficiency (with FTIT re-
+M scores but accelerated M score accumulation at quceq by over 20%). ACC-G2 and ACC-G3 with
+smaller gr anularities. This suggests that even with the selector also maintain comparable performance
+a fixed compression rate training approach (ie., to their counterparts without the selector, while
+the single granularity sequence GO) as in previous achieving over 30% FTIT reduction
+work, the compressor retains hierarchical encod-
+ing capabilities. Training with additional smaller 5.4 Framework Evaluation
+granularities effectively guides the compressor to The results of combinations of compressors trained
+encode information m the compressed embeddings with different granularity sequences and inference
+at earlier positions. This allows the decoder to gglection strategies are shown in Table 3. We ob-
+ACCESS sufficient information with fewer embed- carve that, for the same compressor, sparser infer-
+dings, thereby improving inference efficiency. We ence granularity sequences yield higher M scores
+also observe that the granularity-based inference — py require more context embeddings. This is due
+method significantly outperforms the single gran- tg gparser sequences reducing classification errors
+ularity approach under ideal conditions. The final by the selector, while potentially missing more pre-
+accumulated M scores on both datasets notably —Gise termination points. Among all compressors,
+surpass vanilla RAG, demonstrating the immense —_4CC_G0+G1 achieves the highest average M score,
+potential of our ACC-RAG framework. while ACC-G1+G1 reaches a similar M score with
+. less than of the context embeddings, demon-
+5.3. Selector Analysis ; 60% ; ns ;
+strating the effectiveness of the multi-granularity
+5.3.1 Architecture Ablation training strategy in hierarchical information encod-
+Our ablation study (Appendix F) reveals that RL _ ing. Additionally, training the compressor and se-
+serves as the critical component for sequence-level _ lection strategy with denser granularity sequences
+performance, while supervised learning exhibits _ further enhances efficiency, as exemplified by ACC-
+
+
+--- Page 8 ---
+
+Table 3: The results of combinations of different compressors and selection strategies. GO-G3 denote different
+granularity sequences. For each dataset, two columns represent Match (M) and Average Context Embedding Counts,
+with the best metrics bolded and the second-best underlined.
+Cc Selection Datasets
+Oompressors Strategies TT TTTLCTN=
+NQ TriviaQA WQ TREC SQuAD Average
+G3 41.00 102 23.34 105 42.32 97 33.86 102 35.06 109 35.12 103
+ACC-GO G2 41.11 104 23.42 107 42.27 99 34.15 103 35.09 111 35.21 105
+Gl 41.33 107 23.38 111 42.52 104 3401 108 35.13 114 35.27 109
+G3 41.41 56 23.33 58 42.22 56 33.14 57 35.16 57 35.05 57
+ACC-G1 G2 41.33. 62 23.24 63 42.67 62 33.14 63 35.26 62 35.13 62
+Gl 41.11 64 23.33 64 42.91 64 3343 64 35.37 64 35.23 64
+G3 39.42 47 22.69 50 42.37 48 32.71 48 35.22 49 3448 48
+ACC-G2 G2 39.20 56 23.11 60 42.57 58 33.29 58 34.97 58 3463 58
+Gl 39.39 63 23.07 65 42.57 64 33.72 64 35.15 65 34.78 64
+G3 40.06 63 22.67 62 42.27 64 34.15 64 31.51 63 34.13 63
+ACC-G3 G2 40.17 64 2258 64 4232 64 3444 64 31.52 64 3421 64
+Gl 40.17 64 2258 64 4232 64 3444 64 31.52 64 3421 64
+Table 4: The results of RAG performance between _ post-retrieval, while the boost rate measures the per-
+vanilla RAG and ACC-RAG. For each dataset, two centage of initially incorrect responses corrected
+columns represent resilience and boost rate, with the h h ‘eval . As sh .
+highest score bolded and the second-highest underlined. through retrieval augmentation. As shown in Ta-
+ble 4, RAG exhibits a higher boost rate, while ACC-
+Method Datasets RAG demonstrates a higher resilience rate. As the
+NQ TriviaQA training granularity sequence for compressor be-
+RAG 72.98 28.78 82.06 8.97 comes denser, the overall trend is an increase in the
+ACC-RAG-GO 76.18 22.94 83.22 7.91 boost rate and a decrease in the resilience rate.
+ACC-RAG-G1 77.95 21.67 83.56 7.75
+ACC-RAG-G2 74.82 20.69 83.22 7.52 *
+ACC-RAG-G3_ 77.79 20.31 83.95 6.72 58 OOD Analysis
+_ We evaluate the Out of Distribution(OOD) per-
+G2+G3, which optimized inference efficiency at formance of our method(results in Appendix 1),
+the expense of a slight M score decrease. demonstrating its exceptional generalization abil-
+ity to unseen supporting documents and unseen
+5.5 Case Study . . .
+queries from different domains.
+We present a representative case in Appendix G,
+which demonstrates the outstanding performance 5-9 Additional Computation Analysis
+of ACC-RAG in both efficiency and effectiveness. Our approach incurs additional computational over-
+head during inference due to the introduced selec-
+5-6 Scalability Evaluation tor. Analysis in Appendix J demonstrates the fa-
+We observe an excellent trade-off between effec-  Vorable trade-off between controlled computational
+tiveness and efficiency with Llama3-3B-Instruct Cost and substantial performance gains.
+and Llama3-8B-Instruct (results in Appendix H). lusi
+ACC-RAG achieves results comparable to RAG 6 Conclusion
+on both models and datasets (with <10% M score In this paper, we propose Adaptive Context Com-
+difference) , while improving speed by 4to5 times —_ pression for RAG, a framework that dynamically
+(with PIIT reduced by 76% to 83%), fully show- adjusts compressed embeddings required during
+casing the scalability of the method. inference. The framework effectively improves in-
+5.7 RAG Int tion Analvsi ference efficiency while maintaining quality benefit
+. niegration Analysis from retrieval. Experimental results under standard-
+We evaluate the RAG performance using the re- ized benchmark show that our method achieves the
+silience rate and the boost rate proposed in (Cheng __ best results under context compression and compa-
+et al., 2024). The resilience rate quantifies the rable or superior accuracy with over 4x inference
+proportion of correct decoder responses retained __ efficiency compared to RAG.
+
+
+--- Page 9 ---
+
+Limitations International Conference on Learning Representa-
+tions, ICLR 2023, Kigali, Rwanda, May 1-5, 2023.
+Despite the promising results demonstrated in this OpenReview.net.
+paper, there are several limitations to our frame- : : : :
+work Akari Asai, Sewon Min, Zexuan Zhong, and Danqi
+: Chen. 2023. Retrieval-based language models and
+. applications. In Proceedings of the 61st Annual Meet-
+° We have only conducted a P reliminary exp lo- ing of the Association for Computational Linguistics:
+ration of the selector and its performance is Tutorial Abstracts, ACL 2023, Toronto, Canada, July
+currently the largest bottleneck in the entire 9-14, 2023, pages 41-46. Association for Computa-
+framework. Improving the prediction accu- tional Linguistics.
+racy of the selector is key to further unlocking ajar Ag ai, Zeqiu Wu, Yizhong Wang, Avirup Sil, and
+the potential of adaptive text compression. Hannaneh Hajishirzi. 2024. Self-rag: Learning to
+retrieve, generate, and critique through self-reflection.
+* Our work focuses on adaptive context selec- In The Twelfth International Conference on Learning
+tion, lacking experimental analysis under con- Representations, ICLR 2024, Vienna, Austria, May
+trolled conditions, which remains a promising 7-11, 2024. OpenReview.net.
+direction for future research. Petr Baudis and Jan Sedivy. 2015. Modeling of the
+. question answering task in the yodaqa system. In Ex-
+* We have trained the compressor and selector perimental IR Meets Multilinguality, Multimodality,
+separately, without further exploring the po- and Interaction - 6th International Conference of the
+tential of joint training. This may hinder the CLEF Association, CLEF 2015, Toulouse, France,
+alignment between the two modules, poten- September 8-11, 2015, Proceedings, volume 9283 of
+. . Lecture Notes in Computer Science, pages 222-228.
+tially reducing the overall performance of the Springer.
+framework.
+Jonathan Berant, Andrew Chou, Roy Frostig, and Percy
+¢ Due to computational constraints, we have Liang. 2013. Semantic parsing on freebase from
+not explored the performance of ACC-RAG question-answer pairs. In Proceedings of the 2013
+. Conference on Empirical Methods in Natural Lan-
+on larger models and longer texts, which may guage Processing, EMNLP 2013, 18-21 October
+limit its applicability in certain scenarios. 2013, Grand Hyatt Seattle, Seattle, Washington, USA,
+A meeting of SIGDAT, a Special Interest Group of the
+Ethics Statement ACL, pages 1533-1544. ACL.
+The research conducted in this paper centers around —_ Sebastian Borgeaud, Arthur Mensch, Jordan Hoffmann,
+the improvement of efficiency in retrieval aug- Trevor wi pia Rumheront. Se a ee
+: van den Driessche, Jean-Baptiste Lespiau, Bogdan
+mented generation. Our framework accelerates the Damoc, Aidan Clark, Diego. de Las ch, sas. Mrnolia
+inference of retrieval augmented models by com- Guy, Jacob Menick, Roman Ring, Tom Hennigan,
+pressing long context into compact embeddings Saffron Huang, Loren Maggiore, Chris Jones, Albin
+and dynamically selecting them. Cassirer, Andy Brock, Michela Paganini, Geoffrey
+We acknowledge the importance of the ACM Irving, Oriol Vinyals, Simon Osindero, Karen Si-
+; a. monyan, Jack W. Rae, Erich Elsen, and Laurent Sifre.
+code of Ethics and totally agree with it. We ensure 2022. Improving language models by retrieving from
+that this work is compatible with the provided code. trillions of tokens. In International Conference on
+All data used in this study is obtained from existing Machine Learning, ICML 2022, 17-23 July 2022, Bal-
+benchmarks, while all models used are publicly timore, Maryland, USA, volume 162 of Proceedings
+. . . of Machine Learning Research, pages 2206-2240.
+available, thus ensuring a high level of transparency PMLR.
+and reproducibility in our experimental procedure.
+We have made every effort to ensure that our Aydar Bulatov, Yuri Kuratov, and Mikhail Burtsev. 2022.
+research does not harm individuals or groups, nor Recurrent memory transformer. In Advances in Neu-
+_ : . ral Information Processing Systems 35: Annual Con-
+does it involve any form of deception or potential ference on Neural Information Processing Systems
+misuse of information. 2022, NeurIPS 2022, New Orleans, LA, USA, Novem-
+ber 28 - December 9, 2022.
+Danqi Chen, Adam Fisch, Jason Weston, and Antoine
+References Bordes. 2017. Reading Wikipedia to answer open-
+Zeyuan Allen-Zhu and Yuanzhi Li. 2023. Towards un- domain questions. In Proceedings of the 55th Annual
+derstanding ensemble, knowledge distillation and Meeting of the Association for Computational Lin-
+self-distillation in deep learning. In The Eleventh guistics (Volume 1: Long Papers), pages 1870-1879,
+
+
+--- Page 10 ---
+
+Vancouver, Canada. Association for Computational large language models. In The Tenth International
+Linguistics. Conference on Learning Representations, ICLR 2022,
+Virtual Event, April 25-29, 2022. OpenReview.net.
+
+Xin Cheng, Shen Gao, Lemao Liu, Dongyan Zhao, and
+Rui Yan. 2022. Neural machine translation with — Albert Q. Jiang, Alexandre Sablayrolles, Arthur Men-
+contrastive translation memories. In Proceedings sch, Chris Bamford, Devendra Singh Chaplot, Diego
+of the 2022 Conference on Empirical Methods in de Las Casas, Florian Bressand, Gianna Lengyel,
+Natural Language Processing, EMNLP 2022, Abu Guillaume Lample, Lucile Saulnier, Lélio Re-
+Dhabi, United Arab Emirates, December 7-11, 2022, nard Lavaud, Marie-Anne Lachaux, Pierre Stock,
+pages 3591-3601. Association for Computational Teven Le Scao, Thibaut Lavril, Thomas Wang, Timo-
+Linguistics. thée Lacroix, and William El Sayed. 2023. Mistral
+; co . , 7b. CoRR, abs/2310.06825.
+
+Xin Cheng, Yankai Lin, Xiuying Chen, Dongyan Zhao,
+and Rui Yan. 2023a. Decouple knowledge from — Mandar Joshi, Eunsol Choi, Daniel S. Weld, and Luke
+paramters for plug-and-play language modeling. In Zettlemoyer. 2017. Triviaqa: A large scale distantly
+Findings of the Association for Computational Lin- supervised challenge dataset for reading comprehen-
+guistics: ACL 2023, pages 14288-14308, Toronto, sion. In Proceedings of the 55th Annual Meeting of
+Canada. Association for Computational Linguistics. the Association for Computational Linguistics, ACL
+. . wo, . 2017, Vancouver, Canada, July 30 - August 4, Volume
+
+Xin Cheng, Di Luo, Xiuying Chen, Lemao Liu, 1: Long Papers, pages 1601-1611. Association for
+Dongyan Zhao, and Rui Yan. 2023b. Lift yourself Computational Linguistics.
+up: Retrieval-augmented text generation with self-
+memory. In Advances in Neural Information Pro- — \jadimir Karpukhin, Barlas Oguz, Sewon Min, Patrick
+cessing Systems 36: Annual Conference on Neural S. H. Lewis, Ledell Wu, Sergey Edunov, Danqi Chen,
+Information Processing Systems 2023, NeurIPS 2023, and Wen-tau Yih. 2020. Dense passage retrieval for
+New Orleans, LA, USA, December 10 - 16, 2023. open-domain question answering. In Proceedings of
+
+Xin Cheng, Xun Wang, Xingxing Zhang, Tao Ge, Si- the 2020 Conference on Empirical Methods in Nat-
+Qing Chen, Furu Wei, Huishuai Zhang, and Dongyan ural Language Processing, EMNLP 2020, Online,
+Zhao. 2024. xRAG: Extreme context compression November 16-20, 2020, pages 6769-6781. Associa-
+for retrieval-augmented generation with one token. tion for Computational Linguistics.
+
+g 8
+In The Thirty-eighth Annual Conference on Neural Urvashi Khandelwal, Angela Fan, Dan Jurafsky, Luke
+Information Processing Systems. Zettlemoyer, and Mike Lewis. 2021. Nearest neigh-
+
+Alexis Chevalier, Alexander Wettig, Anirudh Ajith, and bor machine translation. In 9th International Confer-
+Danqi Chen. 2023. Adapting language models to ence on Learning Representations, ICLR 2021, Vir-
+compress contexts. In Proceedings of the 2023 Con- tual Event, Austria, May 3-7, 2021. OpenReview.net.
+ference on Empirical Methods in Natural Language Tom Kwiatkowski, Jennimaria Palomaki, Olivia Red-
+Processing, EMNLP 2023, Singapore, December 6- field. Michael Collins. Ankur P. Parikh. Chris Alberti
+10, 2023, pages 3829-3846. Association for Compu- eee ee THT Del nukbin TrhTerle wan
+tational Linguistics Danielle Epstein, Ilia Polosukhin, Jacob Devlin, Ken-
+
+, ton Lee, Kristina Toutanova, Llion Jones, Matthew
+
+Yunfan Gao, Yun Xiong, Xinyu Gao, Kangxiang Jia, Kelcey, Ming-Wei Chang, Andrew M. Dai, Jakob
+Jinliu Pan, Yuxi Bi, Yi Dai, Jiawei Sun, Qianyu Guo, Uszkoreit, Quoc Le, and Slav Petrov. 2019. Natu-
+Meng Wang, and Haofen Wang. 2023. Retrieval- ral questions: a benchmark for question answering
+augmented generation for large language models: A research. Trans. Assoc. Comput. Linguistics, 7:452—
+survey. CoRR, abs/2312.10997. 466.
+
+Tao Ge, Jing Hu, Lei Wang, Xun Wang, Si-Qing Chen, Patrick S. H. Lewis, Ethan Perez, Aleksandra Pik-
+and Furu Wei. 2024. In-context autoencoder for con- tus, Fabio Petroni, Vladimir Karpukhin, Naman
+text compression in a large language model. In The Goyal, Heinrich Kiittler, Mike Lewis, Wen-tau Yih,
+Twelfth International Conference on Learning Rep- Tim Rocktaschel, Sebastian Riedel, and Douwe
+resentations, ICLR 2024, Vienna, Austria, May 7-11, Kiela. 2020. Retrieval-augmented generation for
+2024. OpenReview.net. knowledge-intensive NLP tasks. In Advances in Neu-
+
+ral Information Processing Systems 33: Annual Con-
+
+Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasupat, ference on Neural Information Processing Systems
+and Ming-Wei Chang. 2020. Retrieval augmented 2020, NeurIPS 2020, December 6-12, 2020, virtual.
+language model pre-training. In Proceedings of the
+37th International Conference on Machine Learning, | Zongqian Li, Yinhong Liu, Yixuan Su, and Nigel Col-
+ICML 2020, 13-18 July 2020, Virtual Event, volume lier. 2024. Prompt compression for large language
+119 of Proceedings of Machine Learning Research, models: A survey. CoRR, abs/2410.12388.
+pages 3929-3938. PMLR.
+
+Xi Victoria Lin, Xilun Chen, Mingda Chen, Weijia
+
+Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Shi, Maria Lomeli, Richard James, Pedro Rodriguez,
+Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Jacob Kahn, Gergely Szilvasy, Mike Lewis, Luke
+Weizhu Chen. 2022. Lora: Low-rank adaptation of Zettlemoyer, and Wen-tau Yih. 2024. RA-DIT:
+
+
+--- Page 11 ---
+
+retrieval-augmented dual instruction tuning. In The Augmenting language models with long-term mem-
+Twelfth International Conference on Learning Rep- ory. In Advances in Neural Information Processing
+resentations, ICLR 2024, Vienna, Austria, May 7-11, Systems 36: Annual Conference on Neural Informa-
+2024. OpenReview.net. tion Processing Systems 2023, NeurIPS 2023, New
+Orleans, LA, USA, December 10 - 16, 2023.
+
+Sewon Min, Weijia Shi, Mike Lewis, Xilun Chen, Wen-
+tau Yih, Hannaneh Hajishirzi, and Luke Zettlemoyer. | Zhiruo Wang, Jun Araki, Zhengbao Jiang, Md. Rizwan
+2023. Nonparametric masked language modeling. Parvez, and Graham Neubig. 2023b. Learning
+In Findings of the Association for Computational to filter context for retrieval-augmented generation.
+Linguistics: ACL 2023, Toronto, Canada, July 9-14, CoRR, abs/2311.08377.
+
+2023, pages 2097-2118. Association for Computa-
+tional Linguistics. Ronald J. Williams. 1992. Simple statistical gradient-
+following algorithms for connectionist reinforcement
+
+Jesse Mu, Xiang Li, and Noah D. Goodman. 2023. learning. Mach. Learn., 8:229-256.
+
+Learning to compress prompts with gist tokens. In ; . ;
+
+Advances in Neural Information Processing Systems | David Wingate, Mohammad Shoeybi, and Taylor
+
+36: Annual Conference on Neural Information Pro- Sorensen. 2022. Prompt compression and contrastive
+
+cessing Systems 2023, NeurIPS 2023, New Orleans, conditioning for controllability and toxicity reduction
+
+LA, USA, December 10 - 16, 2023. in language models. In Findings of the Association
+for Computational Linguistics: EMNLP 2022, Abu
+
+Pranav Rajpurkar, Jian Zhang, Konstantin Lopyrev, and Dhabi, United Arab Emirates, December 7-11, 2022,
+Percy Liang. 2016. Squad: 100, 000+ questions pages 5621-5634. Association for Computational
+for machine comprehension of text. In Proceedings Linguistics.
+of the 2016 Conference on Empirical Methods in .. ; . ; ;
+Natural Language Processing, EMNLP 2016, Austin, Guangzhi Xiong, Qiao Jin, Zhiyong Lu, and Aidong
+Texas, USA, November 1-4, 2016, pages 2383-2392. Zhang. 2024. Benchmarking retrieval-augmented
+The Association for Computational Linguistics. generation for medicine. In Findings of the Asso-
+
+ciation for Computational Linguistics, ACL 2024,
+
+David Rau, Shuai Wang, Hervé Déjean, and Stéphane Bangkok, Thailand and virtual meeting, August 11-
+Clinchant. 2024. Context embeddings for efficient 16, 2024, pages 6233-6251. Association for Compu-
+answer generation in RAG. CoRR, abs/2407.09252. tational Linguistics.
+
+Keshav Santhanam, Omar Khattab, Jon Saad-Falcon, | Fangyuan Xu, Weijia Shi, and Eunsol Choi. 2024a. RE-
+Christopher Potts, and Matei Zaharia. 2022. Col- COMP: improving retrieval-augmented lms with con-
+bertv2: Effective and efficient retrieval via text compression and selective augmentation. In The
+lightweight late interaction. In Proceedings of the Twelfth International Conference on Learning Rep-
+2022 Conference of the North American Chapter of resentations, ICLR 2024, Vienna, Austria, May 7-11,
+the Association for Computational Linguistics: Hu- 2024. OpenReview.net.
+man Language Technologies, NAACL 2022, Seattle,
+
+WA, United States, July 10-15, 2022, pages 3715— | Zhentao Xu, Mark Jerome Cruz, Matthew Guevara,
+3734. Association for Computational Linguistics. Tie Wang, Manasi Deshpande, Xiaofeng Wang, and
+Zheng Li. 2024b. Retrieval-augmented generation
+
+Weijia Shi, Sewon Min, Michihiro Yasunaga, Min- with knowledge graphs for customer service question
+joon Seo, Richard James, Mike Lewis, Luke Zettle- answering. In Proceedings of the 47th International
+moyer, and Wen-tau Yih. 2024. REPLUG: retrieval- ACM SIGIR Conference on Research and Develop-
+augmented black-box language models. In Proceed- ment in Information Retrieval, SIGIR 2024, Washing-
+ings of the 2024 Conference of the North American ton DC, USA, July 14-18, 2024, pages 2905-2909.
+Chapter of the Association for Computational Lin- ACM.
+guistics: Human Language Technologies (Volume 1: . oo .
+
+Long Papers), NAACL 2024, Mexico City, Mexico, Zhilin Yang, Peng Qi, Saizheng Zhang, Yoshua Ben-
+June 16-21, 2024, pages 8371-8384. Association for gio, William W. Cohen, Ruslan Salakhutdinov, and
+Computational Linguistics. Christopher D. Manning. 2018. Hotpotqa: A dataset
+
+for diverse, explainable multi-hop question answer-
+
+James Thorne, Andreas  Vlachos, Christos ing. In Proceedings of the 2018 Conference on Em-
+Christodoulopoulos, and Arpit Mittal. 2018. pirical Methods in Natural Language Processing,
+FEVER: a large-scale dataset for fact extraction Brussels, Belgium, October 31 - November 4, 2018,
+and verification. In Proceedings of the 2018 pages 2369-2380. Association for Computational
+Conference of the North American Chapter of the Linguistics.
+
+Association for Computational Linguistics: Human . ; :
+Language Technologies, NAACL-HLT 2018, New  Fengji Zhang, Bei Chen, Yue Zhang, Jacky Keung, Jin
+Orleans, Louisiana, USA, June 1-6, 2018, Volume Liu, Daoguang Zan, Yi Mao, Jian-Guang Lou, and
+1 (Long Papers), pages 809-819. Association for Weizhu Chen. 2023a. Repocoder: Repository-level
+Computational Linguistics. code completion through iterative retrieval and gen-
+eration. In Proceedings of the 2023 Conference on
+
+Weizhi Wang, Li Dong, Hao Cheng, Xiaodong Liu, Empirical Methods in Natural Language Process-
+
+Xifeng Yan, Jianfeng Gao, and Furu Wei. 2023a. ing, EMNLP 2023, Singapore, December 6-10, 2023,
+
+
+--- Page 12 ---
+
+pages 2471-2484. Association for Computational
+Linguistics.
+
+Xiangyu Zhang, Yu Zhou, Guang Yang, and Taolue
+Chen. 2023b. Syntax-aware retrieval augmented
+code generation. In Findings of the Association for
+Computational Linguistics: EMNLP 2023, Singapore,
+December 6-10, 2023, pages 1291-1302. Association
+for Computational Linguistics.
+
+
+--- Page 13 ---
+
+A Datasets Hyperparameter Assignment
+We use the dataset version processed by DPR! optimizer AdamW
+including retrieval corpus and five QA datasets, learning rate le~*
+which is licensed by CC-BY-NC 4.0. All datasets Ir scheduler type linear
+are English-language resources within the question warmup ratio 0.03
+answering (QA) domain. The datasets we used in- weight dacay 0.0
+herit from them while maintaining consistency in epochs 1
+QA intent. We ensure that the dataset is free from flash attention True
+harmful content or information leakage through a batch size 8
+sampling approach. The detailed statistics of the gradient accumulation steps 4
+dataset are presented in Table 5. Notably, based LoRa r 128
+on whether the supporting documents are present LoRa alpha 32
+in the pretraining dataset, the development set of LoRa dropout 0.05
+the finetuning data is further divided into seen and LoRa bias None
+unseen subsets. gpu 1xA100 80G
+max sequence length 320
+Datasets Train Dev Test TO
+TTT TTT Table 6: Hyperparameters for compressor pretraining.
+Natural Questions 58880 3195 3320 3610
+TriviaQA 60413 2102 4658 11313 the same configuration for a fair comparison, ensur-
+WebQuestions 2474 77 201 2032 ing no intentional optimization bias towards our ap-
+CuratedTREC 1125 32 84. 694 proach. For efficient training, at each training step,
+SQUAD v1.1 70096 6985 936 10570 we randomly sample only one granularity from
+ssosooo——_A—_—_-—-sGanularity sequence and one task to optimize dur-
+Table 5: Number of QA pairs in each dataset across _ ing pretraining. In our configuration, we pretrain
+Train, Dev, and Test splits. The two columns of Dev _ the compressor with roughly 20 hours and finetune
+denote the seen and the unseen subsets respectively. with roughly 50 hours. For selector training, we
+list the hyperparameters in Table 8. We primarily
+B Models search the hyperparameters of learning rates and
+find that a range between 2e~* and le~* yields the
+We use Mistral-7B-Instruct-v0.2°, Llama3.2-3B- pest results. Additionally, we adjusted the num-
+Instruct? and Llama3.1-8B-Instruct* as our back- per of attention heads and layers in the transformer
+bone LLM. The Mistral model is licensed by encoder. We observed that increasing both param-
+Apache-2.0 and two Llama models are licensed eters beyond 4 provided no improvement, while
+by Meta Llama3 Community License. The retriever _ reducing them below 4 resulted in a slight decline
+we used is ColBERT-v2? with MIT License. in performance. The entire training process took
+. . approximately 1 hour, and we ultimately selected
+C Implementation Details the model with the highest sequence accuracy on
+In Table 6 and Table 7, we list the hyperparameters the test set. All exp eriments are imp lemented using
+for compressor pretraining and finetuning. These PyTorch® and Hugging Face Transformers’.
+parameters are primarily inherited from prior work
+(e.g., learning rate, LoRA configuration), as the
+same backbone LLM and similar training tasks are
+used. Additionally, all methods are trained under
+‘https: //github.com/facebookresearch/DPR
+*https: //huggingface.co/mistralai/
+Mistral-7B-Instruct-v@. 2
+https: //huggingface.co/meta-llama/Llama-3.
+2-3B-Instruct
+“https: //huggingface.co/meta-1llama/Llama-3.
+1-8B-Instruct —
+Shttps://github.com/stanford-futuredata/ https: //pytorch.org/
+ColBERT Thttps: //github.com/huggingface/transformers
+
+
+--- Page 14 ---
+
+Hyperparameter Assignment ee nena
+optimizer AdamW go"
+learning rate le? ri
+Ir scheduler type linear 3 oaee
+warmup ratio 0.03 3
+weight dacay 0.0 TriviaQa
+epochs 5 8 o.250
+flash attention True 3 0225
+batch size 2 3
+gradient accumulation steps 4 so"
+LoRa r 128 .? ° Granularity ”
+LoRa alpha 32
+LoRa dropout 0.05 Figure 6: Results of different granularity sequences
+LoRa bias None for compressor under inference granularity sequence
+gpu 1x A6000 48G [1, 2,8, 32]. In the legend, GO-G3 denote [32], [1,32],
+max sequence length 1024 [1, 2,8, 32], [1, 2,4, 8, 16, 32] respectively.
+Table 7: Hyperparameters for compressor finetuning. ee Ee Fe
+$$ 5 0.450
+Hyperparameter Assignment : avo
+optimizer AdamW 3 0350
+learning rate le~* 3
+Ir scheduler type linear TiviaQa
+warmup ratio 0.0 8 0.240
+weight dacay 0.0 3 0.220
+epochs 50 3
+batch size 128 a
+gradient accumulation steps 1 1 Granularity 32
+gpu 1x A6000 48G
+TO Figure 7: Results of different granularity sequences for
+Table 8: Hyperparameters for selector training. compressor under inference granularity sequence [1, 32].
+NO In the legend, GO-G3 denote [32], [1,32], [1, 2, 8, 32],
+0.525 - [1, 2, 4, 8, 16, 32] respectively.
+0.5007 -@- 16
+(04754 8 D_ Analysis on Compression Rate of
+& 0.450 Compressor
+g 0.425
+5 0.400 We investigate the impact of different compression
+3 _ ° rates on compressor performance during training.
+0305 / The results are shown in Figure 5. We train the
+er i > model with a single granularity to facilitate anal-
+Granularity ysis, where the granularity is the count of com-
+= TiviagA pressed embeddings obtained by compression at a
+0264S 36 specific compression rate.
+2 0.24 E_ Analysis on Granularity Sequences of
+: 022 Compressor
+e 0.20 ’ The results of different granularity sequences for
+compressor under inference granularity sequence
+124. 8 16 2 [1, 2, 8,32] and [1,32] are shown in Figure 6 and
+Granularity Figure 7. The conclusion are consistent with Sec-
+Figure 5: Ablation on different compression rates for tion 5.2.3. We observe that the final accumulated
+compressor.
+
+
+--- Page 15 ---
+
+Table 9: The OOD performance of unseen supporting documents. The highest Match(M) and lowest First Token
+Inference Time(FTIT) is bolded.
+Method Datasets
+NQ_ TriviaQA WQ TREC SQuAD Average Average FTIT
+RAG 69.97 27.44 49.75 39.29 59.62 49.21 3268
+ICAE(x 4) 61.66 26.26 50.25 35.71 47.97 44.37 1052
+ACC-RAG(ours) 63.34 26.56 50.75 39.29 51.60 46.31 673
+M scores exceeds the vanilla RAG even with only Table 11: The results of ACC-RAG in Llama3 for scal-
+two inference granularities. ability study. For each dataset, two columns represent
+Match (M) and First Token Inference Time (FTIT).
+F Ablation Study of Selector Model — Method Datasets
+NQ TriviaQA
+We investigate the impact of different components - 36.37. 65 15.33 101
+of selector for classification performance. The de- Llama3-3B AN ae. NG en We0. ike 500
+fault setting of ACC-Selector is described in Sec- a
+tion 4.4. We adopt the sequence classification ac- Llama3-8B RAG ae aso sees son)
+curacy as evaluation metric, verifying whether the ACC-RAG 41.32 380 21.19 489
+selector’s first prediction of "sufficient" is correct. TO
+We report the results in test set in Table 10. I OOD Analysis
+Methods Sequence Accuracy To validate the OOD capability of our method, we
+TTT conduct evaluations from two perspectives: (1) un-
+ACC Selector 10.75 seen supporting documents and (2) unseen queries
+wio RL 64.25 from different domains. The former is evaluated
+w/o attention ; 66.30 on the unseen Devset where each case utilizes a
+w/o segment embeddings 69.35 ground-truth supporting document absent from the
+w/o granularity 69.50 pretraining dataset. Results in Table 9 demonstrate
+Table 10: Ablation on selector. that our method outperforms the strongest base-
+line in both effectiveness and efficiency. Compared
+to Vanilla RAG, our approach achieves over 4x
+G_ Representative Case faster inference speed while maintaining compa-
+rable accuracy across three datasets, with supe-
+To provide a more intuitive understanding of the | Tor performance observed on two datasets. The
+effectiveness of ACC-RAG, we present a represen- latter evaluation employs additional dataset from
+tative case in Table 13. In this case, direct genera- 'W° distinct tasks (HotpotQA (Yang et al., 2018)
+tion and ACC-RAG-G2 with a fixed compression and FEVER (Thorne et al., 2018)). As shown
+rate of 16 fail to answer the question. However, 12 Table 12, our method again demonstrates su-
+our method ACC-RAG-G? with inference granu- perior performance compared to strongest baseline
+larity sequence [1, 32] not only provides the correct while maintaining the 4x speed improvement over
+answer but also uses the fewest context tokens com- Vanilla RAG without compromising accuracy on
+pared to ACC-RAG-G2 with a fixed compression both datasets.
+rate of 4 and RAG.
+J Additional Computation Analysis
+H_ Scalability Analysis On the NQ dataset, our method achieves an average
+FTIT of 630, with the selector accounting for 47
+To investigate whether ACC-RAG is applicable (~7% of total time). This selective mechanism en-
+to other models, we apply our approach to both —_ ables our method to outperform RAG (3264 FTIT)
+Llama3-3B-Instruct and Llama3-8B-Instruct mod- and fixed-ratio compression approaches with same
+els and report the results shown in Table 11. compression rate (1007 FTIT).
+
+
+--- Page 16 ---
+
+Table 12: The OOD performance on unseen queries
+from different domains. For each dataset, two columns — ModelInput SS
+represent Match (M) and First Token Inference Time | —|—@_—-22YY___|_1__W1____1___
+(FTIT). Question: what’s the official symbol of the carnival of quebec?
+Context:
+Datasets!” 1. It is adorned by an arrowed pattern and was worn around
+Method a the winter coats of the time. It is also a symbol of the Lower
+HotpotQA FEVER Canada Rebellion and the Quebec Winter Carnival, as it is worn
+Nemes, s,s," by the festival mascot, Bonhomme Carnaval. Imitations are
+LLM 33.70 290 74.44 293 sold and seen throughout the carnival. The belt is represented in a
+RAG 44.96 3313 83.60 3325 number of artistic creations, such as the illustration “Le Vieux de
+ICAE(x 4) 40.96 1114 79.62 1120 °37” by Henri Julien, the painting “L’ Assemblée des six-comtés”
+ACC-RAG(ours) 41.98 689 81.55 693 by Charles Alexander Smith and the song “Mon Pays, suivi du
+Reel des Aristocrates” from néo-trad musical band Les Cowboys
+K Potential Risks Fringants, *
+2. Carifiesta Carifiesta () is an annual Caribbean Carnival held
+Our method reduces RAG input length while pre- in Montreal, Quebec, Canada. It was established in 1974, and
+serving contextual integrity, yet inherits inherent is held in July. The event is coordinated by the “Caribbean Cul-
+: . . tural Festivities Association”, a nonprofit organization. Carifiesta
+potential risks of RAG such as retrieval-related was established prior to some Carnivals that take place in the
+risks (data bias/information leakage), misleading Caribbean, Cayman Carnival Batabano for example.
+outputs from outdated/incorrect knowledge, adver- 3. Quebec Winter Carnival The Quebec Winter Carnival 0, com-
+: . . . monly known in both English and French as Carnaval, is a pre-
+sarial database manipulation leading to harmful Lenten festival held in Quebec City. After being held intermit-
+responses and so on. In addition, although not tently since 1894, the “Carnaval de Québec” has been celebrated
+observed at present, compressing text into embed- annually since 1955. That year “Bonhomme Carnaval’, the
+; ; ; . ; mascot of the festival, made his first appearance.
+dings may potentially distort the original informa- 4. Canadian rule (maple leaves) and with Quebec’s motto below
+tion, leading to harmful outputs generated by the “Je me souviens”. Je me souviens (“I remember’) was first carved
+model under the coat of arms of Quebec’s Parliament Building facade
+, in 1883. It is an official part of the coat of arms and has been
+the official licence plate motto since 1978, replacing “La belle
+province” (the beautiful province). The expression “La belle
+province” is still used mostly in tourism as a nickname for the
+province.
+5. Montreal Carnivale. The carnivale is named after its mascot
+Bon Soo, created by Ken MacDougall. Bon Soo Winter Carnival
+The Bon Soo Winter Carnival is an annual winter carnival in Sault
+Ste. Marie, Ontario, Canada. The carnival, held every February,
+began in , and has grown to become one of Ontario’s top 50
+festivals as well as Canada’s second largest winter carnival next
+to the Montreal Carnivale in Quebec.
+Model Outputs
+Direct Generation: The official symbol of the Carnival of Que-
+bec, also known as Carnaval de Québec, is a snowgoose.
+Generated with 0 context tokens, wrong answer.
+ACC-RAG-G2 with fixed compression rate 16: The official
+symbol of the Carnival of Quebec is the “Fleur-de-lis” or “leur-
+de-lis carnival” as it is commonly known.
+Generated with 40 context tokens, wrong answer.
+ACC-RAG-G2(ours): The official symbol of the Carnival of
+Quebec is “Bonhomme Carnaval,” a jovial snowman-like figure
+wearing a red hat and scarf, who is the mascot of the Quebec
+Winter Carnival.
+Generated with 64 context tokens, right answer.
+ACC-RAG-G2 with fixed compression rate 4: The official
+symbol of the Carnival of Quebec is “Bonhomme Carnaval,” a
+mascot character with a red nose, a red hat, and a red scarf, who
+is depicted as a snowman.
+Generated with 160 context tokens, right answer.
+Vanilla RAG: The official symbol of the Quebec Winter Carnival
+is “Bonhomme Carnaval” and the maple leaf with the motto “Je
+me souviens” (I remember).
+Generated with 640 context tokens, right answer.
+Table 13: A Case of generated responses using different
+methods.

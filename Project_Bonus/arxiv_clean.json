@@ -1,0 +1,774 @@
+[
+  {
+    "url": "https://arxiv.org/abs/2507.23776",
+    "title": "Cascaded Information Disclosure for Generalized Evaluation of Problem Solving Capabilities",
+    "authors": [
+      "Yunxiang Yan",
+      "Tomohiro Sawada",
+      "Kartik Goyal"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23776\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nCascaded Information Disclosure for Generalized Evaluation of\nProblem Solving Capabilities\n\nYunxiang Yan, Tomohiro Sawada, Kartik Goyal\n\nWhile question-answering~(QA) benchmark performance is an automatic and scalable method to compare LLMs,\nit is an indirect method of evaluating their underlying problem-solving capabilities. Therefore, we propose a\nholistic and generalizable framework based on \\emph{cascaded question disclosure} that provides a more\naccurate estimate of the models’ problem-solving capabilities while maintaining the scalability and automation.\nThis approach collects model responses in a stagewise manner with each stage revealing partial information\nabout the question designed to elicit generalized reasoning in LLMs. We find that our approach not only provides\na better comparison between LLMs, but also induces better intermediate traces in models compared to the\nstandard QA paradigm. We empirically verify this behavior on diverse reasoning and knowledge-heavy QA\ndatasets by comparing LLMs of varying sizes and families. Our approach narrows the performance gap observed\nin the standard QA evaluation settings, indicating that the prevalent indirect QA paradigm of evaluation\noverestimates the differences in performance between models. We further validate our findings by extensive\nablation studies.\n\n‘Comments: Under review\nSubjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23776 [es.CL]\n(or arXiv:2507.23776v1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23776 @\n\nSubmission history\nFrom: Yunxiang Yan [view email]\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23740",
+    "title": "Rule2Text: Natural Language Explanation of Logical Rules in Knowledge Graphs",
+    "authors": [
+      "Nasim Shirvani-Mahdavi",
+      "Devin Wingfield",
+      "Amin Ghasemi",
+      "Chengkai Li"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23740\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nRule2Text: Natural Language Explanation of Logical Rules in\nKnowledge Graphs\n\nNasim Shirvani-Mahdavi, Devin Wingfield, Amin Ghasemi, Chengkai Li\n\nKnowledge graphs (KGs) often contain sufficient information to support the inference of new facts. Identifying\nlogical rules not only improves the completeness of a knowledge graph but also enables the detection of potential\nerrors, reveals subtle data patterns, and enhances the overall capacity for reasoning and interpretation. However,\nthe complexity of such rules, combined with the unique labeling conventions of each KG, can make them difficult\nfor humans to understand. In this paper, we explore the potential of large language models to generate natural\nlanguage explanations for logical rules. Specifically, we extract logical rules using the AMIE 3.5.1 rule discovery\nalgorithm from the benchmark dataset FB15k-237 and two large-scale datasets, FB-CVT-REV and FB+CVT-\nREV. We examine various prompting strategies, including zero- and few-shot prompting, including variable entity\ntypes, and chain-of- thought reasoning. We conduct a comprehensive human evaluation of the generated\nexplanations based on correctness, clarity, and hallucination, and also assess the use of large language models\nas automatic judges. Our results demonstrate promising performance in terms of explanation correctness and\nclarity, although several challenges remain for future research. All scripts and data used in this study are publicly\navailable at this https URLHthis https URL.\n\nSubjects: Computation and Language (cs.CL); Artificial Intelligence (cs Al); Machine Learning (cs.LG)\nCite as: arXiv:2507.23740 [es.CL]\n\n(or arXiv:2507.23740V1 [es.CL] for this version)\n\nhttps:/idoi.org/10.48550/arXiv.2507.23740 @\n\nSubmission history\nFrom: Nasim Shirvani-Mahdavi [view email]\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\ncs.LG\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23661",
+    "title": "Arabic Hate Speech Identification and Masking in Social Media using Deep Learning Models and Pre-trained Models Fine-tuning",
+    "authors": [
+      "Salam Thabet Doghmash",
+      "Motaz Saad"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23661 Help | Advanced Search\n\nAll fields\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nArabic Hate Speech Identification and Masking in Social Media\nusing Deep Learning Models and Pre-trained Models Fine-tuning\n\nSalam Thabet Doghmash, Motaz Saad\n\nHate speech identification in social media has become an increasingly important issue in recent years. In this\nresearch, we address two problems: 1) to detect hate speech in Arabic text, 2) to clean a given text from hate\nspeech. The meaning of cleaning here is replacing each bad word with stars based on the number of letters for\neach word. Regarding the first problem, we conduct several experiments using deep learning models and\ntransformers to determine the best model in terms of the F1 score. Regarding second problem, we consider it as\na machine translation task, where the input is a sentence containing dirty text and the output is the same\nsentence with masking the dirty text. The presented methods achieve the best model in hate speech detection\nwith a 92\\% Macro F1 score and 95\\% accuracy. Regarding the text cleaning experiment, the best result in the\nhate speech masking model reached 0.3 in BLEU score with 1-gram, which is a good result compared with the\nstate of the art machine translation systems.\n\nComments: 23 pages, 5 figures\nSubjects: Computation and Language (es.CL)\nACM classes: 1.2.7\nCite as: arXiv:2507.23661 [es.CL]\n(or arXiv:2507.23661v1 [es.CL] for this version)\nhttps:/doi.org/10.48550/arxiv.2507.23661 @\n\nSubmission history\nFrom: Motaz Saad [view email]\n[v1] Thu, 31 Jul 2025 15:39:46 UTC (3,332 KB)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23588",
+    "title": "DiffLoRA: Differential Low-Rank Adapters for Large Language Models",
+    "authors": [
+      "Alexandre Misrahi",
+      "Nadezhda Chirkova",
+      "Maxime Louis",
+      "Vassilina Nikoulina"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23588\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nDiffLoRA: Differential Low-Rank Adapters for Large Language\nModels\n\nAlexandre Misrahi, Nadezhda Chirkova, Maxime Louis, Vassilina Nikoulina\n\nDifferential Transformer has recently been proposed to improve performance in Transformer models by canceling\nout noise through a denoiser attention mechanism. In this work, we introduce DiffLoRA, a parameter-efficient\nadaptation of the differential attention mechanism, with low-rank adapters on both positive and negative attention\nterms. This approach retains the efficiency of LORA while aiming to benefit from the performance gains of\ndifferential attention. We evaluate DiffLoRA across a broad range of NLP tasks, including general benchmarks,\nmany-shot in-context learning, RAG, and long-context tests. We observe that, although DiffLoRA falls short of\nother parameter-efficient fine-tuning methods in most evaluation tasks, it shows interesting results in certain\ndomains (+11 pts on LoRA for HumanEval). We analyze the attention patterns post-finetuning to identify the\nreasons for this behavior.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23588 [es.CL]\n(or arXiv:2507.23588v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507 23588 @\n\nSubmission history\n\nFrom: Alexandre Misrahi [view email]\n[v4] Thu, 31 Jul 2025 14:24:59 UTC (144 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\ned\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23577",
+    "title": "T-Detect: Tail-Aware Statistical Normalization for Robust Detection of Adversarial Machine-Generated Text",
+    "authors": [
+      "Alva West",
+      "Luodan Zhang",
+      "Liuliu Zhang",
+      "Minjun Zhu",
+      "Yixuan Weng",
+      "Yue Zhang"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23577\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nT-Detect: Tai\nof Adversarial Machine-Generated Text\n\nAlva West, Luodan Zhang, Liuliu Zhang, Minjun Zhu, Yixuan Weng, Yue Zhang\n\nThe proliferation of sophisticated text generation models necessitates the development of robust detection\nmethods capable of identifying machine-generated content, particularly text designed to evade detection through\nadversarial perturbations. Existing zero-shot detectors often rely on statistical measures that implicitly assume\nGaussian distributions, a premise that falters when confronted with the heavy-tailed statistical artifacts\ncharacteristic of adversarial or non-native English texts. This paper introduces T-Detect, a novel detection\nmethod that fundamentally redesigns the statistical core of curvature-based detectors. Our primary innovation is\nthe replacement of standard Gaussian normalization with a heavy-tailed discrepancy score derived from the\nStudent's t-distribution. This approach is theoretically grounded in the empirical observation that adversarial texts\nexhibit significant leptokurtosis, rendering traditional statistical assumptions inadequate. T-Detect computes a\ndetection score by normalizing the log-likelihood of a passage against the expected moments of a t-distribution,\nproviding superior resilience to statistical outliers. We validate our approach on the challenging RAID benchmark\nfor adversarial text and the comprehensive HART dataset. Experiments show that T-Detect provides a consistent\nperformance uplift over strong baselines, improving AUROC by up to 3.9\\% in targeted domains. When\nintegrated into a two-dimensional detection framework (CT), our method achieves state-of the-art performance,\nwith an AUROC of 0.926 on the Books domain of RAID. Our contributions are a new, theoretically-justified\nstatistical foundation for text detection, an ablation-validated method that demonstrates superior robustness, and\na comprehensive analysis of its performance under adversarial conditions. Ours code are released at this https\nURL.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23577 Tes.CL]\n\n-Aware Statistical Normalization for Robust Detection\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by’\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23541",
+    "title": "Med-R$^3$: Enhancing Medical Retrieval-Augmented Reasoning of LLMs via Progressive Reinforcement Learning",
+    "authors": [
+      "Keer Lu",
+      "Zheng Liang",
+      "Youquan Li",
+      "Jiejun Tan",
+      "Da Pan",
+      "Shusen Zhang",
+      "Guosheng Dong",
+      "Huang Leng"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23541\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nMed-R“3: Enhancing Medical Retrieval-Augmented Reasoning of\nLLMs via Progressive Reinforcement Learning\n\nKeer Lu, Zheng Liang, Youquan Li, Jiejun Tan, Da Pan, Shusen Zhang, Guosheng Dong, Huang Leng\n\nIn medical scenarios, effectively retrieving external knowledge and leveraging it for rigorous logical reasoning is\nof significant importance. Despite their potential, existing work has predominantly focused on enhancing either\nretrieval or reasoning capabilities of the models in isolation, with little attention given to their joint optimization,\nwhich leads to limited coordination between the two processes. Additionally, current methods rely heavily on\nsupervised fine-tuning (SFT), which can cause models to memorize existing problem-solving pathways, thereby\nrestricting their generalization ability when confronted with novel problem contexts. Furthermore, while some\nstudies have explored to improve retrieval-augmented reasoning in general domains via reinforcement learning,\ntheir reward function designs do not adequately capture the specific demands of the medi\nthese challenges, we introduce *Med-R\"3\", a **Med**ical **R“etrieval-augmented **R“easoning framework\n\nal domain. To address\n\ndriven by progressive *R”einforcement learning. In this framework, we first develop the model's ability to\nperform logical reasoning over medical problems. Subsequently, on the basis of this foundation, we adaptively\noptimize the retrieval capability to better align with the characteristics of knowledge corpus and external\ninformation utilization throughout the reasoning process. Finally, we conduct joint optimization of the model's\nretrieval and reasoning coordination. Extensive experiments indicate that **Med-R\"3** could achieve state-of-\nthe-art performances, with LLaMA3.1-8B-Instruct + Med-R‘3 surpassing closed-sourced GPT-4o-mini by 3.931%\nat a comparable parameter scale, while Qwen2.5-14B augmented with Med-R’3 shows a more substantial gain\nof 13.53\\%.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23541 [es.CL]\n(or arXiv:2507.23541V1 [es.CL] for this version)\n\nAccess Paper:\n\nView PDF\n\nTeX Source\n\nOther Formats\nview license\nCurrent browse context\nes.CL\n\n<prev | next>\n\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23486",
+    "title": "A Novel Evaluation Benchmark for Medical LLMs: Illuminating Safety and Effectiveness in Clinical Domains",
+    "authors": [
+      "Shirui Wang",
+      "Zhihui Tang",
+      "Huaxia Yang",
+      "Qiuhong Gong",
+      "Tiantian Gu",
+      "Hongyang Ma",
+      "Yongxin Wang",
+      "Wubin Sun",
+      "Zeliang Lian",
+      "Kehang Mao",
+      "Yinan Jiang",
+      "Zhicheng Huang",
+      "Lingyun Ma",
+      "Wenjie Shen",
+      "Yajie Ji",
+      "Yunhui Tan",
+      "Chunbo Wang",
+      "Yunlu Gao",
+      "Qianling Ye",
+      "Rui Lin",
+      "Mingyu Chen",
+      "Lijuan Niu",
+      "Zhihao Wang",
+      "Peng Yu",
+      "Mengran Lang",
+      "Yue Liu",
+      "Huimin Zhang",
+      "Haitao Shen",
+      "Long Chen",
+      "Qiguang Zhao",
+      "Si-Xuan Liu",
+      "Lina Zhou",
+      "Hua Gao",
+      "Dongqiang Ye",
+      "Lingmin Meng",
+      "Youtao Yu",
+      "Naixin Liang",
+      "Jianxiong Wu"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23486\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nA Novel Evaluation Benchmark for Medical LLMs: Illuminating\nSafety and Effectiveness in Clinical Domains\n\nShirui Wang, Zhihui Tang, Huaxia Yang, Qiuhong Gong, Tiantian Gu, Hongyang Ma, Yongxin Wang,\nWubin Sun, Zeliang Lian, Kehang Mao, Yinan Jiang, Zhicheng Huang, Lingyun Ma, Wenjie Shen, Yajie\nJi, Yunhui Tan, Chunbo Wang, Yunlu Gao, Qianling Ye, Rui Lin, Mingyu Chen, Lijuan Niu, Zhihao Wang,\nPeng Yu, Mengran Lang, Yue Liu, Huimin Zhang, Haitao Shen, Long Chen, Qiguang Zhao, Si-Xuan Liu,\nLina Zhou, Hua Gao, Dongqiang Ye, Lingmin Meng, Youtao Yu, Naixin Liang, Jianxiong Wu\n\nLarge language models (LLMs) hold promise in clinical decision support but face major challenges in safety\nevaluation and effectiveness validation. We developed the Clinical Safety-Effectiveness Dual-Track Benchmark\n(CSEDB), a multidimensional framework built on clinical expert consensus, encompassing 30 criteria covering\ncritical areas like critical illness recognition, guideline adherence, and medication safety, with weighted\nconsequence measures. Thirty-two specialist physicians developed and reviewed 2,069 open-ended Q&A items\naligned with these criteria, spanning 26 clinical departments to simulate real-world scenarios. Benchmark testing\nof six LLMs revealed moderate overall performance (average total score 57.2%, safety 54.7%, effectiveness\n62.3%), with a significant 13.3% performance drop in high-risk scenarios (p < 0.0001). Domain-specific medical\nLLMs showed consistent performance advantages over general-purpose models, with relatively higher top scores\nin safety (0.912) and effectiveness (0.861). The findings of this study not only provide a standardized metric for\nevaluating the clinical application of medical LLMs, facilitating comparative analyses, risk exposure identification,\nand improvement directions across different scenarios, but also hold the potential to promote safer and more\neffective deployment of large language models in healthcare environments.\n\n‘Subjects: Computation and Language (cs.CL)\n\nCite as: arXiv:2507.23486 [es.CL]\n\nAccess Paper:\n\nView PDF\nOther Formats\nview license\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23465",
+    "title": "Role-Aware Language Models for Secure and Contextualized Access Control in Organizations",
+    "authors": [
+      "Saeed Almheiri",
+      "Yerulan Kongrat",
+      "Adrian Santosh",
+      "Ruslan Tasmukhanov",
+      "Josemaria Vera",
+      "Muhammad Dehan Al Kautsar",
+      "Fajri Koto"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23465 Help | Advanced Search\n\nAll fields\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nRole-Aware Language Models for Secure and Contextualized\nAccess Control in Organizations\n\nSaeed Almheiri, Yerulan Kongrat, Adrian Santosh, Ruslan Tasmukhanov, Josemaria Vera, Muhammad\nDehan Al Kautsar, Fajri Koto\n\nAs large language models (LLMs) are increasingly deployed in enterprise settings, controlling model behavior\nbased on user roles becomes an essential requirement. Existing safety methods typically assume uniform access\nand focus on preventing harmful or toxic outputs, without addressing role-specific access constraints. In this\nwork, we investigate whether LLMs can be fine-tuned to generate responses that reflect the access privileges\nassociated with different organizational roles. We explore three modeling strategies: a BERT-based classifier, an\nLLM-based classifier, and role-conditioned generation. To evaluate these approaches, we construct two\ncomplementary datasets. The first is adapted from existing instruction-tuning corpora through clustering and role\nlabeling, while the second is synthetically generated to reflect realistic, role-sensitive enterprise scenarios. We\nassess model performance across varying organizational structures and analyze robustness to prompt injection,\nrole mismatch, and jailbreak attempts.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.23465 [es.CL]\n(or arXiv:2507.23465v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.23465 @\n\nSubmission history\n\nFrom: Saeed Almheiri [view email]\n[v4] Thu, 31 Jul 2025 11:41:04 UTC (2,381 KB)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23407",
+    "title": "Beyond Passive Critical Thinking: Fostering Proactive Questioning to Enhance Human-AI Collaboration",
+    "authors": [
+      "Ante Wang",
+      "Yujie Lin",
+      "Jingyao Liu",
+      "Suhang Wu",
+      "Hao Liu",
+      "Xinyan Xiao",
+      "Jinsong Su"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch, All fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language Access Paper:\n\n[Submitted on 31 Jul 2025] View PDF\nBeyond Passive Critical Thinking: Fostering Proactive ATM (experimental)\ne, Ource\n\nQuestioning to Enhance Human-Al Collaboration Other Formats\n\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nAnte Wang, Yujie Lin, Jingyao Liu, Suhang Wu, Hao Liu, Xinyan Xiao, Jinsong Su\n\nCritical thinking is essential for building robust Al systems, preventing them from blindly accepting flawed data or\nbiased reasoning. However, prior work has primarily focused on passive critical thinking, where models simply\nreject problematic queries without taking constructive steps to address user requests. In this work, we introduce\nproactive critical thinking, a paradigm where models actively seek missing or clarifying information from users to\nresolve their queries better. To evaluate this capability, we present GSM-MC and GSM-MCE, two novel\nbenchmarks based on GSMSK for assessing mathematical reasoning under incomplete or misleading conditions. References & Citations\nGSM-MC contains 1,368 math problems with a key variable deliberately removed, requiring models to identify NASAADS\nand request the missing information. GSM-MCE further increases the difficulty by introducing irrelevant details to Soe Se an\ntest robustness against distractions. Experiments on Qwen3 and Llama series models show that, while these\n\na‘ ‘ i Export BibTeX Citation\nmodels excel in traditional reasoning tasks due to extensive post-training and inference-time scaling, they\nstruggle with proactive critical thinking, especially smaller ones. However, we demonstrate that reinforcement Bookmark\nlearning (RL) can significantly improve this ability. Using our enhanced RL algorithm, we achieve substantial £8\ngains, boosting the Qwen3-1.7B's accuracy from 0.15% to 73.98% on GSM-MC. We hope this work advances\nmodels that collaborate more effectively with users in problem-solving through proactive critical thinking.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23407 [es.CL]\n(or arXiv:2507.23407V1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.23407 @\n\nSubmission history\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23404",
+    "title": "Enhanced Arabic Text Retrieval with Attentive Relevance Scoring",
+    "authors": [
+      "Salah Eddine Bekhouche",
+      "Azeddine Benlamoudi",
+      "Yazid Bounab",
+      "Fadi Dornaika",
+      "Abdenour Hadid"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 31 Jul 2025]\nEnhanced Arabic Text Retrieval with Attentive Relevance Scoring\n\nSalah Eddine Bekhouche, Azeddine Benlamoudi, Yazid Bounab, Fadi Dornaika, Abdenour Hadid\n\nArabic poses a particular challenge for natural language processing (NLP) and information retrieval (IR) due to its\ncomplex morphology, optional diacritics and the coexistence of Modern Standard Arabic (MSA) and various\ndialects. Despite the growing global significance of Arabic, it is still underrepresented in NLP research and\nbenchmark resources. In this paper, we present an enhanced Dense Passage Retrieval (DPR) framework\ndeveloped specifically for Arabic. At the core of our approach is a novel Attentive Relevance Scoring (ARS) that\nreplaces standard interaction mechanisms with an adaptive scoring function that more effectively models the\nsemantic relevance between questions and passages. Our method integrates pre-trained Arabic language\nmodels and architectural refinements to improve retrieval performance and significantly increase ranking\naccuracy when answering Arabic questions. The code is made publicly available at \\hreffthis https URL}{GitHub}.\n\n‘Subjects: Computation and Language (cs.CL)\n\nCite as: arXiv:2507.23404 [es.CL]\n(or arXiv:2507.23404v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.23404 @\n\nSubmission history\nFrom: Salah Eddine Bekhouche SE. Bekhouche [view email]\n[v1] Thu, 31 Jul 2025 10:18:28 UTC (166 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAH\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23400",
+    "title": "MRGSEM-Sum: An Unsupervised Multi-document Summarization Framework based on Multi-Relational Graphs and Structural Entropy Minimization",
+    "authors": [
+      "Yongbing Zhang",
+      "Fang Nan",
+      "Shengxiang Gao",
+      "Yuxin Huang",
+      "Kaiwen Tan",
+      "Zhengtao Yu"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nMRGSEM-Sum: An Unsupervised Multi-document Summarization\n\nFramework based on Multi-Relational Graphs and Structural\nEntropy Minimization\n\nYongbing Zhang, Fang Nan, Shengxiang Gao, Yuxin Huang, Kaiwen Tan, Zhengtao Yu\n\nThe core challenge faced by multi-document summarization is the complexity of relationships among documents\nand the presence of information redundancy. Graph clustering is an effective paradigm for addressing this issue,\nas it models the complex relationships among documents using graph structures and reduces information\nredundancy through clustering, achieving significant research progress. However, existing methods often only\nconsider single-relational graphs and require a predefined number of clusters, which hinders their ability to fully\nrepresent rich relational information and adaptively partition sentence groups to reduce redundancy. To overcome\nthese limitations, we propose MRGSEM-Sum, an unsupervised multi-document summarization framework based\n‘on multi-relational graphs and structural entropy minimization. Specifically, we construct a multi-relational graph\nthat integrates semantic and discourse relations between sentences, comprehensively modeling the intricate and\ndynamic connections among sentences across documents. We then apply a two-dimensional structural entropy\nminimization algorithm for clustering, automatically determining the optimal number of clusters and effectively\norganizing sentences into coherent groups. Finally, we introduce a position-aware compression mechanism to\ndistill each cluster, generating concise and informative summaries. Extensive experiments on four benchmark\ndatasets (Multi-News, DUC-2004, PubMed, and WikiSum) demonstrate that our approach consistently\noutperforms previous unsupervised methods and, in several cases, achieves performance comparable to\nsupervised models and large language models. Human evaluation demonstrates that the summaries generated\nby MRGSEM-Sum exhibit high consistency and coverage, approaching human-level quality.\n\n‘Subjects: Computation and Language (¢s.CL); Information Retrieval (cs.IR)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOE) view tcense\n\nCurrent browse context:\ncs.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs.IR\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23399",
+    "title": "Beyond the Cloud: Assessing the Benefits and Drawbacks of Local LLM Deployment for Translators",
+    "authors": [
+      "Peter Sandrini"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23399\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nBeyond the Cloud: Assessing the Benefits and Drawbacks of\nLocal LLM Deployment for Translators\n\nPeter Sandrini\n\nThe rapid proliferation of Large Language Models presents both opportunities and challenges for the translation\nfield. While commercial, cloud-based Al chatbots have garnered significant attention in translation studies,\nconcems regarding data privacy, security, and equitable access necessitate exploration of alternative deployment\nmodels. This paper investigates the feasibility and performance of locally deployable, free language models as a\nviable alternative to proprietary, cloud-based Al solutions. This study evaluates three open-source models\ninstalled on CPU-based platforms and compared against commercially available online chat-bots. The evaluation\nfocuses on functional performance rather than a comparative analysis of human-machine translation quality, an\narea already subject to extensive research. The platforms assessed were chosen for their accessibility and ease\nof use across various operating systems. While local deployment introduces its own challenges, the benefits of\nenhanced data control, improved privacy, and reduced dependency on cloud services are compelling. The\nfindings of this study contribute to a growing body of knowledge conceming the democratization of Al technology\nand inform future research and development efforts aimed at making LLMs more accessible and practical for a\nwider range of users, specifically focusing on the needs of individual translators and small businesses.\n\nSubjects: Computation and Language (es.CL); Computers and Society (cs.CY)\nACM classes: 1.2.7; K.4.3\nCite as: arXiv:2507.23399 [es.CL]\n(or arXiv:2507.23399V1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23399 @\n\nSubmission history\n\nAccess Paper:\n\nView PDF\n\nOther Formats\n(ERE) view ticense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs.CY\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23386",
+    "title": "Causal2Vec: Improving Decoder-only LLMs as Versatile Embedding Models",
+    "authors": [
+      "Ailiang Lin",
+      "Zhuoyun Li",
+      "Kotaro Funakoshi"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23386\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nCausal2Vec: Improving Decoder-only LLMs as Versatile\nEmbedding Models\n\nAiliang Lin, Zhuoyun Li, Kotaro Funakoshi\n\nDecoder-only large language models (LLMs) are increasingly used to build embedding models that effectively\nencode the semantic information of natural language texts into dense vector representations for various\nembedding tasks. However, many existing methods primarily focus on removing the causal attention mask in\nLLMs to enable bidirectional attention, potentially undermining the mode''s ability to extract semantic information\nacquired during pretraining. Additionally, leading unidirectional approaches often rely on extra input text to\n‘overcome the inherent limitations of causal attention, inevitably increasing computational costs. In this work, we\npropose Causal2Vec, a general-purpose embedding model tailored to enhance the performance of decoder-only\nLLMs without altering their original architectures or introducing significant computational overhead. Specifically,\nwe first employ a lightweight BERT-style model to pre-encode the input text into a single Contextual token, which\nis then prepended to the LLM's input sequence, allowing each token to capture contextualized information even\nwithout attending to future tokens. Furthermore, to mitigate the recency bias introduced by last-token pooling and\nhelp LLMs better leverage the semantic information encoded in the Contextual token, we concatenate the last\nhidden states of Contextual and EOS tokens as the final text embedding. In practice, Causal2Vec achieves state-\nof-the-art performance on the Massive Text Embeddings Benchmark (MTEB) among models trained solely on\npublicly available retrieval datasets, while reducing the required sequence length by up to 85% and inference\ntime by up to 82% compared to best-performing methods.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.23386 [es.CL]\n(or arXiv:2507.23386v1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507 23386 @\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23382",
+    "title": "MPCC: A Novel Benchmark for Multimodal Planning with Complex Constraints in Multimodal Large Language Models",
+    "authors": [
+      "Yiyan Ji",
+      "Haoran Chen",
+      "Qiguang Chen",
+      "Chengyue Wu",
+      "Libo Qin",
+      "Wanxiang Che"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23382\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nMPCC: A Novel Benchmark for Multimodal Planning with Complex\n\nConstraints in Multimodal Large Language Models\nYiyan Ji, Haoran Chen, Qiguang Chen, Chengyue Wu, Libo Qin, Wanxiang Che\n\nMultimodal planning capabilities refer to the ability to predict, reason, and design steps for task execution with\nmultimodal context, which is essential for complex reasoning and decision-making across multiple steps.\nHowever, current benchmarks face two key challenges: (1) they cannot directly assess multimodal real-world\nplanning capabilities, and (2) they lack constraints or implicit constraints across modalities. To address these\nissues, we introduce Multimodal Planning with Complex Constraints (MPCC), the first benchmark to\nsystematically evaluate MLLMs' ability to handle multimodal constraints in planning. To address the first\nchallenge, MPCC focuses on three real-world tasks: Flight Planning, Calendar Planning, and Meeting Planning.\nTo solve the second challenge, we introduce complex constraints (e.g. budget, temporal, and spatial) in these\ntasks, with graded difficulty levels (EASY, MEDIUM, HARD) to separate constraint complexity from search space\nexpansion. Experiments on 13 advanced MLLMs reveal significant challenges: closed-source models achieve\nonly 21.3% feasible plans, while open-source models average below 11%. Additionally, we observe that MLLMs\nare highly sensitive to constraint complexity and that traditional multimodal prompting strategies fail in multi-\nconstraint scenarios. Our work formalizes multimodal constraints in planning, provides a rigorous evaluation\nframework, and highlights the need for advancements in constraint-aware reasoning for real-world MLLM\napplications.\n\nComments: Accepted to ACM Multimedia 2025\nSubjects: Computation and Language (es.CL); Artificial Intelligence (cs.Al); Computer Vision and Pattern Recognition (cs.CV)\nAGM classes: 2.2.8; 1.2.10\nCite as: arXiv:2507.23382 [es.CL]\n\n(or arXiv:2507.23382V1 [es.CL] for this version)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nREE view ticense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\ncs.CV\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23358",
+    "title": "Text-to-SQL Task-oriented Dialogue Ontology Construction",
+    "authors": [
+      "Renato Vukovic",
+      "Carel van Niekerk",
+      "Michael Heck",
+      "Benjamin Ruppik",
+      "Hsien-Chin Lin",
+      "Shutong Feng",
+      "Nurul Lubis",
+      "Milica Gasic"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nar Alv > cs > arXiv:2507.23358\n\nSearch,\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 31 Jul 2025]\nText-to-SQL Task-oriented Dialogue Ontology Construction\n\nRenato Vukovic, Carel van Niekerk, Michael Heck, Benjamin Ruppik, Hsien-Chin Lin, Shutong Feng,\n\nNurul Lubis, Milica Gasic\n\nLarge language models (LLMs) are widely used as general-purpose knowledge sources, but they rely on\nparametric knowledge, limiting explainability and trustworthiness. In task-oriented dialogue (TOD) systems, this\nseparation is explicit, using an external database structured by an explicit ontology to ensure explainability and\ncontrollability. However, building such ontologies requires manual labels or supervised training. We introduce\nTeQoDO: a Text-to-SQL task-oriented Dialogue Ontology construction method. Here, an LLM autonomously\nbuilds a TOD ontology from scratch without supervision using its inherent SQL programming capabilities\ncombined with dialogue theory provided in the prompt. We show that TeQoDO outperforms transfer learning\napproaches, and its constructed ontology is competitive on a downstream dialogue state tracking task. Ablation\nstudies demonstrate the key role of dialogue theory. TeQoDO also scales to allow construction of much larger\nontologies, which we investigate on a Wikipedia and ArXiv dataset. We view this as a step towards broader\napplication of ontologies to increase LLM explainability.\n\nSubjects: Computation and Language (¢s.CL); Artificial Intelligence (cs.Al); Databases (cs.DB); Information Retrieval (cs.IR)\nCite as: arXiv:2507.23358 [es.CL]\n\n(or arXiv:2507.23358v1 [es.CL] for this version)\n\nhttps:/doi.org/10.48550/arXiv.2507 23358 @\n\nSubmission history\n\nFrom: Renato Vukovic [view email]\n[v4] Thu, 31 Jul 2025 09:08:59 UTC (274 KB)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\n\ncs.DB\ncsIR\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23334",
+    "title": "MUST-RAG: MUSical Text Question Answering with Retrieval Augmented Generation",
+    "authors": [
+      "Daeyong Kwon",
+      "SeungHeon Doh",
+      "Juhan Nam"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch, All fields\n\nar Alv > cs > arXiv:2507.23334\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language Access Paper:\n\n[Submitted on 31 Jul 2025] View PDF\nMUST-RAG: MUSical Text Question Answering with Retrieval HTML (experimental)\nAugmented Generation Other Formats\n\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nDaeyong Kwon, SeungHeon Doh, Juhan Nam\n\nRecent advancements in Large language models (LLMs) have demonstrated remarkable capabilities across\ndiverse domains. While they exhibit strong zero-shot performance on various tasks, LLMs’ effectiveness in\nmusic-related applications remains limited due to the relatively small proportion of music-specific knowledge in\ntheir training data. To address this limitation, we propose MusT-RAG, a comprehensive framework based on\n\nRetrieval Augmented Generation (RAG) to adapt general-purpose LLMs for text-only music question answering cs.Al\n(MQA) tasks. RAG is a technique that provides external knowledge to LLMs by retrieving relevant context S RR\n\ninformation when generating answers to questions. To optimize RAG for the music domain, we (1) propose\n\nMusWikiDB, a music-specialized vector database for the retrieval stage, and (2) utilizes context information References & Citations\nduring both inference and fine-tuning processes to effectively transform general-purpose LLMs into music- NASAADS\n\nGoogle Scholar\n\nspecific models. Our experiment demonstrates that MusT-RAG significantly outperforms traditional fine-tuning Son ee an\n\napproaches in enhancing LLMs’ music domain adaptation capabilities, showing consistent improvements across\nboth in-domain and out-of-domain MQA benchmarks. Additionally, our MusWikiDB proves substantially more Export BibTeX Citation\neffective than general Wikipedia corpora, delivering superior performance and computational efficiency, Bookmark\n\n‘Comments: 8 pages, 2 figures\nSubjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al); Information Retrieval (cs.IR); Machine Learning (cs.LG)\nCite as: arXiv:2507.23334 [es.CL]\n\n(or arXiv:2507.23334V1 [es.CL] for this version)\n\nhttps://doi.org/10.48550/arXiv.2507 23334 @\n\nSubmission history\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23319",
+    "title": "What's Taboo for You? - An Empirical Evaluation of LLMs Behavior Toward Sensitive Content",
+    "authors": [
+      "Alfio Ferrara",
+      "Sergio Picascia",
+      "Laura Pinnavaia",
+      "Vojimir Ranitovic",
+      "Elisabetta Rocchetti",
+      "Alice Tuveri"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nAll fields\n\nar Alv > cs > arXiv:2507.23319 Help | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nWhat's Taboo for You? - An Empirical Evaluation of LLMs Behavior\nToward Sensitive Content\n\nAlfio Ferrara, Sergio Picascia, Laura Pinnavaia, Vojimir Ranitovic, Elisabetta Rocchetti, Alice Tuveri\n\nProprietary Large Language Models (LLMs) have shown tendencies toward politeness, formality, and implicit\ncontent moderation. While previous research has primarily focused on explicitly training models to moderate and\ndetoxify sensitive content, there has been limited exploration of whether LLMs implicitly sanitize language without\nexplicit instructions. This study empirically analyzes the implicit moderation behavior of GPT-4o-mini when\nparaphrasing sensitive content and evaluates the extent of sensitivity shifts. Our experiments indicate that GPT-\n4o-mini systematically moderates content toward less sensitive classes, with substantial reductions in derogatory\nand taboo language. Also, we evaluate the zero-shot capabilities of LLMs in classifying sentence sensitivity,\ncomparing their performances against traditional methods.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23319 fes.CL]\n(or arXiv:2507.23319V1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.23319 @\n\nSubmission history\nFrom: Sergio Picascia [view email]\n[v1] Thu, 31 Jul 2025 08:02:04 UTC (761 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\ned\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23279",
+    "title": "Unveiling Super Experts in Mixture-of-Experts Large Language Models",
+    "authors": [
+      "Zunhai Su",
+      "Qingyuan Li",
+      "Hao Zhang",
+      "YuLei Qian",
+      "Yuchen Xie",
+      "Kehong Yuan"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23279\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nUnveiling Super Experts in Mixture-of-Experts Large Language\nModels\n\nZunhai Su, Qingyuan Li, Hao Zhang, YuLei Qian, Yuchen Xie, Kehong Yuan\n\nSparsely activated Mixture-of Experts (MoE) models have shown promise in enhancing the learning capacity of\nlarge language models (LLMs). Leveraging the intrinsic importance differences among experts, recent research\nhas explored expert-level compression techniques to improve the efficiency of MoE LLMs. However, existing\napproaches often rely on empirical criteria to identify critical experts, lacking a deeper exploration and\nunderstanding of the heterogeneous importance of experts. In this study, we present the first discovery and\ninvestigation of a distinct subset of experts that play a crucial role in the underlying mechanisms during the\nmodel's forward inference. These experts are prevalent in open-source MoE LLMs, and despite their limited\nnumber, pruning them leads to a significant decline in model performance (e.g., pruning three causes Qwen3-\n30B-A3B to produce repetitive and uninformative outputs). We refer to these experts as Super Experts (SEs)\n\nOur comprehensive analysis provides progressively deeper insights into SEs. (i) SEs are characterized by rare\nbut extreme activation outliers in the output of the down_proj, which give rise to massive activations in the hidden\nstates between decoder layers. Moreover, the distribution of SEs remains model-specific and is unaffected by\npost-training processes. (ii) By pruning SEs, we assess their significance across a variety of tasks, revealing their\nconsiderable impact on the mode's overall performance, particularly in mathematical reasoning. (iii) We further\nenhance our understanding of the influence of SEs compression. Our findings confirm that MoE LLMs rely on\nSEs to induce attention sinks, which are crucial for the distribution of attention scores but are significantly\ndisrupted by SE pruning. The code is available at this https URL.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23279 fes.CL]\n(or arXiv:2507.23279V1 [es.CL] for this version)\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23248",
+    "title": "Evaluating LLMs' Multilingual Capabilities for Bengali: Benchmark Creation and Performance Analysis",
+    "authors": [
+      "Shimanto Bhowmik",
+      "Tawsif Tashwar Dipto",
+      "Md Sazzad Islam",
+      "Sheryl Hsu",
+      "Tahsin Reasat"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > es > arXiv:2507.23248\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nEvaluating LLMs’ Multilingual Capabilities for Bengali: Benchmark\n\nCreation and Performance Analysis\nShimanto Bhowmik, Tawsif Tashwar Dipto, Md Sazzad Islam, Sheryl Hsu, Tahsin Reasat\n\nBengali is an underrepresented language in NLP research. However, it remains a challenge due to its unique\nlinguistic structure and computational constraints. In this work, we systematically investigate the challenges that\nhinder Bengali NLP performance by focusing on the absence of standardized evaluation benchmarks. We then\nevaluated 10 recent open source Large Language Models (LLMs) in 8 of the translated datasets and performed a\ncomprehensive error analysis to pinpoint their primary failure modes. Our findings reveal consistent performance\ngaps for Bengali compared to English, particularly for smaller models and specific model families like Mistral. We\nalso identified promising robustness in certain architectures, such as DeepSeek, that maintain more stable\nperformance across languages. Our analysis reveals an inverse relationship between tokenization efficiency and\nLLM accuracy where models tend to perform worse when inputs are excessively tokenized, whereas more\nefficient \\& concise tokenization results in improved performance. These findings highlight critical areas where\ncurrent models fall short and underscore the need for improved dataset quality and evaluation methodologies\ntailored to multilingual contexts. This work will catalyze further research on NLP for underrepresented languages,\nhelping to democratize access to advanced language technologies worldwide. The code and dataset used in this\nresearch is publicly available at this https URL.\n\n‘Subjects: Computation and Language (es.CL); Machine Learning (cs.LG)\nCite as: arXiv:2507.23248 [es.CL]\n(or arXiv:2507.23248v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507 23248 @\n\nSubmission history\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs.LG\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23247",
+    "title": "P-ReMIS: Pragmatic Reasoning in Mental Health and a Social Implication",
+    "authors": [
+      "Sneha Oram",
+      "Pushpak Bhattacharyya"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23247\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 31 Jul 2025]\n\nP-ReMIS: Pragmatic Reasoning in Mental Health and a Social\nImplication\n\nSneha Oram, Pushpak Bhattacharyya\n\nThere has been an increase in recent advancements in the explainability and development of personalized\nchatbots for mental health. However, the reasoning aspects for explainability and dialogue discourse have not\nbeen explored previously for mental health. Hence, we are investigating the pragmatic reasoning capability of\nlarge language models (LLMs) in this domain. We introduce P-ReMe dataset, and propose a modified definition\nfor the pragmatic phenomena of implicature (implied meaning) and presupposition (implicit assumption) in mental\nhealth. Following the definition, we formulate two tasks in implicature and one task in presupposition. To\nbenchmark the dataset and the presented tasks, we consider four models - Llama3.1, Mistral, MentaLLaMa, and\n‘Qwen. The results of the experiments suggest that Mistral and Qwen show substantial reasoning capabilities in\nthe domain. In addition, we also propose StiPRompts to study the stigma around mental health with the state-of-\nthe-art LLMs, GPT-4o mini, Deepseek-chat, and Claude-3.5-haiku. Our evaluated findings show that Claude-3.5-\nhaiku deals with the stigma more responsibly compared to the other two LLMs.\n\n‘Subjects: Computation and Language (cs.CL)\n\nCite as: arXiv:2507.23247 [es.CL]\n(or arXiv:2507.23247v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.23247 @\n\nSubmission history\n\nFrom: Sneha Oram [view email]\n[v4] Thu, 31 Jul 2025 05:10:38 UTC (7,303 KB)\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23227",
+    "title": "Enabling Few-Shot Alzheimer's Disease Diagnosis on Tabular Biomarker Data with LLMs",
+    "authors": [
+      "Sophie Kearney",
+      "Shu Yang",
+      "Zixuan Wen",
+      "Bojian Hou",
+      "Duy Duong-Tran",
+      "Tianlong Chen",
+      "Jason Moore",
+      "Marylyn Ritchie",
+      "Li Shen"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23227\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\nEnabling Few-Shot Alzheimer's Disease Diagnosis on Tabular\nBiomarker Data with LLMs\n\nSophie Kearney, Shu Yang, Zixuan Wen, Bojian Hou, Duy Duong-Tran, Tianlong Chen, Jason Moore,\nMarylyn Ritchie, Li Shen\n\nEarly and accurate diagnosis of Alzheimer's disease (AD), a complex neurodegenerative disorder, requires\nanalysis of heterogeneous biomarkers (e.g., neuroimaging, genetic risk factors, cognitive tests, and cerebrospinal\nfluid proteins) typically represented in a tabular format. With flexible few-shot reasoning, multimodal integration,\nand natural language-based interpretability, large language models (LLMs) offer unprecedented opportunities for\nprediction with structured biomedical data. We propose a novel framework called TAP-GPT, Tabular Alzheimer's\nPrediction GPT, that adapts TableGPT2, a multimodal tabular-specialized LLM originally developed for business\nintelligence tasks, for AD diagnosis using structured biomarker data with small sample sizes. Our approach\nconstructs few-shot tabular prompts using in-context learning examples from structured biomedical data and\nfinetunes TableGPT2 using the parameter-efficient qLoRA adaption for a clinical binary classification task of AD\nor cognitively normal (CN). The TAP-GPT framework harnesses the powerful tabular understanding ability of\nTableGPT2 and the encoded prior knowledge of LLMs to outperform more advanced general-purpose LLMs and\na tabular foundation model (TFM) developed for prediction tasks. To our knowledge, this is the first application of\nLLMs to the prediction task using tabular biomarker data, paving the way for future LLM-driven multi-agent\nframeworks in biomedical informatics.\n\n‘Subjects: Computation and Language (¢s.CL); Machine Learning (cs.LG); Quantitative Methods (q-bio.QM)\nCite as: arXiv:2507.23227 fes.CL]\n\n(or arXiv:2507.23227V1 [es.CL] for this version)\n\nhttps:/idoi.org/10.48550/arXiv.2507.23227 @\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23220",
+    "title": "Model Directions, Not Words: Mechanistic Topic Models Using Sparse Autoencoders",
+    "authors": [
+      "Carolina Zheng",
+      "Nicolas Beltran-Velez",
+      "Sweta Karlekar",
+      "Claudia Shi",
+      "Achille Nazaret",
+      "Asif Mallik",
+      "Amir Feder",
+      "David M. Blei"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23220\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nModel Directions, Not Words: Mechanistic Topic Models Using\nSparse Autoencoders\n\nCarolina Zheng, Nicolas Beltran-Velez, Sweta Karlekar, Claudia Shi, Achille Nazaret, Asif Mallik, Amir\nFeder, David M. Blei\n\nTraditional topic models are effective at uncovering latent themes in large text collections. However, due to their\nreliance on bag-of-words representations, they struggle to capture semantically abstract features. While some\nneural variants use richer representations, they are similarly constrained by expressing topics as word lists,\nwhich limits their ability to articulate complex topics. We introduce Mechanistic Topic Models (MTMs), a class of\ntopic models that operate on interpretable features learned by sparse autoencoders (SAEs). By defining topics\nover this semantically rich space, MTMs can reveal deeper conceptual themes with expressive feature\ndescriptions. Moreover, uniquely among topic models, MTMs enable controllable text generation using topic-\nbased steering vectors. To properly evaluate MTM topics against word-list-based approaches, we propose\n\\textit{topic judge}, an LLM-based pairwise comparison evaluation framework. Across five datasets, MTMs match\nor exceed traditional and neural baselines on coherence metrics, are consistently preferred by topic judge, and\nenable effective steering of LLM outputs.\n\n‘Subjects: Computation and Language (es.CL); Machine Learning (cs.LG)\nCite as: arXiv:2507.23220 fes.CL]\n(or arXiv:2507.23220V1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.23220 @\n\nSubmission history\n\nFrom: Carolina Zheng [view email]\n[v4] Thu, 31 Jul 2025 03:17:43 UTC (2,524 KB)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs.LG\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23211",
+    "title": "Failures Are the Stepping Stones to Success: Enhancing Few-Shot In-Context Learning by Leveraging Negative Samples",
+    "authors": [
+      "Yunhao Liang",
+      "Ruixuan Ying",
+      "Takuya Taniguchi",
+      "Zhe Cui"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23211\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nFailures Are the Stepping Stones to Success: Enhancing Few-Shot\n\nIn-Context Learning by Leveraging Negative Samples\nYunhao Liang, Ruixuan Ying, Takuya Taniguchi, Zhe Cui\n\nLarge Language Models exhibit powerful few-shot in-context learning (ICL) capabilities, but the performance is\nhighly sensitive to provided examples.\n\nRecent research has focused on retrieving corresponding examples for each input query, not only enhancing the\nefficiency and scalability of the leaming process but also mitigating inherent biases in manual example selection.\nHowever, these studies have primarily emphasized leveraging Positive samples while overlooking the additional\ninformation within Negative samples for contextual learning.\n\nWe propose a novel method that utilizes Negative samples to better select Positive sample examples, thereby\nenhancing the performance of few-shot ICL. Initially, we construct Positive and Negative sample corpora based\non Zero-Shot-Cot. Then, during inference, we employ a semantic similarity-based approach to select the most\nsimilar examples from both the Positive and Negative corpora for a given query. Subsequently, we further retrieve\nPositive examples from the Positive sample corpus based on semantic similarity to the Negative examples, then\nconcatenating them with the previously selected Positive examples to serve as ICL demonstrations. Experimental\nresults demonstrate that our approach surpasses methods solely relying on the most similar positive examples\nfor context, validating that the additional information in negative samples aids in enhancing ICL performance\nthrough improved Positive sample selection.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23211 [es.CL]\n(or arXiv:2507.23211V1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23211 @\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23194",
+    "title": "Geak: Introducing Triton Kernel AI Agent & Evaluation Benchmarks",
+    "authors": [
+      "Jianghui Wang",
+      "Vinay Joshi",
+      "Saptarshi Majumder",
+      "Xu Chao",
+      "Bin Ding",
+      "Ziqiong Liu",
+      "Pratik Prabhanjan Brahma",
+      "Dong Li",
+      "Zicheng Liu",
+      "Emad Barsoum"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23194\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\n\nGeak: Introducing Triton Kernel Al Agent & Evaluation\nBenchmarks\n\nJianghui Wang, Vinay Joshi, Saptarshi Majumder, Xu Chao, Bin Ding, Zigiong Liu, Pratik Prabhanjan\nBrahma, Dong Li, Zicheng Liu, Emad Barsoum\n\nThe demand for Al-generated GPU kernels is rapidly growing, influenced by the need for scalable, hardware-\noptimized solutions in both industry and academia. As deep learning workloads grow in complexity and diversity,\nit is imperative to automate low-level kernel development to meet performance and productivity demands. Major\ncloud providers, semiconductor companies, and research institutions are now investing heavily in Al-driven code\ngeneration for GPUs, aiming to reduce manual optimization efforts while achieving near-expert performance on\nhardware like AMD MI300X. The Triton language, a Python-based DSL for GPU programming, has emerged as a\npopular target for such Al-generated kernels due to its balance of performance and ease-of-coding. In this work,\nwe present an evaluation suite for Triton-based GPU kernels and GEAK (Generating Efficient Al-centric GPU\nKernels)-a framework that leverages cutting-edge LLMs to generate performant Triton code specifically for AMD\nGPUs, including the AMD MI300X and MI250. GEAK leverages inference-time compute scaling to produce\nTriton-based GPU kernels using a reasoning loop adapted from Reflexion-style feedback mechanisms. On two\nevaluation benchmarks, GEAK significantly outperformed the baselines of directly prompting frontier LLMs as\nwell as Reflexion-based generation pipelines by achieving correctness up to 63% and execution speed up of up\nto 2.59X. These results highlight the promise of GEAK-like agentic code generation for accelerating the adoption\nof diverse hardware platforms and democratizing access to expert-level kemel performance.\n\nSubjects: Computation and Language (cs.CL); Artificial Intelligence (cs Al); Machine Learning (cs.LG)\nCite as: arXiv:2507.23194 [es.CL]\n\n(or arXiv:2507.23194v1 [es.CL] for this version)\n\nhttos://doi ora/10.48550/arXiv.2507 23194 @\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\ncs.LG\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23167",
+    "title": "LENS: Learning Ensemble Confidence from Neural States for Multi-LLM Answer Integration",
+    "authors": [
+      "Jizhou Guo"
+    ],
+    "date": "[ 31 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nAll fields\n\nar Alv > cs > arXiv:2507.23167 Help | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 31 Jul 2025]\nLENS: Learning Ensemble Confidence from Neural States for\nMulti-LLM Answer Integration\n\nJizhou Guo\n\nLarge Language Models (LLMs) have demonstrated impressive performance across various tasks, with different\nmodels excelling in distinct domains and specific abilities. Effectively combining the predictions of multiple LLMs\nis crucial for enhancing system robustness and performance. However, existing ensemble methods often rely on\nsimple techniques like voting or logits ensembling, which overlook the varying confidence and reliability of models\nin different contexts. In this work, we propose LENS (Learning ENsemble confidence from Neural States), a\nnovel approach that leas to estimate model confidence by analyzing internal representations. For each LLM,\nwe train a lightweight linear confidence predictor that leverages layer-wise hidden states and normalized\nprobabilities as inputs. This allows for more nuanced weighting of model predictions based on their context-\ndependent reliability. Our method does not require modifying the model parameters and requires negligible\nadditional computation. Experimental results on multiple-choice and boolean question-answering tasks\ndemonstrate that LENS outperforms traditional ensemble methods by a substantial margin. Our findings suggest\nthat internal representations provide valuable signals for determining model confidence and can be effectively\nleveraged for ensemble learning.\n\n‘Subjects: Computation and Language (¢s.CL); Artificial Intelligence (cs.Al); Machine Learning (cs.LG); Multiagent Systems (cs.MA)\nCite as: arXiv:2507.23167 [es.CL]\n(or arXiv:2507.23167V1 [es.CL] for this version)\n\nhitps://doi.org/10.48550/arXiv.2507.23167 @\n\nSubmission history\nFrom: Jizhou Guo [view email]\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\ncs Al\ncs. LG\ncs.MA\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23158",
+    "title": "User Feedback in Human-LLM Dialogues: A Lens to Understand Users But Noisy as a Learning Signal",
+    "authors": [
+      "Yuhan Liu",
+      "Michael J.Q. Zhang",
+      "Eunsol Choi"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23158\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 30 Jul 2025)\n\nUser Feedback in Human-LLM Dialogues: A Lens to Understand\nUsers But Noisy as a Learning Signal\n\nYuhan Liu, Michael J.Q. Zhang, Eunsol Choi\n\nOnce language models (LMs) are deployed, they can interact with users long-term, ideally evolving continuously\nbased on their feedback. Asking for direct user feedback can be disruptive; thus, we study harvesting user\nfeedback from user-LM interaction logs. We study implicit user feedback in two user-LM interaction datasets\n(WildChat and LMSYS). First, we analyze user feedback in the user-LLM conversation trajectory, providing\ninsights into when and why such feedback occurs. Second, we study harvesting learning signals from such\nimplicit user feedback. We find that the contents of user feedback (e.g., user wanted clarification), not just the\npolarity (e.g., users were unhappy with the previous model response), can improve model performance in short\nhuman-designed questions (MTBench) but not on longer and more complex questions (WildBench). We also find\nthat the usefulness of user feedback is largely tied to the quality of the user's initial prompt. Together, we provide\nan in-depth study of implicit user feedback, showing its potential and limitations.\n\nComments: Earlier version of this paper was presented at 2nd Workshop on Models of Human Feedback for Al Alignment (MoFA), ICML\n\n2025\n\nSubjects: Computation and Language (cs.CL)\n\nCite as: arXiv:2507.23158 [es.CL]\n(or arXiv:2507.23158v1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23158 @\n\nSubmission history\nFrom: Yuhan Liu [view email]\n[v1] Wed, 30 Jul 2025 23:33:29 UTC (528 KB)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23135",
+    "title": "ISO-Bench: Benchmarking Multimodal Causal Reasoning in Visual-Language Models through Procedural Plans",
+    "authors": [
+      "Ananya Sadana",
+      "Yash Kumar Lal",
+      "Jiawei Zhou"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nAll fields\n\nar Alv > cs > arXiv:2507.23135 Help | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 30 Jul 2025]\nISO-Bench: Benchmarking Multimodal Causal Reasoning in\nVisual-Language Models through Procedural Plans\n\nAnanya Sadana, Yash Kumar Lal, Jiawei Zhou\n\nUnderstanding causal relationships across modalities is a core challenge for multimodal models operating in real-\nworld environments. We introduce ISO-Bench, a benchmark for evaluating whether models can infer causal\ndependencies between visual observations and procedural text. Each example presents an image of a task step\nand a text snippet from a plan, with the goal of deciding whether the visual step occurs before or after the\nreferenced text step. Evaluation results on ten frontier vision-language models show underwhelming\nperformance: the best zero-shot F1 is only 0.57, and chain-of-thought reasoning yields only modest gains (up to\n0.62 F1), largely behind humans (0.98 F1). Our analysis further highlights concrete directions for improving\ncausal understanding in multimodal models.\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23135 [es.CL]\n(or arXiv:2507.23135v1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23135 @\n\nSubmission history\nFrom: Yash Kumar Lal [view email]\n[v1] Wed, 30 Jul 2025 22:30:48 UTC (1,290 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23121",
+    "title": "Uncovering the Fragility of Trustworthy LLMs through Chinese Textual Ambiguity",
+    "authors": [
+      "Xinwei Wu",
+      "Haojie Li",
+      "Hongyu Liu",
+      "Xinyu Ji",
+      "Ruohan Li",
+      "Yule Chen",
+      "Yigeng Zhang"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > es > arXiv:2507.23121\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 30 Jul 2025]\n\nUncovering the Fragility of Trustworthy LLMs through Chinese\nTextual Ambiguity\n\nXinwei Wu, Haojie Li, Hongyu Liu, Xinyu Ji, Ruohan Li, Yule Chen, Yigeng Zhang\n\nIn this work, we study a critical research problem regarding the trustworthiness of large language models (LLMs):\n\nhow LLMs behave when encountering ambiguous narrative text, with a particular focus on Chinese textual\nambiguity. We created a benchmark dataset by collecting and generating ambiguous sentences with context and\ntheir corresponding disambiguated pairs, representing multiple possible interpretations. These annotated\nexamples are systematically categorized into 3 main categories and 9 subcategories. Through experiments, we\ndiscovered significant fragility in LLMs when handling ambiguity, revealing behavior that differs substantially from\nhumans. Specifically, LLMs cannot reliably distinguish ambiguous text from unambiguous text, show\noverconfidence in interpreting ambiguous text as having a single meaning rather than multiple meanings, and\nexhibit overthinking when attempting to understand the various possible meanings. Our findings highlight a\nfundamental limitation in current LLMs that has significant implications for their deployment in real-world\napplications where linguistic ambiguity is common, calling for improved approaches to handle uncertainty in\nlanguage understanding. The dataset and code are publicly available at this GitHub repository: this https URL.\n\n‘Comments: Accepted at KDD workshop on Evaluation and Trustworthiness of Agentic and Generative Al Models (Agentic & GenAl\nEvaluation Workshop KDD '25)\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.All)\n\nCite as: arXiv:2507.23121 [es.CL]\n(or arXiv:2507.23121V1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23121 @\n\nSubmission history\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23104",
+    "title": "RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL",
+    "authors": [
+      "Jeffrey Eben",
+      "Aitzaz Ahmad",
+      "Stephen Lau"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23104\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 30 Jul 2025)\n\nRASL: Retrieval Augmented Schema Linking for Massive Database\n\nText-to-SQL\nJeffrey Eben, Aitzaz Ahmad, Stephen Lau\n\nDespite advances in large language model (LLM)-based natural language interfaces for databases, scaling to\nenterprise-level data catalogs remains an under-explored challenge. Prior works addressing this challenge rely\n‘on domain-specific fine-tuning - complicating deployment - and fail to leverage important semantic context\ncontained within database metadata. To address these limitations, we introduce a component-based retrieval\narchitecture that decomposes database schemas and metadata into discrete semantic units, each separately\nindexed for targeted retrieval. Our approach prioritizes effective table identification while leveraging column-level\ninformation, ensuring the total number of retrieved tables remains within a manageable context budget.\nExperiments demonstrate that our method maintains high recall and accuracy, with our system outperforming\nbaselines over massive databases with varying structure and available metadata. Our solution enables practical\ntext-to-SQL systems deployable across diverse enterprise settings without specialized fine-tuning, addressing a\ncritical scalability gap in natural language database interfaces.\n\nSubjects: Computation and Language (cs.CL); Artificial Intelligence (cs Al); Machine Learning (cs.LG)\nCite as: arXiv:2507.23104 [es.CL]\n\n(or arXiv:2507.23104v1 [es.CL] for this version)\n\nhttps:/doi.org/10.48550/arXiv.2507.23104 @\n\nSubmission history\n\nFrom: Jeff Eben [view email]\n[v1] Wed, 30 Jul 2025 21:09:47 UTC (554 KB)\n\nAccess Paper:\n\nView PDF\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\ncs.LG\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23095",
+    "title": "SMART-Editor: A Multi-Agent Framework for Human-Like Design Editing with Structural Integrity",
+    "authors": [
+      "Ishani Mondal",
+      "Meera Bharadwaj",
+      "Ayush Roy",
+      "Aparna Garimella",
+      "Jordan Lee Boyd-Graber"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23095\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 30 Jul 2025)\n\nSMART-Editor: A Mul\nEditing with Structural Integrity\n\nIshani Mondal, Meera Bharadwaj, Ayush Roy, Aparna Garimella, Jordan Lee Boyd-Graber\n\nWe present SMART-Editor, a framework for compositional layout and content editing across structured (posters,\nwebsites) and unstructured (natural images) domains. Unlike prior models that perform local edits, SMART-Editor\npreserves global coherence through two strategies: Reward-Refine, an inference-time rewardguided refinement\nmethod, and RewardDPO, a training-time preference optimization approach using reward-aligned layout pairs. To\nevaluate model performance, we introduce SMARTEdit-Bench, a benchmark covering multi-domain, cascading\nedit scenarios. SMART-Editor outperforms strong baselines like InstructPix2Pix and HIVE, with RewardDPO.\nachieving up to 15% gains in structured settings and Reward-Refine showing advantages on natural images.\nAutomatic and human evaluations confirm the value of reward-guided planning in producing semantically\nconsistent and visually aligned edits.\n\n‘Comments: Under Submission\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.All)\nCite as: _arXiv:2507.23095 [es.CL]\n(or arXiv:2507.23095v1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23095 @\n\nSubmission history\n\nFrom: Ishani Mondal [view email]\n[v1] Wed, 30 Jul 2025 20:52:34 UTC (2,803 KB)\n\n‘Agent Framework for Human-Like Design\n\nAccess Paper:\n\nView PDF\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23083",
+    "title": "Context-aware Rotary Position Embedding",
+    "authors": [
+      "Ali Veisi",
+      "Delaram Fartoot",
+      "Hamidreza Amirzadeh"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23083\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 30 Jul 2025)\nContext-aware Rotary Position Embedding\n\nAli Veisi, Delaram Fartoot, Hamidreza Amirzadeh\n\nPositional encoding is a vital component of Transformer architectures, enabling models to incorporate sequence\norder into self-attention mechanisms. Rotary Positional Embeddings (ROPE) have become a widely adopted\nsolution due to their compatibility with relative position encoding and computational efficiency. However, ROPE\nrelies on static, input-independent sinusoidal frequency patterns, limiting its ability to model context-sensitive\nrelationships. In this work, we propose CARoPE (Context-Aware Rotary Positional Embedding), a novel\ngeneralization of RoPE that dynamically generates head-specific frequency patterns conditioned on token\nembeddings. This design introduces token- and context-sensitive positional representations while preserving\nRoPE efficiency and architectural simplicity. CARoPE computes input-dependent phase shifts using a bounded\ntransformation of token embeddings and integrates them into the rotary mechanism across attention heads. We\n\nevaluate CARoPE on the FineWeb-Edu-10B dataset using GPT-2 variants trained on next-token prediction tasks.\n\nExperimental results show that CARoPE consistently outperforms RoPE and other common positional encoding\nbaselines, achieving significantly lower perplexity, even at longer context lengths. Additionally, CAROPE enables\nfaster training throughput without sacrificing model stability. These findings demonstrate that CAROPE offers a\nscalable, expressive, and efficient upgrade to existing positional encoding strategies in Transformer models.\n\nComments: 4 pages, 1 table\nSubjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23083 [es.CL]\n(or arXiv:2507.23083V1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507.23083 @\n\nSubmission history\n\nEmam: Hamidraza Amirzadoh Iwiew amaill\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23082",
+    "title": "Exploring In-Context Learning for Frame-Semantic Parsing",
+    "authors": [
+      "Diego Garat",
+      "Guillermo Moncecchi",
+      "Dina Wonsever"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23082 Help | Advanced Search\n\nAll fields\n\nComputer Science > Computation and Language\n\n[Submitted on 30 Jul 2025]\nExploring In-Context Learning for Frame-Semantic Parsing\n\nDiego Garat, Guillermo Moncecchi, Dina Wonsever\n\nFrame Semantic Parsing (FSP) entails identifying predicates and labeling their arguments according to Frame\nSemantics. This paper investigates the use of In-Context Learning (ICL) with Large Language Models (LLMs) to\nperform FSP without model fine-tuning. We propose a method that automatically generates task-specific prompts\nfor the Frame Identification (Fl) and Frame Semantic Role Labeling (FSRL) subtasks, relying solely on the\nFrameNet database. These prompts, constructed from frame definitions and annotated examples, are used to\nguide six different LLMs. Experiments are conducted on a subset of frames related to violent events. The method\nachieves competitive results, with F1 scores of 94.3% for Fl and 77.4% for FSRL. The findings suggest that ICL\noffers a practical and effective alternative to traditional fine-tuning for domain-specific FSP tasks\n\n‘Subjects: Computation and Language (cs.CL)\nCite as: arXiv:2507.23082 [es.CL]\n(or arXiv:2507.23082v1 [es.CL] for this version)\nhttps:/doi.org/10.48550/arXiv.2507.23082 @\n\nSubmission history\n\nFrom: Diego Garat [view email]\n[v1] Wed, 30 Jul 2025 20:29:17 UTC (85 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\ned\n\nBibliographic and Citation Tools\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.23063",
+    "title": "Math Natural Language Inference: this should be easy!",
+    "authors": [
+      "Valeria de Paiva",
+      "Qiyue Gao",
+      "Hai Hu",
+      "Pavel Kovalev",
+      "Yikang Liu",
+      "Lawrence S. Moss",
+      "Zhiheng Qian"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.23063\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 30 Jul 2025]\nMath Natural Language Inference: this should be easy!\n\nValeria de Paiva, Qiyue Gao, Hai Hu, Pavel Kovalev, Yikang Liu, Lawrence S. Moss, Zhiheng Qian\n\nWe ask whether contemporary LLMs are able to perform natural language inference (NLI) tasks on mathematical\ntexts. We call this the Math NLI problem. We construct a corpus of Math NLI pairs whose premises are from\nextant mathematical text and whose hypotheses and gold labels were provided by people with experience in both\nresearch-level mathematics and also in the NLI field. We also investigate the quality of corpora using the same\npremises but whose hypotheses are provided by LLMs themselves. We not only investigate the performance but\nalso the inter-group consistency of the diverse group of LLMs. We have both positive and negative findings\n\nAmong our positive findings: in some settings, using a majority vote of LLMs is approximately equivalent to using\nhuman-labeled data in the Math NLI area. On the negative side: LLMs still struggle with mathematical language.\nThey occasionally fail at even basic inferences. Current models are not as prone to hypothesis-only “inference” in\nour data the way the previous generation had been. In addition to our findings, we also provide our corpora as\n\ndata to support future work on Math NLL\n\nComments: 9 pages plus appendices\nSubjects: Computation and Language (es.CL)\nMSG classes: 68750\nACM classes: 1.2.7\nCite as: arXiv:2507.23063 [es.CL]\n(or arXiv:2507.23063v1 [es.CL] for this version)\nhttps:/doi.org/10.48550/arXiv.2507.23063 @\n\nSubmission history\nFrom: Lawrence Moss [view email]\n[v1] Wed, 30 Jul 2025 19:49:04 UTC (32 KB)\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22968",
+    "title": "C3: A Bilingual Benchmark for Spoken Dialogue Models Exploring Challenges in Complex Conversations",
+    "authors": [
+      "Chengqian Ma",
+      "Wei Tao",
+      "Yiwen Guo"
+    ],
+    "date": "[ 30 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nAll fields\n\nar Alv > cs > arXiv:2507.22968 Help | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 30 Jul 2025]\nC3: A Bilingual Benchmark for Spoken Dialogue Models Exploring\nChallenges in Complex Conversations\n\nChengqian Ma, Wei Tao, Yiwen Guo\n\nSpoken Dialogue Models (SDMs) have recently attracted significant attention for their ability to generate voice\nresponses directly to users’ spoken queries. Despite their increasing popularity, there exists a gap in research\nfocused on comprehensively understanding their practical effectiveness in comprehending and emulating human\nconversations. This is especially true compared to text-based Large Language Models (LLMs), which benefit\nfrom extensive benchmarking. Human voice interactions are inherently more complex than text due to\ncharacteristics unique to spoken dialogue. Ambiguity poses one challenge, stemming from semantic factors like\npolysemy, as well as phonological aspects such as heterograph, heteronyms, and stress patterns. Additionally,\ncontext-dependency, like omission, coreference, and multi-turn interaction, adds further complexity to human\nconversational dynamics. To illuminate the current state of SDM development and to address these challenges,\nwe present a benchmark dataset in this paper, which comprises 1,079 instances in English and Chinese.\nAccompanied by an LLM-based evaluation method that closely aligns with human judgment, this dataset\nfacilitates a comprehensive exploration of the performance of SDMs in tackling these practical challenges.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.22968 [es.CL]\n(or arXiv:2507.22968v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.22968 @\n\nSubmission history\nFrom: Chenggian Ma [view email]\n[v1] Wed, 30 Jul 2025 17:56:23 UTC (33,978 KB)\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22944",
+    "title": "Opacity as Authority: Arbitrariness and the Preclusion of Contestation",
+    "authors": [
+      "Naomi Omeonga wa Kayembe"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22944\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 25 Jul 2025]\n\nOpacity as Authority: Arbitrariness and the Preclusion of\nContestation\n\nNaomi Omeonga wa Kayembe\n\nThis article redefines arbitrariness not as a normative flaw or a symptom of domination, but as a foundational\nfunctional mechanism structuring human systems and interactions. Diverging from critical traditions that conflate\narbitrariness with injustice, it posits arbitrariness as a semiotic trait: a property enabling systems - linguistic, legal,\nor social - to operate effectively while withholding their internal rationale. Building on Ferdinand de Saussure's\nconcept of l'arbitraire du signe, the analysis extends this principle beyond language to demonstrate its cross-\ndomain applicability, particularly in law and social dynamics. The paper introduces the \"Motivation ->\nConstatability -> Contestability” chain, arguing that motivation functions as a crucial interface rendering an act's\nlogic vulnerable to intersubjective contestation. When this chain is broken through mechanisms like\n\"immotivization” or \"Conflict Lateralization” (exemplified by \"the blur of the wolf drowned in the fish\"), acts\nproduce binding effects without exposing their rationale, thus precluding justiciability. This structural opacity, while\nappearing illogical, is a deliberate design protecting authority from accountability. Drawing on Shannon's entropy\nmodel, the paper formalizes arbitrariness as A = H(L|M) (conditional entropy). It thereby proposes a modern\ntheory of arbitrariness as a neutral operator central to control as well as care, an overlooked dimension of\ninterpersonal relations. While primarily developed through human social systems, this framework also illuminates\na new pathway for analyzing explainability in advanced artificial intelligence systems.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs Al); Computers and Society (cs.CY)\nCite as: arXiv:2507.22944 [es.CL]\n\n(or arXiv:2507.22944V1 [es.CL] for this version)\n\nhttps:/idoi.org/10.48550/arXiv.2507.22944 @\n\nAccess Paper:\n\nView PDF\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs Al\ncs.CY\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22943",
+    "title": "A chart review process aided by natural language processing and multi-wave adaptive sampling to expedite validation of code-based algorithms for large database studies",
+    "authors": [
+      "Shirley V Wang",
+      "Georg Hahn",
+      "Sushama Kattinakere Sreedhara",
+      "Mufaddal Mahesri",
+      "Haritha S. Pillai",
+      "Rajendra Aldis",
+      "Joyce Lii",
+      "Sarah K. Dutcher",
+      "Rhoda Eniafe",
+      "Jamal T. Jones",
+      "Keewan Kim",
+      "Jiwei He",
+      "Hana Lee",
+      "Sengwee Toh",
+      "Rishi J Desai",
+      "Jie Yang"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22943 Help | Advanced Search\n\nAll fields\n\nComputer Science > Computation and Language\n\n[Submitted on 25 Jul 2025]\n\nA chart review process aided by natural language processing and\nmulti-wave adaptive sampling to expedite validation of code-based\nalgorithms for large database studies\n\nShirley V Wang, Georg Hahn, Sushama Kattinakere Sreedhara, Mufaddal Mahesri, Haritha S. Pillai,\nRajendra Aldis, Joyce Lii, Sarah K. Dutcher, Rhoda Eniafe, Jamal T. Jones, Keewan Kim, Jiwei He, Hana\nLee, Sengwee Toh, Rishi J Desai, Jie Yang\n\nBackground: One of the ways to enhance analyses conducted with large claims databases is by validating the\nmeasurement characteristics of code-based algorithms used to identify health outcomes or other key study\nparameters of interest. These metrics can be used in quantitative bias analyses to assess the robustness of\nresults for an inferential study given potential bias from outcome misclassification. However, extensive time and\nresource allocation are typically re-quired to create reference-standard labels through manual chart review of\nfree-text notes from linked electronic health records. Methods: We describe an expedited process that introduces\nefficiency in a validation study us-ing two distinct mechanisms: 1) use of natural language processing (NLP) to\nreduce time spent by human reviewers to review each chart, and 2) a multi-wave adaptive sampling approach\nwith pre-defined criteria to stop the validation study once performance characteristics are identified with sufficient\nprecision. We illustrate this process in a case study that validates the performance of a claims-based outcome\nalgorithm for intentional self-harm in patients with obesity. Results: We empirically demonstrate that the NLP-\nassisted annotation process reduced the time spent on review per chart by 40% and use of the pre-defined\nstopping rule with multi-wave samples would have prevented review of 77% of patient charts with limited\ncompromise to precision in derived measurement characteristics. Conclusion: This approach could facilitate more\nroutine validation of code-based algorithms used to define key study parameters, ultimately enhancing\nunderstanding of the reliability of find-ings derived from database studies.\n\nAccess Paper:\n\nView PDF\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by’\ncs\n\nstat\nstat ME\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22941",
+    "title": "SigBERT: Combining Narrative Medical Reports and Rough Path Signature Theory for Survival Risk Estimation in Oncology",
+    "authors": [
+      "Paul Minchella",
+      "Loïc Verlingue",
+      "Stéphane Chrétien",
+      "Rémi Vaucher",
+      "Guillaume Metzler"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22941\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 25 Jul 2025]\n\nSigBERT: Combining Narrative Medical Reports and Rough Path\n\nSignature Theory for Survival Risk Estimation in Oncology\nPaul Minchella, Loic Verlingue, Stéphane Chrétien, Rémi Vaucher, Guillaume Metzler\n\nElectronic medical reports (EHR) contain a vast amount of information that can be leveraged for machine\nlearning applications in healthcare. However, existing survival analysis methods often struggle to effectively\nhandle the complexity of textual data, particularly in its sequential form. Here, we propose SigBERT, an\ninnovative temporal survival analysis framework designed to efficiently process a large number of clinical reports\nper patient. SigBERT processes timestamped medical reports by extracting and averaging word embeddings into\nsentence embeddings. To capture temporal dynamics from the time series of sentence embedding coordinates,\nwe apply signature extraction from rough path theory to derive geometric features for each patient, which\nsignificantly enhance survival model performance by capturing complex temporal dynamics. These features are\nthen integrated into a LASSO-penalized Cox model to estimate patient-specific risk scores. The model was\ntrained and evaluated on a real-world oncology dataset from the Léon Bérard Center corpus, with a C-index\nscore of 0.75 (sd 0.014) on the independent test cohort. SigBERT integrates sequential medical data to enhance\nrisk estimation, advancing narrative-based survival analysis.\n\nComments: 12 pages, 2 figures, accepted for ECML PKDD 2025\nSubjects: Computation and Language (cs.CL); Computers and Society (cs.CY); Machine Learning (cs.LG); Applications (stat.AP)\nCite as: arXiv:2507.22941 [es.CL]\n\n(or arXiv:2507.22941V1 [es.CL] for this version)\n\nhttps://doi.org/10.48550/arXiv.2507.22941 @\n\nSubmission history\nFrom: Paul Minchella [view email]\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\ncs.CY\ncs. LG\n\nstat\nstatAP\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22940",
+    "title": "Trustworthy Reasoning: Evaluating and Enhancing Factual Accuracy in LLM Intermediate Thought Processes",
+    "authors": [
+      "Rui Jiao",
+      "Yue Zhang",
+      "Jinku Li"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22940\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 25 Jul 2025]\nTrustworthy Reasoning: Evaluating and Enhancing Factual\nAccuracy in LLM Intermediate Thought Processes\n\nRui Jiao, Yue Zhang, Jinku Li\n\nWe present RELIANCE (Reasoning Evaluation with Logical Integrity and Accuracy for Confidence\nEnhancement), a novel framework addressing a critical vulnerability in Large Language Models (LLMs): the\nprevalence of factual inaccuracies within intermediate reasoning steps despite correct final answers. This\nphenomenon poses substantial risks in high-stakes domains including healthcare, legal analysis, and scientific\nresearch, where erroneous yet confidently presented reasoning can mislead users into dangerous decisions. Our\nframework integrates three core components: (1) a specialized fact-checking classifier trained on counterfactually\naugmented data to detect subtle factual inconsistencies within reasoning chains; (2) a Group Relative Policy\nOptimization (GRPO) reinforcement learning approach that balances factuality, coherence, and structural\ncorrectness through multi-dimensional rewards; and (3) a mechanistic interpretability module examining how\nfactuality improvements manifest in model activations during reasoning processes. Extensive evaluation across\nten state-of-the-art models reveals concerning patterns: even leading models like Claude-3.7 and GPT-o1\ndemonstrate reasoning factual accuracy of only 81.93% and 82.57% respectively. RELIANCE significantly\nenhances factual robustness (up to 49.90% improvement) while maintaining or improving performance on\nchallenging benchmarks including Math-500, AIME-2024, and GPQA. Furthermore, our activation-level analysis\nprovides actionable insights into how factual enhancements reshape reasoning trajectories within model\narchitectures, establishing foundations for future training methodologies that explicitly target factual robustness\nthrough activation-guided optimization.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.22940 [es.CL]\n(or arXiv-2507.22940V1 [es.CL] for this version)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nREE view ticense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by’\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22939",
+    "title": "PARROT: An Open Multilingual Radiology Reports Dataset",
+    "authors": [
+      "Bastien Le Guellec",
+      "Kokou Adambounou",
+      "Lisa C Adams",
+      "Thibault Agripnidis",
+      "Sung Soo Ahn",
+      "Radhia Ait Chalal",
+      "Tugba Akinci D Antonoli",
+      "Philippe Amouyel",
+      "Henrik Andersson",
+      "Raphael Bentegeac",
+      "Claudio Benzoni",
+      "Antonino Andrea Blandino",
+      "Felix Busch",
+      "Elif Can",
+      "Riccardo Cau",
+      "Armando Ugo Cavallo",
+      "Christelle Chavihot",
+      "Erwin Chiquete",
+      "Renato Cuocolo",
+      "Eugen Divjak",
+      "Gordana Ivanac",
+      "Barbara Dziadkowiec Macek",
+      "Armel Elogne",
+      "Salvatore Claudio Fanni",
+      "Carlos Ferrarotti",
+      "Claudia Fossataro",
+      "Federica Fossataro",
+      "Katarzyna Fulek",
+      "Michal Fulek",
+      "Pawel Gac",
+      "Martyna Gachowska",
+      "Ignacio Garcia Juarez",
+      "Marco Gatti",
+      "Natalia Gorelik",
+      "Alexia Maria Goulianou",
+      "Aghiles Hamroun",
+      "Nicolas Herinirina",
+      "Krzysztof Kraik",
+      "Dominik Krupka",
+      "Quentin Holay",
+      "Felipe Kitamura",
+      "Michail E Klontzas",
+      "Anna Kompanowska",
+      "Rafal Kompanowski",
+      "Alexandre Lefevre",
+      "Tristan Lemke",
+      "Maximilian Lindholz",
+      "Lukas Muller",
+      "Piotr Macek",
+      "Marcus Makowski",
+      "Luigi Mannacio",
+      "Aymen Meddeb",
+      "Antonio Natale",
+      "Beatrice Nguema Edzang",
+      "Adriana Ojeda",
+      "Yae Won Park",
+      "Federica Piccione",
+      "Andrea Ponsiglione",
+      "Malgorzata Poreba",
+      "Rafal Poreba",
+      "Philipp Prucker",
+      "Jean Pierre Pruvo",
+      "Rosa Alba Pugliesi",
+      "Feno Hasina Rabemanorintsoa",
+      "Vasileios Rafailidis",
+      "Katarzyna Resler",
+      "Jan Rotkegel",
+      "Luca Saba",
+      "Ezann Siebert",
+      "Arnaldo Stanzione",
+      "Ali Fuat Tekin",
+      "Liz Toapanta Yanchapaxi",
+      "Matthaios Triantafyllou",
+      "Ekaterini Tsaoulia",
+      "Evangelia Vassalou",
+      "Federica Vernuccio",
+      "Johan Wasselius",
+      "Weilang Wang",
+      "Szymon Urban",
+      "Adrian Wlodarczak",
+      "Szymon Wlodarczak",
+      "Andrzej Wysocki",
+      "Lina Xu",
+      "Tomasz Zatonski",
+      "Shuhang Zhang",
+      "Sebastian Ziegelmayer",
+      "Gregory Kuchcinski",
+      "Keno K Bressem"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully act\n\nar XR \\V > cs > arXiv:2507.22939\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 25 Jul 2025]\n\nPARROT: An Open Multilingual Radiology Reports Dataset\n\nBastien Le Guellec, Kokou Adambounou, Lisa C Adams, Thibault Agripnidis, Sung Soo Ahn, Radhia Ait\nChalal, Tugba Akinci D Antonoli, Philippe Amouyel, Henrik Andersson, Raphael Bentegeac, Claudio\nBenzoni, Antonino Andrea Blandino, Felix Busch, Elif Can, Riccardo Cau, Armando Ugo Cavallo,\nChristelle Chavihot, Erwin Chiquete, Renato Cuocolo, Eugen Divjak, Gordana Ivanac, Barbara\nDziadkowiec Macek, Armel Elogne, Salvatore Claudio Fanni, Carlos Ferrarotti, Claudia Fossataro,\nFederica Fossataro, Katarzyna Fulek, Michal Fulek, Pawel Gac, Martyna Gachowska, Ignacio Garcia\nJuarez, Marco Gatti, Natalia Gorelik, Alexia Maria Goulianou, Aghiles Hamroun, Nicolas Herinirina,\nKrzysztof Kraik, Dominik Krupka, Quentin Holay, Felipe Kitamura, Michail E Klontzas, Anna\nKompanowska, Rafal Kompanowski, Alexandre Lefevre, Tristan Lemke, Maximilian Lindholz, Lukas\nMuller, Piotr Macek, Marcus Makowski, Luigi Mannacio, Aymen Meddeb, Antonio Natale, Beatrice\nNguema Edzang, Adriana Ojeda, Yae Won Park, Federica Piccione, Andrea Ponsiglione, Malgorzata\nPoreba, Rafal Poreba, Philipp Prucker, Jean Pierre Pruvo, Rosa Alba Pugliesi, Feno Hasina\nRabemanorintsoa, Vasileios Rafailidis, Katarzyna Resler, Jan Rotkegel, Luca Saba, Ezann Siebert,\nArnaldo Stanzione, Ali Fuat Tekin, Liz Toapanta Yanchapaxi, Matthaios Triantafyllou, Ekaterini Tsaoulia,\nEvangelia Vassalou, Federica Vernuccio, Johan Wasselius, Weilang Wang, Szymon Urban, Adrian\nWlodarezak, Szymon Wlodarezak, Andrzej Wysocki, Lina Xu, Tomasz Zatonski, Shuhang Zhang,\nSebastian Ziegelmayer, Gregory Kuchcinski, Keno K Bressem\n\nRationale and Objectives: To develop and validate PARROT (Polyglottal Annotated Radiology Reports for Open\nTesting), a large, multicentric, open-access dataset of fictional radiology reports spanning multiple languages for\ntesting natural language processing applications in radiology. Materials and Methods: From May to September\n2024 radiologists were invited to contribute fictional radiology reports following their standard reporting practices.\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nREE view ticense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAH\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22938",
+    "title": "A Graph-based Approach for Multi-Modal Question Answering from Flowcharts in Telecom Documents",
+    "authors": [
+      "Sumit Soman",
+      "H. G. Ranjani",
+      "Sujoy Roychowdhury",
+      "Venkata Dharma Surya Narayana Sastry",
+      "Akshat Jain",
+      "Pranav Gangrade",
+      "Ayaaz Khan"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22938\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 25 Jul 2025]\n\nA Graph-based Approach for Multi-Modal Question Answering\nfrom Flowcharts in Telecom Documents\n\nSumit Soman, H. G. Ranjani, Sujoy Roychowdhury, Venkata Dharma Surya Narayana Sastry, Akshat\nJain, Pranav Gangrade, Ayaaz Khan\n\nQuestion-Answering (QA) from technical documents often involves questions whose answers are present in\nfigures, such as flowcharts or flow diagrams. Text-based Retrieval Augmented Generation (RAG) systems may\nfail to answer such questions. We leverage graph representations of flowcharts obtained from Visual large\nLanguage Models (VLMs) and incorporate them in a text-based RAG system to show that this approach can\nenable image retrieval for QA in the telecom domain. We present the end-to-end approach from processing\ntechnical documents, classifying image types, building graph representations, and incorporating them with the\ntext embedding pipeline for efficient retrieval. We benchmark the same on a QA dataset created based on\nproprietary telecom product information documents. Results show that the graph representations obtained using\na fine-tuned VLM model have lower edit distance with respect to the ground truth, which illustrate the robustness\nof these representations for flowchart images. Further, the approach for QA using these representations gives\ngood retrieval performance using text-based embedding models, including a telecom-domain adapted one. Our\napproach also alleviates the need for a VLM in inference, which is an important cost benefit for deployed QA\nsystems.\n\nComments: Accepted for publication at the KDD 2025 Workshop on Structured Knowledge for Large Language Models,\nSubjects: Computation and Language (es.CL); Artificial Intelligence (cs.Al)\nMSG classes: 68750\nACM classes: 1.2.7\nCite as: arXiv:2507.22938 [es.CL]\n(or arXiv:2507.22938V1 [es.CL] for this version)\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22937",
+    "title": "CoE-Ops: Collaboration of LLM-based Experts for AIOps Question-Answering",
+    "authors": [
+      "Jinkun Zhao",
+      "Yuanshuai Wang",
+      "Xingjian Zhang",
+      "Ruibo Chen",
+      "Xingchuang Liao",
+      "Junle Wang",
+      "Lei Huang",
+      "Kui Zhang",
+      "Wenjun Wu"
+    ],
+    "date": "[ 25 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22937\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 25 Jul 2025]\n\nCoE-Ops: Collaboration of LLM-based Experts for AlOps\nQuestion-Answering\n\nJinkun Zhao, Yuanshuai Wang, Xingjian Zhang, Ruibo Chen, Xingchuang Liao, Junle Wang, Lei Huang,\nKui Zhang, Wenjun Wu\n\nWith the rapid evolution of artificial intelligence, AlOps has emerged as a prominent paradigm in DevOps. Lots of\nwork has been proposed to improve the performance of different AlOps phases. However, constrained by\ndomain-specific knowledge, a single model can only handle the operation requirement of a specific task,such as\nlog parser,root cause analysis. Meanwhile, combining multiple models can achieve more efficient results, which\nhave been proved in both previous ensemble learning and the recent LLM training domain. Inspired by these\nworks, to address the similar challenges in AIOPS, this paper first proposes a collaboration-of-expert\nframework(CoE-Ops) incorporating a general-purpose large language model task classifier. A retrieval-\naugmented generation mechanism is introduced to improve the framework's capability in handling both Question-\nAnswering tasks with high-level(Code, build, Test,etc.) and low-level(fault analysis,anomaly detection, etc.). Finally,\nthe proposed method is implemented in the AlOps domain, and extensive experiments are conducted on the\nDevOps-EVAL dataset. Experimental results demonstrate that CoE-Ops achieves a 72% improvement in routing\naccuracy for high-level AlOps tasks compared to existing CoE methods, delivers up to 8% accuracy\nenhancement over single AlOps models in DevOps problem resolution, and outperforms larger-scale Mixture-of-\nExperts (MoE) models by up to 14% in accuracy.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.22937 [es.CL]\n(or arXiv:2507.22937V1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.22937 @\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22936",
+    "title": "Evaluating Large Language Models (LLMs) in Financial NLP: A Comparative Study on Financial Report Analysis",
+    "authors": [
+      "Md Talha Mohsin"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nar Alv > cs > arXiv:2507.22936\n\nSearch,\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 24 Jul 2025]\n\nEvaluating Large Language Models (LLMs) in Financial NLP: A\n\nComparative Study on Financial Report Analysis\nMd Talha Mohsin\n\nLarge Language Models (LLMs) have demonstrated remarkable capabilities across a wide variety of Financial\nNatural Language Processing (FinNLP) tasks. However, systematic comparisons among widely used LLMs\nremain underexplored. Given the rapid advancement and growing influence of LLMs in financial analysis, this\nstudy conducts a thorough comparative evaluation of five leading LLMs, GPT, Claude, Perplexity, Gemini and\nDeepSeek, using 10-K filings from the ‘Magnificent Seven' technology companies. We create a set of domain-\nspecific prompts and then use three methodologies to evaluate model performance: human annotation,\nautomated lexical-semantic metrics (ROUGE, Cosine Similarity, Jaccard), and model behavior diagnostics\n(prompt-level variance and across-model similarity). The results show that GPT gives the most coherent,\nsemantically aligned, and contextually relevant answers; followed by Claude and Perplexity. Gemini and\nDeepSeek, on the other hand, have more variability and less agreement. Also, the similarity and stability of\noutputs change from company to company and over time, showing that they are sensitive to how prompts are\nwritten and what source material is used\n\nComments: 22 Pages, 6 Tables, 7 Figures\n\nSubjects: Computation and Language (¢s.CL); Artificial Intelligence (cs.A\\l); Computational Engineering, Finance, and Science (cs.CE);,\n\nHuman-Computer Interaction (cs. HC); Computational Finance (q-fin.CP)\nCite as: _arXiv:2507.22936 [es.CL]\n(or arXiv:2507 229361 [es.CL] for this version)\n\nhttps://doi.org/10.48550/arxiv.2507.22936 @\n\nSubmission history\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\ncs Al\ncs.CE\ncs. HC\na-fin\na-fin.cP\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22935",
+    "title": "Trusted Knowledge Extraction for Operations and Maintenance Intelligence",
+    "authors": [
+      "Kathleen Mealey",
+      "Jonathan A. Karr Jr.",
+      "Priscila Saboia Moreira",
+      "Paul R. Brenner",
+      "Charles F. Vardeman II"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22935\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 24 Jul 2025]\nTrusted Knowledge Extraction for Operations and Maintenance\nIntelligence\n\nKathleen Mealey, Jonathan A. Karr Jr., Priscila Saboia Moreira, Paul R. Brenner, Charles F. Vardeman II\n\nDeriving operational intelligence from organizational data repositories is a key challenge due to the dichotomy of\ndata confidentiality vs data integration objectives, as well as the limitations of Natural Language Processing\n(NLP) tools relative to the specific knowledge structure of domains such as operations and maintenance. In this\nwork, we discuss Knowledge Graph construction and break down the Knowledge Extraction process into its\nNamed Entity Recognition, Coreference Resolution, Named Entity Linking, and Relation Extraction functional\ncomponents. We then evaluate sixteen NLP tools in concert with or in comparison to the rapidly advancing\ncapabilities of Large Language Models (LLMs). We focus on the operational and maintenance intelligence use\ncase for trusted applications in the aircraft industry. A baseline dataset is derived from a rich public domain US\nFederal Aviation Administration dataset focused on equipment failures or maintenance requirements. We assess\nthe zero-shot performance of NLP and LLM tools that can be operated within a controlled, confidential\nenvironment (no data is sent to third parties). Based on our observation of significant performance limitations, we\ndiscuss the challenges related to trusted NLP and LLM tools as well as their Technical Readiness Level for wider\nuse in mission-critical industries such as aviation. We conclude with recommendations to enhance trust and\nprovide our open-source curated dataset to support further baseline testing and evaluation.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\narXiv:2507.22935 [es.CL]\n\n(or arXiv:2507.22935v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.22935 @\n\nCite as:\n\nSubmission history\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22934",
+    "title": "Deep Learning Approaches for Multimodal Intent Recognition: A Survey",
+    "authors": [
+      "Jingwei Zhao",
+      "Yuhua Wen",
+      "Qifei Li",
+      "Minchi Hu",
+      "Yingying Zhou",
+      "Jingyao Xue",
+      "Junyang Wu",
+      "Yingming Gao",
+      "Zhengqi Wen",
+      "Jianhua Tao",
+      "Ya Li"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22934 Help | Advanced Search\n\nAll fields\n\nComputer Science > Computation and Language\n\n[Submitted on 24 Jul 2025]\nDeep Learning Approaches for Multimodal Intent Recognition: A\nSurvey\n\nJingwei Zhao, Yuhua Wen, Qifei Li, Minchi Hu, Yingying Zhou, Jingyao Xue, Junyang Wu, Yingming\nGao, Zhengqi Wen, Jianhua Tao, Ya Li\n\nIntent recognition aims to identify users’ underlying intentions, traditionally focusing on text in natural language\nprocessing. With growing demands for natural human-computer interaction, the field has evolved through deep\nlearning and multimodal approaches, incorporating data from audio, vision, and physiological signals. Recently,\nthe introduction of Transformer-based models has led to notable breakthroughs in this domain. This article\nsurveys deep learning methods for intent recognition, covering the shift from unimodal to multimodal techniques,\nrelevant datasets, methodologies, applications, and current challenges. It provides researchers with insights into\nthe latest developments in multimodal intent recognition (MIR) and directions for future research.\n\nComments: Submitted to ACM Computing Surveys\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.All)\nCite as: —_arXiv:2507.22934 [es.CL]\n(or arXiv:2507.22934V1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507 22934 @\n\nSubmission history\n\nFrom: Yuhua Wen [view email]\n[v4] Thu, 24 Jul 2025 17:12:01 UTC (3,589 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\nHTML (experimental)\nTeX Source\nOther Formats\nView lense\nCurrent browse context\nes.CL\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22933",
+    "title": "Augmented Vision-Language Models: A Systematic Review",
+    "authors": [
+      "Anthony C Davis",
+      "Burhan Sadiq",
+      "Tianmin Shu",
+      "Chien-Ming Huang"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22933\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 24 Jul 2025]\nAugmented Vision-Language Models: A Systematic Review\n\nAnthony C Davis, Burhan Sadiq, Tianmin Shu, Chien-Ming Huang\n\nRecent advances in visual-language machine learning models have demonstrated exceptional ability to use\nnatural language and understand visual scenes by training on large, unstructured datasets. However, this training\nparadigm cannot produce interpretable explanations for its outputs, requires retraining to integrate new\ninformation, is highly resource-intensive, and struggles with certain forms of logical reasoning. One promising\nsolution involves integrating neural networks with external symbolic information systems, forming neural symbolic\nsystems that can enhance reasoning and memory abilities. These neural symbolic systems provide more\ninterpretable explanations to their outputs and the capacity to assimilate new information without extensive\nretraining. Utilizing powerful pre-trained Vision-Language Models (VLMs) as the core neural component,\naugmented by extemal systems, offers a pragmatic approach to realizing the benefits of neural-symbolic\nintegration. This systematic literature review aims to categorize techniques through which visual-language\nunderstanding can be improved by interacting with external symbolic information systems.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.22933 [es.CL]\n(or arXiv:2507.22933v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.22933 @\n\nSubmission history\n\nFrom: Anthony C. Davis [view email]\n[v4] Thu, 24 Jul 2025 16:27:38 UTC (906 KB)\n\n| Bibliographic Tools | Code. Data, Media Demos Related Papers ‘About arXivLabs\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22932",
+    "title": "FinMarBa: A Market-Informed Dataset for Financial Sentiment Classification",
+    "authors": [
+      "Baptiste Lefort",
+      "Eric Benhamou",
+      "Beatrice Guez",
+      "Jean-Jacques Ohana",
+      "Ethan Setrouk",
+      "Alban Etienne"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22932\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 24 Jul 2025]\n\nFinMarBa: A Market-Informed Dataset for Financial Sentiment\nClassification\n\nBaptiste Lefort, Eric Benhamou, Beatrice Guez, Jean-Jacques Ohana, Ethan Setrouk, Alban Etienne\n\nThis paper presents a novel hierarchical framework for portfolio optimization, integrating lightweight Large\nLanguage Models (LLMs) with Deep Reinforcement Learning (DRL) to combine sentiment signals from financial\nnews with traditional market indicators. Our three-tier architecture employs base RL agents to process hybrid\ndata, meta-agents to aggregate their decisions, and a super-agent to merge decisions based on market data and\nsentiment analysis. Evaluated on data from 2018 to 2024, after training on 2000-2017, the framework achieves a\n26% annualized return and a Sharpe ratio of 1.2, outperforming equal-weighted and S&P 500 benchmarks. Key\ncontributions include scalable cross-modal integration, a hierarchical RL structure for enhanced stability, and\nopen-source reproducibility.\n\nComments: 8 pages\nSubjects: Computation and Language (es.CL); General Finance (q-fin.GN)\nCite as: _arXiv:2507.22932 [es.CL]\n(or arXiv:2507.22932v1 [es.CL] for this version)\nhttps://doi.org/10.48550/arXiv.2507 22932 @\n\nSubmission history\n\nFrom: Eric Benhamou [view email]\n[v4] Thu, 24 Jul 2025 16:27:32 UTC (387 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\na-fin\n\na-fin.GN\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\ned\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22931",
+    "title": "Enhancing RAG Efficiency with Adaptive Context Compression",
+    "authors": [
+      "Shuyu Guo",
+      "Zhaochun Ren"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch, All fields\n\nar Alv > cs > arXiv:2507.22931 Help | Advanced Search\n\nComputer Science > Computation and Language Access Paper:\n\n[Submitted on 24 Jul 2025] View PDF\nEnhancing RAG Efficiency with Adaptive Context Compression HTM (experimental)\nShuyu Guo, Zhaochun Ren Other Formats\nRetrieval-augmented generation (RAG) enhances large language models (LLMs) with external knowledge but en rowse context:\ncs.CL\n\nincurs significant inference costs due to lengthy retrieved contexts. While context compression mitigates this,\nissue, existing methods apply fixed compression rates, over-compressing simple queries or under-compressing\ncomplex ones. We propose Adaptive Context Compression for RAG (ACC-RAG), a framework that dynamically\n\n. Change to browse by:\nadjusts compression rates based on input complexity, optimizing inference efficiency without sacrificing accuracy. os\nACC-RAG combines a hierarchical compressor (for multi-granular embeddings) with a context selector to retain cs.Al\nminimal sufficient information, akin to human skimming. Evaluated on Wikipedia and five QA datasets, ACC-RAG\noutperforms fixed-rate methods and matches/unlocks over 4 times faster inference versus standard RAG while\n\n<prev | next>\nnew | recent | 2025-07\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nmaintaining or improving accuracy.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al) Export BibTeX Citation\nCite as: arXiv:2507.22931 [es.CL]\n(or arXiv:2507.22931v1 [es.CL] for this version) Bookmark\n\nhttps://doi.org/10.48550/arXiv.2507.22031 @ ¥\n\nSubmission history\nFrom: Shuyu Guo [view email]\n[v1] Thu, 24 Jul 2025 13:46:51 UTC (943 KB)\n\nBibliographic Tools Code, Data, Media Demos Related Papers About arXivLabs\n\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22930",
+    "title": "Protecting Vulnerable Voices: Synthetic Dataset Generation for Self-Disclosure Detection",
+    "authors": [
+      "Shalini Jangra",
+      "Suparna De",
+      "Nishanth Sastry",
+      "Saeed Fadaei"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22930\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n[Submitted on 24 Jul 2025]\n\nProtecting Vulnerable Voices: Synthetic Dataset Generation for\nSelf-Disclosure Detection\n\nShalini Jangra, Suparna De, Nishanth Sastry, Saeed Fadaei\n\nSocial platforms such as Reddit have a network of communities of shared interests, with a prevalence of posts\nand comments from which one can infer users’ Personal Information Identifiers (Pls). While such self-disclosures\ncan lead to rewarding social interactions, they pose privacy risks and the threat of online harms. Research into\nthe identification and retrieval of such risky self-disclosures of Plis is hampered by the lack of open-source\nlabeled datasets. To foster reproducible research into Pll-revealing text detection, we develop a novel\nmethodology to create synthetic equivalents of Pll-revealing data that can be safely shared. Our contributions\ninclude creating a taxonomy of 19 Pll-revealing categories for vulnerable populations and the creation and\nrelease of a synthetic Pll-labeled multi-text span dataset generated from 3 text generation Large Language\nModels (LLMs), Llama2-7B, Llama3-8B, and zephyr-7b-beta, with sequential instruction prompting to resemble\nthe original Reddit posts. The utility of our methodology to generate this synthetic dataset is evaluated with three\nmetrics: First, we require reproducibility equivalence, i.e., results from training a model on the synthetic data\nshould be comparable to those obtained by training the same models on the original posts. Second, we require\nthat the synthetic data be unlinkable to the original users, through common mechanisms such as Google Search.\nThird, we wish to ensure that the synthetic data be indistinguishable from the original, i.e., trained humans should\nnot be able to tell them apart. We release our dataset and code at this https URL to foster reproducible research\ninto Pll privacy risks in online social media\n\nComments: 15 pages, 4 Figures, Accepted in \"The 17th Intemational Conference on Advances in Social Networks Analysis and Mining -\n\nASONAM-2025\"\nSubjects: Computation and Language (es.CL); Social and Information Networks (cs.Sl)\nCite as: arXiv:2507.22930 [es.CL]\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nREE view ticense\n\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs.SI\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n\nAW\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22929",
+    "title": "EH-Benchmark Ophthalmic Hallucination Benchmark and Agent-Driven Top-Down Traceable Reasoning Workflow",
+    "authors": [
+      "Xiaoyu Pan",
+      "Yang Bai",
+      "Ke Zou",
+      "Yang Zhou",
+      "Jun Zhou",
+      "Huazhu Fu",
+      "Yih-Chung Tham",
+      "Yong Liu"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22929\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 24 Jul 2025]\n\nEH-Benchmark Ophthalmic Hallucination Benchmark and Agent-\n\nDriven Top-Down Traceable Reasoning Workflow\nXiaoyu Pan, Yang Bai, Ke Zou, Yang Zhou, Jun Zhou, Huazhu Fu, Yih-Chung Tham, Yong Liu\n\nMedical Large Language Models (MLLMs) play a crucial role in ophthalmic diagnosis, holding significant potential\nto address vision-threatening diseases. However, their accuracy is constrained by hallucinations stemming from\nlimited ophthalmic knowledge, insufficient visual localization and reasoning capabilities, and a scarcity of\nmultimodal ophthalmic data, which collectively impede precise lesion detection and disease diagnosis.\nFurthermore, existing medical benchmarks fail to effectively evaluate various types of hallucinations or provide\nactionable solutions to mitigate them. To address the above challenges, we introduce EH-Benchmark, a novel\nophthalmology benchmark designed to evaluate hallucinations in MLLMs. We categorize MLLMs' hallucinations\nbased on specific tasks and error types into two primary classes: Visual Understanding and Logical Composition,\neach comprising multiple subclasses. Given that MLLMs predominantly rely on language-based reasoning rather\nthan visual processing, we propose an agent-centric, three-phase framework, including the Knowledge-Level\nRetrieval stage, the Task-Level Case Studies stage, and the Result-Level Validation stage. Experimental results\nshow that our multi-agent framework significantly mitigates both types of hallucinations, enhancing accuracy,\ninterpretability, and reliability. Our project is available at this https URL.\n\n‘Comments: 9 figures, 5 tables. submit/6621751\n‘Subjects: Computation and Language (es.CL); Computer Vision and Pattern Recognition (cs.CV); Multiagent Systems (cs. MA)\nCite as: _arXiv:2507.22929 [es.CL]\n\n(or arXiv:2507.22929V1 [es.CL] for this version)\n\nhttps://doi.org/10.48550/arXiv.2507.22929 @\n\nSubmission history\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\ncs\n\ncs.CV\ncs.MA\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  },
+  {
+    "url": "https://arxiv.org/abs/2507.22928",
+    "title": "How does Chain of Thought Think? Mechanistic Interpretability of Chain-of-Thought Reasoning with Sparse Autoencoding",
+    "authors": [
+      "Xi Chen",
+      "Aske Plaat",
+      "Niki van Stein"
+    ],
+    "date": "[ 24 Jul 2025]",
+    "abstract": "We gratefully a\n\nSearch,\n\nar Alv > cs > arXiv:2507.22928\n\nAll fields\n\nHelp | Advanced Search\n\nComputer Science > Computation and Language\n\n[Submitted on 24 Jul 2025]\n\nHow does Chain of Thought Think? Mechanistic Interpretability of\n\nChain-of-Thought Reasoning with Sparse Autoencoding\nXi Chen, Aske Plaat, Niki van Stein\n\nChain-of thought (CoT) prompting boosts Large Language Models accuracy on multi-step tasks, yet whether the\ngenerated \"thoughts\" reflect the true internal reasoning process is unresolved. We present the first feature-level\ncausal study of CoT faithfulness. Combining sparse autoencoders with activation patching, we extract\nmonosemantic features from Pythia-70M and Pythia-2.8B while they tackle GSM8K math problems under CoT\nand plain (noCoT) prompting. Swapping a small set of CoT-reasoning features into a noCoT run raises answer\nlog-probabilities significantly in the 2.88 model, but has no reliable effect in 70M, revealing a clear scale\nthreshold. CoT also leads to significantly higher activation sparsity and feature interpretability scores in the larger\nmodel, signalling more modular internal computation. For example, the model's confidence in generating correct\nanswers improves from 1.2 to 4.3. We introduce patch-curves and random-feature patching baselines, showing\nthat useful CoT information is not only present in the top-K patches but widely distributed. Overall, our results\nindicate that CoT can induce more interpretable internal structures in high-capacity LLMs, validating its role as a\nstructured prompting method.\n\n‘Subjects: Computation and Language (cs.CL); Artificial Intelligence (cs.Al)\nCite as: arXiv:2507.22928 [es.CL]\n(or arXiv:2507.22928v1 [es.CL] for this version)\nhttps:/idoi.org/10.48550/arXiv.2507.22928 @\n\nSubmission history\n\nFrom: Xi Chen [view email]\n[v4] Thu, 24 Jul 2025 10:25:46 UTC (3,184 KB)\n\nAccess Paper:\n\nView PDF\n\nHTML (experimental)\n\nTeX Source\n\nOther Formats\nCOREE) view tcense\nCurrent browse context\nes.CL\n\n<prev | next>\nnew | recent | 2025-07\nChange to browse by:\n\ncs\ncs Al\n\nReferences & Citations\n\nNASAADS\nGoogle Scholar\nSemantic Scholar\n\nExport BibTeX Citation\nBookmark\n"
+  }
+]

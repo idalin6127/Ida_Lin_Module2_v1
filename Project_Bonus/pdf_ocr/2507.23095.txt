@@ -1,0 +1,1834 @@
+
+
+--- Page 1 ---
+
+SMART-Editor: A Multi-Agent Framework for Human-Like Design
+Editing with Structural Integrity
+Ishani Mondal' , Meera Bharadwaj! , Ayush Roy!,
+Aparna Garimella’, Jordan Boyd-Graber!
+' University of Maryland, College Park, 7 Adobe Research Lab
+imondal@umd. edu
+We present SMART-Editor, a framework for i: Ines 1 ai; :
+Ww compositional layout and content editing across aii | . : :
+N structured (posters, websites) and unstructured ; —_ -_— [| J —
+op) (natural images) domains. Unlike prior mod- oo peseltana)SSC« SMART-EGtOr—]
+N els that perform local edits, SMART-Editor
+— preserves global coherence through two strate- ed ‘ wns setting toa by yan ce eo +
+= gies: Reward-Refine, an inference-time reward- og <4 _ oo ) hY/ Vo A . ) >
+= guided refinement method, and RewardDPO, Wc ie 7... = oo
+pr a training-time preference optimization ap- a =
+proach using reward-aligned layout pairs. Figure 1: Unlike InstructPix2Pix (Brooks et al., 2023),
+_ To evaluate model performance, we intro- HIVE (Zhang et al., 2024b), and Base-LLama, which
+Ss duce SMARTEdit-Bench, a benchmark cov- apply edits locally and often fail to maintain coher-
+° ening multi-domain, cascading edit scenarios. ence, SMART-Editor performs structured layout ed-
+3 SMART-Editor outp erforms strong baselines its and visual transformations with compositional rea-
+Ly like InstructPix2Pix and HIVE, with Reward- soning—anticipating cascading effects and preserving
+DPOachieving up to 15% gains in structured global alignment and semantic consistency.
+ce settings and Reward-Refine showing advan-
+2 tages on natural images. Automatic and human To explore this challenge, we introduce the notion
+On evaluations confirm the value of reward-guided of a SMART-EDIT—an edit that (a) adheres seman-
+>) planning in producing semantically consistent tically to the instruction, (b) minimizes disruption to
+2 and visually aligned edits. unrelated content, (c) preserves spatial coherence and
+N ° alignment, and (d) anticipates and resolves cascading
+Ct~ 1 Introduction effects (formalized in Section 2). We further present
+i) Layout and scene editing is a cornerstone of multimodal | SMARTEdit-Bench (Section 3), a benchmark designed
+nm reasoning, encompassing tasks such as poster restructur- to evaluate compositional edit reasoning in LLMs and
+N ing, webpage reflow, and natural image transformation | VLMs across three domains: scientific posters, web
+. = (Suri et al., 2024; Zhu et al., 2024; Gani et al., 2024; layouts, and natural images. Each instance in the bench-
+< Tanaka et al., 2024; Lin et al., 2024). These edits of- | mark features a real-world or curated edit sourced from
+wy ten go beyond simple object manipulations and require datasets such as SciPostLayout (Tanaka et al., 2024),
+a) coordinated adjustments across spatial, semantic, and Design2Code (Si et al., 2025), and HQEdit (Hui et al.,
+stylistic dimensions (Jia et al., 2024; Feng et al., 2023a; | 2024), comprising an initial scene, a human-verified
+Lin et al., 2023). Instructions like “Insert a video sec- © SMART-EDIT instruction, and a target layout/image
+tion at the middle” (Figure 1) require cascading edits | requiring multi-step semantic and structural updates.
+such as identifying an insertion point in layout hierarchy, Unlike prior datasets focused on isolated edits (Table 1),
+shifting subsequent sections to preserve flow, aligning © SMARTEdit-Bench is designed to evaluate the ability
+with adjacent regions, and updating labels and narrative | of models to perform globally coherent, multi-step edits
+rhythm for coherence. to maintain human-like design integrity.
+When humans learn how to draw or typset, they learn We observe that base LLMs/VLMs like LLaMA,
+about the basics of composition and balance (Golomb, Qwen, LLaVA, GPT4-o and Gemini-pro can follow
+1987), but it remains unclear whether large language _instructions superficially (edit adherence >= 4.0), but
+models (LLMs) or visual LMs (VLMs) can propagate _fail to preserve deeper layout reasoning: narrative coher-
+edits in a structured and semantically coherent manner. _ ence drops by over 15% during section reordering, and
+These tasks are critical for scientific communication — layout alignment degrades sharply during insert/delete
+(Lozano, 2014), where even a single misplaced section operations (Table 2, 3, 4). Cross-sectional consistency
+or inconsistent scene can undermine clarity, or usability. is especially fragile when instructions induce global
+
+
+--- Page 2 ---
+
+Dataset / System Domain(s) Edit-Aware Comp. Reasoning Cascading Instruction Eval Scope Notable Features
+InstructEdit (Wang et al., 2023) Natural Images v - - Natural Language Visual, Mask Accuracy LLM + segmentation + SD for multi-object edits.
+
+PostScoreEdit Social Media v - - Prompt Paraphrasing Engagement, Human Ratings Paraphrase+rank to boost audience engagement.
+
+FFCLIP (Radford et al., 2021) Faces, Cars, Churches v Partial - Free-form Text CLIP Alignment StyleGAN latent editing via CLIP alignment.
+
+DocEdit-v2 (Suri et al., 2024) Structured Docs v Local - Free/Structured DOM Tree, CSS IoU LMM-based HTML editing + reformulation.
+
+LayoutGPT (Feng et al., 2023b) 2D/3D Layouts - v - Prompt Only Layout Plausibility CSS-like layout synthesis with spatial reasoning.
+
+COLE (Jia et al., 2024) Graphic Design - Hierarchical - Design Intent Visual + Typographic JSON + image gen for typography and layout.
+
+SciPostLayout (Tanaka et al., 2024) Scientific Posters - - - Layout Only Visual Structure Poster layout generation only, no edit modeling.
+
+LayoutCoT (Shi et al., 2025) Posters, UI Layouts - CoT Only - CoT Prompting Visual Coherence Prompt-based spatial reasoning, no edit ops.
+
+SMARTEdit-Bench (Ours) Posters, Web, Images v v v Implicit instructions requiring Cascaded-Reasoning Visual, Semantic, Structural Multi-domain, layout propagation, semantic + visual edit cascades.
+Table 1: Comparison of SMARTEdit-Bench with prior datasets. Our benchmark uniquely supports multi-domain,
+instruction-grounded cascading edits with compositional reasoning. Related works are described in Appendix 10.
+changes (e.g., regrouping content or propagating section _ tains objects that appear too large, too small, or overlap
+deletions). To address these limitations, we introduce —_ unnaturally, 4) Depth Layering and Occlusion (DL)
+SMART-Editor, a modular agentic framework that co- _ Evaluates if the spatial layering of objects appear real
+ordinates planning, execution, critique, and optimization —_ and not floating.
+
+(Section 4 and Figure 2). The Action Agent translates
+
+edit instructions into layout operations, which are ap- 3 SMARTEdit-Bench
+
+lied by the Ex: r. A Critique Agent then evaluates eas
+P y ecuto Critique Agent Existing datasets (Table 1) largely focus on local, ex-
+the output across structured reward axes (e.g., overlap, er . Serr .
+
+. . plicit edits, and fail to capture the implicit, composi-
+whitespace, coherence) and produces actionable feed- . we . .
+: . ; tional nature of real-world editing—where a single in-
+back in natural language. This feedback/new action . .
+
+1 ides the Optimizer Agent. which tes j struction often triggers global layout or scene changes.
+Pian guides the pimizer “Agen > wae Op: era es in To address this, we introduce SMARTFdit-Bench, a
+two modes: (1) Reward-Refine, which uses critiques to ; : .
+
+. Lol. . . . . multi-domain benchmark covering structured (posters,
+revise the initial plan in an iterative loop until all qual- . .
+
+. . : webpages) and unstructured (natural images) inputs.
+ity checks are satisfied; and (2) RewardDPO, which . . .
+
+. . Each example includes a natural language instruction, a
+
+fine-tunes the model using preference pairs filtered by . : .
+
+. . . human-edited output, and metadata annotated with edit
+reward alignment to generalize better layout reasoning . .
+. . type (A manual analysis of 200 real-world edit exam-
+policies. Across posters, webpages, and natural images, . . . .
+ws . ples identifies five types of structural edits: Reordering,
+
+SMART-Editor improves layout alignment (+0.3-0.5), . . :
+
+. . . Insertion, Object Replacement, Content Grouping, and
+
+narrative and cross-sectional consistency (up to +0.2), . . er .
+
+: ae . Deletion (Table 9)—which are implicit in nature (with-
+
+and visual plausibility (Figure 3, 4). Pan . . .
+
+out specifying how to edit) and necessitate cascading,
+multi-region updates). Dataset statistics are shown in
+
+2 Evaluation of ‘SMARTness’ of an Edit? — Table 8.
+
+Inspired by the evaluation metrics used by prior layout SMARTEdit-Bench — Webpages. We divide the
+generation works (Tanaka et al., 2024; Lin et al., 2023; dataset into two parts: (a) Real-World Edits: We extract
+Hui et al., 2024; Zhang et al., 2024b), we formalize the layout-altering commits from github.io repositories by
+notion of SMART-Edit as an edit operation that, when | COmparing HTML snapshots before and after structural
+applied to structured or unstructured visual content, sat- Changes. Stylistic edits are removed using two signals:
+isfies a set of post-edit quality constraints in structured low DOM tree edit distance and high semantic simi-
+domain ((Definitions and Mathematical Formulations larity, indicating minimal structural change. GPT-4V
+in Appendix 12.1) such as 1) Edit Adherence verifies  8&nerates natural language instructions by comparing
+whether the edit instruction is faithfully executed 2) Nar- _ before/after screenshots. This results in S64 triplets
+rative Coherence ensures logical section ordering (e.g., (Before Commit, Edit Instruction, After Commit), each
+Methods before Results) is preserved. Violations are | ™anually reviewed and refined by the first author to
+detected by prompting GPT-4o on expected order pairs ensure they are “Smart-Edits 7 (b) Synthetic Edits: Lay-
+3) Cross-Sectional Consistency evaluates whether se- _ 0uts are sampled from the Design2Code dataset(Si et al.,
+mantically linked elements (e.g., captions and figures, 2925). GPT-4o generates implicit, high-level edit in-
+objects and context) remain aligned. Contradictions structions. An expert annotator ensures the instruction
+are flagged via entailment-based GPT-40 prompts 4) leads to compositional layout updates; otherwise, both
+Visual-Spatial Layout captures design quality through ‘instruction and layout are revised manually. This yields
+three components: overlap penalty (discouraging colli- 510 high-quality synthetic triplets.
+sions), whitespace penalty (encouraging compactness), SMARTEdit-Bench 7 Posters. We generate 1,200
+and alignment reward (favoring grid-aligned layouts). Synthetic poster edits using SCIPOSTLAYOUT (Tanaka
+However, in unstructured natural images , we formulate et al., 2024), prompting GPT-4V/4o to propose composi-
+four core capabilities (Definitions and Mathematical “onal layout transformations. All outputs are manually
+Formulations in Appendix 12.3) 1) Edit Adherence reviewed to remove trivial or overly explicit edits. Two
+(EA) - Same as before, 2) Semantic match (SM): —XPert annotators label 250 human-edited posters with
+Comp ute the CLIP similarity between the textual in- 'We plan to release the dataset upon acceptance and this is
+struction and the generated image, 3) Object Size and _ intended only for research purposes. All source datasets are
+Realism (Overlap) : Check if the edited image con- _ publicly available under CC-BY and MIT License.
+
+
+--- Page 3 ---
+
+| en age and gender", ‘Authors’: "Taha Omer*,1,2, B Nasseroleslami‘\nFiona Molloy” Gerard
+. ceee) one Mullins?, Orla Hardiman‘\n1. Academic Unit of Neurology, Trinity College &\n2. Clinical
+| | | Neurophysiology Dept, Beaumont Hospital, Dublin, Ireland", ‘Institutions’: '1. Academic
+aan nan nin Ran “aoe Unit of Neurology, Trinity College & 2. Clinical Neurophysiology Dept, Beaumont
+=== 2 | | pant etrences —— Hospital, Dublin, Ireland’, ‘Background’: 'Motor Unit Number index (MUNIX)}
+oO ae = a
+= — =. | Action Plan: Modular Actions: i ~ .
+—— as z= — Insert a new 1) Shift_sections_after(layout: Layout, ~ ; ‘Institution | |
+Sloe. | SESE |i. | . non-overlapping section S anchor_section="References", dy=100) = —
+Ee | titled "Empirical 2) insert_section (layout: Layout,
+= | eye | | Results (User Study)" section_id="Empirical Results (User opens =| =
+| below "References" in Study)", bbox=[0, 768, 384, 868], ——
+the left column, text="Empirical Results (User Study)")
+Ce) AE) | GERD | adjusting vertical space. 3) update_text ( c’ |
+@ regarding the = =
+= results of User |- = ——————— ; vite :
+!
+[omni ) ‘es, the one between Results an: onclusion Methods ‘Study participants
+Ahpincat results (User study) Results
+| i section Sieué not A ] Limitations
+| Vv Retreces sireat Ge ; —_— |
+e along with other
+; |{ R6)Narrative = Results ' Updated Contentuson: |
+I
+| RASS x | Empirical Results (User |
+Figure 2: Overview of SMART-Editor (Reward-Refine) on structured image (Poster). Given a poster image, and a
+high-level edit instruction, SMART-Editor generates an action plan and applies geometric edits (Action Agent). The
+first-draft output is evaluated on several aspect (Critique Agent). Any violations trigger natural language feedback
+used to revise layout and content in an iterative loop, enabling reward-guided editing (Optimizer Agent).
+edit types and reasoning dimensions, forming a gold test After pre-processing, given the parsed input of layout-
+set. An additional 2,000 synthetic edits support training content pair (Z, C) and instruction F, an action plan is
+and preference modeling. first generated using LLM (Action-Plan in Figure 2)
+SMARTEdit-Bench — Natural Images. To cover un- _— followed by generating a symbolic edit plan A =
+structured visual edits, we adopt examples from the HQ- [a1 dz, ... , @x] = LLM_Plan(E, L, C), where each ac-
+Edit (Hui et al., 2024) dataset. Each instance contains an _ tion a; corresponds to a structured operation from the
+image, an instruction, and an edited output with aligned § Action Registry (such as translate, reorder etc.) which
+bounding boxes. We manually filter out 500 edits which —_are present in Table 10 (Refer to Modular Actions in
+require spatial reasoning and cascaded changes, anduse _—_ Figure 2). The executor agent then executes each of
+the gold outputs for evaluation. the modular actions in A to yield the first draft of the
+edited output (L’,C’), which serves as input to next
+4 SMART-EFditor stage. Refer to Appendix 11.3 for details.
+We formulate SMART-Editing as a structure-aware gen- . .
+eration task guided by natural language instructions. Critique Agent. The Critique Agent evaluates the
+To this end, we propose the SMART-Editor pipeline semantic and visual quality of the edited layout-content
+? ? : ! 7 :
+which orchestrates a trilateral collaboration among three = Pl! A , C"), generating both a scalar reward score
+core agents—Action, Critique, and Optimizer—to per- R(L’,C") and structured, actionable feedback for re-
+form semantically faithful and visually coherent layout- _finement (see Appendix 11.4). As detailed in Section 2,
+content editing grounded in an input image and edit the criteria for assessing edits differ across structured
+instruction. The system takes as input a raw image I and unstructured domains. For structured domains, we
+and an edit instruction E, from which it generates an employ a combination of heuristic checks and LLM-
+edited image J’ following the edit instruction. based prompting (Appendix 12.1) to compute reward
+components aligned with the axes R1-R6 in Figure 2,
+1. Action Agent. First, the Action Agent takes a enabling diagnosis of specific issues and suggestions for
+raw input image J and edit instruction &, and outputs improvement (e.g., the Overlap Critic might note, “Yes,
+a first-pass edited layout-content pair (L’,C’). It first the one between Results and Conclusion are overlap-
+parses J into an initial layout L = {(0;,b;)}_,, where _ ping, try moving Conclusion down”). For unstructured
+o; denotes a visual region (e.g., section type or object images, the agent evaluates four core dimensions—Edit
+label), b; = (xi, yi, 74, y) € R* is its bounding box. | Adherence, Semantic Consistency, Depth and Occlu-
+In parallel, it extracts associated textual content C' to sion, and Size Realism—as defined in Section 2 and
+these regions (Details in Appendix 11.1). further detailed in Appendix 11.4, providing targeted
+
+
+--- Page 4 ---
+
+feedback to guide coherent visual refinement. ifiably better than L~ based on a composite reward
+i. . function: R(L) = yan An + Tr (L), which aggregates
+Optimizer Agent. We compute the composite re- multiple quality dimensions such as layout alignment,
+ward as a weighted sum of interpretable components: jarrative fl ow, and visual plausibility.
+R(L’,C’) = ope An: re (L’), where each r;, captures . in oo.
+a specific quality axis and \; € R is a tunable weight For positive exalmp les L™, we p rimarily use gold-
+(k=1 in our case). If R(L’, C’) falls below a threshold, standard human-edited layouts when available (.g., in
+the Optimizer agent explores two complementary strate- SMARTEditBench). In cases where human edits are
+gies for optimizing generation under reward-defined unavailable, we sample multiple candidate layouts from
+constraints: an inference-time refinement loop-based a base model and select the one with the highest reward
+method (Reward-Refine) and a training-time preference score, while filtering out invalid candidates (e.g., layouts
+distillation approach (RewardDPO). with overlapping elements, missing sections, or visual
+artifacts).
+1) Iterative Refinement (Reward-Refine). This Negative examples L~ are created by applying tar-
+method performs reward-guided self-correction through geted degradations to L* using transformation func-
+iterative inference (Algorithm 1). At iterationt = 1, tions T, € 7, which are designed to introduce spe-
+beam search is used to sample k candidate layout- cific types of errors. In structured domains, these in-
+content pairs (L, cl) conditioned on the previous _ clude misplacing sections (e.g., placing “Results” above
+state (L(Y), C\—) and the instruction E. Based “Methods”), inducing overlaps, misaligning bounding
+on the critique feedback, we convert the suggested im- _ boxes, or distorting whitespace. In unstructured do-
+provement into a revised plan expressed in the struc- _ mains, we introduce implausible edits such as unreal-
+tured action space defined by the Action Registry (Sec- _ istic object size, semantic mismatches (e.g., “cat on
+tion 10). These symbolic actions guide the genera- the sky”), or incorrect depth layering. We retain a
+tion of new candidate layouts, and beam search is pair only if the degradation results in a reward dif-
+again employed to sample alternatives and select the ference of at least 6, ie., R( L*) — R(L~) > 6,
+best one by computing the reward for each. The and the negative example violates at least one hard
+best candidate under the reward function is selected _ constraint (e.g., HASOVERLAP is true or BREAKSSE-
+as (L,C) = argmax;c) R(L). This process | MANTICORDER is true). The final preference dataset
+continues iteratively until all constraints are satisfied is defined as Dprep = {(I,L0,Lt,L~) | AR >
+or a maximum number of refinement steps is reached. 6 and L~ violates constraint}, enabling supervision-
+The final output is the converged layout-content pair _ free contrastive learning that trains the model not only to
+(L*,C*) = (LC), emulating a human-in-the- follow layout instructions but also to internalize design
+loop editor through critique-to-action planning. principles such as clarity, structure, and coherence.
+2) Reward-Aligned Preference Optimization (Re-
+wardDPO) To address runtime and initialization limi- | Direct Preference Optimization. Given preference
+tations of inference-time refinement, we propose Re- pairs (J, Lo, L*,L~), we train the model using
+wardDPO, a training-time framework that distills | the Direct Preference Optimization (DPO) (Rafailov
+reward-aligned preferences into the model via con- et al., 2024) objective, defined as Lppo(?) =
+: sos : log Pg(LT|1,L
+trastive supervision over structured perturbations (Algo- — — Jog siiog FoF TF hgh ph icy Ppl ESY” where £ con-
+rithm 2). This actually takes the initial output Lo after trols the sharpness of the preference signal. Unlike SFT,
+preprocessing 10 the Action Agent as input, uses Cri- DPO explicitly aligns generation with structural and
+tique Agents to generate preference data, and finally semantic layout quality, enabling the model to prefer
+generates optimized layout L* as outp ut (We skip op u- globally coherent outputs in a single forward pass.
+mizing the content using DPO, as it improves well in | . . .
+single iteration in Reward-Refine). It follows 3 steps At inference time, the RewardDPO model directly
+as described below: generates a high-quality layout LY = to (Lo, E)ina
+single forward pass, without requiring iterative refine-
+Supervised Finetuning. We begin with asupervised — ment.
+finetuning (SFT) stage, where the model fg is trained
+on triplets (Lo, B®, 1...) © Derr. The model is ; ;
+optimized han a tog ati nod objective: Lspr(@) = 5 Experimental Setup and Main Results
+_y (7) @) 7 @
+
+Dra 108 Po(Learyer | Bs Lo"): We aim to assess whether layout and content gener-
+Preference Pair Generation via Reward-Aligned — ated by LLMs/VLMs after edit instruction are “smart”
+Contrastive Supervision. Supervised fine-tuning typ- | enough and we benchmark the model’s capabilities
+ically exposes models to a single “ideal” layout per along various dimensions. Besides, we also check how
+instruction, limiting their ability to reason about the |= much performance boost has been made by our pro-
+relative quality of edits. To address this, we construct posed SMART-Editor. To this end, we structure our
+contrastive preference pairs (L+,Z~), where L+ is ver- experiments as below:
+
+
+--- Page 5 ---
+
+Model Set. EA+|Narr. + XSect | Ovip{ WSpe| Algn t specific sections accordingly. For unstructured image
+LPrompter 4.29 | 044 0.62 | 84 49 33.4 domains, we retain GPT-40 for textual grounding and
+7S 452 | 043 0.61 58 35 35.0 use state-of-the-art GLIGEN (Li et al., 2023) to synthe-
+GPT4o CFS. 4.60. | 0.44 0.63 60 3.6 35.5 size updated visuals within specified object bounding
+CoT 4.65] 0.46 0.65 | 55 34 36.0
+SE 4.70] 047 0.67 | 52 3.2 36.5 boxes.
+7S 4481 041. 0.60 60 38 34.5 For structured domains, we use LayoutPrompter (Shi
+Gemini-Pro FS. 455 | 0.45 0.62 62 3.9 35.0 et al., 2025) as the state-of-the-art training-free baseline
+CoT 460] 0.46 064 | 59 3.7 35.2 ; , . .
+SE 4621 049 0066 56 35 35.8 to compare the ’smartness’ of edits when evaluating on
+784101 030. 045 70 48 330 the human-created posters and websites. For natural
+Gemma FS 430] 0.32 0.46 | 68 46 33.5 images, we consider the following latest image-editing
+so. tas eh Oa 5 4 xe baselines: a) Instructpix2pix (Brooks et al., 2023) b)
+ss. 400| 028 042 | 140. 67 300 DALLE-3 (Danescu-Niculescu-Mizil et al., 2012), c)
+LLaVA FS 4.05 | 0.29 0.43 135 6.5 30.2 HIVE (Zhang et al., 2024b).
+so. te eo ie be $5 33 Evaluation Setup. We evaluate the quality of
+og de Poa ode Pee Bd editing across both structured domains (e.g., posters,
+tama FS 4.25 | 0.32 0.47 64 47 34.5 webpages) and unstructured domains (e.g., natural
+COT 4.28] 0.34 048 | 62 45 35.0 : : 5 ati
+SE 432 | 035 049 | 60 a images) using a combination of reference-free and
+$s. 427| 009. 044) 72 42.2335 reference-based methods (Evaluation methods in
+FS 445] 030 045 | 68 4.0 34.2 Appendix 12.1, 12.2, 12.3)
+Qwen COT 450] 032 046 | 66 38 34.8
+SE 455] 0.33 047 | 64 3.7 35.2
+a __ Reference-F ree Takeaways. Tables 2 present the per-
+Table 2: Reference-Free Evaluation of Models on — frmance of LLMs and VLMs on SMARTEdit-Bench-
+SMARTEdit-Bench-Posters. Posters. On SMARTEdit-Bench-Posters, while the
+zero-shot, few-shot, CoT variants struggle, GPT-40
+System EFAt DLt SMt  Overlapt (Reward-Refine) achieves the best layout editing per-
+DALLE3 395. 3.75. 410 355 formance—edit adherence 4.70, cross-section consis-
+InstructPix2Pix 3.85 340 3.90 3.65 tency 0.67, and alignment 36.5—outperforming Layout-
+Gligen + Reward-Refine toe an ye ae Prompter. Gemini-Pro also shows notable gains with
+Gligen + RewardDPO 435 4.20 4.40 4.25 refinement. On SMARTEdit-Bench-Websites, layout
+Gold tmage OSD 00 editing is more challenging, but SMART-Editor still
+Table 3: GPT-40-based evaluation of image edits on improves results: GPT-4o (Reward-Refine) leads with
+. cross-section score 0.66, lower overlap (70), and higher
+SMARTEdit-Bench — Natural Images (1-5). EA = alignment (31.5), demonstrating robust spatial under-
+Edit Adherence (instruction following), DL = Depth sis ding 7? 8 P
+vavenns: 6 Me Semantic Math ia CLIP), Overlap = Reference-Based Takeaways. On SMARTEdit-
+P : Bench-Posters, GPT-40 + Reward-Refine achieves
+5.1 How “smart” are the edits made by the base the highest layout similarity (4.47) and strong seman-
+models compared to SMART-Editor? tic consistency (4.38), outperforming LayoutPrompter
+, ; (4.01). RewardDPO fine-tuning also boosts LLaMA
+We evaluate the smartness: of LLMs and VLMs to and Gemma by +0.22 in layout alignment (Table 12).
+perform layout and semantic content editing in line On SMARTEdit-Bench-Websites. GPT-4o0 + Reward-
+with human design principles. Our experiments in- Refine again leads with LS = 4.45 (40.45) and SC =
+clude three LLMs—Gemma (Team et al., 2024b), 4.50. Gemini-Pro shows consistent gains (LS = 4.36, SC
+LLaMA (Touvron et al., 2023), and Qwen (Baietal.,  _ 4.32), highlighting the benefit of reward-based refine-
+2023)—and three VLMs—GPT-4o (OpenAl et al., nent (Table 17). On SMARTEdit-Bench — Natural Im-
+2024), Gemini-Pro (Team et al., 2024a), and LLaVA ages, Gligen + RewardDPO achieves near-gold scores
+(Liu et al., 2023)—each evaluated under four infer- (4.35-4.40) across all axes—edit adherence, depth lay-
+ence settings: Zero-Shot (ZS), Few-Shot (FS), Chain- ering, semantic match, and realism—outperforming
+of-Thought (CoT), and SMART-Editor Reward- pj 1-3, HIVE, and InstructPix2Pix (Table 3).
+Refine (SE) (Appendix 12.5 for prompts, inference
+settings and HuggingFace-Models). All three LLMs Impact of Edit Types. To pinpoint specific weak-
+and three VLMs contribute to generating layout edits —_ nesses in model reasoning, we analyze the model behav-
+in the SMART-Editor’s Reward-Refine variant across ior under four common edit operations—ZInsert, Delete,
+all domains, while only LLMs are employed in the Reordering, and Content Grouping—by measuring re-
+RewardDPO-based fine-tuning setup (Finetuning details ward deltas between pre-edit and post-edits. Results (Ta-
+in Appendix 12.6). When the instruction involves se- __ ble 4) reveal that layout reward is most sensitive, with
+mantic content modification (i.e., action: updatetext), | severe degradation from Insert (17.6%) and Reordering
+we delegate content generation exclusively to GPT-40, —_ (15.9%) edits due to increased overlap and whitespace.
+which identifies target regions and rewrites content for | Narrative coherence also drops sharply under Insert
+
+
+--- Page 6 ---
+
+ao eee =e Reward-Refine (Full) 440. 041 -62.0 33.2
+— py aS “iE Al: — Reward Replanning 4.22 0.35 -71.0 30.0
+oy — St 8 A2: — Language Feedback 4.28 0.33 -66.5 31.2
+.” a) te RewardDPO (Full) 4.55 0.44 -58.0 34.0
+& oo A3: — Rand Negatives (RandNeg) 4.42 0.37 -66.0 31.5
+: flu A4: — No Reward Filtering 4.40 0.39 -63.5 32.0
+; ae aE | 2 Table 6: Ablation results across all domains (average).
+eS — Both Reward-Refine and RewardDPO rely heavily on
+eta reward-driven structure: removing reward-based replan-
+. : : : ning or curated preference data harms performance.
+Figure 3: Reward improvement over iterations across
+semantic and visual dimensions on the posters, websites  Reward-Refine vs RewardDPO. We compare Re-
+and natural images. Semantic consistency shows min- —_ wardDPO with Zero-Shot, Supervised Finetuning (SFT),
+imal gains across iterations for natural images, while and Reward-Refine (Figure 4) for all the LLMs in
+visual-spatial layout rewards improve more sharply for SMART-Editor. Across all models and domains, Re-
+posters and websites. wardDPO achieves the highest composite rewards, indi-
+cating better alignment with semantic and visual-spatial
+Composite Reward Score per Method and Model by Domain en layout goals. While Reward-Refine improves quality
+la. _ -_ “ through iterative correction, RewardDPO matches or
+enanetian w@H ee exceeds its final performance with greater efficiency.
+PPP ritrrr © tf Gains are strongest in structured domains like posters
+UP EERE EE and websites, where layout feedback is explicit. In natu-
+FT PrrPerrrrtrrrt & ral images, improvements are modest, suggesting that
+oe — st = os is — a? Ft while RewardDPO optimizes structural edits well, se-
+mantic reasoning in unstructured scenes still remains a
+Figure 4: Models trained with RewardDPO and re- challenge.
+fined using Reward-Refine achieve higher composite
+rewards—teflecting better semantic and spatial layout 5.2 Ablation Analysis in SMART-Editor
+uality—compared to SFT and Zero-Shot baselines. . .
+quay P Impact of Iterations in Reward-Refine. To assess
+how well models improve layout and content over time,
+Edit Type Narrative | Layout | Cross-Section Consistency | we apply Reward-Refine across natural images posters
+Insert -12.3% -17.6% -0.22% . . . . .
+Delete “0.0% 44% “O1D% and websites, iteratively updating model outputs using
+Reordering -0.08% “15.9% 0% composite reward feedback as summation of metric
+Content Grouping -0.12% -12.7% 0% . . . .
+— scores (Details in Appendix 12.4). Each round opti-
+Table 4: Average relative reward drop across reason- —_ ™12€S two key reasoning dimensions: semantic cons1s-
+ing dimensions by edit type (from zero-shot baseline). tency and visual-spatial layout. As shown in Figure 3,
+Layout degradation dominates across Insert, Delete, most visual-spatial improvements oceur within the first
+and Grouping edits, followed by narrative incoherence. two iterations—especially in structured domains like
+Cross-section consistency is relatively more preserved. posters and websites—driven by alignment and spacing
+feedback. Semantic gains are slower and often plateau.
+SS In natural image editing, it helps bridge perceptual gaps
+Model A vs. B Posters Websites Natural Images : : 8 8 : P : 8 Ps P 8 P
+i in occlusion, depth layering, and instruction adherence,
+RewardDPO vs. LayoutPrompter 65.4% 72.1% - : “a :
+Reward-Refine vs. HIVE - . 78.2% outperforming traditional baselines (Table 3).
+RewardDPO vs. Reward-Refine 82.5% 78.6% 48.2% Impact of Components in SMART-Editor. To better
+RewardDPO vs. SFT 88.6% 84.3% 78.2% a a ve eS ee cy ee Ce a rs
+RewardDPO vs. Zero-Shot 955% 937% 90.0% understand the contribution of individual components,
+Reward-Refine vs. SFT 63.2% 67.5% 80.4% 1 1 _
+Rana Rete ve. Saro-Shot Be Rhos 1K we conduct targeted ablation studies across posters, web
+SFT vs. Zero-Shot 61.8% 68.2% 69.5% sites, and natural images (Table 6). Each ablation selec-
+tively removes a key mechanism from either Reward-
+Table 5: WTR from human preference rankings, re- —_ Refine or RewardDPO. Al: No Reward-Based Re-
+ported for Posters, Websites, and Natural Images (Base- _ planning (Reward-Refine) We disable iterative reward-
+LLama). RewardDPO is preferred in structured do- _ guided refinement and use only initial layout edits to
+mains; Reward-Refine performs best in natural scenes. test whether passive edits suffice; this leads to a 9-11
+point drop in layout quality, showing that structured ed-
+(12.3%) and Delete (10.0%) due to unbalanced or con- _its require active spatial reasoning. A2: No Language
+textless updates. In contrast, Cross-Sectional Consis- | Feedback (Reward-Refine) We remove intermediate
+tency is minimally affected (0.22%), suggesting models _ natural language feedback prompts to assess their role
+better preserve high-level structural alignment thanlocal in guiding semantic fixes; as a result, semantic consis-
+spatial or narrative coherence. tency, especially in natural images, degrades due to lack
+
+
+--- Page 7 ---
+
+ed ee al aerratives . themida
+Figure 5: Poster edit example: RewardDPO fixes over- aera erin
+lap and restores alignment after inserting a new section. i ee
+of localized corrective signals. A3: Random Negatives —_ Figure 6: Webpage Edit example: Reward-Refine suc-
+(RewardDPO) We substitute structured corrupted pairs cessfully improves spatial arrangement and UX goals
+with random preferences during DPO training to test _ based on the insert instruction.
+learning signal specificity; this weakens narrative and
+alignment understanding, resulting in incoherent section 6 Related Work
+rite vine (Rev - apro) We skip the stp of filtering Our work lies at the intersection of instruction-based
+preference pairs based on reward alignment to see how editing, structured layout modeling, and COMPOST”
+noise affects preference modeling; this introduces con- tional reasoning: Instruction-guided image editing ap-
+tradictory supervision, reducing the model’s ability to Proanes (Bal ot al 2025), x wo HOLE. a > Hae nn
+align edits with the intended quality axes. Additionally, _ > : °
+we also perform ablation on the impact of training data 2024) focus one ixel-level transformations but largely
+in RewardDPO and the impact of critics (Appendix 13.1 ignore how edits propagate through structured scenes.
+13.2, 13.3) P PP “’ While these models improve visual realism, they lack
+ee mechanisms to reason over cascading changes in lay-
+out or content coherence. In the structured domain,
+5.3. Human Evaluation models such as LayoutGAN (Li et al., 2019), Layout-
+We run human evaluation (Instructions in Figure 12) easel ke al., en ant ‘avout Ty (ene
+across posters, websites, and natural images, comparing et al., 2023 ) synt osiZe ayouts rom scratch but do
+four model variants: Zero-Shot. SFT. Reward-Refine not support iterative editing or reward-based refine-
+and RewardDPO. Annotators rank outputs based on ment. Recent work like LayoutCoT (Shi et al., 2025)
+edit quality given an instruction and initial layout. Us- brings reasoning into layout generation but lacks evalu-
+ing win-tie-rate (WTR) statistics from 30 samples per ation of edit propagation. Benchmarks such as SciPost-
+domain, we observe that RewardDPO and Reward- Layout (Tanaka et al., 2024) and InstructEdit (Wang
+Refine consistently outperform baselines (Table 5). In et al.., 2023) support layout understanding, but not com
+posters and websites, RewardDPO dominates Reward- positional edit evaluation. Programmatic editing in
+Refine in over 78% of pairwise comparisons, confirm- code (Fried et al., 2023) and HTML (Li et al., 2022)
+ing the value of reward-aligned learning in structured explores instruction-following with symbolic reasoning,
+settings. For natural images, Reward-Refine slightly which inspires our approach to layout action p lanning.
+edges out RewardDPO (51.8%), suggesting iterative However, these systems operate in text/code domains
+feedback better captures visual plausibility. Both meth- and lack alignment with Nisual-semantic payout ee
+ods strongly outperform SFT and Zero-Shot across all tures. Unlike prior work, we ocus On Wi ether edits
+domains preserve global structure (More in Appendix 10).
+40 Case § 7 Conclusion and Future Work
+5. ualitative Case Studies
+an . This work introduces SMART-Editor, a unified frame-
+We present qualitative case studies across structured work for layout and scene editing that emphasizes de-
+of SMART Editon In Figus ee aero eke sign integrity. By combining inference-time refinement
+. ° ~ , - and training-time preference optimization, SMART-
+layout overlap a ciontihe poaten while Figure 6 shew : Editor achieves significant improvements in both struc-
+> tured and unstructured domains. Moving forward, we
+Reward-Refine reshufiling a webpage layout to improve envision extending SMART-Editor to malti-turn editing,
+narrative coherence and spatial usability. For naturalim- 444 real-world human-in-the-lo op design workflows.
+ages (Figure 9), GLIGEN with RewardDPO accurately
+transforms a rainforest scene into an arctic landscape Limitations
+with polar bears; in contrast, InstructPix2Pix fails to
+remove the parrot or reflect the scene semantics (Fig- ¢ Assumption of Reliable Rewards: Reward-Refine
+ure 8). assumes access to well-defined, reliable reward func-
+
+
+--- Page 8 ---
+
+tions. In real-world design workflows, such signals | Tim Brooks, Aleksander Holynski, and Alexei A. Efros.
+may be noisy, latent, or subjective. 2023. Instructpix2pix: Learning to follow image
+editing instructions. Preprint, arXiv:2211.09800.
+* Single-Turn Editing Focus: Our framework is eval- oo, ;
+uated on isolated editing instructions. Multi-turn, | Shang Chai, Liansheng Zhuang, and Fengying Yan.
+interactive layout editing remains unexplored and 2023. Layoutdm: Transformer-based diffusion model
+may require modeling user intent over time for layout generation. Preprint, arXiv:2305.02567.
+. . . Mark Chen, Jerry Tworek, Heewoo Jun, Qiming
+* Inference-Time Overhead: Reward-Refine im- Yuan, Henrique Ponde de Oliveira Pinto, Jared Ka-
+proves output quality but incurs additional computa- plan, Harri Edwards, Yuri Burda, Nicholas Joseph,
+tional cost during inference and may be sensitive to Greg Brockman, Alex Ray, Raul Puri, Gretchen
+initialization or local optima. Krueger, Michael Petrov, Heidy Khlaaf, Girish Sas-
+try, Pamela Mishkin, Brooke Chan, Scott Gray,
+Ethics Statement Nick Ryder, Mikhail Pavlov, Alethea Power, Lukasz
+. oo, . Kaiser, Mohammad Bavarian, Clemens Winter,
+The experiments performed in this study involved hu- Philippe Tillet, Felipe Petroski Such, Dave Cum-
+man participants. All the experiments involving human mings, Matthias Plappert, Fotios Chantzis, Eliza-
+evaluation were exempt under institutional IRB review. beth Barnes, Ariel Herbert-Voss, William Hebgen
+We recruited participants for our human study using Guss, Alex Nichol, Alex Paino, Nikolas Tezak, Jie
+Upwork and we have fairly compensated all the Up- Tang, Igor Babuschkin, Suchir Balaji, Shantanu Jain,
+work freelancers involved in this study, at an average William Saunders, Christopher Hesse, Andrew N.
+rate of 15.00 USD per hour (respecting their suggested Carr, Jan Leike, Josh Achiam, Vedant Misra, Evan
+Upwork hourly wage). We did not collect any personal Fea ees ation Mathew ene vies
+data during the experiments, and they could choose not Tundage, Nara uratl, ate ayer, Peter veneer,
+t ticipate in the study. The d t din th Bob McGrew, Dario Amodei, Sam McCandlish, Ilya
+© parlicip a e in © study. tne ocumen S usec in the Sutskever, and Wojciech Zaremba. 2021. Evaluat-
+study are distributed under an open license. : ing large language models trained on code. Preprint,
+While this work adheres to ethical guidelines for arXiv:2107.03374.
+human participation and open data usage, it presents
+some potential risks. First, automated layout modi- Cristian Danescu-Niculescu-Mizil, Lillian Lee,
+fications—especially in scientific or web-based con- Bo Pang, and Jon Kleinberg. 2012. : Echoes of
+tent—may unintentionally alter the intended commu- power. Language effects and power differences in
+or : .. ope social interaction. In Proceedings of WWW, pages
+nicative structure or introduce misinformation if mis-
+rae . 699-708.
+used. Second, systems that rely on implicit, instruction-
+based editing could generate plausible but incorrect edits Weixi Feng, Wanrong Zhu, Tsu-jui Fu, Varun Jampani,
+that are difficult to verify without human oversight, po- Arjun Akula, Xuehai He, Sugato Basu, Xin Eric
+tentially reducing user trust. Finally, the deployment Wang, and William Yang Wang. 2023a. Layoutgpt:
+of such editing systems in real-world design workflows compositional visual planning and generation with
+without adequate guardrails may diminish creative con- large language models. In Proceedings of the 37th
+trol. International Conference on Neural Information Pro-
+cessing Systems, NIPS ’23, Red Hook, NY, USA.
+Curran Associates Inc.
+References Weixi Feng, Wanrong Zhu, Tsu jui Fu, Varun Jam-
+Jinbin Bai, Wei Chow, Ling Yang, Xiangtai Li, pani, Arjun Akula, Xuehai He, Sugato Basu, Xin Eric
+. : Wang, and William Yang Wang. 2023b. Layoutgpt:
+Juncheng Li, Hanwang Zhang, and Shuicheng Yan. Cc ‘tional visual planni d ti ith
+2025. Humanedit: A high-quality human-rewarded ompostronal Visual’ planning and generayon Ww!
+dataset for instruction-based image editing. Preprint, large language models. Preprint, arXiv:2305.15393.
+arXiv:2412.04280. Daniel Fried, Armen Aghajanyan, Jessy Lin, Sida Wang,
+Jinze Bai, Shuai Bai, Yunfei Chu, Zeyu Cui, Kai Dang, tt Wallace, Freda Shi, Ruigi Zhong, Wen tau Yih,
+Xiaodong Deng, Yang Fan, Wenbin Ge, Yu Han, Fei Luke Zettlemoyer, and Mike L ew's. 2023. Incoder:
+Huang Binyuan Hui Luo Ji. Mei Li Junyang Lin A generative model for code infilling and synthesis.
+wo . an ee : , Preprint, arXiv:2204.05999.
+Runji Lin, Dayiheng Liu, Gao Liu, Chengqiang Lu, ,
+Keming Lu, Jianxin Ma, Rui Men, Xingzhang Ren, — Hanan Gani, Shariq Faroog Bhat, Muzammal Naseer,
+Xuancheng Ren, Chuanqi Tan, Sinan Tan, Jianhong Salman Khan, and Peter Wonka. 2024. Llm blueprint:
+Tu, Peng Wang, Shijie Wang, Wei Wang, Shengguang Enabling text-to-image generation with complex and
+Wu, Benfeng Xu, Jin Xu, An Yang, Hao Yang, Jian detailed prompts. Preprint, arXiv:2310.10640.
+Yang, Shusheng Yang, Yang Yao, Bowen Yu, Hongyi
+Yuan, Zheng Yuan, Jianwei Zhang, Xingxuan Zhang, Yuying Ge, Sijie Zhao, Chen Li, Yixiao Ge, and Ying
+Yichang Zhang, Zhenru Zhang, Chang Zhou, Jin- Shan. 2024. Seed-data-edit technical report: A hy-
+gren Zhou, Xiaohuan Zhou, and Tianhang Zhu. 2023. brid dataset for instructional image editing. Preprint,
+Qwen technical report. Preprint, arXiv:2309. 16609. arXiv:2405.04007.
+
+
+--- Page 9 ---
+
+Claire Golomb. 1987. The development of composi- Suchir Balaji, Valerie Balcom, Paul Baltescu, Haim-
+tional strategies in children’s drawings. Visual Arts ing Bao, Mohammad Bavarian, Jeff Belgum, Ir-
+Research, pages 42-52. wan Bello, Jake Berdine, Gabriel Bernadett-Shapiro,
+
+an . . . Christopher Berner, Lenny Bogdonoff, Oleg Boiko,
+
+wee ce Siwel Yang, Bingchen Zhu, wichun a Madelaine Boyd, Anna-Luisa Brakman, Greg Brock-
+eng Wang, reng Wang, Yuyin Zhou, an 1- man, Tim Brooks, Miles Brundage, Kevin Button,
+hang Xie. 2024. Hq-edit: A high-quality dataset Trevor Cai, Rosie Campbell, Andrew Cann, Brittany
+for instruction-based image editing. Preprint, Carey, Chelsea Carlson, Rory Carmichael, Brooke
+arXiv:2404.09990. Chan, Che Chang, Fotis Chantzis, Derek Chen, Sully
+
+Peidong Jia, Chenxuan Li, Yuhui Yuan, Zeyu Liu, Chen, Ruby Chen, Jason Chen, Mark Chen, Ben
+
+. . Lo. Chess, Chester Cho, Casey Chu, Hyung Won Chung,
+Yichao Shen, Bohan Chen, Xingru Chen, Yinglin : : : .
+vp: xy, : Dave Cummings, Jeremiah Currier, Yunxing Dai,
+
+Zheng, Dong Chen, Ji Li, Xiaodong Xie, Shanghang
+- : . . Cory Decareaux, Thomas Degry, Noah Deutsch,
+Zhang, and Baining Guo. 2024. Cole: A hierarchical Damien Deville. Arka Dhar. David Dohan. Steve
+generation framework for multi-layered and editable . 4 . - ‘ .
+raphic design. Preprint, atXiv:231 1.16974 Dowling, Sheila Dunning, Adrien Ecoffet, Atty Eleti,
+8 . ; , , , Tyna Eloundou, David Farhi, Liam Fedus, Niko Felix,
+
+Akash Abdu Jyothi, Thibaut Durand, Jiawei He, Leonid Simon Posada Fishman, Juston Forte, Isabella Ful-
+Sigal, and Greg Mori. 2021. Layoutvae: Stochastic ford, Leo Gao, Elie Georges, Christian Gibson, Vik
+scene layout generation from a label set. Preprint, Goel, Tarun Gogineni, Gabriel Goh, Rapha Gontijo-
+arXiv:1907.10719. Lopes, Jonathan Gordon, Morgan Grafstein, Scott
+
+Gray, Ryan Greene, Joshua Gross, Shixiang Shane
+
+Alexander Kirillov, Eric Mintun, Nikhila Ravi, Hanzi Gu, Yufei Guo, Chris Hallacy, Jesse Han, Jeff Harris,
+Mao, Chloe Rolland, Laura Gustafson, Tete Xiao, Yuchen He, Mike Heaton, Johannes Heidecke, Chris
+Spencer Whitehead, Alexander C. Berg, Wan-Yen Hesse, Alan Hickey, Wade Hickey, Peter Hoeschele,
+Lo, Piotr Dollar, and Ross Girshick. 2023. Segment Brandon Houghton, Kenny Hsu, Shengli Hu, Xin
+anything. Preprint, arXiv:2304.02643. Hu, Joost Huizinga, Shantanu Jain, Shawn Jain,
+
+. oo, . . Joanne Jang, Angela Jiang, Roger Jiang, Haozhun
+
+Jianan Li, Jimei Yang, Aaron Hertzmann, Jianming Jin, Denny Jin, Shino Jomoto, Billie Jonn, Hee-
+Zhang, and Tingfa Xu. 2019. Layoutgan: Generat- woo Jun, Tomer Kaftan, Lukasz Kaiser, Ali Ka-
+ing graphic layouts with wireframe discriminators. mali, Ingmar Kanitscheider, Nitish Shirish Keskar,
+Preprint, arXiv:1901.06767. Tabarak Khan, Logan Kilpatrick, Jong Wook Kim,
+
+. . Loy: . Christina Kim, Yongjik Kim, Jan Hendrik Kirch-
+
+Jingyu Li, . Wei Liu, and Tan Lee. 2022. Edit- ner, Jamie Kiros, Matt Knight, Daniel Kokotajlo,
+net: A lightweight network for unsupervised do- . . .
+
+: . . . . Lukasz Kondraciuk, Andrew Kondrich, Aris Kon-
+main adaptation in speaker verification. Preprint, or i ° .
+arXiv:2206.07548 stantinidis, Kyle Kosic, Gretchen Krueger, Vishal
+
+, , , Kuo, Michael Lampe, Ikai Lan, Teddy Lee, Jan Leike,
+
+Yuheng Li, Haotian Liu, Qingyang Wu, Fangzhou Jade Leung, Daniel Levy, Chak Ming Li, Rachel Lim,
+Mu, Jianwei Yang, Jianfeng Gao, Chunyuan Li, and Molly Lin, Stephanie Lin, Mateusz Litwin, Theresa
+Yong Jae Lee. 2023. Gligen: Open-set grounded text- Lopez, Ryan Lowe, Patricia Lue, Anna Makanju,
+to-image generation. Preprint, arXiv:2301.07093. Kim Malfacini, Sam Manning, Todor Markov, Yaniv
+
+Markovski, Bianca Martin, Katie Mayer, Andrew
+
+Jiawei Lin, Jiaqi Guo, Shizhao Sun, Zijiang James Yang, Mayne, Bob McGrew, Scott Mayer McKinney, Chris-
+Jian-Guang Lou, and Dongmei Zhang. 2023. Lay- tine McLeavey, Paul McMillan, Jake McNeil, David
+outprompter: Awaken the design ability of large lan- Medina, Aalok Mehta, Jacob Menick, Luke Metz, An-
+guage models. Preprint, arXiv:2311.06495. drey Mishchenko, Pamela Mishkin, Vinnie Monaco,
+
+Evan Morikawa, Daniel Mossing, Tong Mu, Mira Mu-
+
+Yuanze Lin, Yi-Wen Chen, Yi-Hsuan Tsai, Lu Jiang, rati, Oleg Murk, David Mély, Achvin Nair, Reiichiro
+and Ming-Hsuan Yang. 2024. Text-driven image Nakano, Rajeev Nayak, Arvind Neelakantan, Richard
+editing via learnable regions. In Proceedings of the Ngo, Hyeonwoo Noh, Long Ouyang, Cullen O’ Keefe,
+IEEE/CVF Confer ence on Computer Vision and Pat- Jakub Pachocki, Alex Paino, Joe Palermo, Ashley
+tern Recognition (CVPR), pages 7059-7068. Pantuliano, Giambattista Parascandolo, Joel Parish,
+
+Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Emy Parparita, Alex Passos, Mikhail Pavlov, Andrew
+
+: : : : . Peng, Adam Perelman, Filipe de Avila Belbute Peres,
+
+Lee. 2023. Visual instruction tuning. Preprint, . . . .
+arXiv:2304.08485. Michael Petrov, Henrique Ponde de Oliveira Pinto,
+Michael, Pokorny, Michelle Pokrass, Vitchyr H. Pong,
+
+George A Lozano. 2014. Ethics of using language edit- Tolly Powell, Alethea Power, Boris Power, Elizabeth
+ing services in an era of digital communication and Proehl, Raul Puri, Alec Radford, Jack Rae, Aditya
+heavily multi-authored papers. Science and Engineer- Ramesh, Cameron Raymond, Francis Real, Kendra
+ing Ethics, 20(2):363-377. Rimbach, Carl Ross, Bob Rotsted, Henri Roussez,
+
+Nick Ryder, Mario Saltarelli, Ted Sanders, Shibani
+
+OpenAI, Josh Achiam, Steven Adler, Sandhini Agarwal, Santurkar, Girish Sastry, Heather Schmidt, David
+Lama Ahmad, Ilge Akkaya, Florencia Leoni Ale- Schnurr, John Schulman, Daniel Selsam, Kyla Shep-
+man, Diogo Almeida, Janko Altenschmidt, Sam Alt- pard, Toki Sherbakov, Jessica Shieh, Sarah Shoker,
+man, Shyamal Anadkat, Red Avila, Igor Babuschkin,
+
+
+--- Page 10 ---
+
+Pranav Shyam, Szymon Sidor, Eric Sigler, Maddie Shohei Tanaka, Hao Wang, and Yoshitaka Ushiku. 2024.
+Simens, Jordan Sitkin, Katarina Slama, Ian Sohl, Scipostlayout: A dataset for layout analysis and
+Benjamin Sokolowsky, Yang Song, Natalie Stau- layout generation of scientific posters. Preprint,
+dacher, Felipe Petroski Such, Natalie Summers, Ilya arXiv:2407.19787.
+Sutskever, Jie Tang, Nikolas Tezak, Madeleine B.
+Thompson, Phil Tillet, Amin Tootoonchian, Eliz- | Gemini Team, Petko Georgiev, Ving Ian Lei, Ryan
+abeth Tseng, Preston Tuggle, Nick Turley, Jerry Burnell, Libin Bai, Anmol Gulati, Garrett Tanzer,
+Tworek, Juan Felipe Ceron Uribe, Andrea Vallone, Damien Vincent, Zhufeng Pan, Shibo Wang, Soroosh
+Arun Vijayvergiya, Chelsea Voss, Carroll Wainwright, Mariooryad, Yifan Ding, Xinyang Geng, Fred Al-
+Justin Jay Wang, Alvin Wang, Ben Wang, Jonathan cober, Roy Frostig, Mark Omernick, Lexi Walker,
+Ward, Jason Wei, CJ Weinmann, Akila Welihinda, Cosmin Paduraru, Christina Sorokin, Andrea Tac-
+Peter Welinder, Jiayi Weng, Lilian Weng, Matt Wi- chetti, Colin Gaffney, Samira Daruki, Olcan Ser-
+ethoff, Dave Willner, Clemens Winter, Samuel Wol- cinoglu, Zach Gleicher, Juliette Love, Paul Voigt-
+rich, Hannah Wong, Lauren Workman, Sherwin Wu, laender, Rohan Jain, Gabriela Surita, Kareem Mo-
+Jeff Wu, Michael Wu, Kai Xiao, Tao Xu, Sarah Yoo, hamed, Rory Blevins, Junwhan Ahn, Tao Zhu, Korn-
+Kevin Yu, Qiming Yuan, Wojciech Zaremba, Rowan raphop Kawintiranon, Orhan Firat, Yiming Gu, Yu-
+Zellers, Chong Zhang, Marvin Zhang, Shengjia Zhao, jing Zhang, Matthew Rahtz, Manaal Faruqui, Natalie
+Tianhao Zheng, Juntang Zhuang, William Zhuk, and Clay, Justin Gilmer, JD Co-Reyes, Ivo Penchev, Rui
+Barret Zoph. 2024. Gpt-4 technical report. Preprint, Zhu, Nobuyuki Morioka, Kevin Hui, Krishna Hari-
+arXiv:2303.08774. dasan, Victor Campos, Mahdis Mahdieh, Mandy Guo,
+Samer Hassan, Kevin Kilgour, Arpi Vezer, Heng-
+Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Tze Cheng, Raoul de Liedekerke, Siddharth Goyal,
+Ramesh, Gabriel Goh, Sandhini Agarwal, Girish Sas- Paul Barham, DJ Strouse, Seb Noury, Jonas Adler,
+try, Amanda Askell, Pamela Mishkin, Jack Clark, Mukund Sundararajan, Sharad Vikram, Dmitry Lep-
+Gretchen Krueger, and Ilya Sutskever. 2021. Learn- ikhin, Michela Paganini, Xavier Garcia, Fan Yang,
+ing transferable visual models from natural language Dasha Valter, Maja Trebacz, Kiran Vodrahalli, Chu-
+supervision. Preprint, arXiv:2103.00020. layuth Asawaroengchai, Roman Ring, Norbert Kalb,
+Livio Baldini Soares, Siddhartha Brahma, David
+Rafael Rafailov, Archit Sharma, Eric Mitchell, Ste- Steiner, Tianhe Yu, Fabian Mentzer, Antoine He,
+fano Ermon, Christopher D. Manning, and Chelsea Lucas Gonzalez, Bibo Xu, Raphael Lopez Kauf-
+Finn. 2024. Direct preference optimization: Your man, Laurent El Shafey, Junhyuk Oh, Tom Hennigan,
+language model is secretly a reward model. Preprint, George van den Driessche, Seth Odoom, Mario Lucic,
+arXiv:2305.18290. Becca Roelofs, Sid Lall, Amit Marathe, Betty Chan,
+Santiago Ontanon, Luheng He, Denis Teplyashin,
+Tianhe Ren, Qing Jiang, Shilong Liu, Zhaoyang Zeng, Jonathan Lai, Phil Crone, Bogdan Damoc, Lewis
+Wenlong Liu, Han Gao, Hongjie Huang, Zhengyu Ma, Ho, Sebastian Riedel, Karel Lenc, Chih-Kuan Yeh,
+Xiaoke Jiang, Yihao Chen, Yuda Xiong, Hao Zhang, Aakanksha Chowdhery, Yang Xu, Mehran Kazemi,
+Feng Li, Peijun Tang, Kent Yu, and Lei Zhang. 2024. Ehsan Amid, Anastasia Petrushkina, Kevin Swersky,
+Grounding dino 1.5: Advance the "edge" of open-set Ali Khodaei, Gowoon Chen, Chris Larkin, Mario
+object detection. Preprint, arXiv:2405.10300. Pinto, Geng Yan, Adria Puigdomenech Badia, Piyush
+Patil, Steven Hansen, Dave Orr, Sebastien M. R.
+Hengyu Shi, Junhao Su, Huansheng Ning, Xiaoming Arnold, Jordan Grimstad, Andrew Dai, Sholto Dou-
+Wei, and Jialin Gao. 2025. Layoutcot: Unleashing glas, Rishika Sinha, Vikas Yadav, Xi Chen, Elena Gri-
+the deep reasoning potential of large language models bovskaya, Jacob Austin, Jeffrey Zhao, Kaushal Patel,
+for layout generation. Preprint, arXiv:2504.10829. Paul Komarek, Sophia Austin, Sebastian Borgeaud,
+Linda Friso, Abhimanyu Goyal, Ben Caine, Kris
+Chenglei Si, Yanzhe Zhang, Ryan Li, Zhengyuan Yang, Cao, Da-Woon Chung, Matthew Lamm, Gabe Barth-
+Ruibo Liu, and Diyi Yang. 2025. Design2Code: Maron, Thais Kagohara, Kate Olszewska, Mia Chen,
+Benchmarking multimodal code generation for au- Kaushik Shivakumar, Rishabh Agarwal, Harshal God-
+tomated front-end engineering. In Proceedings of hia, Ravi Rajwar, Javier Snaider, Xerxes Dotiwalla,
+the 2025 Conference of the Nations of the Americas Yuan Liu, Aditya Barua, Victor Ungureanu, Yuan
+Chapter of the Association for Computational Lin- Zhang, Bat-Orgil Batsaikhan, Mateo Wirth, James
+guistics: Human Language Technologies (Volume 1: Qin, Ivo Danihelka, Tulsee Doshi, Martin Chadwick,
+Long Papers), pages 3956-3974, Albuquerque, New Jilin Chen, Sanil Jain, Quoc Le, Arjun Kar, Madhu
+Mexico. Association for Computational Linguistics. Gurumurthy, Cheng Li, Ruoxin Sang, Fangyu Liu,
+Lampros Lamprou, Rich Munoz, Nathan Lintz, Harsh
+Manan Suri, Puneet Mathur, Franck Dernoncourt, Rajiv Mehta, Heidi Howard, Malcolm Reynolds, Lora
+Jain, Vlad I Morariu, Ramit Sawhney, Preslav Nakov, Aroyo, Quan Wang, Lorenzo Blanco, Albin Cassirer,
+and Dinesh Manocha. 2024. DocEdit-v2: Document Jordan Griffith, Dipanjan Das, Stephan Lee, Jakub
+structure editing via multimodal LLM grounding. Sygnowski, Zach Fisher, James Besley, Richard Pow-
+In Proceedings of the 2024 Conference on Empir- ell, Zafarali Ahmed, Dominik Paulus, David Reitter,
+ical Methods in Natural Language Processing, pages Zalan Borsos, Rishabh Joshi, Aedan Pope, Steven
+15485-15505, Miami, Florida, USA. Association for Hand, Vittorio Selo, Vihan Jain, Nikhil Sethi, Megha
+Computational Linguistics. Goel, Takaki Makino, Rhys May, Zhen Yang, Jo-
+
+
+--- Page 11 ---
+
+han Schalkwyk, Christina Butterfield, Anja Hauth, Baker, Katie Millican, Mohamed Elhawaty, Kostas
+Alex Goldin, Will Hawkins, Evan Senter, Sergey Aisopos, Carl Lebsack, Nathan Byrd, Hanjun Dai,
+Brin, Oliver Woodman, Marvin Ritter, Eric Noland, Wenhao Jia, Matthew Wiethoff, Elnaz Davoodi, Al-
+Minh Giang, Vijay Bolina, Lisa Lee, Tim Blyth, Ian bert Weston, Lakshman Yagati, Arun Ahuja, Isabel
+Mackinnon, Machel Reid, Obaid Sarvana, David Sil- Gao, Golan Pundak, Susan Zhang, Michael Azzam,
+ver, Alexander Chen, Lily Wang, Loren Maggiore, Khe Chai Sim, Sergi Caelles, James Keeling, Ab-
+Oscar Chang, Nithya Attaluri, Gregory Thornton, hanshu Sharma, Andy Swing, YaGuang Li, Chenxi
+Chung-Cheng Chiu, Oskar Bunyan, Nir Levine, Tim- Liu, Carrie Grimes Bostock, Yamini Bansal, Zachary
+othy Chung, Evgenii Eltyshev, Xiance Si, Timothy Nado, Ankesh Anand, Josh Lipschultz, Abhijit Kar-
+Lillicrap, Demetra Brady, Vaibhav Aggarwal, Boxi markar, Lev Proleev, Abe Ittycheriah, Soheil Has-
+Wu, Yuanzhong Xu, Ross Mcllroy, Kartikeya Badola, sas Yeganeh, George Polovets, Aleksandra Faust,
+Paramjit Sandhu, Erica Moreira, Wojciech Stokowiec, Jiao Sun, Alban Rrustemi, Pen Li, Rakesh Shivanna,
+Ross Hemsley, Dong Li, Alex Tudor, Pranav Shyam, Jeremiah Liu, Chris Welty, Federico Lebron, Anirudh
+Elahe Rahimtoroghi, Salem Haykal, Pablo Sprech- Baddepudi, Sebastian Krause, Emilio Parisotto, Radu
+mann, Xiang Zhou, Diana Mincu, Yujia Li, Ravi Soricut, Zheng Xu, Dawn Bloxwich, Melvin John-
+Addanki, Kalpesh Krishna, Xiao Wu, Alexandre son, Behnam Neyshabur, Justin Mao-Jones, Ren-
+Frechette, Matan Eyal, Allan Dafoe, Dave Lacey, Jay shen Wang, Vinay Ramasesh, Zaheer Abbas, Arthur
+Whang, Thi Avrahami, Ye Zhang, Emanuel Taropa, Guez, Constant Segal, Duc Dung Nguyen, James
+Hanzhao Lin, Daniel Toyama, Eliza Rutherford, Mo- Svensson, Le Hou, Sarah York, Kieran Milan, So-
+toki Sano, HyunJeong Choe, Alex Tomala, Cha- phie Bridgers, Wiktor Gworek, Marco Tagliasacchi,
+lence Safranek-Shrader, Nora Kassner, Mantas Pa- James Lee-Thorp, Michael Chang, Alexey Guseynov,
+jarskas, Matt Harvey, Sean Sechrist, Meire Fortunato, Ale Jakse Hartman, Michael Kwong, Ruizhe Zhao,
+Christina Lyu, Gamaleldin Elsayed, Chenkai Kuang, Sheleem Kashem, Elizabeth Cole, Antoine Miech,
+James Lottes, Eric Chu, Chao Jia, Chih-Wei Chen, Richard Tanburn, Mary Phuong, Filip Pavetic, Se-
+Peter Humphreys, Kate Baumli, Connie Tao, Rajku- bastien Cevey, Ramona Comanescu, Richard Ives,
+mar Samuel, Cicero Nogueira dos Santos, Anders Sherry Yang, Cosmo Du, Bo Li, Zizhao Zhang,
+Andreassen, Nemanja Raki¢evi¢, Dominik Grewe, Mariko Iinuma, Clara Huiyi Hu, Aurko Roy, Shaan
+Aviral Kumar, Stephanie Winkler, Jonathan Caton, Bijwadia, Zhenkai Zhu, Danilo Martins, Rachel Sapu-
+Andrew Brock, Sid Dalmia, Hannah Sheahan, Iain tro, Anita Gergely, Steven Zheng, Dawei Jia, Ioannis
+Barr, Yingjie Miao, Paul Natsev, Jacob Devlin, Fer- Antonoglou, Adam Sadovsky, Shane Gu, Yingying
+yal Behbahani, Flavien Prost, Yanhua Sun, Artiom Bi, Alek Andreev, Sina Samangooei, Mina Khan,
+Myaskovsky, Thanumalayan Sankaranarayana Pillai, Tomas Kocisky, Angelos Filos, Chintu Kumar, Colton
+Dan Hurt, Angeliki Lazaridou, Xi Xiong, Ce Zheng, Bishop, Adams Yu, Sarah Hodkinson, Sid Mittal, Pre-
+Fabio Pardo, Xiaowei Li, Dan Horgan, Joe Stanton, mal Shah, Alexandre Moufarek, Yong Cheng, Adam
+Moran Ambar, Fei Xia, Alejandro Lince, Mingqiu Bloniarz, Jaehoon Lee, Pedram Pejman, Paul Michel,
+Wang, Basil Mustafa, Albert Webson, Hyo Lee, Ro- Stephen Spencer, Vladimir Feinberg, Xuehan Xiong,
+han Anil, Martin Wicke, Timothy Dozat, Abhishek Nikolay Savinov, Charlotte Smith, Siamak Shakeri,
+Sinha, Enrique Piqueras, Elahe Dabir, Shyam Upad- Dustin Tran, Mary Chesus, Bernd Bohnet, George
+hyay, Anudhyan Boral, Lisa Anne Hendricks, Corey Tucker, Tamara von Glehn, Carrie Muir, Yiran Mao,
+Fry, Josip Djolonga, Yi Su, Jake Walker, Jane La- Hideto Kazawa, Ambrose Slone, Kedar Soparkar,
+banowski, Ronny Huang, Vedant Misra, Jeremy Chen, Disha Shrivastava, James Cobon-Kerr, Michael Shar-
+RJ Skerry-Ryan, Avi Singh, Shruti Rijhwani, Dian man, Jay Pavagadhi, Carlos Araya, Karolis Misiunas,
+Yu, Alex Castro-Ros, Beer Changpinyo, Romina Nimesh Ghelani, Michael Laskin, David Barker, Qi-
+Datta, Sumit Bagri, Arnar Mar Hrafnkelsson, Mar- ujia Li, Anton Briukhov, Neil Houlsby, Mia Glaese,
+cello Maggioni, Daniel Zheng, Yury Sulsky, Shaobo Balaji Lakshminarayanan, Nathan Schucher, Yun-
+Hou, Tom Le Paine, Antoine Yang, Jason Riesa, Do- hao Tang, Eli Collins, Hyeontaek Lim, Fangxiaoyu
+minika Rogozinska, Dror Marcus, Dalia El Badawy, Feng, Adria Recasens, Guangda Lai, Alberto Magni,
+Qiao Zhang, Luyu Wang, Helen Miller, Jeremy Greer, Nicola De Cao, Aditya Siddhant, Zoe Ashwood, Jordi
+Lars Lowe Sjos, Azade Nova, Heiga Zen, Rahma Orbay, Mostafa Dehghani, Jenny Brennan, Yifan He,
+Chaabouni, Mihaela Rosca, Jiepu Jiang, Charlie Kelvin Xu, Yang Gao, Carl Saroufim, James Mol-
+Chen, Ruibo Liu, Tara Sainath, Maxim Krikun, Alex loy, Xinyi Wu, Seb Arnold, Solomon Chang, Julian
+Polozov, Jean-Baptiste Lespiau, Josh Newlan, Zeyn- Schrittwieser, Elena Buchatskaya, Soroush Radpour,
+cep Cankara, Soo Kwak, Yunhan Xu, Phil Chen, Martin Polacek, Skye Giordano, Ankur Bapna, Si-
+Andy Coenen, Clemens Meyer, Katerina Tsihlas, mon Tokumine, Vincent Hellendoorn, Thibault Sot-
+Ada Ma, Juraj Gottweis, Jinwei Xing, Chenjie Gu, tiaux, Sarah Cogan, Aliaksei Severyn, Mohammad
+Jin Miao, Christian Frank, Zeynep Cankara, San- Saleh, Shantanu Thakoor, Laurent Shefey, Siyuan
+jay Ganapathy, Ishita Dasgupta, Steph Hughes-Fitt, Qiao, Meenu Gaba, Shuo yiin Chang, Craig Swanson,
+Heng Chen, David Reid, Keran Rong, Hongmin Fan, Biao Zhang, Benjamin Lee, Paul Kishan Rubenstein,
+Joost van Amersfoort, Vincent Zhuang, Aaron Cohen, Gan Song, Tom Kwiatkowski, Anna Koop, Ajay Kan-
+Shixiang Shane Gu, Anhad Mohananey, Anastasija nan, David Kao, Parker Schuh, Axel Stjerngren, Gol-
+Tlic, Taylor Tobin, John Wieting, Anna Bortsova, naz Ghiasi, Gena Gibson, Luke Vilnis, Ye Yuan, Fe-
+Phoebe Thacker, Emma Wang, Emily Caveness, lipe Tiengo Ferreira, Aishwarya Kamath, Ted Kli-
+Justin Chiu, Eren Sezener, Alex Kaskasoli, Steven menko, Ken Franko, Kefan Xiao, Indro Bhattacharya,
+
+
+--- Page 12 ---
+
+Miteyan Patel, Rui Wang, Alex Morris, Robin Strudel, Taylor, Jennifer Prendki, Marcus Wu, Tom Eccles,
+Vivek Sharma, Peter Choy, Sayed Hadi Hashemi, Jes- Tianqi Liu, Kavya Kopparapu, Francoise Beaufays,
+sica Landon, Mara Finkelstein, Priya Jhakra, Justin Christof Angermueller, Andreea Marzoca, Shourya
+Frye, Megan Barnes, Matthew Mauger, Dennis Daun, Sarcar, Hilal Dib, Jeff Stanway, Frank Perbet, Nejc
+Khuslen Baatarsukh, Matthew Tung, Wael Farhan, Trdin, Rachel Sterneck, Andrey Khorlin, Dinghua
+Henryk Michalewski, Fabio Viola, Felix de Chau- Li, Xihui Wu, Sonam Goenka, David Madras, Sasha
+mont Quitry, Charline Le Lan, Tom Hudson, Qingze Goldshtein, Willi Gierke, Tong Zhou, Yaxin Liu, Yan-
+Wang, Felix Fischer, Ivy Zheng, Elspeth White, Anca nie Liang, Anais White, Yunjie Li, Shreya Singh,
+Dragan, Jean baptiste Alayrac, Eric Ni, Alexander Sanaz Bahargam, Mark Epstein, Sujoy Basu, Li Lao,
+Pritzel, Adam Iwanicki, Michael Isard, Anna Bu- Adnan Ozturel, Carl Crous, Alex Zhai, Han Lu, Zora
+lanova, Lukas Zilka, Ethan Dyer, Devendra Sachan, Tung, Neeraj Gaur, Alanna Walton, Lucas Dixon,
+Srivatsan Srinivasan, Hannah Muckenhirn, Honglong Ming Zhang, Amir Globerson, Grant Uy, Andrew
+Cai, Amol Mandhane, Mukarram Tariq, Jack W. Rae, Bolt, Olivia Wiles, Milad Nasr, Ilia Shumailov, Marco
+Gary Wang, Kareem Ayoub, Nicholas FitzGerald, Selvi, Francesco Piccinno, Ricardo Aguilar, Sara
+Yao Zhao, Woohyun Han, Chris Alberti, Dan Gar- McCarthy, Misha Khalman, Mrinal Shukla, Vlado
+rette, Kashyap Krishnakumar, Mai Gimenez, Anselm Galic, John Carpenter, Kevin Villela, Haibin Zhang,
+Levskaya, Daniel Sohn, Josip Matak, Inaki Itur- Harry Richardson, James Martens, Matko Bosnjak,
+rate, Michael B. Chang, Jackie Xiang, Yuan Cao, Shreyas Rammohan Belle, Jeff Seibert, Mahmoud
+Nishant Ranka, Geoff Brown, Adrian Hutter, Va- Alnahlawi, Brian McWilliams, Sankalp Singh, An-
+hab Mirrokni, Nanxin Chen, Kaisheng Yao, Zoltan nie Louis, Wen Ding, Dan Popovici, Lenin Simi-
+Egyed, Francois Galilee, Tyler Liechty, Praveen cich, Laura Knight, Pulkit Mehta, Nishesh Gupta,
+Kallakuri, Evan Palmer, Sanjay Ghemawat, Jas- Chongyang Shi, Saaber Fatehi, Jovana Mitrovic, Alex
+mine Liu, David Tao, Chloe Thornton, Tim Green, Grills, Joseph Pagadora, Tsendsuren Munkhdalai,
+Mimi Jasarevic, Sharon Lin, Victor Cotruta, Yi-Xuan Dessie Petrova, Danielle Eisenbud, Zhishuai Zhang,
+Tan, Noah Fiedel, Hongkun Yu, Ed Chi, Alexan- Damion Yates, Bhavishya Mittal, Nilesh Tripuraneni,
+der Neitz, Jens Heitkaemper, Anu Sinha, Denny Yannis Assael, Thomas Brovelli, Prateek Jain, Miha-
+Zhou, Yi Sun, Charbel Kaed, Brice Hulse, Swa- jlo Velimirovic, Canfer Akbulut, Jiaqi Mu, Wolfgang
+roop Mishra, Maria Georgaki, Sneha Kudugunta, Macherey, Ravin Kumar, Jun Xu, Haroon Qureshi,
+Clement Farabet, Izhak Shafran, Daniel Vlasic, An- Gheorghe Comanici, Jeremy Wiesner, Zhitao Gong,
+ton Tsitsulin, Rajagopal Ananthanarayanan, Alen Anton Ruddock, Matthias Bauer, Nick Felt, Anirudh
+Carin, Guolong Su, Pei Sun, Shashank V, Gabriel GP, Anurag Arnab, Dustin Zelle, Jonas Rothfuss,
+Carvajal, Josef Broder, Iulia Comsa, Alena Repina, Bill Rosgen, Ashish Shenoy, Bryan Seybold, Xinjian
+William Wong, Warren Weilun Chen, Peter Hawkins, Li, Jayaram Mudigonda, Goker Erdogan, Jiawei Xia,
+Egor Filonov, Lucia Loher, Christoph Hirnschall, Jiri Simsa, Andrea Michi, Yi Yao, Christopher Yew,
+Weiyi Wang, Jingchen Ye, Andrea Burns, Hardie Steven Kan, Isaac Caswell, Carey Radebaugh, Andre
+Cate, Diana Gage Wright, Federico Piccinini, Lei Elisseeff, Pedro Valenzuela, Kay McKinney, Kim Pa-
+Zhang, Chu-Cheng Lin, Ionel Gog, Yana Kulizh- terson, Albert Cui, Eri Latorre-Chimoto, Solomon
+skaya, Ashwin Sreevatsa, Shuang Song, Luis C. Kim, William Zeng, Ken Durden, Priya Ponna-
+Cobo, Anand Iyer, Chetan Tekur, Guillermo Gar- palli, Tiberiu Sosea, Christopher A. Choquette-Choo,
+rido, Zhuyun Xiao, Rupert Kemp, Huaixiu Steven James Manyika, Brona Robenek, Harsha Vashisht,
+Zheng, Hui Li, Ananth Agarwal, Christel Ngani, Sebastien Pereira, Hoi Lam, Marko Velic, Denese
+Kati Goshvadi, Rebeca Santamaria-Fernandez, Woj- Owusu-Afriyie, Katherine Lee, Tolga Bolukbasi, Ali-
+ciech Fica, Xinyun Chen, Chris Gorgolewski, Sean cia Parrish, Shawn Lu, Jane Park, Balaji Venkatraman,
+Sun, Roopal Garg, Xinyu Ye, S. M. Ali Eslami, Alice Talbert, Lambert Rosique, Yuchung Cheng,
+Nan Hua, Jon Simon, Pratik Joshi, Yelin Kim, Ian Andrei Sozanschi, Adam Paszke, Praveen Kumar,
+Tenney, Sahitya Potluri, Lam Nguyen Thiet, Quan Jessica Austin, Lu Li, Khalid Salama, Bartek Perz,
+Yuan, Florian Luisier, Alexandra Chronopoulou, Sal- Wooyeol Kim, Nandita Dukkipati, Anthony Barysh-
+vatore Scellato, Praveen Srinivasan, Minmin Chen, nikov, Christos Kaplanis, XiangHai Sheng, Yuri Cher-
+Vinod Koverkathu, Valentin Dalibard, Yaming Xu, vonyi, Caglar Unlu, Diego de Las Casas, Harry
+Brennan Saeta, Keith Anderson, Thibault Sellam, Askham, Kathryn Tunyasuvunakool, Felix Gimeno,
+Nick Fernando, Fantine Huot, Junehyuk Jung, Mani Siim Poder, Chester Kwak, Matt Miecnikowski, Va-
+Varadarajan, Michael Quinn, Amit Raul, Maigo hab Mirrokni, Alek Dimitriev, Aaron Parisi, Dangyi
+Le, Ruslan Habalov, Jon Clark, Komal Jalan, Kale- Liu, Tomy Tsai, Toby Shevlane, Christina Kouridi,
+sha Bullard, Achintya Singhal, Thang Luong, Boyu Drew Garmon, Adrian Goedeckemeyer, Adam R.
+Wang, Sujeevan Rajayogam, Julian Eisenschlos, Brown, Anitha Vijayakumar, Ali Elqursh, Sadegh
+Johnson Jia, Daniel Finchelstein, Alex Yakubovich, Jazayeri, Jin Huang, Sara Mc Carthy, Jay Hoover,
+Daniel Balle, Michael Fink, Sameer Agarwal, Jing Li, Lucy Kim, Sandeep Kumar, Wei Chen, Courtney
+Dj Dvijotham, Shalini Pal, Kai Kang, Jaclyn Konzel- Biles, Garrett Bingham, Evan Rosen, Lisa Wang, Qi-
+mann, Jennifer Beattie, Olivier Dousse, Diane Wu, jun Tan, David Engel, Francesco Pongetti, Dario
+Remi Crocker, Chen Elkind, Siddhartha Reddy Jon- de Cesare, Dongseong Hwang, Lily Yu, Jennifer
+nalagadda, Jong Lee, Dan Holtmann-Rice, Krystal Pullman, Srini Narayanan, Kyle Levin, Siddharth
+Kallarackal, Rosanne Liu, Denis Vnukov, Neera Vats, Gopal, Megan Li, Asaf Aharoni, Trieu Trinh, Jes-
+Luca Invernizzi, Mohsen Jafari, Huanjie Zhou, Lilly sica Lo, Norman Casagrande, Roopali Vij, Loic
+
+
+--- Page 13 ---
+
+Matthey, Bramandia Ramadhana, Austin Matthews, Bachem, Oscar Chang, Oscar Wahltinez, Paige Bai-
+CJ Carey, Matthew Johnson, Kremena Goranova, Ro- ley, Paul Michel, Petko Yotov, Rahma Chaabouni,
+hin Shah, Shereen Ashraf, Kingshuk Dasgupta, Ras- Ramona Comanescu, Reena Jana, Rohan Anil, Ross
+mus Larsen, Yicheng Wang, Manish Reddy Vuyyuru, McIlroy, Ruibo Liu, Ryan Mullins, Samuel L Smith,
+Chong Jiang, Joana Tjazi, Kazuki Osawa, Celine Sebastian Borgeaud, Sertan Girgin, Sholto Douglas,
+Smith, Ramya Sree Boppana, Taylan Bilal, Yuma Shree Pandya, Siamak Shakeri, Soham De, Ted Kli-
+Koizumi, Ying Xu, Yasemin Altun, Nir Shabat, menko, Tom Hennigan, Vlad Feinberg, Wojciech
+Ben Bariach, Alex Korchemniy, Kiam Choo, Olaf Stokowiec, Yu hui Chen, Zafarali Ahmed, Zhitao
+Ronneberger, Chimezie Iwuanyanwu, Shubin Zhao, Gong, Tris Warkentin, Ludovic Peran, Minh Giang,
+David Soergel, Cho-Jui Hsieh, Irene Cai, Shariq Clément Farabet, Oriol Vinyals, Jeff Dean, Koray
+Iqbal, Martin Sundermeyer, Zhe Chen, Elie Bursztein, Kavukcuoglu, Demis Hassabis, Zoubin Ghahramani,
+Chaitanya Malaviya, Fadi Biadsy, Prakash Shroff, In- Douglas Eck, Joelle Barral, Fernando Pereira, Eli
+derjit Dhillon, Tejasi Latkar, Chris Dyer, Hannah Collins, Armand Joulin, Noah Fiedel, Evan Sen-
+Forbes, Massimo Nicosia, Vitaly Nikolaev, Somer ter, Alek Andreev, and Kathleen Kenealy. 2024b.
+Greene, Marin Georgiev, Pidong Wang, Nina Mar- Gemma: Open models based on gemini research and
+tin, Hanie Sedghi, John Zhang, Praseem Banzal, technology. Preprint, arXiv:2403.08295.
+Doug Fritz, Vikram Rao, Xuezhi Wang, Jiageng . . . .
+Zhang, Viorica Patraucean, Dayou Du, Igor Mor- Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+datch, Ivan Jurin, Lewis Liu, Ayush Dubey, Abhi Martinet, Marie-Anne Lachaux, Timothée Lacroix,
+Mohan, Janek Nowakowski, Vlad-Doru Ion, Nan Baptiste Roziére, Naman Goyal, Eric Hambro, Faisal
+Wei, Reiko Tojo, Maria Abi Raad, Drew A. Hud- Azhar, Aurelien Rodriguez, Armand Joulin, Edouard
+son, Vaishakh Keshava, Shubham Agrawal, Kevin Grave, and Guillaume Lample. 2023. Llama: Open
+Ramirez, Zhichun Wu, Hoang Nguyen, Ji Liu, Mad- and efficient foundation language models. Preprint,
+havi Sewak, Bryce Petrini, DongHyun Choi, Ivan arXiv:2302.13971.
+Philips, Ziyue Wang, Ioana Bica, Anku sh Garg, Qian Wang, Biao Zhang, Michael Birsak, and Peter
+Jarek Wilkiewicz, Priyanka Agrawal, Xiaowei Li, Wonka. 2023. Instructedit: Improvine automatic
+Danhao Guo, Emily Xue, Naseer Shaik, Andrew one Sep . Prowse au
+: . masks for diffusion-based image editing with user
+Leach, Sadh MNM Khan, Julia Wiesinger, Sammy instructions. Preprint, arXiv:2305.18047
+Jerome, Abhishek Chakladar, Alek Wenjiao Wang, , , , , ,
+Tina Ornduff, Folake Abu, Alireza Ghaffarkhah, Mar- Kai Zhang, Lingbo Mo, Wenhu Chen, Huan Sun, and
+cus Wainwright, Mario Cortes, Frederick Liu, Joshua Yu Su. 2024a. Magicbrush: A manually anno-
+Maynez, Andreas Terzis, Pouya Samangouei, Ri- tated dataset for instruction-guided image editing.
+ham Mansour, Tomasz Kepa, Fran¢ois-Xavier Aubet, Preprint, arXiv:2306.10012.
+Anton Algymr, Dan Banica, Agoston Weisz, An-
+dras Orban, Alexandre Senges, Ewa Andrejczuk, Shu Zhang, Xinyi Yang, Yihao Feng, Can Qin, Chia-
+Mark Geller, Niccolo Dal Santo, Valentin Anklin, Chih Chen, Ning Yu, Zeyuan Chen, Huan Wang,
+Majd Al Merey, Martin Baeuml, Trevor Strohman, Silvio Savarese, Stefano Ermon, Caiming Xiong,
+Junwen Bai, Slav Petrov, Yonghui Wu, Demis Has- and Ran Xu. 2024b. Hive: Harnessing human
+sabis, Koray Kavukcuoglu, Jeff Dean, and Oriol feedback for instructional visual editing. Preprint,
+Vinyals. 2024a. Gemini 1.5: Unlocking multimodal arXiv:2303.09618.
+understanding across millions of tokens of context. a .
+Preprint, arXiv:2403.05530. Wanrong Zhu, Ruiyi Zhang, Jennifer Healey,
+William Yang Wang, and Tong Sun. 2024. Automatic
+Gemma Team, Thomas Mesnard, Cassidy Hardin, layout planning for visually-rich documents with
+Robert Dadashi, Surya Bhupatiraju, Shreya Pathak, instruction-following models. In Proceedings of
+Laurent Sifre, Morgane Riviére, Mihir Sanjay the 3rd Workshop on Advances in Language and
+Kale, Juliette Love, Pouya Tafti, Léonard Hussenot, Vision Research (ALVR), pages 167-172, Bangkok,
+Pier Giuseppe Sessa, Aakanksha Chowdhery, Adam Thailand. Association for Computational Linguistics.
+Roberts, Aditya Barua, Alex Botev, Alex Castro-
+Ros, Ambrose Slone, Amélie Héliou, Andrea Tac-
+chetti, Anna Bulanova, Antonia Paterson, Beth Tsai,
+Bobak Shahriari, Charline Le Lan, Christopher A.
+Choquette-Choo, Clément Crepy, Daniel Cer, Daphne
+Ippolito, David Reid, Elena Buchatskaya, Eric Ni,
+Eric Noland, Geng Yan, George Tucker, George-
+Christian Muraru, Grigory Rozhdestvenskiy, Hen-
+ryk Michalewski, Ian Tenney, Ivan Grishchenko,
+Jacob Austin, James Keeling, Jane Labanowski,
+Jean-Baptiste Lespiau, Jeff Stanway, Jenny Bren-
+nan, Jeremy Chen, Johan Ferret, Justin Chiu, Justin
+Mao-Jones, Katherine Lee, Kathy Yu, Katie Milli-
+can, Lars Lowe Sjoesund, Lisa Lee, Lucas Dixon,
+Machel Reid, Maciej Mikuta, Mateo Wirth, Michael
+Sharman, Nikolai Chinaev, Nithum Thain, Olivier
+
+
+--- Page 14 ---
+
+8 Appendix minimal overlap or misalignment. Websites perform
+; ; oy ; slightly worse (4.18), while natural images show lower
+We organize the app endix section into subsections to plan fidelity (3.70) and higher error scores, often due to
+furnish additional details supporting our claims: : : :
+weak grounding and spatial realism.
+— Human Evaluation to derive the motivation of our These results highlight a key gap in current models:
+research (Appendix 9) while structured edits propagate well in posters and web
+— Related Works (Appendix 10) layouts, plan-grounded editing in natural images is hin-
+— SMARTEdit-Bench Statistics dered by poor affordance reasoning and visual ground-
+— SMART-Editor Methodology (Appendix 11) ing. Importantly, failures identified by annotators—such
+- Preprocessing Details of Images in as “misplaced added sections,” “overlap with titles,” or
+SMARTEdit-Bench (Posters, Websites, “Semantic drift in relocated content”—correlate with
+Natural Images (Appendix 11.1) quantitative penalties from our reward functions.
+— Edit Instruction Taxonomy (Appendix 11.2) Setup. We selected 30 representative edit examples
+- Action Agent Details (Appendix 11.3) per domain (posters, websites, natural images). For
+— Critique Agent Details (Appendix 11.4) each, we showed three expert annotators: (a) the input
+— Optimizer Agent Details (Appendix 11.5) layout or image, (b) the edit instruction, (c) the plan
+— Implementation and Evaluation (Appendix 12) generated by the VLM/LLM, and (d) the final output
+— Reference-Free Metrics (Appendix 12.1) after applying the generated plan through command and
+execution steps.
+— Reference-Based Evaluation Metrics on Struc-
+tured Images (Appendix 12.2) Metrics. Annotators rated (1) how well the final
+— Reference-Based Evaluation Metrics on Un- Utput reflected the intended plan (Plan-to-Execution
+Structured Images (Appendix 12.3) Match), and (2) the presence of overlap or misalignment
+. . based on visual inspection and design conventions (1-5
+— Baseline Inference Prompting and Model De-
+tails (Appendix 12.5) scale). Scores were averaged across annotators.
+— Composite Reward for Evaluation (Ap- Participants. Three PhD-level design experts with
+pendix 12.4) prior experience in scientific poster creation and multi-
+— DPO Implementation and Hyperparameters (Ap- _ Modal editing workflows.
+pendix 12.6) Findings. Structured domains (posters, websites) ex-
+— Additional Results on Automatic Evaluation (Ap- hibited strong plan adherence and minimal reward viola-
+pendix 13) tions (Table 7). In contrast, image-based edits suffered
+— Reference-Based Evaluation on Websites and —_ from object overlap, layout incoherence, and incon-
+Posters (Table 12, Table 17) sistencies between plan and outcome, reflecting weak
+— Impact of Training Data in DPO (Ap- model grounding in unstructured visual tasks.
+pendix 13.1)
+— Impact of Beam Search Iteration (Ap- 10 Related Work
+pendix 13.2) Our work intersects multiple areas of research, including
+- Ablation of Reward Components in Re- _ instruction-based image editing, layout and structure-
+wardRefine Approach (Appendix 13.3) preserving generation, and cascading edit reasoning.
+— Human Evaluation instructions and Consent Forms We organize the discussion into four main categories:
+(Section 14) (1) Instruction-Based Image Editing, (2) Structured
+Layout Editing, (3) Compositional and Cascading
+9 Human Evaluation for Motivation Reasoning, and (4) Programmatic and Code-Based
+. Edit Modeling.
+To assess whether the edit plans generated by VLMs
+and LLMs translate into coherent and reward-aligned _Instruction-Based Image _ Editing. Instruction-
+edits, we conduct a human evaluation across 30 exam- _— guided image editing has emerged as a key task to
+ples in each domain (Posters, Websites, Natural Im- — enable intuitive human-AI interaction. Early models
+ages). For each sample, we provide human annotators __ such as InstructPix2Pix (Brooks et al., 2023) pioneered
+(3 PhD students with design expertise) with the original _ fine-tuning diffusion models using instruction—image
+image/layout, the model-generated plan, and the final _— pairs generated by LLMs. However, their reliance
+layout/output after plan-to-command execution. on synthetic data often introduced hallucinations or
+Annotators rate: (i) how well the plan aligns with — poor alignment. Recent datasets aim to address these
+the observed edit (Plan-to-Execution Match, 1-5), and limitations. HumanEdit (Bai et al., 2025) introduces
+(ii) the degree of overlap and alignment errors in the —_a high-quality, human-rewarded dataset of over 5,000
+final layout (1-5, lower is worse). As shown in Table 7, | examples with edit masks and naturalistic instructions
+posters show the highest alignment (avg. 4.45), with across six fine-grained types (e.g., ‘Add a butterfly,”
+
+
+--- Page 15 ---
+
+Domain Plan-to-Execution Match (1-5) Avg. Overlap Violation Avg. Alignment Error
+Posters 4.45 £0.31 1.22 + 0.45 1.40 + 0.51
+Websites 4.18 + 0.39 1.50 + 0.62 1.68 + 0.58
+Natural Images 3.70 + 0.55 2.10 + 0.70 1.90 + 0.65
+Table 7: Human evaluation of plan-to-execution consistency and reward function failures (rated 1-5) across 30
+samples per domain by 3 expert annotators. Lower scores indicate more frequent violations.
+‘Reduce grapes from 3 to 2”). HQ-Edit (Hui et al., | icBench) focus on agent planning and multimodal syn-
+2024) scales up this vision by synthetically generating thesis but do not evaluate how edits cascade through a
+200,000 edit pairs using GPT-4V and DALLE 3 with _ layout. To this end, we introduce SMARTEditBench,
+enhanced instruction diversity and layout coherence via —_ a benchmark for testing whether multimodal LLMs can
+post-processing. It introduces alignment and coherence handle compositional reasoning in edits—e.g., does
+metrics to assess semantic fidelity. However, both repositioning one figure preserve alignment with its
+focus on visual realism and localized edits, without caption? Can adding a section reorder surrounding el-
+modeling or evaluating how edits should propagate | ements semantically? Our method evaluates edits in
+structurally across interdependent layout elements. _ structured settings like posters, web layouts, and scenes
+Other image-editing systems, such as MagicBrush __ using metrics like semantic ordering, spatial overlap,
+(Zhang et al., 2024a), HIVE (Zhang et al., 2024b) _ and visual alignment. This direction is loosely inspired
+and SEED-Data-Edit (Ge et al., 2024), fine-tune by structured editing tasks in other modalities, such as
+LDMs for instruction-following using structured or semantic parsing with structured outputs, but uniquely
+crowd-annotated masks. While these methods improve _ adapted for visual-semantic alignment and layout rea-
+local edit adherence, they do not address whether soning.
+cascading implications of edits are correctly realized
+in a structured scene or layout. Programmatic Editing and Code-Driven Reason-
+ing. Recent research investigates editing behaviors
+Structured Layout Generation Structured layout | Over code or structured representations. Instruction-
+generation has gained attention for tasks such as UI _ following models for code editing (e.g., CodeX (Chen
+prototyping, poster generation, and scientific visualiza- _ ¢t al., 2021), InCoder (Fried et al., 2023)) have demon-
+tion. Models like LayoutGAN (Li et al., 2019), Lay- _Strated impressive reasoning about insertion, deletion,
+out VAE (Jyothi et al., 2021), and LayoutTransformer —_ 2nd reordering in code. In a similar vein, some web-
+(Chai et al., 2023) learned to place elements based on _ editing models like EditNet (Li et al., 2022) predict edit
+supervised geometric and semantic patterns. actions over HTML based on goal descriptions. In the
+With the rise of LLMs, LayoutGPT (Feng et al., vision domain, LayoutGPT (Feng et al., 2023b) uses a
+2023b) proposed using LLMs to serve as visual plan- stylesheet-style intermediate representation to enable
+ners by converting textual instructions into HTML-style compositional planning. Our work draws on these in-
+structured layouts. Similarly, LayoutCoT (Shi et al., sights and applies them to layout editing, where bound-
+2025) demonstrates that CoT reasoning and retrieval- 19g box structures and section types must be jointly up-
+augmented generation can help LLMs improve align- dated to follow instructions while preserving document
+ment and visual coherence in layout generation. How- integrity. In contrast to prior work focused on local-
+ever, both target layout synthesis, not iterative layout ized edits, synthetic instruction adherence, or single-
+editing, and lack evaluation mechanisms for edit propa- _ St€P generation, our framework evaluates whether mul-
+gation. SciPostLayout (Tanaka et al., 2024) introduces _timodal models can perform cascading, multi-element,
+a dataset of scientific poster layouts, enabling research instruction-based layout refinement. We propose a
+into layout understanding. Yet it focuses on static lay- 2° benchmark (SMARTEditBench), and evaluation pro-
+out prediction and lacks instructional editing or rea- _ tcl to test whether edits to one element propagate
+soning evaluation. InstructEdit (Wang et al., 2023) logically and semantically across a structured scene or
+explores using instructions to guide edits, optimizing  4ocument.
+for downstream engagement (social media) or using
+segmentation for precise control. These approaches are 11 SMART-Editor Methodology
+instructive for our work but again, they operate at the 11.1 Preprocessing Details
+pixel-level or object-level, not layout-structure.
+To enable structured layout reasoning across diverse
+Compositional and Cascading Reasoning in Lay- _ input formats, we apply modality-specific preprocessing
+outs Humans perform layout edits not just locally, techniques to convert unstructured inputs into a unified
+but with global awareness—adding a new section may __ representation: a set of objects or sections, each with a
+require shifting others, updating order, and maintaining bounding box and textual content. Below we describe
+alignment. Existing editing benchmarks (e.g.,Graph- the processing pipeline for each modality: To enable
+
+
+--- Page 16 ---
+
+structured layout reasoning across diverse input formats, —_ particularly challenging for models that rely on direct
+we adopt modality-specific preprocessing pipelines that | decoding without structural reasoning. This taxonomy
+convert raw visual or web-based inputs into a unified informs our design of evaluation settings and is central
+representation consisting of objects or sections with to motivating the need for structured, multi-step editing
+associated bounding boxes and textual content. pipelines like SMART-Editor.
+
+For natural images, we begin with a raw image and . .
+a textual edit instruction (e. o “Add a cat on the left") 11.3 Action Agent Details
+We use spaCy to extract noun phrases from the instruc- | The action agents takes in the layout and content ex-
+tion, which are then treated as grounding targets for tracted from an image, translates the implicitly specified
+Grounding DINO (Ren et al., 2024). The detected re- edit instruction in the layout-content space into verbal
+gions are further refined using the Segment Anything _—_action plan, next the actions are transformed into spe-
+Model (SAM) (Kirillov et al., 2023), which improves cific modular functions (Description of modular func-
+the quality of object-level masks and bounding boxes. tions in _ 10 and the implementation of each of these
+This process yields a set of annotated objects with pre- functions are in ALgorithm 3, ALgorithm 4, ALgo-
+cise spatial regions and semantic labels. rithm 5 and ALgorithm 6) which when executed should
+
+For scientific posters, we leverage GPT-40 to ex- _ lead to the refined layout-content output.
+tract structured layout elements directly from poster . .
+screenshots or PDF renderings. We prompt the model Prompt: Action Plan Generation
+with a query such as: “Given this poster, identify all You are provided with a structured layout consisting
+distinct rectangular sections and provide their bound- of pounding boxes and their associated section labels,
+ing boxes and associated content in the format {section along with an edit instruction that specifies how the
+name: [xl, yl, x2, y2], content: "..." }”. GPT-40 re- _—_Jayout should be changed.
+turns a structured layout with section-wise bounding Your task is to generate a clear and concise step-by-
+boxes and corresponding textual descriptions, enabling _ step action plan in natural language that explains:
+layout-aware downstream reasoning.
+
+For websites, we parse HTML DOM tree using tools e Which specific sections need to be added, removed,
+such as BeautifulSoup or 1xml to extract key struc- or modified.
+tural components, including headers, navigation bars, * What geometric adjustments are required, such as
+content blocks, and sidebars. We retrieve the text con- moving, resizing, or swapping sections.
+tent for each major DOM node and estimate their bound-
+ing boxes using browser-based rendering APIs (e.g., via ¢ The reasoning behind these changes, ensuring that
+Playwright or headless browser utilities). The result layout coherence is preserved—for example, avoid-
+is a structured mapping from each layout region to its ing overlaps or maintaining narrative flow.
+geometric footprint and textual content, making it com- . .
+patible with layout editing models. Edit Instruction:
+
+{edit_instruction}
+
+11.2 Edit Instruction Taxonomy Initial Layout:
+Table 9 provides illustrative examples of edit instruc- {1 nitial_lay out} : : :
+tions spanning diverse modalities (posters, websites, (Each entry includes a section ID, bounding box coordi-
+and natural images), each annotated with a correspond-  "!€S v0, Yo, 1, yi], and a section label.)
+ing taxonomy of edit type, degree of explicitness, and Expected Output:
+need for cascaded changes. We distinguish between five Write a natural language action plan describing the se-
+types of structural edits: Section Reordering, Section —_ mantic and spatial edits needed to fulfill the instruction.
+Insertion, Object Replacement, Content Grouping, — Avoid code or structured formats—this should be a ver-
+and Section Deletion. These edit types are frequently _ bal plan intended for a layout editing agent to interpret
+encountered across structured and unstructured domains and execute.
+in our benchmark. An important dimension captured
+in this table is implicitness—i.e., how much of the re-
+quired layout or content adjustment is left unstated in You will be provided with an action plan correspond-
+the instruction. For instance, even simple insertions ing to an edit instruction {edit_instruction} anda
+(e.g., adding a section) demand implicit reasoning about set of target geometric actions. Your job is to convert
+placement and formatting, while object replacement in the plan into steps of geometric actions that would be
+natural images often assumes background compatibility integrated into the code sequentially.
+and spatial realism. We also highlight whether edits Action Plan (in words)
+cause cascaded changes—that is, whether making the {Action_plan}
+instructed change necessitates updates to surrounding Geometric Action Codes
+layout structure, alignment, or spacing. Most implicit in-
+structions lead to cascaded layout effects, making them
+
+
+--- Page 17 ---
+
+“Domain ——~C«Sits”-—«“—=ss=—ti« Source ——<i‘é Annotations:
+Webpages (Real) 564 GitHub + GPT-4V Edit Type + Reasoning (Gold Edited Output)
+Webpages (Synthetic) 510 Design2Code + GPT-40 Edit Type + Reasoning (Gold Edited Output)
+
+Posters (Synthetic) 1,200  SciPostLayout+ GPT-40 Edit Type + Reasoning (No Gold Edited Output)
+Posters (Human Eval) 250 Expert-Tagged Posters Gold Edited Output
+Natural Images — HQ-Edit (Scene Edits) Object-Level Semantics (Gold Edited Output)
+Table 8: Composition of SMARTEditBench across modalities and sources.
+Edit Instruction Taxonomy Modality How is it Implicit? Cascaded
+Change?
+Move the "Results" sec- Section Reordering Poster Requires understanding of scientific dis- Yes
+tion above "Methods" course order (Results should follow
+Methods)
+Add a section describing Section Insertion Website Implies structural addition and reflowing Yes
+ongoing research projects of layout without stating exact position
+below the About section or formatting
+Replace the "silver Object Replacement Natural Requires inferring spatial placement Yes
+teapot" with a "sleeping Image (e.g., "on table"), relative size, and plau-
+tabby cat" in the image sibility
+Group all job experiences Content Grouping Website Suggests structural reorganization with- Yes
+by company to make the out detailing how the layout should shift
+layout more readable
+Remove the References Section Deletion Poster Directly states which section to delete, Yes
+section but doesn’t specify consequences on lay-
+out alignment or spacing
+Table 9: Examples of edit instructions with associated taxonomy, modality, nature of implicit reasoning, and whether
+the edit requires cascaded changes.
+. . ¢ Edit Adherence (EA): Determines whether the
+{geometric_actions} . . . :
+edited image faithfully executes the textual instruc-
+Initial Se tion. Agents examine both the visual edit and the
+{initial layout} original instruction to rate adherence on a scale
+Output Format from 1 (failed to follow) to 5 (precise execution).
+Format your output as a list of JSON objects contain-
+ing the sequence of target action APIs by filling in the ¢ Semantic Match (CLIP Similarity): Uses CLIP-
+real values of parameters inside the functions. Do not based cosine similarity to assess alignment be-
+output anything else. ; tween the instruction and the resulting image.
+The output should match the exact format in the Geo- Avent id biect t d
+metric Action Codes, for example: gents consider Object presence, type, and con-
+snap_to_grid(layout: Layout, section_id: textual placement.
+str, grid_unit) . . .
+resize_section(layout: Layout, section_id, * Object Realism: Judges whether objects appear
+scale_x, scale_y) naturally scaled and spatially integrated within the
+Each output JSON object must contain two keys: scene. Edits that result in unrealistic overlaps,
+action and parameters. floatation, or unnatural proportions receive lower
+scores.
+11.4 Critique Agent Details * Depth and Occlusion: Evaluates the spatial lay-
+.. ering of objects. If any object appears visually
+11.4.1 Critiques for Unstructured Images inconsistent (e.g., floating, occluded unnaturally),
+To evaluate image edits in unstructured domains (e.g., the agent marks the edit as implausible.
+natural images), we introduce a suite of critique agents Critique Prompting Protocol For each edited image,
+that analyze various dimensions of visual quality, se- .
+: : : . . we gather the following:
+mantic fidelity, and instruction alignment. These agents
+leverage both automated metrics and LLM-based rea- * Instruction used for editing
+soning to generate fine-grained, actionable feedback. + Edited image (visual or VLM-encoded)
+These agents are based on the way it is specified in Ap-
+pendix 12.3. Each critique agent is assigned to evaluate ¢ Per-dimension scores (1—5 scale or cosine similar-
+one axis of visual quality: ity)
+
+
+--- Page 18 ---
+
+Function Description Example LaTeX Symbolic Form
+translate_object Shifts a section’s position by Az, Translate METHODS by  bbox’ = bbox + (Az, Ay)
+Ay. (0, +100)
+resize_object Scales the width and height of a Resize PLOT 1 by (sz = __ bbox’ = scale(bbox, sz, sy)
+section by sz, Sy. 1.2, sy = 0.8)
+align_object_left Aligns the left edge of a section Align BACKGROUND to x} = Xref, 2 = Vrep + wW
+to areference x. x = 30
+center_object Centers the section horizontally Center a = "wh =z i+w
+within canvas width W. ACKNOWLEDGEMENTS
+on canvas of width 1080
+snap_to_grid Snaps bbox edges to nearest grid Snap REFERENCES to grid 2, =6- | = + 0.5|
+unit 6. of 20px
+insert_object Inserts a new section with given Insert SUMMARY at — layout|s] = {bbox, text}
+bbox and text. [100, 500, 400, 580]
+remove_object Deletes a section from layout by Remove INTRODUCTION layout = layout \ {s}
+ID.
+replace_object_bbox Replaces the bbox of a section Replace METHODS bbox to —_layout|s].bbox +
+with a new one. (50, 400, 480, 500] new_bbox
+reorder_objects Reorders sections top-down with Reorder [INTRO, METHOD, y; = yo + ri (hy + Ypad)
+optional spacing. RESULT] with Ypaa = 20
+update_object_text Updates the text content of asec- Update RESULT text to  layout|s].text ~— new_text
+tion. “New findings here.”
+Table 10: Layout editing functions with their semantic descriptions, practical examples, and symbolic representations.
+All the implementation algorithms are listed in Algorithm 1-4.
+The critique agent is prompted as follows: spatial and semantic alignment of layout edits with the
+. instructional goal. Each agent receives the edit trace (in-
+You are a critique agent. The struction, initial layout, final layout), computed reward
+instruction was: "Add a coffee cup on scores, and generates targeted, actionable feedback.
+the table.” You are provided with:
+Critique Dimensions Each critique agent is respon-
+* Edited Image: Limage or feature sible for one of the following layout quality metrics as
+representation] calculated in Appendix 12.1. Each agent is provided
+e Adherence Score: 4 with the following:
+* Semantic Match (CLIP): 0.72 . . . .
+. ; ( ) ¢ Edit Instruction: Natural language instruction
+* Object Realism Score: 3 (e.g., “Move Results above Methods”’)
+* Depth/Occlusion Score: 2
+* Layout JSONs: Initial and edited layouts with
+For each dimension, describe (a) bounding boxes and content
+what went well, (b) what went wrong,
+and (c) one specific suggestion to ¢ Reward Values: Pre-computed scores from layout
+improve the edit. Output a structured evaluators (e.g., overlap, alignment)
+critique across all dimensions. wo. .
+q 11.5 Optimizer Agent Details
+The agent returns feedback in a structured JSON format, 42 Implementation and Evaluation
+identifying strengths and weaknesses in each dimension. Details
+This feedback is used to guide model refinement or
+generate revision plans in downstream modules. 12.1 Reference-Free Evaluation
+Composite Reward and Feedback Trace. The com- In Table 2, we have used the following reference-free
+posite reward for an unstructured image is computed metrics/rewards to calculate which do not assume any
+by summing the individual dimension scores. Critique gold-standard image to compare.
+agents trace the reward breakdown to pinpoint low- 1. Edit Adherence (EA) Evaluation
+performing aspects, providing a transparent rationale
+for model evaluation and improvement. You are given a layout editing task. Based on the
+we . Edit Instruction, the system updates the layout
+11.4.2 Critiques for Structured Image Edits and content. You are asked to rate how faithfully
+To evaluate structured document layouts such as posters the instruction was followed.
+and websites, we design critique agents that assess both
+
+
+--- Page 19 ---
+
+Edit Instruction: <Insert instruction Overlap Penalty (OvIp). It quantifies undesirable vi-
+here> sual collisions between elements. For every pair of lay-
+out components (b;,b;), the intersection-over-union
+(IoU) is computed if they overlap, and accumulated as a
+Initial Layout and Content: penalty. This discourages any spatial overlap that could
+<Insert JSON-like structure for layout hinder readability or visual clarity.
+and section content before edit>
+Whitespace Penalty (Wspc). It inefficient use of lay-
+out space. It is defined as
+Final Layout and Content:
+<Insert JSON-like structure for layout 1 Aased
+and section content after edit> A canvas
+where Ajseq is the total area of layout boxes and A canvas
+Question: On a scale from | to 5, how well does is the total canvas area. This encourages layouts to use
+the final layout implement the edit instruction? space compactly, without excessive gaps that reduce
+visual coherence.
+1: Edit is incorrect or missing.
+3: Edit partially follows the instruction. Alignment Reward (Algn). It encourages the visually
+aligned layouts by rewarding sections whose left edges
+5: Edit fully implements the instruction as in- fall on predefined grid lines. Let x; be the left edge
+tended. of bounding box b;. Then, the alignment reward is
+computed as
+Your Response: Ny
+Score (1-5): ____ Justification: Patien = + 3 [x mod grid = 0]
+where JV is the total number of layout components.
+This promotes clean and structured alignment across the
+layout.
+Narrative Coherence (Narr.) Evaluation. To evalu- 12.2 Reference-Based Evaluation Prompts on
+ate the Narrative Coherence (Narr.) (7sem) evaluates .
+. . Structured Domains
+whether the edited layout preserves the top-down logical
+structure of a document (e.g., Background + Methods __ In this section, we discuss about the different evaluation
+—> Results). For each pair of expected section orders metrics that we use to compare the model-edited images
+(Si, Sj), GPT-40 is prompted with: “Does section S; with the human-edited images (gold-standard) on the
+logically precede section S;?”. A violation is counted structured domains of images such as posters and web-
+if the answer is negative. The final reward is computed Sites SMARTEdit-Bench-Posters and SMARTEdit-
+as Bench-Websites respectively. To evaluate, we use the
+Tem = 1 — a following prompts using GPT4-o as Judge as mentioned
+: |O| below, and the results are tabulated in Table 12 and
+where v is the number of violations and O is the set of Table 17.
+all ordered section pairs. This reward ensures that edits
+do not disrupt the logical reading flow of the content
+(Refer to Examples in Table 11). Compare the model-edited layout and content
+Cross-Sectional Consistency Evaluation. (7c0s;) with a human-edited (gold) version.
+measures whether semantically linked content—such Instruction: "Move Results above Methods"
+as figures and their captions or methods and re- Model Output: ...
+sults—remain meaningfully consistent. GPT-4o is Gold Output. ...
+treated as a natural language inference model, where Task: Rate semantic consistency on a scale from
+each section pair (.5;,.5;) is evaluated for entailment. If 1 (completely misaligned) to 5 (semantically
+GPT-4o0 detects a semantic contradiction, it is counted faithful to the gold).
+as a violation. The reward is defined as
+Yeross = 1 — —
+Ig Compare the spatial arrangement and section or-
+where c is the number of contradictions and G is the set der of the model-edited layout to the gold layout.
+of grouped section pairs. This metric ensures semantic Ignore text content; focus only on structural sim-
+alignment across logically related content blocks (Refer ilarity.
+to Examples in Table 11).
+
+
+--- Page 20 ---
+
+Metric | Description (GPT-40-Inferred)
+
+Narrative Coherence Assesses whether the document follows a top-down logical structure (e.g., Back-
+ground —> Methods — Results). For each section pair (5;, S;) in the expected order,
+GPT-40 is prompted with: “Does the content of section ‘5; ‘ logically precede section
+“S;‘?”. If GPT-40 responds “no,” the pair is marked as a violation. The final reward
+
+is computed as rsem = 1 — jor where v is the number of violations and © is the set
+of expected pairs.
+
+Cross-Sectional Consistency Measures semantic contradictions across grouped section pairs (e.g., Figure and its
+Caption, or Methods and Results). GPT-40 is used as an NLI model: section S;
+serves as the premise, S; as the hypothesis. It is prompted to determine whether the
+pair is entailed, neutral, or contradictory. If the label is “contradiction,” it is counted
+as a violation. The reward is defined as Teross = 1 — Tan where c is the number of
+contradictions and G is the set of grouped section pairs.
+
+Table 11: Description of semantic reward metrics inferred using GPT-4o.
+
+Model Layout: ...
+
+Gold Layout: ... Check if the edited image contains objects that
+
+Rate similarity from 1 (very different) to 5 appear too large, too small, or overlap unnatu-
+
+(nearly identical). rally.
+
+Instruction: “Add a coffee cup on the table”
+Image: [generated]
+12.3 Reference Based Evaluation on Unstructured Rate from 1 (poor realism) to 5 (realistic ob-
+Images ject size and spatial integration).
+In this section, we discuss about the different evaluation
+metrics that we use to compare the model-edited images
+with the human-edited images (gold-standard) on the . . :
+natural images in SMARTEdit-Bench-Natural Images. Evaluate whether the spatial layering of objects
+To evaluate, we use the following prompts using GPT4- appears natural. Are any objects unnaturally
+o as Judge as mentioned below, and the results are in floating, occluded, or visually inconsistent?
+Table 3. Edited Image: [image]
+Rate from 1 (unrealistic occlusion or depth)
+to 5 (physically plausible arrangement).
+
+Given an image edit instruction and a generated 12.4 Composite Reward Calculation for
+
+image, assess whether the instruction was accu- Structured and Unstructured Images
+
+rately followed. .
+
+Instruction: "Replace the tiger with a small cat In the case of natural images (unstructured), the Com-
+
+on the right side." posite Reward used in Figure 4 evaluates whether the
+
+Edited Image: [VLM View or Image ID] edited image aligns with user intent and preserves visual
+
+Reference (Gold): [Reference Image or CLIP realism. It combines all the rewards mentioned in Sec-
+
+Caption] tion 12.3. The VLM generated scores are in the range
+
+Rate from 1 (failed to follow) to 5 (precise and of 1-5. These are summed to yield the final score which
+
+faithful execution). ensures that image edits remain semantically faithful,
+
+physically grounded, and visually plausible. And in the
+case of posters and websites (structured), the Compos-
+ite Reward used in Figure 4 combines all the rewards
+and penalties mentioned in Section 12.1.
+
+Compute the CLIP similarity between the tex-
+
+tual instruction and the generated image. Use 12.5 Baseline Inference Prompting and Model
+
+this to judge whether the object(s), their type, Details
+
+and placement are semantically aligned with the
+
+intent.
+
+Instruction: “Add a dog sitting under a tree” You are a layout editing assistant. Your task is
+
+Image: [CLIP-encoded] to update the structure of a poster or webpage
+
+Score: cosine similarity between instruction and layout in response to a human instruction. In-
+
+image features. struction: Move the Results section above
+
+Methods
+
+
+--- Page 21 ---
+
+Initial Layout: {Initial_layout} ing settings:
+Initial Content: {Initial_Content} * max_new_tokens = 1024
+Output: Return the updated layout as a JSON
+dictionary. Do not explain your answer. e temperature = Q.7
+* top_p = 0.9, top_k = 50
+* repetition_penalty = 1.1
+You are a layout editor that follows human de- * do_sample = True, num_beams = 1
+sign principles. Think step-by-step to apply the
+edit instruction to the layout. Special Use Cases. For REWARD-REFINE, we enable
+Instruction: Insert a new section titled num_beams = 5 to allow multi-candidate sampling. For
+Discussion below Results VLMs such as LLaVA or GPT-40, structured visual
+Initial Layout: {Initial_layout} layouts are encoded as textual descriptions of bounding
+Step-by-Step: 1. The instruction asks to insert boxes and section names when images are not directly
+"Discussion" below "Results". available.
+2. "Results" ends at y=500. .
+3. Allocate a height of 100 for the new section. 12.6 DPO Implementation and Hyperparameters
+4. Add new bounding box for "Discussion": [Q, For DPO _ training, we fine-tuned _ both
+500, 768, 600] LLaMA-3-8B-Instruct and Gemma-2-9B-It  us-
+Updated Layout: {Updated_layout} ing full-parameter tuning across all layers. We
+employed a sigmoid-based preference loss with
+8 =0.1, a learning rate of 5 x 10~7 with cosine decay,
+and a warmup over 10% of total steps. Training was
+run for 3 epochs with a batch size of | and gradient
+You are a layout editing assistant. Your task is to accumulation steps of 8. We used bfloat16 precision
+revise the layout structure based on edit instruc- and optimized training efficiency with DeepSpeed
+tions, layout geometry, and section content. ZeRO Stage 3. Model evaluation was performed every
+— Example 1 — 100 steps, and logs were recorded every 10 steps to
+monitor convergence behavior. Training was conducted
+— Example 2 — on 4 A100 80GB GPUs and took approximately 5
+GPU-hours per model. The total compute budget,
+— Now You Try — including data preprocessing and reward-based filtering,
+Instruction: Swap Methods and _ Study was approximately 20 GPU-hours.
+Participants
+Initial Layout: {Initial_layout} 13. Additional Results on Automatic
+Initial Content: {Initial_Content} Evaluation
+Output: Provide updated layout only.
+13.1 Impact of Training Data in DPO
+Inference Settings We evaluate the performance of To assess how much preference data is required for effec-
+LLMs and VLMs on layout and content editing using "Ve reward-based fine-tuning, we conduct an ablation
+a consistent set of inference-time hyperparameters. Ta- Study varying the number of traning pairs used in Re-
+ble summarizes the decoding configurations used for wardDPO across posters, websites, and natural images.
+each model. For HuggingFace-hosted models such as 4S Shown in Table 14, performance improves steadily as
+Gemma (gemma-2-9b-it) (2), LLama (Llama-3.2-3B- training data increases from 1.2k (10%) to 4k (30-35%),
+Instruct)?, Qwen 4), LLaVA (LLava-1.5-7b 5, we follow but plateaus beyond that. Notably, models trained with
+standard generation protocols. For GPT-40 and Gemini- Just 4k preference pairs achieve near-saturation in all
+Pro, we rely on their respective APIs. domains, yielding 97-99% of the gains observed with
+the full 12k set. For structured domains like posters and
+Default Generation Configuration. Unless other- websites, edit adherence (EA), semantic consistency
+wise specified, models are run with the following decod- (SC), and layout similarity (LS) scores reach above 4.3
+Ss by this point. Similarly, in natural images, key realism
+“https ://huggingface.co/google/gemma-2-9b- it dimensions such as depth layering (DL), semantic match
+“https: //huggingface.co/meta-1lama/Llama- 3. (SM), and overlap plausibility also converge early, with
+2-3B-Instruct : :
+‘https: //huggingface.co/Qwen/Qwen2. only marginal improvements (+0.02 to +0.05) when
+5-7B-Instruct scaling to 12k pairs.
+https: //huggingface.co/liuhaotian/llava-v1. These results suggest that RewardDPO requires rela-
+5-7b tively modest supervision to internalize layout-sensitive
+
+
+--- Page 22 ---
+
+Model Avg. SC (1-5) + Avg. LS (1-5) t
+LayoutPrompter (Lin et al., 2023) - 4.01 (40.00)
+LLaMA (Zero-Shot) 4.14 3.90 (-0.11)
+LLaMA + Reward-Refine 4.00 4.05 (+0.04)
+LLaMA + RewardDPO 4.12 4.18 (+0.17)
+Gemma (Zero-Shot) 4.10 3.78 (-0.23)
+Gemma + Reward-Refine 3.88 3.93 (-0.08)
+Gemma + RewardDPO 4.01 4.10 (40.09)
+Qwen (Zero-Shot) 3.11 3.97 (-0.04)
+Qwen + Reward-Refine 3.88 4.03 (+0.02)
+Qwen + RewardDPO 4.01 4.10 (+0.09)
+LLaVA (Zero-Shot) 4.00 3.55 (-0.46)
+LLaVA + Reward-Refine 3.75 3.72 (-0.29)
+Gemini-Pro (Zero-Shot) 4.00 3.78 (-0.23)
+Gemini-Pro + Reward-Refine 4.30 4.38 (+0.37)
+GPT-40 (Zero-Shot) 4.52 3.98 (-0.03)
+GPT-40 + Reward-Refine 4.38 4.47 (+0.46)
+Table 12: Reference-based Evaluation on the SMARTEditBench-Posters, comparing Zero-Shot, Reward-Refine,
+and RewardDPO variants against the current state-of-the-art training-free model, LayoutPrompter, using human-
+edited posters as the gold standard. We report average GPT-40 scores (on a 1-5 scale) for two dimensions: Semantic
+Consistency (SC) and Layout Similarity (LS). Delta values denote the improvement over the baseline LayoutPrompter
+(SC score of 4.01), where higher positive deltas reflect better alignment with human-edited layouts.
+Training Size (Pairs) Posters(EA/SC/LS) Websites(EA/SC/LS) Images (EA / DL /SM/ Overlap)
+10% ( 1.2k) 4.12 / 4.00 / 4.08 4.08 / 3.92 / 4.01 4.10 / 4.00 / 4.10 / 4.00
+30% ( 4k) 4.32 / 4.25 / 4.30 4.26 / 4.18 / 4.22 4.32 / 4.20 / 4.35 / 4.22
+100% ( 12k) 4.35 / 4.32 / 4.35 4.30 / 4.25 / 4.30 4.35 /4.20/ 4.40 / 4.25
+Table 14: Ablation on RewardDPO training data volume across domains. Performance converges around 4k
+preference pairs, with only marginal gains beyond. EA: Edit Adherence, SC: Semantic Consistency, LS: Layout
+Similarity, DL: Depth Layering, SM: Semantic Match.
+Beam Width Posters (EA/SC/LS) Websites(EA/SC/LS) Images (EA /DL /SM/ Overlap)
+1 (Greedy) 4.10/3.95 / 4.05 4.02 / 3.88 / 3.95 4.05 / 3.90 / 4.00 / 3.88
+2 4.20/4.10/4.18 4.15 /4.00/ 4.08 4.15/4.00/4.12/ 4.00
+4 4.32 / 4.25 / 4.30 4.26 / 4.18 / 4.22 4.32 / 4.20 / 4.35 / 4.22
+6 4.33/4.26/4.31 4.28 /4.19/ 4.23 4.33 /4.20/ 4.35 / 4.23
+8 4.33 / 4.25 / 4.30 4.28 / 4.18 / 4.23 4.32 /4.20/4.34/ 4.22
+Table 15: Beam search ablation across domains. Performance improves notably from greedy decoding to beam size
+4, with diminishing returns beyond. EA: Edit Adherence, SC: Semantic Consistency, LS: Layout Similarity, DL:
+Depth Layering, SM: Semantic Match.
+preferences. Efficient learning is likely due to the struc- _all metrics, including Edit Adherence (EA), Semantic
+tured nature of the reward signals and the contrastive | Consistency (SC), and Layout Similarity (LS). For ex-
+framing of the optimization objective. This finding sup- —_ ample, in posters, performance improves from 4.05 (LS)
+ports the scalability of preference-based finetuning in —_ under greedy decoding to 4.30 at beam size 4. Similarly,
+layout editing tasks—even in low-resource or domain- _in natural images, realism dimensions such as Depth
+adaptive settings. Layering (DL) and Semantic Match (SM) also improve.
+13.2. Beam Search Ablation Beyond a beam width of 4, gains plateau across do-
+mains, indicating early convergence. Beam sizes larger
+We ablate the impact of beam width on layout edit qual- _ than 6 offer minimal additional benefit while increasing
+ity across structured and unstructured domains. As computational cost. These results suggest that beam
+shown in Table 15, increasing the beam size from 1 __ width 4 offers a strong trade-off between performance
+(greedy) to 4 leads to consistent improvements across _ and efficiency in layout-aware decoding.
+
+
+--- Page 23 ---
+
+Reward Configuration Posters (SC/LS) Websites(SC/LS) Images (SM / DL / Overlap)
+
+All Rewards (Full) 4.25 / 4.38 4.18 / 4.30 4.35 / 4.20 / 4.25
+
+w/o Alignment 4.10/ 4.22 4.05 / 4.16 4.30/ 4.18 / 4.20
+
+w/o Semantic Order 4.05 / 4.18 3.98 / 4.10 4.32/4.20/ 4.25
+
+w/o Cross-Sect. Consistency 4.08 / 4.15 4.00 / 4.12 -/-/-
+
+w/o Overlap 4.22 / 4.28 4.15 / 4.25 4.10/ 4.15 / 3.90
+
+w/o Whitespace 4.18 / 4.24 4.12 / 4.20 -/-/-
+
+Only Semantic (SemOrder + XSec) 4.00 / 4.10 3.95 / 4.05 4.32 /-/-
+
+Only Spatial (Align + Overlap) 4.20 / 4.35 4.14/ 4.28 4.35 / 4.20 / 4.25
+Table 16: Ablation of reward components used in RefineLoop, evaluated via GPT-40 against gold references.
+Semantic Consistency (SC), Layout Similarity (LS), Semantic Match (SM), Depth Layering (DL), and Overlap
+realism are scored 1-5. Removing alignment or semantic ordering leads to the largest drops in structured domains;
+overlap feedback is most critical in image edits.
+
+13.3. Impact of Reward Components in
+RefineLoop
+To assess which reward signals are most critical for
+aligning model edits with gold references, we ablate
+individual components within RefineLoop and evalu-
+ate the resulting outputs using GPT-40-based reference
+comparison. As shown in Table 16, removing alignment
+or semantic order results in the largest quality drops in
+structured domains, reflecting their importance in en-
+forcing visual structure and narrative flow. In contrast,
+for natural images, removing overlap realism sharply
+degrades plausibility, reducing the score from 4.25 to
+3.90. Spatial-only rewards (alignment + overlap) per-
+form well on images, while semantic-only rewards (se-
+mantic order + cross-sectional consistency) fall short in
+layout tasks. These findings validate the role of targeted
+reward components in generating edits that align with
+human design expectations.
+14 Human Evaluation
+The instructions provided to the humans for performing
+annotations are illustrated in Figure 12 and the form to
+collect their consent is in Figure 13.
+
+
+--- Page 24 ---
+
+Algorithm 1 Reward-Guided Layout and Content Refinement
+1: Input: Layout data D (e.g., webpage, PDF, or image), instruction [
+2: Output: Final layout L* and content C*
+3: Step 1: Layout Representation
+4: Convert D into unified layout Lo = {(0;, bi, t;)}*_, and initial content Co
+5: Step 2: Instruction Classification
+6: Classify instruction J as layout-only, semantic-only, or joint-edit
+7: Step 3: First-Pass Execution
+8: Generate symbolic action plan A = [a1,..., ax] using an LLM
+9: Apply actions to obtain layout L’ and updated content C’:
+L’, C’ — ar(. -- AL (Lo, Co))
+
+10: Step 4: Reward Evaluation
+
+11: Compute layout reward: R(L’) = 37>, An + re(L’)
+
+12: if R(L’) < 7 or constraints are violated then
+
+13: Initialize L © L',CO —C’
+
+14: for t = 1 to T do
+
+15: Generate k layout-content candidates via beam search on (Lo), Cc") 1)
+
+16: Select best candidate: (L,C™) — arg max R(L)
+
+17: if L satisfies all constraints then
+
+18: return L* = L,C* = Cc
+
+19: end if
+
+20: Generate feedback f; (e.g., “Results overlaps with Discussion”)
+
+21: Refine via LLM: (L“,C) < LLM_Refine(L™,C®, T, fi)
+
+22: end for
+
+23: end if
+
+24: return L* = L’ or L™, C* = C’ or CO?
+
+Algorithm 2 Reward-Aligned Preference Optimization (RewardDPO)
+1: Input: Instruction J, initial layout Lo, SFT model fg, reward function R(-)
+2: Output: Trained layout model via Direct Preference Optimization
+3: function SUPERVISEDFINETUNING(Dsprr)
+
+4: for all triplet (Zo, I, Lrarget) € Dsrr do
+
+5: Train model fo with Lsrr = — log Po(Ltarger | Z, Lo)
+6: end for
+
+7: end function
+
+8: function GENERATEPREFERENCEPAIRS( fg, R(-), 6)
+
+9: for all (Lo, J) do
+
+10: Generate candidate layouts {L;} using fg or constrained decoding
+
+11: Ite arg max j,. R(L;)
+
+12: if L* violates constraints then continue
+
+13: end if
+
+14: Sample transformation T;, € T and apply L~ = Ty(L*)
+
+15: if R(L*) — R(L~) > 6 and L~ violates constraints then
+
+16: Add (I, Lo, Lt, L~) to Dpret
+
+17: end if
+
+18: end for
+
+19: return Dpret
+
+20: end function
+
+21: function DIRECTPREFERENCEOPTIMIZATION(Dprer, 3)
+
+22: for all (I, Lo, L*, L~) € Dprer do
+
+23: Compute:
+
+ef log Po(LT|I,Lo)
+Lor0(0) = — log aioe Py(L*|sbo) 1 eBlog Po(L~IT,Lo)
+
+24: Update fg to minimize Lppo
+
+25: end for
+
+26: end function
+
+27: Step 1: SUPERVISEDFINETUNING(Dsprr)
+
+28: Step 2: Dprer <_ GENERATEPREFERENCEPAIRS( fo, R(-), 6)
+
+29: Step 3: DIRECTPREFERENCEOPTIMIZATION(D pret, 3)
+
+
+--- Page 25 ---
+
+Model Avg. SC (1-5) + Avg. LS (1-5) t
+
+LayoutPrompter (Lin et al., 2023) - 4.00 (40.00)
+
+LLaMA (ZS) 4.08 3.88 (-0.12)
+
+LLaMA + Reward-Refine 4.05 4.10 (+0.10)
+
+LLaMA + RewardDPO 4.18 4.22 (+0.22)
+
+Gemma (ZS) 4.02 3.75 (-0.25)
+
+Gemma + Reward-Refine 3.90 4.05 (+0.05)
+
+LLaMA + RewardDPO 4.08 4.22 (+0.22)
+
+LLaVA (ZS) 3.95 3.60 (-0.40)
+
+LLaVA + Reward-Refine 3.85 3.80 (-0.20)
+
+Gemini-Pro (ZS) 4.38 4.20 (+0.20)
+
+Gemini-Pro + Reward-Refine 4.32 4.36 (+0.36)
+
+GPT-40 (ZS) 4.45 4.30 (+0.30)
+
+GPT-40 + Reward-Refine 4.50 4.45 (+0.45)
+Table 17: Reference-based evaluation on SMARTEditBench-Websites, comparing Zero-Shot, Reward-Refine,
+and RewardDPO-enhanced variants. We report average scores (1-5) for Semantic Consistency (SC) and Layout
+Similarity (LS), with deltas from the LayoutPrompter baseline (LS = 4.00) shown in parentheses.
+
+Delete Reseai ch
+ne ware Questions Sectio n eee eae
+cc» a i?
+Blindly Deleting Section Reshuffled and Adjusted
+- Whitespace (Penalized)
+
+Figure 7: Reward improvement over iterations across semantic and visual dimensions on the posters, websites and
+natural images. Semantic consistency shows minimal gains across iterations for natural images, while visual-spatial
+layout rewards improve more sharply for posters and websites.
+
+
+--- Page 26 ---
+
+Algorithm 3 Object Translation and Insertion
+1: function TRANSLATEOB- Algorithm 5 object Removal, Resizing, and Alignment
+JECT(layout, section_id,dx,dy) 1: function REMOVEOBJECT(layout, object_id)
+2: [v1, y1, 2, y2] < layout|section_id].bbox 2: delete layout|object_id]
+3: layout|section_id].bbox < [x1 + dx, yi + dy, v2 + 3: return layout ~
+; dex, yo + dy] 4: end function
+4: return layout 5: function RESIZEOB-
+5: end function JECT(layout, object_id, scale_x, scale_y)
+6: function . SHIFTOBJECT- 6: [@1, y1, 2, y2] < layout|object_id].bbox
+SAFTER(layout, anchor_id, dy) 7: cx — (x1 + @2)/2, cy — (yi + y2)/2
+7: anchor_y < layout|anchor_id].bbox[1] 8: width < (a2 — 21) scale_x
+8: for all (object_id, object) in layout do 9: height _ - scale.
+9: if object.bbox[1] > anchor_y then . eight < (ya — yn) scale_y
+. JECK = Y 10: layout|object_id].bboz <— [cx — width/2,cy —
+10: layout . — TRANSLATEOB- height /2, cx + width/2, cy + height /2]
+JECT(layout, object_id, 0, dy) I: return layout
+IT: end if 12: end function
+12: end for 13: function ALIGNOB-
+Is: return layout JECTLEFT(layout, object_id, x_ref)
+14: end function 14: [@1, y1, 2, y2] < layoutlobject_id].bbox
+15: function INSERTOB- 15: width — v5 — 24
+JECT(layout, object_id, bbox, text) 16: j tlobject. idl.bb a
+16: layout|object_id] < {bbox : bbox, text : text} , width, yo| object td). ow web yu eref +
+17: return layout 17: return layout
+18: end function 18: end function
+Algorithm 4 Text Update, Bounding Box, and Reorder-
+ing
+1: function UPDATEOBJECT- {yas oO
+TEXT(layout, object_id, new_text) Algorithm 6 Centering and Snapping to Grid
+2: layout|object_id].text — new_text 1: function CENTEROB-
+3: return layout JECT(layout, object_id, canvas_width)
+4: end function 2: [@1, y1, 2, y2] < layout|object_id].bbox
+5: function REPLACEOBJECTB- 3: width < £2 — 21
+Box(layout, object_id, new_bbox) 4: cx + canvas_width/2
+6: layout|object_id].bbox < new_bbox 5: layout|object_id].bbox < [cx — width/2, y1, cx +
+7: return layout width/2, y2]
+8: end function 6: return layout
+9: function REORDEROB- 7: end function
+JECTS(layout, order, x_start, width, y_padding) 8: function SNAPTOGRID(layout, object_id, grid_unit)
+10: y < 100 9: bbox + layout |object_id].bbox
+11: for all object_id in order do 10: snapped < round each coordinate in bbox to nearest
+12: height <<  layoutlobject_id].bbox[3] — multiple of grid_unit
+layout |object_id].bbox[1] 11: layout|object_id].bbox <— snapped
+13: layout|object_id].bbox e 12: return layout
+[v_start, y, z_start + width, y + height] 13: end function
+14: y «y+ height + y_padding
+15: end for
+16: return layout
+17: end function
+VS Instructpix2pix ‘\: 7) ma a _—
+| t ¥ \ < be ’ 4 b Scene Content a J
+Figure 9: Natural-Image (SMART-Editor)
+Figure 8: Natural-Image (InstructPix2Pix).
+
+
+--- Page 27 ---
+
+r. 4 Bad Insertion mmmtenced) improved Layout with Guided Video ction
+Insert a aes = i ea T — TT 7 &x| che TO
+20 6005 200 200 600 sO OOS 1200 ™ ” “ ~ a a “
+. : = | Blindly Inserting Section Reshuffled and Adjusted
+- Overlap Penalty Correctly, with no overlap
+- Narrative Coherence (Video penalty and better narrative
+section should ideally be below verence
+the main content to ensure
+readability)
+Figure 10: Reward improvement over iterations across semantic and visual dimensions on the posters, websites and
+natural images. Semantic consistency shows minimal gains across iterations for natural images, while visual-spatial
+layout rewards improve more sharply for posters and websites.
+= "E nse “SMART-Editor
+| Aa ‘
+™= wt.
+a Move the
+rf. ladybug to the
+4 flowerbed in the
+Sa lower-left corner
+>
+Poor Seclusion cues (cieiig Better Occlusion
+Figure 11: Reward improvement over iterations across semantic and visual dimensions on the posters, websites and
+natural images. Semantic consistency shows minimal gains across iterations for natural images, while visual-spatial
+layout rewards improve more sharply for posters and websites.
+
+
+--- Page 28 ---
+
+Instructions for Human Evaluation
+You will be shown:
+« Aninitial layout or image
++ Acorresponding edit instruction
+* Two edited outputs generated by different Al models (labeled Output A and Output 8)
+Your task is to compare the two outputs and decide which one better fulfills the instruction while maintaining
+overall quality.
+Please consider the following criteria in your decision:
+1. Edit Adherence — Does the output correctly follow the instruction?
+2. Semantic Consistency — |s the structure/narrative logical and coherent?
+3. Visual-Spatial Quality (for layouts) — Are elements well-aligned without averlap or unnecessary gaps?
+4. Visual Plausibility (for natura! images) — Do edited objects appear realistic in context (e.g., correct size,
+no visual artifacts)?
+Based on the instruction and initial layout/image, which output is better?
+Option 1
+Option 2
+Figure 12: Human Evaluation Instructions
+
+
+--- Page 29 ---
+
+You are invited to participate in a research study conducted as part of an academic project to evaluate the
+quality of Al-generated edits to layouts and images. This study involves viewing edit instructions, initial
+layouts or images, and evaluating outputs generated by different models.
+Purpose of the Study:
+To assess whether Al models can make semantically and visually coherent edits that align with human design
+intuition.
+What You Will Do:
+You will be shown:
+
+¢ An initial layout or image
+
+¢ An edit instruction
+
+* Two edited outputs (Output A and Output B)
+You will compare these outputs and indicate which one is better based on how well the instruction is
+followed and the overall layout/image quality.
+Estimated Time:
+This task will take approximately 10-15 minutes in total.
+Voluntary Participation:
+Your participation is completely voluntary. You may skip any question or stop the survey at any time.
+Confidentiality:
+No personally identifiable information will be collected. Your responses will be used for research purposes
+only.
+Compensation:
+You will be compensated according to the agreement with the research team or platform (e.g., Upwork,
+university lab, etc.).
+Contact Information:
+If you have questions about the study, please contact the research team at [YOUR EMAIL].
+
+Figure 13: Consent Form from participants

@@ -1,0 +1,786 @@
+
+
+--- Page 1 ---
+
+Jinkun Zhao! Yuanshuai Wang! Xingjian Zhang' Ruibo Chen! Xingchuang Liao! Junle Wang!
+Lei Huang)”, Kui Zhang’ =, Wenjun Wu!” =
+'SKLCCSE, Institute of Artificial Intelligence, Beihang University
+Beijing Advanced Innovation Center for Future Blockchain and Privacy Computing, Beihang University
+{huangleiai, zhangkui, wwj09315}@buaa.edu.cn
+OM Abstract—With the rapid evolution of artificial intelligence, i ~ am a searieve!
+oS AlOps has emerged as a prominent paradigm in DevOps. ino 4 pees
+ql Lots of work has been proposed to improve the performance — ; & Ne \ cea (O@@ ap By time |
+of different AIOps phases. However, constrained by domain- | a — Aon =: Sal for |
+—= specific knowledge, a single model can only handle the operation DEV O PS 1 x ** = he Alops}
+= requirement of a specific task,such as log parser,root cause SL oa Pe Add s_------/
+analysis. Meanwhile, combining multiple models can achieve ee Gow
+‘/) _ more efficient results, which have been proved in both previous 4 RO clog Parser .
+CN __ ensemble learning and the recent LLM training domain. Inspired TITS SESS SL Root Cause Analysis \ none
+by these works,to address the similar challenges in AIOPS, this No °
+paper first proposes a collaboration-of-expert framework(CoE-
+= Ops) incorporating a general-purpose large language model task _ Fig. 1. Collaboration Scenarios of CoE-Ops Experts on Question-Answering
+UO classifier. A retrieval-augmented generation mechanism is intro- Tasks at Various Levels within DevOps. CoE-Ops is capable of handling
+* duced to improve the framework’s capability in handling both DevOps tasks across the entire life-cycle (high-level) and its sub-tasks (low-
+S) Question-Answering tasks with high-level(Code,build,Test,etc.) level), enabling flexible switching between AlOps experts.
+wy and low-level(fault analysis,anomaly detection,etc.). Finally, the [IMs to optimize DevOps workflows [17]. Within AIOps
+proposed method is implemented in the AIOps domain, and_. 1 : h ilize LLMs for DevO soe
+— extensive experiments are conducted on the DevOps-EVAL ump ementations t at ut ize ; Stor ev" Ps optimization, a
+>> dataset. Experimental results demonstrate that CoE-Ops achieves critical challenge lies in selecting appropriate AlOps models
+Ct a 72% improvement in routing accuracy for high-level AIOps for different AlOps tasks [1] [13] and enabling expert role-
+Cc tasks compared to existing CoE methods, delivers up to 8% — switching capabilities across heterogeneous workflows [3] [11]
+© accuracy enhancement over single AIOps models in DevOps [19] which is not suitable for multi-agent system leveraging
+N problem resolution, and outperforms larger-scale Mixture-of- Itiple AT ith ialized and fixed rol 52
+N Experts (MoE) models by up to 14% in accuracy. multiple agents wit specia Ze an. xed roles [52].
+~ Index Terms—Collaboration of Experts, DevOps, AlOps, En- Although domain-specific LLMs tailored for DevOps have
+oO semble Learning, Retrieval-augmented Generation. emerged, current solutions face limitations due to their reliance
+Val on training data from specific domains [12] [15]. This results
+N I. INTRODUCTION in inadequate coverage of all DevOps phases and their corre-
+SS DevOps is a software engineering methodology designed sponding subtasks [17] [18], leading to deployment failures
+to bri dge the gap between software development (Dev) and in unfamiliar scenarios [14] and representing a persistent
+< . . . bottleneck for AIOps advancements.
+fa IT operations (Ops) [2]. The comprehensive DevOps lifecycle Based h limitati f AI hi
+—S  compri ht j . : . ased on the current limitations o Ops, this paper
+prises eight iterative phases: Plan, Code, Build, Test, formulates the following three research questions (RQs):
+Deploy, Release, Monitor, and Operation. Each phase operates 1 (Effecti g 4d : ae
+cyclically and encompasses specific subtask categories, as + RQI (Effectiveness): Can LLM ensemb/ing mitigate the
+illustrated in Fig. 1. With advancements in artificial intelli- ROD etency aps between different LLMs?
+gence (AI) and deep learning, emerging paradigms such as * RQ ‘ (Scalability): How can LLM ensempling apply for
+MLOps and AIOps have been proposed, representing two dis- Pos atk learning D. the are s foment tl del
+tinct approaches to integrating AI with DevOps. Specifically, ° Q ( ciency): oes the integration of smaller models
+AIOps employs machine learning models to optimize DevOps via LLM ensembling enable performance that surpasses
+workflows [11] [12] [13}. that of larger models? . .
+
+In recent years, the rapid emergence of large language To address the current challenges in AlOps regarding model
+models has spurred research exploring the integration of LLMs _ Selection [13], role-switching [19], and scalability [16], we
+with DevOps. These studies primarily focus on leveraging Propose the following solutions. First, we enhanced the exist-
+
+ing Collaboration-of-Experts framework based on a two-stage
+3 denotes corresponding author. expert routing mechanism [48] [49]. Subsequently, we inte-
+
+
+--- Page 2 ---
+
+grated the ensemble learning concept and the refined frame- challenge for AlOps lies in selecting and integrating appropri-
+work into DevOps workflows, leveraging their inherent model- ate machine learning models [13] [19] to ensure adaptability
+task scalability to enable dynamic selection, composition, and to diverse use cases while fulfilling heterogeneous [18] and
+role-switching of AIOps experts (as illustrated in Fig. 1). evolving requirements [16].
+Finally, to address high-level DevOps tasks, we incorporated . .
+the task classifier with retrieval-augmented generation. This B. Ensemble Learning with Large Language Models
+combination enhances task classification by retrieving relevant Ensemble learning with large language models involves the
+contextual knowledge for target problems and integrating it systematic utilization of multiple LLMs, each designed to
+into the prompt, thereby improving the framework’s adapt- handle user queries during downstream inference to capitalize
+ability to complex operational scenarios. on their individual strengths [20] [21]. Depending on the
+Our key contributions are summarized as follows: strategy for model integration, ensemble learning can be
+¢ A Collaboration-of-Expert framework CoE-Ops based on categorized into two paradigms: Mixture-of-Experts (MoE)
+two-stage expert routing and a general-purpose large and Collaboration-of-Experts (CoE).
+language model as task classifier, enabling dynamic a) Mixture-of-Experts: In recent years, MoE models
+switching across diverse AlOps task domains and LLM _ have become a primary choice for foundation models [50] [51]
+ensembles. due to their computational efficiency and strong generalization
+e An enhanced task classifier empowered by retrieval- capabilities. In MoE systems, different expert modules possess
+augmented generation technology, specifically designed distinct strengths, making efficient utilization a key challenge.
+to address high-level task representations inherent in FrugalGPT [22] and LLM-Blender [23] aggregate outputs
+DevOps scenarios. from various experts to generate final results, while others
+e Comprehensive empirical validation on DevOps-EVAL adopt voting strategies to select the optimal output [24] [25]
+benchmarks with multiple task-expert configurations and [26]. However, these expert modules cannot complete tasks
+over a dozen AlOps expert models, systematically vali- independently, and the selection and generation processes
+dating CoE-Ops’s dual scalability in task scalability and lack interpretability. As a result, the Collaboration-of-Experts
+model scalability. framework has increasingly drawn attention from researchers.
+IL RELATED WorK b) Collaboration-of-Experts: CoE primarily facilitates
+synergistic interactions among experts by selecting one or
+A. Development and Operations several optimal experts for a given input. Early efforts explored
+DevOps is a collaborative, cross-domain software develop- the use of sub-networks as expert models [27] [31]. With
+ment methodology that emphasizes the automation of contin- the proliferation of large-scale models, CoE has shifted focus
+uous delivery for software updates [3]. When integrated with toward incorporating diverse performance metrics, such as
+artificial intelligence, its evolutionary trajectory bifurcates into answer accuracy [29] [32], inference cost [28] [33] [34],
+two primary branches: MLOps and AIOps [16]. and problem difficulty [30] [35]. A core research direction
+a) MLOps: MLOps focuses on applying DevOps prac- in CoE involves the design of routing algorithms for large
+tices to machine learning systems, aiming to establish seam- models [29]. For instance, cascading networks [37] [40] have
+less integration between diverse open source tools to enable been proposed, or large models are represented as nodes [36]
+fully automated execution of ML workflows, spanning dataset [39] or vector embeddings [41], with probabilistic methods
+construction, model training, and deployment [4] [5]. With [38] employed to predict routing outcomes. Recent studies
+the recent emergence of large language models, LLMOps further integrate reinforcement learning [42] [43] [44] [45] to
+[7], an extension of MLOps tailored for LLM development refine expert routing strategies and introduce hardware-aware
+and deployment, have gained momentum. LLMOps addresses _ optimizations [46] [47] for efficient expert model loading. To
+the unique operational challenges of LLMs [8] and provides address the lack of interpretability in routing decisions, a two-
+specialized tools for efficient data processing, model training, stage expert routing framework [48] [49] has been developed
+deployment, and maintenance [10]. However, both MLOps_ (as shown in Fig 2). This framework first categorizes input
+and LLMOps currently face limitations, including a lack problems and then selects the most suitable expert for each
+of standardized practices, difficulties in maintaining model category, thereby enhancing both the explainability of routing
+consistency and scalability [6] [9], and ambiguous evaluation decisions and the scalability of the overall system.
+criteria.
+b) AlOps: In contrast, AlOps leverages AI and ML III]. PROBLEM FORMULATION
+technologies to efficiently build and operate large-scale online Before introducing the collaboration-of-experts paradigm
+services and applications in software engineering [11]. Most into the AlOps domain, it is essential to delineate both the
+existing AlOps implementations rely on data from a limited existing challenges within AlOps and the potential limitations
+number of domains [12] and predominantly employ supervised _ this collaborative approach may encounter when addressing
+learning techniques [15]. Consequently, their proposed models _ highly abstract AlOps tasks. The primary challenge in contem-
+are often confined to specific DevOps subdomains rather than porary AlOps lies in effectively orchestrating diverse LLMs
+being deployable across the entire ecosystem [17]. A critical from distinct domains to address multifaceted operational
+
+
+--- Page 3 ---
+
+Inference [Router ‘a ah {Off-line “Context Pool TTT
+{ [Task 1] | { [Expert] | Hf [Context 2] + mbedder 4 etriever
+Classifier H i _.| Mapping |_| | A i Ley —— |
+PL ter-t) FPL) Ste-2) [TPE a ae
+Be ge eee a ae ne
+/ | Training Task ‘ = Inference "=a [eae =n
+\ / S62 ; | Task Pool | {Expert Pool}
+NN Pretraining / Fine-tuning vA a ! [task 1] | ' [Expert] }
+Re wos [Tesk2] c] LM Classifier] | i | Mapping |! '
+<i | (Step-1) is is Gtep-2) [|i i
+Fig. 2. Framework of the CoE Based on Two-Stage Expert Routing. The input a SAL
+is first processed by a pre-trained task classifier to obtain its corresponding task =
+category label (Step-1). It is then routed to a designated expert model based [Benchmark | AlOps Task | AlOpsTasi2 [| a L- ]
+on a pre-established ’Task-Expert” mapping derived from existing benchmark a
+(Step-2). Finally, it is the produce by the designated expert model. — 7 a ae ae al [Tsk] c]
+LLM Group for AlOps | LLM Group 1 for AlOps | Patopserper2[ ¥ [|
+Y ‘ ; ! g oem. A Fig. 4. Framework of CoE-Ops. CoE-Ops introduces improvements to Step-1
+XN a a | ra ee of the CoE based on two-stage expert routing. First, the discriminative model-
+fit Ne | ©) ‘ [EEN] [LLM nal] \ based classifier is replaced with an LLM-based classifier. Subsequently, the
+i) Add Replace’ C) | AE 7 prompt is enhanced by extracting a task list from benchmark datasets and
+| LAN Glass Alo employing Retrieval-Augmented Generation (RAG) technology to retrieve
+So | a mop on m relevant context for the current input, thereby assisting the LLM-based
+Model Scalability Scenario 1 | Model Scalability Scenario 2 classifier in classification.
+f | ;
+g | g reconfigure candidate AlOps LLMs through flexible mapping
+AtOps Task Group (tasks) AtOps Task Group 1 (N tasks) adjustments, thereby enhancing the scalability of model.
+Sy ncn ae |} OTS
+AlOps Task Group (M tasks) | AlOps Task Group 2 (N tasks) ae
+a ; | oo B. Task Scalability
+Task Scalability Scenario 1 Task Scalability Scenario 2
+. . . - While two-stage expert routers [48] [49] outperform their
+Fig. 3. AlIOps Scenario Illustrating Model and Task Scalability. The end- : “a: : “Le:
+to-end expert router is primarily constrained by model scalability. While the end-to-end counterparts in model scalability, they still exhibit
+classifier in the two-stage expert routing approach improves model scalability, significant limitations in task scalability. As demonstrated in
+it is still constrained by task scalability. Scenario 1, the output dimensionality of the two-stage expert
+requirements. For collaboration-of-experts frameworks, their routing remains fixed, since it employs discriminative models
+scalability emerges as a critical concern within AlOps due to as classifiers. Consequently, when the number of classification
+the field’s broad spectrum of tasks and model heterogeneity. tasks changes Cron to hae structural modifications and
+We categorize this scalability challenge along two dimensions: retraining are typically Fequite .
+model scalability and task scalability. The corresponding oper- Furthermore, Scenario 2 reveals that when task contexts
+ational scenarios for these dimensions are proposed in Fig. 3 evolve, the task classifier often fails to generalize to unseen
+tasks without retraining on in-domain data. This limitation
+A. Model Scalability stems from the classifier’s reliance on parametric knowledge
+(memorized during training) rather than leveraging external
+For collaboration-of-experts with end-to-end expert routing, knowledge sources, restricting its task scalability.
+the scalability of model remains a critical challenge. As
+illustrated in Scenario 1, because the router directly employs IV. METHODOLOGY
+LLMs as routing nodes, newly released AIOps LLMs cannot ; oo
+be dynamically incorporated into or replace old models in the The framework of our proposed CoE-Ops is shown in Fig.
+router’s LLM group. To address this issue, routers must un- 4. It consists of a two-stage expert routing mechanism which
+dergo retraining whenever LLM group for AlOps are updated, replaces discriminative models with general-purpose LLMs
+incurring substantial computational overhead enhanced by retrieval-augmented generation capabilities.
+Furthermore, Scenario 2 demonstrates that when task con- AT FE Routi
+texts evolve, certain models in the existing group may become - fwo-stage Expert Kouting
+unsuitable as experts for emerging tasks. However, the router CoE-Ops primarily improves upon the two-stage expert
+cannot transit to new expert groups tailored to the updated routing mechanism proposed in seminal works including Com-
+task requirements since it rigidly maps inputs to fixed AlOps _ position of Experts [48] and Bench-CoE [49]. During the
+experts. This necessitates costly retraining or fine-tuning of original process of two-stage expert routing, the AlOps user’s
+the router to adapt to new AIOps task scenarios. query is first classified by a pretrained or fine-tuned classifier
+With the emergence of collaboration-of-experts frameworks to determine its task type. The query is then routed to the
+with two-stage expert routing such as Bench-CoE [49] and _ best-in-domain model for processing based on this label, as
+Composition of Experts [48], CoE can now dynamically shown in Fig. 2.
+
+
+--- Page 4 ---
+
+The task classifier in the two-stage expert routing can be 8B. Classifier with General-purpose LLM
+abstracted as (1) shows. Prompt | - Classifier with General-purpose LLM
+T= r ee ex P(T|X,C), (1) You are a classifier that can categorize questions into
+S171 Tayo Ta} specific tasks. Your job is to analyze the following
+where T represents the AIlOps task, C represents the classifi- given Wee Ton and determine which task from the
+cation model, and X denotes the current input from user. Provided list it most likely belongs UD
+In particular, within the two-stage expert routing archi- the section . Hollows: {asi hae
+tecture of the Collaboration of Experts, the cardinality of . ; .
+candidate AlOps experts should adhere to the bounds specified Ki tebea
+in (2), since each AlOps expert model demonstrates expertise B. lop tion}
+in a minimum of one specialized AIOps domain. , “B
+C.{optionc}
+D.{optionp}”.
+2S Nexpent S Mask; (2) Prat ma answer in the format: ”**Task:
+[selected task] **”.
+where Ntask denotes the number of AIOps tasks.
+Following AlOps task categorization by the classifier, input ee . . .
+ATOps queries are dynamically routed to domain specialized To overcome ' he limitations inherent ” conventional {wo
+expert models through a ’task-expert” allocation mechanism, stage expert routing CoE frameworks, p articularly their depen-
+as mathematically formalized in (3). dence on repeated classifier fine-tuning or retraining across
+distinct task scenarios, we implement a dual enhancement
+strategy. First, the classifier component is replaced by a
+f:Toé, (3) general-purpose LLM operating in zero-shot mode, thereby
+eliminating fine-tuning requirements. Second, a structured
+where T = {T,,T>,...,Ty¢} denotes the set of AlOps tasks, task-list prompting mechanism (see Prompt 1) is integrated
+€ ={E, Ez,..., En} denotes the set of AlOps experts, MM  t© ensure task scalability of the optimized architecture.
+indicates the count of AlOps tasks, and N indicates the count The enhanced framework enables dynamic adaptation to
+of AlOps experts. shifting task scenarios through prompt-based task list mod-
+When developing the task-expert” allocation mechanism, it ification, eliminating the need for classifier pretraining or
+is necessary to establish a metric for evaluating the capability fine-tuning. This architectural innovation substantially reduces
+of each expert model across different task domains. For AIOps C™putational overhead while maintaining task scalability
+queries involving multiple-choice questions and question-and- within the CoE paradigm.
+answer formats, the answer accuracy of the expert model The classification architecture of our framework, enhanced
+can serve as a suitable evaluation metric. This accuracy through the integration of prompt engineering and a general-
+measurement, as shown in (4), provides a quantitative basis Purpose LLM, achieves formal abstraction as mathematically
+for assessing model performance. characterized in (6).
+Lm T= argmax  P(T|X, P, Loeneral); (6)
+Accuracy(M,T;) = +> SS 1M (43) = Aij), (4) PEAT: Ta,....Ta}
+‘j=l where P denotes the prompt with the task list, Lgenerat
+, represents the general-purpose LLM.
+where N; denotes the number of AIOps queries in the AlOps Notably. unlike fine-tuned classifiers. using a. general-
+task T;, M represents the expert model, V; stands for the Ys . . > 6 ef
+OF. —— purpose LLM as a classifier may yield an unknown’ class
+AlOps queries in the AlOps task T;, and Aj; indicates the result. This reflects the LLM’s effort to reduce hallucination
+correct answer to the AlOps query “ij. by refusing to force-classify ambiguous inputs. Thus, after
+Upon construction of the capability assessment leaderboard, incorporating prompts and a general-purpose LLM, an addi-
+the expert model demonstrating superior accuracy within each tional “unknown” class is needed. Consequently, the number
+task domain is designated as the optimal solution for the ’task- of output task classes is modified as shown in (7).
+expert” allocation, with formal validation provided in (5).
+Nopredict task = Mask + Nank; (7)
+N;
+Ms = arg max [ So 1 M (¥;;) _ 4] ; (5) where Nunx denotes the number of tasks of unknown types
+Mem \ Ni j=l (typically equals 1).
+In this case, we need to select an extra expert model for the
+where 1/;* denotes the best AlOps model on task T;. “unknown” class. Our selection strategy, as shown in (8), is to
+
+
+--- Page 5 ---
+
+choose the expert model with the highest average capability
+in all task domains to handle the ’unknown” AIOps input. q = Encodergac(Q), (11)
+1 Ni where Q denotes the query data.
+Mink = et AL Mou S- Sov (Vij) = Ais) |. (8) After obtaining the input AlOps query vector and knowl-
+ON Ti€T j=l edge base vectors, we perform retrieval to find the knowledge
+where M*, denotes the best AIOps model on ”unknown” task. base vectors most similar to the input vector. The retrieval
+process is described by (12).
+Prompt 2 - AlOps Experts with Chain of thought .
+P(clq) = exp(sin(a, c)) . (12)
+Please answer the following DEVOPS question. doeec exP(sin(¢, €))
+tits question is: {question} The formula for the Retriever’s similarity calculation is
+The options are as follows: shown in (13).
+A. {option 4}
+a eek sim(q,¢) =4-¢. (13)
+D. {optionn} After incorporating the RAG technique, we retrieve similar
+Think step by step and then finish your answer with problems to the input question, using them as context in the
+*the answer is (X)” where X is the correct letter choice. prompt. The improved prompt is shown in Prompt 3.
+For the expert models, we also avoid fine-tuning. Instead, Prompt 3 - Classifier with RAG
+we use prompts with chain of thought as the input. The prompt ‘ion ene 0 Glsiiter that ean exiguutze questions tivo
+template is shown in Prompt 2. In the multiple-choice setting, . ar .
+to assess expert capabilities via answer accuracy, we ask the specific tasks. your a ss ‘0 ae un ee
+model to return answers in a fixed format. novi vinta at Titel bce te task from the
+C. LLM Classifier Enhanced with RAG The tasks are as follows: {task list}.
+Simply replacing the classifier in the two-stage expert router tte question is:
+with a general-purpose LLM carries risks. In AIOps domains {question}
+with abstract or high-level task (like plan, build, code, etc.), te a
+the LLM may struggle to link inputs to tasks due to limited “LOPMONB
+information. To address this, context needs to be introduced Oe nek
+to help the LLM better understand the AlOps inputs, establish Ye P - ; the followi es of .
+task-input connections, and improve AIOps task prediction. ou can Tenet to me SOmOwring examples © questions
+In this condition, we integrated retrieval-augmented gener- and their a tasks to decide the current
+ation into the two-stage LLM routing. By retrieving similar Oe evide 8 task: (Casa; the f, ee Tagk:
+questions and their categories to the input question, RAG rovige your ne mn the format: ask
+aids the general-purpose LLM in determining the input’s [sellsened waste .
+task category. This led to the improvement of the CoE-Ops
+framework in the scenarios with high-level AlOps tasks. V. EXPERIMENT
+Similar to other RAG approaches, the RAG process in our 4, Experimental Setup
+anne sc absteactly shown fa (0) sub-phases: Off-line and To validate the effectiveness of our designed CoE-Ops in the
+> , complex domain of AlOps Question-Answering, we evaluated
+P(olq) = S- P(alq, c)P(clq), (9) its performance using the DevOps-Eval! benchmark. DevOps-
+ce Eval is a comprehensive evaluation dataset specifically de-
+where q denotes the encoded vector of the query, c represents signed for large language models in the DevOps domain.
+> This repository primarily contains a substantial collection
+the encoded vector of the context, and o denotes the output of of multiple-choice questions related to DevOps and AlOps,
+the LLM classifier. oo . categorized into two subsets by language: DevOps-Eval En-
+During the Off-line stage, existing textual data is encoded, glish and DevOps-Eval Chinese. The DevOps-Eval English
+as shown in (10). subset primarily covers low-level AlOps tasks, with its scope
+c = Encoderrac(C), (10) detailed in Table 1, while DevOps-Eval Chinese encompasses
+the comprehensive DevOps lifecycle, representing high-level
+where C’ denotes the context data. AIOps tasks, as outlined in Tab. I.
+In the On-line stage, the input AlOps query is first encoded
+into a vector by the encoder, as shown in (11). ‘https://hf-mirror.com/datasets/codefuse-ai/CodeFuse-DevOps-Eval
+
+
+--- Page 6 ---
+
+TABLE II
+TASK-EXPERT MAPPING AND CLASSIFIER SETTINGS
+Task Set A Expert Set 1 Expert Set 2 ‘Task Set B Expert Set 3 Expert Set 4
+Log Parser Internlm-chat-7B! Ministral-8b2 , Build Internlm-chat-7b Gemma-2-27b-it”
+Root Cause Analysis CodeFuse-DevOps-Model-7B-Chat! Ministral-8b Code Qwen2-7B-Instruct! | Doubao-1.5-lite-32k?
+Time Series Anomaly Detection | CodeFuse-DevOps-Model-7B-Base! Glm-4-flash? | Deploy Internlm-chat-7b Doubao-1.5-lite-32k
+Time Series Classification Internlm-7B! Codegeex-4? Monitor Mathstral-7B-v0.1! Gemma-2-27b-it
+Time Series Forecasting Internlm-chat-7B Ministral-8b Operate Qwen2-7B-Instruct Gemma-2-27b-it
+Plan Qwen2-7B-Instruct Glm-4-flash?
+Release Mathstral-7B-v0.1 Gemma-2-27b-it
+Test Qwen2-7B-Instruct Doubao-1.5-lite-32k
+Classifier 1 DeepSeek-RIl-Distill-Qwen-7B!
+Classifier 2 DeepSeek-V3?
+“TiDepolyed Locally
+[2]Depolyed through API, base url: https://openrouter.ai/api/v 1
+[3]Depolyed through API, base url: https://o3.fan/v1
+TABLE I bility radar charts.
+DATASET INFO OF DEVOPS-EVAL
+B. RQ1: CoE-Ops Effectiveness Evaluation
+DEVOPS-EVAL English® DEVOPS-EVAL Chinese? To validate that our proposed CoE-Ops framework can
+Task Sample Task Sample balance capability disparities among models through ensem-
+LogParser 350 Build 218 ble learning across diverse model combinations, we applied
+RootCauseAnalysis 250 Code 1321 CoE-Ops with different classifiers to expert collaborations
+TimeSeriesAnomalyDetection 300 Deploy 255 _
+TimeSeriesClassification 200 Monitor 216 (Expert Sets 1-4) on Task Set A and Task Set B from
+TimeSeriesForecasting 320 Operate 2041 Tab. II. Specifically, we employed both the locally deployed
+Plan 66 DeepSeek-R1-Distill-Qwen-7B (Classifier 1) and the remotely
+Release oe accessed DeepSeek-V3 (Classifier 2) as task classifiers. For
+*Can be treated as dataset with low-level tasks”. the RAG component, we employed the eval sp lit from the
+Can be treated as “dataset with high-level tasks”. DEVOPS-EVAL dataset as the context. The all-MiniLM-L6-
+v2 model was used as the encoder to encode both contexts
+and inputs into vector representations. Inputs were routed to
+To evaluate the performance of numerous expert models corresponding AlOps experts within Expert Sets 1-4 based on
+across diverse task domains, we established a comprehensive the classification results.
+benchmark and constructed the ”Task-Expert” mapping pre- We measured metrics such as answer accuracy for CoE-
+sented in Tab. IH, where Task Set A represents a low-level ps and its utilized experts, and constructed capability radar
+AJOps task and Task Set B constitutes a high-level AIOps task. charts for the models. The experimental results were subse-
+For Set 1 and Set 3 in Tab. Il, we deploy the corresponding quently organized and aggregated according to the Expert Sets.
+expert models locally for inference due to their moderate Specifically, results for Expert Set 1 are presented in Tab. III
+parameter size. Regarding Set 2 and Set 4 in Tab. II, the and Fig. 5, Expert Set 2 in Tab. IV and Fig. 6, Expert Set 3
+substantial parameter scale of these expert models precludes jn Tab. V and Fig. 7, and Expert Set 4 in Tab. VI and Fig. 8.
+local deployment. We directly invoke these models via API
+interfaces provided by open-source platforms for inference, TABLE Ill
+since our proposed CoE-Ops framework requires neither fine- | PERFORMANCE OF COE-OPS WITH EXPERT SET 1 ON DEVOPS-EVAL
+tuning nor training of the models. ENGLISH (TASK SET A)
+Notably, to verify that CoE-Ops framework possesses good
+task and expert extensibility, when switching among the four Models Acc(%)  Prec(%) Rec(%) F1(%)
+sets, we only modified the prompts and the task-expert Internlm-7B 35.07 37.05 35.07 34.36
+mapping, without altering the model architecture or retraining Internlm-chat-7B 35.99 39.47 35.99 35.42
+and fine-tuning the models. CodeFuse-7B-Base* 28.17 29.57 28.17 25.39
+Fi : : : CodeFuse-7B-Chat? 30.56 31.71 30.56 30.36
+or experimental evaluation metrics, we employed numer- oO
+ical indicators including accuracy, precision, recall, and Fl- CoE-Ops(Classifier 1) 40.07 42.40 40.07 39.6
+: : : ; CoE-Ops(Classifier 2) 44.08 46.82 44.08 43.58
+score for classification and question-answering tasks to quan- a
+fy th Its. Additi I ‘sualized th : 1 *Model’s full name: CodeFuse-DevOps-Model-7B-Base.
+ury the results. imona y; we visualized the experimenta. bModel’s full name: CodeFuse-DevOps-Model-7B-Chat.
+outcomes using confusion matrix heatmaps and model capa-
+
+
+--- Page 7 ---
+
+Internlm-7B varied expert configurations—both in quantity and type—on
+Log Parser Internlm-chat-7B . eae
+64 CodeFuse-DevOps-Model-7B-Base the same task. This demonstrates the scalability of our CoE-
+Zs Cer Omaaine Ops framework with respect to model composition, as further
+y, 52| —*— CoE-Ops(Classifier 2) evidenced in Fig. 5 and Fig. 6.
+vf Root Cause
+Time Series_«~ 40 sp. 25 5p Analysis TABLE V
+Forecasting? cape 36 10 PERFORMANCE OF COE-OPS WITH EXPERT SET 3 ON DEVOPS-EVAL
+ar sr / CHINESE (TASK SET B)
+WZ 24
+6 Models Ace(%)  Prec(%) Rec(%) F1(%)
+28 ee
+om Internlm-chat-7b 54.2 53.63 54.20 53.56
+ho Mathstral-7B-v0.1 62.74 62.77 62.74 62.47
+Time Series Time Series Qwen2-7B-Instruct 63.57 64.44 63.57 63.32
+Classification Anomaly Detection —  — — — ———DWNMW«iCOTT
+CoE-Ops(Classifier 1) 64.52 64.93 64.52 64.24
+Fig. 5. Capability Radar Chart of CoE-Ops with Expert Set 1 on DevOps- CoE-Ops(Classifier 2) 64.14 64.44 64.14 63.86
+EVAL English (TASK SET A)
+Lo: : : Internlm-chat-7b
+As indicated in Tab. III, the CoE-Ops framework employing iy ad Mathetrak 7B.
+1 1 1 1 78 Qwen2-7B-Instruct
+two classifiers demonstrates significant improvements over TEST ; CODE TT Cor Ope(Classifer 1)
+individual AlOps expert models across metrics including Ac- 84 S ha ~~ 70 —e*— CoE-Ops(Classifier 2)
+curacy, Precision, Recall, and Fl-score. Specifically, Accuracy eS 1) re
+. . 9
+shows respective improvements of 4% and 8% compared to the (_O 34
+: : 68 .
+best-performing standalone AlOps model. The effectiveness of 76 cegdr® 1
+the CoE-Ops framework is further validated in Fig. 5. RELEASE, Xa Se a8 Ne TY TO NB 8 PLOY
+40 40 69 A / :
+TABLE IV NOY
+PERFORMANCE OF COE-OPS WITH EXPERT SET 2 ON DEVOPS-EVAL a8 45 S62
+ENGLISH (TASK SET A) > NG < ae
+PLAN 64 <Z=—-monttor
+en st
+Models Ace(%e)Pree(%e) Ree) FM) OPERATE
+Glm-4-flash 62.54 64.50 62.54 63.16
+Codegeex-4 54.44 63.84 54.44 58.65 Fig. 7. Capability Radar Chart of CoE-Ops with Expert Set 3 on DevOps-
+Ministral-8b 68.38 69.07 68.38 68.70 EVAL Chinese (TASK SET B)
+CoE-Ops(Classifier 1) 69.15 71.13 69.15 70.10 : :
+CoE-Ops(Classifier 2) 70.49 72.29 70.49 7131 For high-level AIOps tasks such as Task Set B, despite
+a their increased task classification difficulty, our CoE-Ops
+framework consistently outperforms individual AlOps expert
+models. This capability enhancement is evidenced by the
+Log Parser Gim-4-flash analysis presented in Tab. V and Fig. 7.
+i) Codegeex-4
+Ministral-8b
+? —?— CoE-Ops(Classifier 1) TABLE VI
+88 —*— CoE-Ops(Classifier 2) PERFORMANCE OF COE-OPS WITH EXPERT SET 4 ON DEVOPS-EVAL
+% CHINESE (TASK SET B)
+Time Series J Root Cause
+Forecasting 84 80 8 90 analysis
+90 15
+85\kq os 82 65 70. Models Ace(%)  Prec(%) Rec(%) F1(%)
+arya 55 0"
+955.50 Doubao-1.5-lite-32k 73.21 73.73 73.21 73.47
+9g ASS Gemma-2-27b-it 74.22 74.13 74.22 74.14
+> Glm-4-flash 68.60 68.23 68.6 68.26
+6 » CoE-Ops(Classifier 1) 74.28 74.79 74.28 74.52
+Ao 40 CoE-Ops(Classifier 2) 75.60 75.91 75.60 75.75
+\ ——————
+44
+Time Series 48 \“4Time Series
+Classification Anomaly Detection Similarly, by synthesizing results from Tab. V and Tab. VI,
+Fig. 6. Capability Radar Chart of CoE-Ops with Expert Set 2 on DevOps- we observe that our CoE-Ops framework also exhibits model
+EVAL English (TASK SET A) scalability on high-level AlOps tasks, it consistently enhances
+overall accuracy across model combinations involving both
+As shown in Tab. IV, the CoE-Ops framework utilizing two locally and remotely deployed models. This capability is
+classifiers achieves balanced capability enhancement across further demonstrated in Fig. 7 and Fig. 8.
+
+
+--- Page 8 ---
+
+BUILD Doubao-1.5-lite-32k TABLE VII
+| Gemma-2-27b-it CLASSIFY PERFORMANCE ON DEVOPS-EVAL ENGLISH (TASK SET A)
+88 CODE Glm-4-flash
+TEST rr 80 —?®— CoE-Ops(Classifier 1)
+& —— —e— CoE-Ops(Classifier 2) a
+80 64 70 \\ Classifiers Acce(%)  Prec(%) Rec(%) F1(%)
+716 AN eo
+R 56} 69 Random Select 20.00 - - -
+Ba 48 Bench-CoE 62.46 52.69 62.46 55.35
+RELEASE, n PN C26 8, 68,7276 }® DEPLOY Classifier | w/o RAG 77.11 87.66 77.11 81.52
+86 BO \® Classifier 1 80.92 95.62 80.92 87.51
+(55° 60 Classifier 2 w/o RAG 100 100 100 100
+68 Classifier 2 100 100 100 100
+ss
+70
+PLAN6S [e MONITOR
+i TABLE VIII
+OPERATE CLASSIFY PERFORMANCE ON DEVOPS-EVAL CHINESE (TASK SET B)
+Fig. 8. Capability Radar Chart of CoE-Ops with Expert Set 4 on DevOps-
+EVAL Chinese (TASK SET B) Classifiers Ace(%)  Prec(%)  Rec(%)  F1(%)
+Random Select 12.5 - - -
+. . Bench-CoE 4.94 11.86 4.94 0.83
+In summary, through comprehensive analysis of Accuracy, i
+1: Classifier 1 w/o RAG 13.91 32.65 13.91 14.66
+Recall, Fl-Score, and model capability radar charts across Classifier 1 43.84 71.47 43.84 50.43
+diverse expert configurations on multiple AIOps tasks, we —_ To —_—
+d trate the effectiveness of the CoE-Ops framework in Classifier 2 w/o RAG 24.95 41.67 24° 26.54
+emons NOEMPS ors Classifier 2 77.22 79.79 77.22 77.22
+balancing heterogeneous model capabilities while establishing —_—_— Hy .™0D oO —*«owao&nh
+its scalability across varying model compositions.
+Answer to RQ1: Experimental results demonstrate The classification results for Task Set A are presented in Fig. 9
+that our proposed CoE-Ops framework effectively bal- (Classifier 1) and Fig. 10 (Classifier 2), respectively. Similarly,
+ances capability discrepancies among diverse models the results for Task Set B are shown in Fig. 11 (Classifier 1)
+across various tasks and expert settings. This inte- and Fig. 12 (Classifier 2).
+gration ultimately achieves an overall performance
+improvement of up to approximately 8%, confirming ;
+: Parse, ae 13 3 1 0 23
+the effectiveness of our approach.
+Root
+C. RQ2: Classifier Scalability Validation analysis (ne _ : : i! i
+
+Following the validation that our proposed CoE-Ops frame- = mine
+work effectively balances capability disparities across different & Jeoomely ie a mE o a Bs
+AlOps models, we conducted an ablation study on its core g
+component, the Classifier, to assess its scalability for complex - senec 0 u 162 1 25
+tasks in the AlOps domain. We evaluated two Classifiers aac
+employed by CoE-Ops (Classifier 1 and Classifier 2) on Task Time
+Set A and Task Set B, as detailed in Tab. II. Additionally, we Forecasting : : : “ie
+tested the classification performance of a baseline Classifier Log Root Time = Time == Time Unknown
+
+. . . Parser Cause Series Series Series
+without Retrieval-Augmented Generation enhancement. Task Analysis Anomaly Classification Forecasting
+Set A and Task Set B differ in both the number of tasks and ferent
+their hierarchical complexity. Testing on these two tasks thus Fig. 9. Heatmap Visualization of Classifier 1’s Confusion Matrix on DevOps-
+allows coverage of the two Task Scalability Scenarios outlined EVAL English (Task Set A)
+in Section III.
+
+We also evaluated the performance of the Bench-CoE Analysis of Tab. VII reveals that Classifier 1 and Classifier
+framework, which utilizes a fine-tuned classifier, on both Task 2, implemented without fine-tuning or retraining, achieved
+Set A and Task Set B in AlOps as a control. The general _ strong classification performance in Task Set A. Their classifi-
+experimental results are presented in Tab. VII (for Task Set cation accuracy surpassed that of the Bench-CoE framework,
+A) and Tab. VII (for Task Set B). which uses a fine-tuned classifier. In particular, Classifier 2
+
+Furthermore, to facilitate a more intuitive analysis of the achieved the classification accuracy 100%, demonstrating its
+classification performance of the two Classifiers employed by _ robust generalization capability. Furthermore, the classification
+the CoE-Ops framework on individual tasks within Task Set accuracy of Classifier 1 showed a significant improvement
+A and Task Set B, we visualized their results using heatmaps. after RAG integration. The heatmaps presented in Fig. 9 and
+
+
+--- Page 9 ---
+
+oad 350 5 ‘ a‘ 5 ‘ BUILD- 128 47 23 2 12 1 1 4 0
+CODE- 12 11 15 42 7 0 175 0
+te 0 a0) @ 0 9 @ DEPLOY- 15 is a 8 27 3 0 13 0
+5 Time E wonrron- il 35 9 143 23 0 0 5 0
+kg Anca: 0) 0) 300 0) 0) () 8
+2 petecton 3 OPERATE- 12 87 32 78 37 25 7 0
+< zt
+garies- 0 0 0 200 0 0 PLAN- 0 0 1 0 1 64 0 0 0
+Classification
+RELEASE - 6 49 38 5 56 4 36 18 (e)
+series- 0 i) ie) 0 320 ie)
+Forecasting TEST- 1 0 0 1 0 0 1 225 0
+Log Root Time Time Time Unknown ‘9 ‘~% ea "e '& 's Hee A ae
+Predicted Task Type Predicted Task Type
+Fig. 10. Heatmap Visualization of Classifier 2’s Confusion Matrix on DevOps- _ Fig. 12. Heatmap Visualization of Classifier 2’s Confusion Matrix on DevOps-
+EVAL English (Task Set A) EVAL Chinese (Task Set B)
+; ; ; Answer to RQ2: We design CoE-Ops, which employs
+Fig. 10 further validate the performance of both classifiers. a general-purpose large language model as the task
+classifier. This classifier is enhanced using prompt-
+ing and Retrieval-Augmented Generation (RAG) tech-
+sur rss => llg:~SCltkt:SC ots niques to adapt to the complex task scenarios in
+AlOps. We conduct classification experiments on both
+CODE on ee ae low-level and high-level tasks. The experimental re-
+pepoy! 10 [Cota 5 dl 3 Moos sults demonstrate that our CoE-Ops achieves signifi-
+2 cantly higher task classification accuracy compared to
+5 ae | i | other ensemble learning methods in AlOps, showing
+% OpeRATE. 23 Oo ss a 2 oOo improvements of 37.54% and 72.28%, respectively.
+5
+PLAN- O ie) 3} 3 ie) 42 1 9 8
+RELEASE- 8 31 23 16 13 11 13 77 20 D. RQ3: Efficiency Validation
+mest) 0 896 1 3 0 6 o FR 17 Following the validation of CoE-Ops’ effectiveness in bal-
+Sills ensue TS ancing model capabilities and its classifier’s task scalability,
+ae Ss a. s we further compared CoE-Ops against other CoE and MoE
+Seater models. Notably, the total parameter count of the mixtral-
+Fig. 11. Heatmap Visualization of Classifier 1’s Confusion Matrix on DevOps- 8x7b-instruct model reached approximately 56B, while the
+EVAL Chinese (Task Set B) largest model deployed by our CoE-Ops utilized 27B parame-
+ters. We evaluated these models separately on Task Set A and
+Task Set B. Bench-CoE and Random-CoE (CoE with entirely
+A comparison of Tab. VII and Tab. VIII reveals that while random model routing) were tested on Task Set A as control
+the Bench-CoE framework, based on a fine-tuned classifier, groups, while Bench-CoE was not tested as a control group
+demonstrates acceptable classification performance in the low- on Task Set B due to its poor classification performance. The
+level AlOps task (Task Set A), its accuracy exhibits a marked experimental results are presented in Tab. IX and Tab. X,
+degradation when the AIOps task scenario shifts to the high- respectively, and are also visualized in the model capability
+level AlOps task (Task Set B). In contrast, although the per- radar charts shown in Fig. 13 and Fig. 14.
+formance of both Classifiers within our CoE-Ops framework As indicated in Tab. IX, CoE-Ops demonstrates superior
+also declined, their classification accuracy showed significant overall capability in the complex domain of AlOps compared
+recovery, particularly for Classifier 2, upon augmentation with to existing CoE and MoE models. Analysis combining Tab. IX
+Retrieval-Augmented Generation technology. This robustly and Tab. X reveals that CoE-Ops, leveraging an ensemble of
+demonstrates the task scalability of our CoE-Ops framework smaller models, comprehensively surpasses large models such
+within the complex AlOps task domain. This identical con- as mixtral-8x7b-instruct in terms of overall performance. This
+clusion is further corroborated by the graphical evidence conclusion is further supported by the evidence presented in
+presented in Fig. 11 and Fig. 12. Fig. 13 and Fig. 14.
+
+
+--- Page 10 ---
+
+TABLE IX Answer to RQ3: We conduct experiments comparing
+eee ee ope Katee MoE we ere SET 2 ON the performance of CoE-Ops integrated with small
+- NGLISH (TASK SET . aor . ;
+( ) models against existing large models implemented via
+the MoE paradigm on the DEVOPS-EVAL dataset.
+Models Acc(%) — Prec(%) Rec(%) F1(%) The results experimentally demonstrate that, when
+Mixtral-8x7b-instruct 55.56 61.15 55.56 57.99 appropriate small models are selected, CoE-Ops’s in-
+Random-CoE 59.15 62.63 59.15 60.84 tegration of these small models achieves performance
+Bench-CoE 68.94 70.30 68.94 69.58 surpassing that of large aneyleie
+CoE-Ops(Classifier 1) 69.15 71.13 69.15 70.10
+CoE-Ops(Classifier 2) 70.49 72.29 70.49 71.31
+— VI. THREATS TO VALIDITY
+We acknowledge the following potential threats to the
+validity of our study and discuss our mitigation strategies:
+TABLE X y y 8 8
+PERFORMANCE OF COE AND MOE WITH EXPERT SET 4 ON a) Internal validity: Internal threats primarily center on
+DEVOPS-EVAL CHINESE (TASK SET B) the risks associated with large model API calls. To test as many
+large language models (LLMs) as possible, this study utilized
+Models Ace(%)  Prec(%)  Rec(%)  F1(%) both locally deployed models and API calls to access publicly
+TT TTT Tro available online models. However, this approach introduces
+Mixtral-8x7b-instruct. 65.26 66.89 65.26 65.94 ; a Pproa
+a risks such as invocation failure due to compromised API inter-
+CoE-Ops(Classifier 1) 74.28 74.79 74.28 74.52 : ws :
+CoE-Ops(Classifier 2) 75.60 7591 75.60 715.75 faces or credentials, or server crashes. To mitigate the internal
+—.|H oi —- oo q— threats arising from API call risks, we implemented additional
+program checkpoints during API invocation. When an API call
+fails—whether due to network connectivity issues, sensitivity
+Random-CoE of test data triggering content filters, or other causes—this
+Log Parser Mixtral-8x7b-instruct ; ggering >,
+% Bench-CoE mechanism allows us to resume the testing procedure from the
+88. —*®— CoE-Ops(Classifier 1) 1 1 dj
+TS Cob-OpstClassifier 2) checkpoint after troubleshooting the fault, thereby avoiding the
+# need for complete retesting.
+80 oo Root Cause b) External validity: External threats primarily center on
+hme Seriegs /16 ‘ 10 Analysis the specificity of task contexts. For the CoE framework, a
+orecastin; > . . . . . . . . “Led .
+. f6 Dy 49 significant risk lies in its limited extensibility across diverse
+a ¥ task scenarios. Specifically, a CoE framework functioning
+a 28 effectively in one context may fail in others due to dis-
+30 33 tributional shifts in training data. To address these external
+so Y 4g threats arising from task context specificity, our CoE-Ops
+Time Series\;-45 \4Time Series framework leverages off-the-shelf general-purpose large mod-
+Classification 50 Anomaly Detection els (without specialized training or fine-tuning) combined with
+Fie. 13. Capability Radar Chart of C ve Experi Devo advanced prompting techniques. This approach transcends the
+ig. 13. apability Radar art of Comparative Experiments on DevOps- : : : : :
+EVAL English (Task Set A) constraints of specific task contexts, enabling effective routing
+of expert models across both concrete and abstract domains.
+c) Construct validity: Construct threats primarily center
+BUILD Mixtral-8x7b-instruet on hallucination issues introduced by the classification model.
+se oniChasitee » As our CoE-Ops framework employs a general-purpose large
+TEST 0! 80 CODE model—without specialized training or fine-tuning—as its
+0” 10 \\ classifier, it may exhibit hallucinations when processing high-
+10 75| 69 65 level tasks. This presents a potential threat to the construct
+% Iss validity of our framework. To mitigate these construct threats,
+RELEAST a6 aa ee eet en DEPLOY we employ Retrieval-Augmented Generation combined with
+45 \5s |/ prompt engineering to reduce hallucination in the classification
+60
+50 model.
+55 6
+i 70 VII. CONCLUSION
+PLAN 65 MONITOR ee : :
+Pp To address the limitations of single AlOps expert models in
+OPERATE mastering all DevOps domains and the challenges of ensemble
+learning in task switching within complex AIOps environ-
+Fig. 14. Capability Radar Chart of Comparative Experiments on DevOps- ents. this paper proposes CoE-Ops, a two-phase expert rout-
+EVAL Chinese (Task Set B) : > >
+ing CoE framework based on a general large language model
+
+
+--- Page 11 ---
+
+classifier and Retrieval-Augmented Generation. By utilizing [19] Mulongo, N. Key Performance Indicators of Artificial Intelligence For
+the general LLM classifier and prompts, CoE-Ops avoids the IT Operations (AIOPS). 2024 International Symposium On Networks,
+os : ; . Computers And Communications (ISNCC). pp. 1-8 (2024)
+
+need for repeated training or fine-tuning during task scenario [20] Chen, Z., Li, J., Chen, P, Li, Z., Sun, K., Luo, Y., Mao, Q., Yang,
+
+transitions, thereby enhancing its task scalability. Furthermore, D., Sun, H. & Yu, P. Harnessing Multiple Large Language Models: A
+
+the incorporation of RAG significantly strengthens its capa- Survey on LLM Ensemble. (2025), https://arxiv.org/abs/2502.18036
+
+bility in handling tasks with highly abstract scenarios. In [21] Varangot-Reille, C., Bouvard, C., Gourru, A., Ciancone, M., Schaeffer,
+; ; M. & Jacquenet, F. Doing More with Less — Implementing Routing
+future work, we will explore the automated construction of Strategies in Large Language Model-Based Systems: An Extended
+
+AlOps expert capability rankings to achieve fully automated oryey. (2025), ae oe veh tien
+
+: sys : [22] Chen, L., Zaharia, M. & Zou, J. FrugalGPT: How to Use Large Language
+
+collaboration among AIOps experts. Additionally, we will Models While Reducing Cost and Improving Performance. (2023),
+
+integrate this framework with multi-agent systems to establish https://arxiv.org/abs/2305.05176
+
+multi-tiered AlOps expert collaboration. [23] Jiang, D., Ren, X. & Lin, B. LLM-Blender: Ensembling Large Lan-
+
+guage Models with Pairwise Ranking and Generative Fusion. (2023),
+https://arxiv.org/abs/2306.02561
+
+REFERENCES [24] Sukhbaatar, S., Golovneva, O., Sharma, V., Xu, H., Lin, X., Roziére,
+B., Kahn, J., Li, D., Wen-Yih, Weston, J. & Li, X. Branch-Train-
+
+[1] Ebert, C., Gallardo, G., Hernantes, J. & Serrano, N. DevOps. [EEE Mix: Mixing Expert LLMs into a Mixture-of-Experts LLM. (2024),
+Software. 33, 94-100 (2016) https://arxiv.org/abs/2403.078 16
+
+[2] Jabbari, R., Ali, N., Petersen, K. & Tanveer, B. What is DevOps? A [25] Si, C., Shi, W., Zhao, C., Zettlemoyer, L. & Boyd-Graber, J. Getting
+systematic mapping study on definitions and practices. Proceedings Of more out of mixture of language model reasoning experts. (2023), ArXiv
+The Scientific Workshop Proceedings Of XP2016. pp. 1-11 (2016) Preprint ArXiv:2305.14628
+
+[3] Leite, L., Rocha, C., Kon, F., Milojicic, D. & Meirelles, P. A survey [26] Li, J., Zhang, Q., Yu, Y., Fu, Q. & Ye, D. More agents is all you need.
+of DevOps concepts and challenges. ACM Computing Surveys (CSUR). (2024), ArXiv Preprint ArXiv:2402.05120
+52, 1-35 (2019) [27] Zhang, Y., Chen, Z. & Zhong, Z. Collaboration of experts: Achieving
+
+[4] Shah, P., Ahmad, N. & Beg, M. Towards MLOps: A DevOps Tools 80% top-1 accuracy on imagenet with 100m flops. (2021), ArXiv
+Recommender System for Machine Learning System. ArXiv Preprint Preprint ArXiv:2107.03815
+ArXiv:2402.12867. (2024) [28] Sakota, M., Peyrard, M. & West, R. Fly-swat or cannon? cost-effective
+
+[5] Kreuzberger, D., Kiihl, N. & Hirschl, S. Machine learning operations language model choice via meta-modeling. Proceedings Of The 17th
+(mlops): Overview, definition, and architecture. IEEE Access. 11 pp. ACM International Conference On Web Search And Data Mining. pp.
+31866-31879 (2023) 606-615 (2024)
+
+[6] Zarour, M., Alzabut, H. & Alsarayrah, K. MLOps best practices, chal- [29] Shnitzer, T., Ou, A., Silva, M., Soule, K., Sun, Y., Solomon, J.,
+lenges and maturity models: A systematic literature review. Information Thompson, N. & Yurochkin, M. Large language model routing with
+And Software Technology. pp. 107733 (2025) benchmark datasets. (2023), ArXiv Preprint ArXiv:2309.15789
+
+[7] Shan, R. & Shan, T. Enterprise LLMOps: Advancing Large Language [30] Ong, I., Almahairi, A., Wu, V., Chiang, W., Wu, T., Gonzalez, J.,
+Models Operations Practice. 2024 IEEE Cloud Summit. pp. 143-148 Kadous, M. & Stoica, I. Routellm: Learning to route llms with pref-
+(2024) erence data, 2024. URL Https://arxiv. Org/abs/2406.18665.
+
+[8] Diaz-De-Arcaya, J., Lopez-De-Armentia, J., Mifi6n, R., Ojanguren, I. & [31] Huang, S., Pan, J. & Zheng, H. CCoE: A Compact LLM with Collab-
+Torre-Bastida, A. Large Language Model Operations (LLMOps): Defi- oration of Experts. (2024), ArXiv Preprint ArXiv:2407.11686
+nition, Challenges, and Lifecycle Management. 2024 9th International [32] Maurya, K., Srivatsa, K. & Kochmar, E. SelectLLM: Query-Aware
+Conference On Smart And Sustainable Technologies (SpliTech). pp. 1-4 Efficient Selection Algorithm for Large Language Models. (2024),
+(2024) ArXiv Preprint ArXiv:2408.08545
+
+[9] Tantithamthavorn, C., Palomba, FE, Khomh, FE & Chua, J. MLOps, [33] Stripelis, D., Hu, Z., Zhang, J., Xu, Z., Shah, A., Jin, H., Yao, Y.,
+LLMOps, FMOps, and Beyond. IEEE Software. 42, 26-32 (2025) Avestimehr, S. & He, C. Polyrouter: A multi-llm querying system. ArXiv
+
+[10] Pahune, S. & Akhtar, Z. Transitioning from MLOps to LLMOps: Navi- E-prints. pp. arXiv-2408(2024)
+gating the Unique Challenges of Large Language Models. Information. [34] Stripelis, D., Hu, Z., Zhang, J., Xu, Z., Shah, A., Jin, H., Yao, Y.,
+16, 87 (2025) Avestimehr, S. & He, C. TensorOpera Router: A Multi-Model Router
+
+[11] Dang, Y., Lin, Q. & Huang, P. Aiops: real-world challenges and for Efficient LLM Inference. (2024), ArXiv Preprint ArXiv:2408.12320
+research innovations. 2019 IEEE/ACM 41st International Conference [35] Ding, D., Mallick, A., Wang, C., Sim, R., Mukherjee, S., Ruhle, V.,
+On Software Engineering: Companion Proceedings (ICSE-Companion). Lakshmanan, L. & Awadallah, A. Hybrid llm: Cost-efficient and quality-
+pp. 4-5 (2019) aware query routing. (2024), ArXiv Preprint ArXiv:2404.14618
+
+[12] Notaro, P., Cardoso, J. & Gerndt, M. A survey of aiops methods for [36] Guha, N., Chen, M., Chow, T., Khare, I. & Re, C. Smoothie: Label free
+failure management. ACM Transactions On Intelligent Systems And language model routing. Advances In Neural Information Processing
+Technology (TIST). 12, 1-45 (2021) Systems. 37 pp. 127645-127672 (2024)
+
+[13] Hua, Y. A systems approach to effective aiops implementation. (Mas- [37] Hu, Q., Bieker, J., Li, X., Jiang, N., Keigwin, B., Ranganath, G., Keutzer,
+sachusetts Institute of Technology,2021) K. & Upadhyay, S. Routerbench: A benchmark for multi-Ilm routing
+
+[14] Diaz-De-Arcaya, J., Torre-Bastida, A., Zarate, G., Mifién, R. & Almeida, system. (2024), ArXiv Preprint ArXiv:2403.12031
+A. A joint study of the challenges, opportunities, and roadmap of mlops [38] Zhang, T., Mehradfar, A., Dimitriadis, D. & Avestimehr, S. Leveraging
+and aiops: A systematic survey. ACM Computing Surveys. 56, 1-30 uncertainty estimation for efficient llm routing. (2025), ArXiv Preprint
+(2023) ArXiv:2502.11021
+
+[15] Mondru, A., Shreyas, R. & Anabathula, T. A Roadmap to Success: [39] Feng, T., Shen, Y. & You, J. Graphrouter: A graph-based router for Im
+Strategies and Challenges in Adopting Aiops for it Operations. Interna- selections. (2024), ArXiv Preprint ArXiv:2410.03834.
+tional Journal Of Interpreting Enigma Engineers (IJIEE). 1 (2024) [40] Yue, Y., Zhang, G., Liu, B., Wan, G., Wang, K., Cheng, D. & Qi,
+
+[16] Brahmandam, B. Beyond DevOps: The Evolution Toward Intelligent IT Y. Masrouter: Learning to route llms for multi-agent systems. (2025),
+Operations with AlOps and MLOps. (2025) ArXiv Preprint ArXiv:2502.11133.
+
+[17] Faraz Khan, A., Khan, A., Mohamed, A., Ali, H., Moolinti, S., Haroon, [41] Jitkrittum, W., Narasimhan, H., Rawat, A., Juneja, J.. Wang, Z., Lee,
+S., Tahir, U., Fazzini, M., Butt, A. & Anwar, A. LADs: Leveraging C., Shenoy, P., Panigrahy, R., Menon, A. & Kumar, S. Universal
+LLMs for AI-Driven DevOps. ArXiv E-prints. pp. arXiv-2502 (2025) Model Routing for Efficient LLM Inference. (2025), ArXiv Preprint
+
+[18] Krishnamurthy, D. & Neelanath, V. Establishing a Robust LLMOps ArXiv:2502.08773.
+
+Framework for Intelligent Automation: Strategies and Best Practices. [42] Lu, K., Yuan, H., Lin, R., Lin, J.. Yuan, Z., Zhou, C. & Zhou,
+2025 Emerging Technologies For Intelligent Systems (ETIS). pp. 1-5 J. Routing to the expert: Efficient reward-guided ensemble of large
+(2025) language models. (2023), ArXiv Preprint ArXiv:2311.08692.
+
+
+--- Page 12 ---
+
+[43] Nguyen, Q., Hoang, D., Decugis, J., Manchanda, S., Chawla, N. & Doan,
+K. MetaLLM: A High-performant and Cost-efficient Dynamic Frame-
+work for Wrapping LLMs. (2024), ArXiv Preprint ArXiv:2407.10834.
+
+[44] Zhao, Z., Jin, S. & Mao, Z. Eagle: Efficient training-free router for
+multi-Ilm inference. (2024), ArXiv Preprint ArXiv:2409.15518.
+
+[45] Wang, X., Liu, Y., Cheng, W., Zhao, X., Chen, Z., Yu, W., Fu, Y. &
+Chen, H. Mixllm: Dynamic routing in mixed large language models.
+(2025), ArXiv Preprint ArXiv:2502.18482.
+
+[46] Prabhakar, R., Sivaramakrishnan, R., Gandhi, D., Du, Y., Wang, M.,
+Song, X., Zhang, K., Gao, T., Wang, A., Li, X. & Others Sambanova
+sn401: Scaling the ai memory wall with dataflow and composition of
+experts. 2024 57th IEEE/ACM International Symposium On Microar-
+chitecture (MICRO). pp. 1353-1366 (2024)
+
+[47] Suo, J., Liao, X., Xiao, L., Ruan, L., Wang, J., Su, X. & Huo,
+Z. CoServe: Efficient Collaboration-of-Experts (CoE) Model Inference
+with Limited Memory. Proceedings Of The 30th ACM International
+Conference On Architectural Support For Programming Languages And
+Operating Systems, Volume 2. pp. 178-191 (2025)
+
+[48] Jain, S., Raju, R., Li, B., Csaki, Z., Li, J., Liang, K., Feng, G., Thakkar,
+U., Sampat, A., Prabhakar, R. & Others Composition of Experts: A
+Modular Compound AI System Leveraging Large Language Models.
+(2024), ArXiv Preprint ArXiv:2412.01868.
+
+[49] Wang, Y., Zhang, X., Zhao, J., Wen, S., Feng, P., Liao, S., Huang, L.
+& Wu, W. Bench-CoE: a Framework for Collaboration of Experts from
+Benchmark. ArXiv Preprint (2024), ArXiv:2412.04167.
+
+[50] Liu, A., Feng, B., Xue, B., Wang, B., Wu, B., Lu, C., Zhao, C., Deng,
+C., Zhang, C., Ruan, C. & Others Deepseek-v3 technical report. (2024),
+ArXiv Preprint ArXiv:2412.19437.
+
+[51] Yang, A., Li, A., Yang, B., Zhang, B., Hui, B., Zheng, B., Yu, B., Gao,
+C., Huang, C., Lv, C. & Others Qwen3 technical report. (2025), ArXiv
+Preprint ArXiv:2505.09388
+
+[52] Khan, U. & Kallinteris, N. Autonomous Multi-Agent LLMs in Agile
+Development: A Framework for AI-Driven Collaboration. (2025)

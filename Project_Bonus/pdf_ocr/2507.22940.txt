@@ -1,0 +1,1265 @@
+
+
+--- Page 1 ---
+
+Trustworthy Reasoning: Evaluating and Enhancing Factual Accuracy in LLM
+Intermediate Thought Processes
+Rui Jiao*, Yue Zhang", Jinku Li*
+*Xidian University
+¥ Shandong University
+Abstract—We present RELIANCE (Reasoning Evaluation with impressive performance [7], [8], [9], [10]. However, these
+a) Logical Integrity and Accuracy for Confidence Enhancement), reasoning LLMs in high-stakes scenarios, e.g., medical
+oS a novel framework addressing a critical vulnerability in diagnosis [11], [12], legal reasoning [13], [14], and financial
+ql Large Language Models (LLMs): the prevalence of factual | decision-making, demand [15], [16] not just convincing
+_ inaccuracies within intermediate reasoning steps despite | answers but factually accurate reasoning processes. While
+=) correct final answers. This phenomenon poses substantial risks Significant progress has been made in improving the final
+= in high-stakes domains including healthcare, legal analysis, and outputs of LLMs, the intermediate reasoning steps—the
+Vay scientific research, where erroneous yet confidently presented thinking process” that leads to conclusions—often contain
+N reasoning can mislead users into dangerous decisions. Our —-“Titical_ factual errors that undermine the reliability and
+framework integrates three core components: (1) a specialized ‘Tustworthiness of these systems [17]. ;
+_] fact-checking classifier trained on counterfactually augmented These factual errors partly stem from the Reinforcement
+O data to detect subtle factual inconsistencies within reasoning _L€atning (RL) training process, which encourages the
+‘chains; (2) a Group Relative Policy Optimization (GRPO) —'MOdel_ to explore reasoning steps through rewards and
+N reinforcement learning approach that balances factuality, generate final answers accordingly. While effective at
+YL, coherence, and_ structural correctness through multi- making ath onses more human “like and “do kun RL hen
+dimensional rewards; and (3) a mechanistic interpretability inadvertently encourage mode S to pretens to now wien
+a aos : they do not, fabricating plausible-sounding but incorrect
+— module examining how factuality improvements manifest . : : : wy
+> : er F : : explanations to satisfy perceived expectations. Additionally,
+in model activations during reasoning processes. Extensive . 4. a : : : :
+>) : : specialized training in mathematical or logical reasoning,
+= evaluation across ten state-of-the-art models reveals concerning intended to improve step-by-step problem solving. ma
+patterns: even leading models like Claude-3.7 and GPT-ol enforce this behavior Once a mistake is introduced in
+ON . .
+N demonstrate reasoning factual accuracy of only 81.93% and . :
+82.57% respectively. RELIANCE significantly enhances factual the reasoning steps chain, models often generate self-
+N . P 0 90% i 8 Ail aan consistent but fundamentally flawed justifications rather
+~ robustness (up to 49.90% improvement) wale maintaining than acknowledging uncertainty or correcting errors.
+& or improving performance on challenging benchmarks This issue is critical: factual errors introduced early in
+; ; y
+a) including Math-500, AIME-2024, and GPQA. Furthermore, the visible reasoning process can propagate and amplify,
+N our activation-level analysis provides actionable insights into ultimately leading to incorrect conclusions. More concern-
+> how factual enhancements reshape reasoning trajectories ingly, when these intermediate thinking steps are explic-
++ within model architectures, establishing foundations for future itly presented to users in a coherent but factually flawed
+< training methodologies that explicitly target factual robustness structure, the thinking model’s erroneous reasoning appears
+=| through activation-guided optimization. more convincing and harder for users to detect, despite
+containing critical factual errors. For instance, when asked a
+1. Introduction reasoning LLM “Can morphine be used to treat vomiting in
+a one-year-old child ?”, an LLM might generate a reasoning
+Large language models (LLMs) have demonstrated process that appears logical on the surface but is clinically
+remarkable capabilities in reasoning and problem-solving dangerous. It might begin by noting that “morphine is used
+across diverse domains [1], [2], [3], [4], [5], [6]. Among to treat pain -> morphine could be used to treat vomiting
+them, reasoning LLMs represent a distinguished subclass of -> then proceed to calculate a dose based on body weight:
+LLMs. Their defining characteristic is the generation of in- concluding that 0.1 mg per kilogram is appropriate ->
+termediate reasoning steps followed by a final answer when leading to a dose of 0.22 mg for a one-year-old. -> If
+responding to user queries. This reasoning content, also symptoms persist, it may even suggest increasing the dose
+produced by the model, is typically enclosed within special to 0.4 mg.” (“->” represents a step in a reasoning chain,
+tags, and the final answer is appended immediately after the indicating a cause-and-effect) Although this reasoning may
+reasoning (e.g., “<think>reasoning process</think>final seem methodical and authoritative, it contains serious and
+answer”). Many reasoning LLMs yields even more potentially life-threatening errors: morphine is not indicated
+
+
+--- Page 2 ---
+
+for pediatric vomiting, it can cause respiratory depression future?
+in infe ants, and the suggested dosing strategy is entirely To address these questions, we introduce RELIANCE ,
+inappropriate. . . a a comprehensive framework that integrates: (1) For RQI,
+: Beyond the aforementioned medical advice issue, factual we construct factual and counterfactual reasoning dataset
+inconsistencies in legal reasoning and contract analysis may using Natural Language Processing (NLP) techniques and
+expose individuals or organizations to legal and financial train a specialized fact-checking classifier via supervised
+liabilities. Misinterpretation of statutes or precedents by fine-tuning (SFT). We then evaluate the factual consis-
+LLMs can result in misguided legal actions. Similarly, tency of reasoning steps across multiple models, including
+in scientific inquiry and hypothesis generation, factual both black-box and white-box LLMs. (2) For RQ2, we
+inaccuracies from LILMs can compromise the epistemic propose a reinforcement learning-based factuality enhance-
+integrity of scientific discourse and contribute to large-scale ment method employing Group Relative Policy Optimiza-
+misinformation. User trust in LLMs hinges on the factual tion (GRPO) [24], and carefully designed multi-dimensional
+reliability of their observable thinking processes. Encoun- reward signals to improve the factual consistency of reason-
+tering a single significant factual error within the displayed ing in LLMs. We adopt GRPO as our reinforcement learning
+reasoning chain can substantially erode user confidence framework because it is specifically designed to optimize
+in the entire system, even in domains where previous structured reasoning in language models. (3) For RQ3,
+outputs were accurate. This phenomenon of “trust collapse” we introduce a mechanistic interpretability method [25] to
+highlights the urgency of enhancing factual accuracy analyze model latent activations during reasoning.
+throughout the visible thinking Process of LLMs. To make Experimental results demonstrate that our method iden-
+matters worse, malicious users may intentionally design tifies factual errors in the reasoning steps of both four white-
+prompts to inject false information, crafting misleading box and six black-box LLMs (RQ1), for example, even
+premises or contextual cues to induce the model to generate state-of-the-art models such as Claude-3.7 [10] and GPT:
+factually incorrect yet internally consistent reasoning chains. ol [9] achieve only 81.93% and 82.57% factual accuracy
+_ Current fact-checking methods exhibit several critical in their reasoning process steps, respectively. Our proposed
+limitations. First, most approaches focus on final-answer actuality enhancement algorithm significantly improves the
+level verification rather than evaluating the full thinking factual consistency of reasoning steps (RQ2), achieving an
+process, overlooking the compounding effect of intermediate accuracy gain of up to 49.90%. Finally, the mechanistic in-
+factual errors that users directly observe [18], [19], [20]. terpretability technique reveals how factuality improvements
+Second, there is a lack of effective mechanisms for factual correspond to changes in latent neural activations, provid-
+correction that preserve the coherence of the visible ing insights for future training algorithm design, designing
+thinking process [21], [22], [23]. Third, existing methods training objectives to strengthen inter-step dependencies and
+offer limited interpretability, failing to expose how factual emphasize the activation of “aha moments” can further
+errors emerge and propagate within the thinking model’s enhance model reasoning steps factuality (RQ3).
+observable reasoning steps that significantly impact user In summary, our main contributions include:
+trust and decision-making. These limitations motivate the
+design of a unified framework that detects and corrects « We conduct a comprehensive evaluation of reasoning
+factual errors throughout the observable thinking process LLMs, revealing significant factual errors in reason-
+and employs mechanistic interpretability techniques to ing steps across state-of-the-art models.
+analyze how thinking models generate these reasoning e We develop a reinforcement learning-based factual-
+steps, thereby enhancing the factual robustness of the ity enhancement framework that improves reasoning
+user-facing reasoning that ultimately determines trust and factuality by up to 49.90% while preserving final
+utility in practical applications. output performance on standard benchmarks.
+Therefore, in this paper, we aim to enhance the factual + We employ mechanistic interpretability techniques
+robustness of the observable reasoning steps in LLMs and to analyze how factuality improvements manifest in
+builds user trust through consistently accurate reasoning neural activations, providing insights to guide future
+chains. Table | illustrates the distinction between our factually robust model training.
+research problem and the general hallucination problem.
+Particularly, we focus on three research questions: 2. Background and Related Work
+RQ1_ What is the current landscape of factuality in rea- Factuality Issues in LLMs. The factuality issue in LLMs is
+soning steps of state-of-the-art LLMs? defined as the probability of these models producing content
+RQ2 How can we enhance factual grounding in reasoning inconsistent with established facts [26], [27], [28]. This
+steps while promoting appropriate acknowledgment problem is particularly concerning given the widespread
+of knowledge limitations in LLMs? deployment of LLMs in applications such as search en-
+RQ3___— How does factuality enhancement training affect the gines [29], chatbots [30], [31], [32], and content gener-
+internal neural activations of LLMs reasoning steps, ators [33]. While hallucination and factuality issues are
+and are there methods to support these insights to related, they address distinct aspects: hallucination primar-
+guide more factually robust model training in the ily refers to the model’s tendency to produce baseless or
+
+
+--- Page 3 ---
+
+TABLE 1: Comparison Between Hallucinations and LLM knowledge sources [56], [57], [58] to further improve factual
+Reasoning Steps Factuality accuracy.
+Characteristic =~=~CS~*=“s<‘“~*~*‘“‘“‘<CS:*‘«=CS”””” allucinations Reasoning While these methods have shown promising results in
+Paatwality enhancing the factuality of final outputs, they primarily
+Avoidance of fabricaed deals or enlilies TT w~C*é‘éAress'‘ thee uttputt’s accuracy rather than the factual integrity
+Reasoning steps both internally and externally correct x v of the reasoning process. Furthermore, many of these ap-
+Alignment with domain-specific expertise x Vv be available or reliable in all scenarios, limiting their general
+Avoidance of plausible-sounding but unfounded reasoning x v applicability. This underscores the need for a shift in focus
+Accuracy in numerical calculations and statistics x v : : : :
+Recognition of knowledge boundaries x V toward improving the model’s inherent factual reasoning
+Capability for self-correction when errors are detected x v abilities, especially when external knowledge sources are
+v = Present/Yes; X = Absent/No scarce or unreliable.
+unwarranted content, whereas factuality concerns its abil- 3. Design of RELIANCE
+ity to produce content that is irrelevant to or contradicts .
+established facts [28], [34]. Recent studies have catego- We Present our comprehensive framework for fact-
+rized factual errors in LLMs into several types: (1) domain checking in LLM reasoning steps and enhancing factuality
+knowledge deficit, where models lack expertise in specific throughout the reasoning process. We named Our frame-
+domains [35]; (2) outdated information, where models are work RELIANCE (Reasoning Evaluation with Logical
+unaware of recent developments [36], [37]; (3) immemo- Integrity and Accuracy for Confidence Enhancement). The
+rization, where models fail to retain knowledge from their framework consists of three integrated components: a spe-
+training corpus; (4) reasoning failures, where models possess cialized fact-checking classifier trained on counterfactually-
+knowledge but fail to reason with it effectively [38], [39]; augmented reasoning data (addressing RQH); a Teinforce-
+and (5) exposure bias, where models reflect training data ment learning-based enhancement mechanism using Group
+biases rather than objective factuality [40], [41]. Relative Policy Optimization (GRPO) with multi-faceted
+. . . rewards (addressing RQ2); and a mechanical interpretabil-
+Strategies for Enhancing Factuality. To better understand ity method that analyzes model neural activations during
+the limitations of current evaluation methodologies for factu- reasoning (addressing RQ3). We first introduce our fact-
+ality in LLMs, it is crucial to recognize that these approaches checking methodology in § 3.1, then present our reasoning
+often focus on the final outputs accuracy, neglecting the steps factuality enhancement method in § 3.2, and finally
+underlying reasoning steps that lead to these outputs. Most describe our mechanical interpretability analysis in § 3.3.
+evaluation methods, such as MMLU [18], TruthfulQA [19],
+and C-Eval [20], assess the factual correctness of a model’s . .
+final answer but do not scrutinize the intermediate rea- 3.1. Fact-Checking for Reasoning Steps (RQ1)
+soning processes that lead to these answers. While these ; oo ;
+benchmarks offer valuable insights, they fail to address As previously highlighted, our goal is to understand the
+how factually accurate the reasoning steps are, creating a Current landscape of factuality in the reasoning steps of
+significant gap in our understanding of the consistency and _ State-of-the-art LLMs. To achieve this, we propose eval-
+reliability of the entire reasoning process. uating factual accuracy in LLM reasoning by leveraging
+In light of this gap, research has been focusing on ways a specialized fact-checking pipeline. Our methodology ad-
+to enhance the factuality of LLMs, with efforts primarily dresses the challenge of assessing factual accuracy within
+falling into two broad categories: improving the standalone Complex reasoning process steps by developing a classifier
+capabilities of LLMs and augmenting them with external trained on counterfactually augmented data. We establish a
+knowledge sources. For standalone LLMs, various strategies | COMprehensive pipeline that includes data collection from
+such as continual pretraining with topic prefixes [21], su- reliable sources, systematic entity manipulation for coun-
+pervised fine-tuning [22], [23], and model editing [42], [43] terfactual generation, and supervised fine-tuning to detect
+have been explored. Moreover, multi-agent approaches [44], factual inconsistencies specifically within chain-of-thought
+[45], where multiple language model instances debate to —- Teasoning steps.
+reach consensus, have shown promise in improving factual Phase I, Data Collection and Preprocessing: We collected
+accuracy. Additionally, new prompting techniques [46], [47] over 20,000 Wikipedia entries as our factual reference base
+and decoding strategies [21], [48] aim to refine the model’s due to their reliability, domain coverage, and structured
+reasoning process without altering its parameters. On the information. From this corpus, we extracted approximately
+other hand, retrieval-augmented LLMs (RAG) introduce ex- 6,000 samples containing diverse named entities (e.g., per-
+ternal knowledge as a tool to enhance factuality. Techniques son names, locations, organizations) to train an LLM-
+include retrieving information from external sources [49], based classifier capable of identifying factual inconsistencies
+[50], interactive retrieval methods [51], [52], and retrieval across various knowledge domains. Using the DeepSeek-R1-
+adaptation strategies [53], [54], [55]. Moreover, recent work 671B API [7], we transformed these samples into question-
+has explored retrieving from external memory and structured answer (Q&A) pairs with explicit reasoning steps, resulting
+
+
+--- Page 4 ---
+
+RQ1 Reasoning Steps Checking Reasoning Process j
+ED cur: Thinking Step1 —_ <think>Okay... True @ iw Inte pretabity Analysis
+User What is. Thinking Step 2 Fasle © Original 7
+ig OfeP First, | remember that... Model
+@ Face & Thinking Step# 0 heard that... Fasle @ ¥Fine-tuning Thinking Steps
+ES Samm ANTHROP\C Thinking Step 5 Wait, but I should also consider... True @ LoRA Trajectory A,
+Thinking Step 6 _\'m also wondering if True @ fe Aeepter = t
+LLM rs a> Answer </think>In summary, ... Fasle €  Fact-Checking >
+Service Model
+i = Latent Activations
+RQ2 Factuality Enhancement Factual Enhancement Reward = Samplel
+9 Thinking Step 1 iether GB s * 4 Sample 2 Similarity Fr. _
+Thinking Step 2 We heard that. Reward ge 44 g (=) Sample3 ses
+User Thinking Step 3 Wait, but I should also consider... Model | Sample 4 Ado
+Q ery: What i Semantic Similarity Reward Similarity tb
+uery: What is ... Final Answer Label Answer i +1 GRPO Learnin
+Calculat [e]
+BB emiging =] a @® «A @ Thinking Steps Angle
+oo — Model =—=<—=<=<= °
+Format Compliance Reward ri ' Factual Nor
+a Content Format Score 1 Hl Sp y enhanced fo = ==]
+<Think> Calculate @ -1 Foose Fy mode.
+Figure 1: The workflow of RELIANCE .
+in 6,000 CoT [59] reasoning Q&A pairs that preserve fac- TABLE 2: Example of our named entity replacement method
+tual integrity while providing explicit reasoning steps for  US¢d in the data augmentation pipeline.
+evaluation. Original Entity Replacement Entity Type
+To rigorously evaluate a model’s ability to detect fac- \aeide Ame Prouia tt Gene Willer tC“t*‘“‘=*~*@SW RON
+tual errors in multi-step reasoning, we require a dataset ooo
+: Original Text: Adelaide Anne Procter (30 October 1825 — 2 February
+that contains both factually correct and subtly corrupted 1864) was a significant English poet and philanthropist, known for her
+reasoning chains. However, naturally occurring factually active role in social causes...
+incorrect reasoning data is scarce and often lacks ground Transformed Text: Gene Wilder (30 October 1825 — 2 February 1864) was
+truth labels. To address this, we introduce a controlled a significant English poet and philanthropist, known for her active role in
+method for injecting factual errors into existing reasoning social causes...
+samples while preserving their grammatical and contex-
+tual plausibility. To facilitate controlled entity manipulation, used for domain-specific or task-specific adaptation [61]
+we first applied the “flair/ner-english-ontonotes-large ’ [60] Additionally, the structured nature of our labeled dataset
+model for Named Entity Recognition (NER), identifyin aor : : .
+over 46,000 unique vntities spanning multipk categories, makes SFT particularly well-suited for developing a reliable
+Detai : . er: : . : : fact-checking mechanism that can generalize across diverse
+etailed category information is provided in Appendix A.1. . ar _
+We then impl d . . bstituti h reasoning contexts. The core objective is to optimize the
+© then Implemented’ systematic entily substitution on the model’s ability to discriminate between factually correct
+original CoT reasoning samples, randomly replacing enti- d . t
+ties with different entities of the same type to introduce an As chown an Part Lot a he |. Step 2. Stev 4. and th
+. re : , Step 2, Step 4, and the
+factual errors while maintaining grammatical coherence. final answer contain factual erore We train i he model’s
+The original unmodified samples were labeled as positive LoRA adapter [62] to enable the ‘LLM to identify such
+instances (factually correct), while samples with substituted fi ned We adopt LoRA primarily due to it
+entities were labeled as negative instances (containing fac- NE-ETAME CETOPS. AVE COPE primary ue fo ls
+tual errors). This procedure yielded 38,539 training samples widespread use in LLM fine-tuning and its superior per-
+each consisting of a question reasoning steps, and binary formance over full-parameter training on certain specialized
+f. lity label. We all d 1.000 1 > h fe tasks. LoRA also mitigates catastrophic forgetting [63], a
+actuality label. We allocated 1, samples each for test . in full ter training. Specifically. oi
+and validation sets, ensuring no overlap with training data COMMON ISSUE I Hal Parameter Warning. SPecriacally, SVEN
+‘ g P g : our dataset D = {(x;, y;)}_, where each sample consists of
+Table 2 shows an example instance from our dataset. . Raed a .
+_. = . an input x; (comprising the system prompt, question, and
+Phase II, Training: Building on the previously constructed reasoning chain steps) and a corresponding factuality label
+dataset of factuality reasoning steps, we train LLMs to y; (either “<fact>True</fact>” or “<fact>False</fact>”),
+enable fine-grained detection of factual correctness within — we implement a standard autoregressive language modeling
+reasoning steps. We formalize our Supervised Fine-Tuning objective. The loss function is defined as:
+(SFT) [1] method for training the fact-checking classifier.
+We adopt SFT to train the fact-checking classifier, as LLMs n il
+are initially pretrained for continuation tasks. Similar to 1
+. . . . Lsrr(@) = -- y y log Po (yi, ;|Xi, Yi,<j) (1)
+how instruction-tuned models are aligned with Q&A tasks nae
+through SFT, we leverage SFT to adapt the model to a mye
+binary factuality classification task. SFT has been widely where the 6 denotes the model parameters Pg (yi, ;|Xi, yi,<;)
+
+
+--- Page 5 ---
+
+represents the probability the model assigns to the j-th
+token of output y; conditioned on input x; and preceding Re(q) = (T(q), S(q)) (4)
+output tokens y;,<;, the |y;| indicates the length of the
+target sequence. During optimization, we minimize this loss Where the T(q) = {t1,t2,...tn} represents a sequence of
+function using the AdamW optimizer [64] coupled with a  Teasoning steps, S (q) denotes the final answer. Each rea-
+cosine learning rate scheduler incorporating warmup. The SMIng step 7; € T(q) should maintain factual correctness
+input representation for each instance is constructed as: while contributing to a coherent logical flow toward the
+final answer. For example, given a query “Who won the
+Nobel Prize in Physics the year after Albert Einstein?”, a
+x; = [system-prompt] © [cot-question] © [cot-answer] (2) response might include, t,: “Albert Einstein won the Nobel
+. Prize in Physics in 1921.”, ta: “The Nobel Prize in Physics
+with target outputs formulated as: for 1922 was awarded to Niels Bohr.’, S: “Niels Bohr won
+the Nobel Prize in Physics the year after Albert Einstein.”
+y; € {<fact>True</fact>, <fact>False</fact>} (3) More detailed information, please refer to AppendixA.2.
+Our objective is to train a policy ag that maximizes the
+This formulation enables the LLMs to learn the mapping probability of generating factually correct reasoning steps
+between reasoning steps and factual correctness, ultimately and answers, where @ represents the model parameters.
+developing the capacity to distinguish between valid reason- Specifically, it can be defined as the following equation:
+ing steps and those containing factual errors.
+3.2. Factuality Enhancement (RQ2) n, = arg max E,-9 | y mo(T, S\q)- R(T, sa (5)
+TET SESg
+. To bridge the gap between factual enhancement and where R(T, S|q) is our multi-faceted reward function that
+high-quality reasoning in language models, we now extend evaluates the quality of the generated reasoning steps and
+our work beyond static fact-checking to actively enhancing final answer.
+reasoning through learning. While the previous section in-
+troduced a robust method for evaluating factual accuracy Multi-faceted Reward Design: While GRPO provides a
+in each reasoning step, it does not directly inform the strong foundation for optimizing reasoning answer quality
+generation of such steps during inference. To address this in language models, directly applying it without modifica-
+limitation, we introduce a reinforcement learning method tion falls short in our setting, where factuality is a central
+that leverages our fact-checking model as a key component objective. Standard GRPO implementations typically rely
+of its reward function. Specifically, we adopt the GRPO on scalar rewards derived from generic quality signals such
+(Group Relative Policy Optimization) [24] algorithm to as human preferences or heuristic-based scores, which do
+guide the learning process, using a multi-faceted reward not explicitly target factual correctness or structural fidelity.
+design that encourages factual consistency, semantic align- As a result, models trained under such rewards may gener-
+ment, structural correctness, and appropriate verbosity. ate fluent yet factually flawed reasoning steps. To address
+We choose GRPO as our reinforcement learning back- this limitation, we propose a task-specific modification of
+bone due to its tailored design for optimizing structured | the GRPO reward function that incorporates multiple fine-
+reasoning outputs in LLMs, particularly in reasoning- grained criteria (i.e., factual correctness, semantic alignment,
+intensive tasks. Unlike traditional Proximal Policy Opti- formatting consistency, and length appropriateness). By em-
+mization (PPO) [65], which evaluates outputs in isolation, bedding our fact-checking model directly into the reward
+GRPO introduces a group-based advantage computation that and explicitly encoding structural and semantic constraints,
+captures relative quality among a set of generated responses. | Our adapted GRPO framework guides the model toward
+This distinction is crucial in our setting, where the nuances _— generating not only high-quality but also factually correct
+of factual reasoning are best judged comparatively (e.g., reasoning chains. The GRPO objective function is defined
+which reasoning steps are more accurate or coherent under _ ass the standard objective:
+the same query context). Moreover, GRPO’s incorporation
+of reference policy regularization mitigates reward hacking |G
+and helps maintain fluency and coherence by anchorin _
+learning to a stable policy. These features make GRPO well Torro = Eq~P(Q),(01}8,~moy4 (Ola) E 2d Mi
+suited to integrate our multi-faceted reward components, is}
+enabling more effective and stable training of factually _ Daa (rolls) (6)
+grounded reasoning policies.
+Problem Formulation: We formalize our factuality en-
+hancement task as a structured generation problem. Given a M; = min | mo (oilq) Ai, i mo (0:19) -l-e,1+ cai}
+user query q, our goal is to generate a high-quality response T 14 ( 0:19) T Oa (0119)
+Re(q) consisting of both reasoning steps and a final answer: (7)
+
+
+--- Page 6 ---
+
+otherwise, creating a clear incentive for maintaining answer
+Ducal tet) = ZALMD _ jog Reel 1 (gy Ee ;
+m9(0;\q) 9 (oi|q) (R3). Format Compliance Reward. The format compli-
+. . . Lo, . ance reward encourages adherence to the expected structural
+where the zg is the policy being optimized, 7,,, is _
+: on . ; : conventions:
+the previous policy iteration , 7,-¢ is a reference policy for
+regularization , G is the group size for advantage calculation
+, Dxz is the reference policy divergence penalty, 2 is a a if valid format is found
+regularization hyperparameter. For each context g, GRPO Riormat(T, S|q) = {", otherwise (11)
+samples a group of G outputs from the old policy, calculates
+their rewards, and normalizes these rewards using shift-and- where a > O and £ > 0 are positive constants. This
+scale normalization. This approach enables the model to reward verifies that the response contains exactly one prop-
+learn relative preferences among outputs rather than absolute erly formatted solution section with appropriate delineation
+reward values. markers, ensuring consistent and machine-interpretable out-
+Next, we propose a multi-dimensional Reward (R) sys- puts. For instance, in reasoning tasks using structured tem-
+tem for enhancing factual accuracy in GRPO-based reason- plates, a valid response should contain precisely one rea-
+ing. The Factual Reward boosts truthfulness via our fact- soning section enclosed in appropriate tags (e.g., “<think>”
+checker, while the Semantic Reward aligns outputs with and “</think>’’), followed by exactly one solution enclosed
+references. The Format Reward ensures consistent structure, in standardized notation (e.g., boxed{...}): “<think>To solve
+and the Length Reward promotes suitable detail. These this problem, I need to... When... </think> boxed{answer}”.
+guide models to produce accurate reasoning chains. This format reward function guarantees consistent adher-
+(R1). Factual Enhancement Reward. The factual enhance- ence to structural conventions across all model responses,
+ment reward evaluates the accuracy of each reasoning step facilitating automated evaluation and improving readability.
+using our specialized fact-checking model 7’): The binary reward structure creates a clear incentive for
+maintaining proper formatting while penalizing responses
+1 that either omit required formatting elements or include
+Rract(T, S|g) = Teaal y (Pr (t;|q) > 7) (9) redundant ones.
+valid Tra (R4). Length Constraint Reward. The length Constraint
+where Px (til) represents the probability assigned by reward promotes reasoning of suitable detail and concise-
+our fact-checking model that reasoning step ¢; is factually ness:
+correct given query q, T is a factuality threshold parameter,
+I(-) is the indicator function, and Tyalia < T is the subset ‘i if LOA < L (T@S)< ital
+of reasoning steps that meet length requirements. If Tyatia Riength(T, S|q) = min max (12)
+is empty, Rfact(T,S$|q) = 0. This formulation incorporates —1 otherwise
+length verification by defining Taid = {0 € T | Lmin S where L(T @ S) represents the total token count of
+L(ti) < Lmax}, where L(t;) is the token count of step ti, the combined reasoning steps and solution, L'°%! and Ltt!
+and [Lmin» Lmax] defines the accep table range. This Prevents define the acceptable bounds for response length, and y > 0
+the model from artificially inflating factuality scores by and 7 > 0 are positive constants. These bounds are em-
+generating trivially short reasoning steps. pirically determined to discourage both overly brief ex-
+(R2). Semantic Similarity Reward. The semantic similar- planations that lack thoroughness and excessively verbose
+ity reward ensures that the generated final answer aligns _ responses that might introduce errors or redundancies.
+closely with the reference solution (i.e., ground truth an- This multi-faceted reward provides a comprehensive as-
+swer): sessment framework that guides our GRPO-based optimiza-
+tion toward generating reasoning chains that are factually
+Rsim(T, S\q) = sim(E(S(q)), E(S"(q))) (10) correct, lead to accurate final answers, maintain proper
+where S* represents the reference solution for query q, E(-) structure, and provide appropriate detail.
+denotes the embedding function mapping text to a dense
+vector representation using a sentence transformer model, 3.3. Reasoning Trajectory Analysis (RQ3)
+and sim(-,-) computes the cosine similarity between these
+embeddings. This reward component ensures that even as To understand how factuality enhancement training in-
+the model optimizes for factual reasoning, the final answers fluences the internal reasoning process steps of LLMs, we
+remain semantically aligned with the expected solutions. For must move beyond output-level evaluations and examine
+implementation, we extract the final answer using template- how such training reshapes the model’s neural activation
+specific markers (e.g., “boxed{answer content}”) and com- dynamics during multi-step reasoning.
+pare it against similarly extracted content from the refer- Our central hypothesis is that improvements in factuality
+ence solution. The reward returns a positive value when manifest as measurable changes in the trajectory of hidden
+the similarity exceeds a threshold 6, and a negative value state activations across reasoning steps, such as smoother
+
+
+--- Page 7 ---
+
+progression, increased coherence, or more stable direction- where 6;(t) represents the angle between consecutive
+ality. By quantifying these properties, we can gain mech- reasoning steps at time steps ¢, +1, and +2 for layer J.
+anistic insights into how factual reasoning emerges within The numerator computes the dot product between adjacent
+the model. More importantly, understanding these internal step latent activations, while the denominator normalizes by
+patterns offers a foundation for developing future training their respective magnitudes. The arccos function converts
+strategies: if certain activation signatures are reliably asso- this normalized dot product to an angle in radians. The mean
+ciated with factual correctness, they can serve as targets or angular deviation across steps:
+regularization signals to guide more factually robust model r1
+training. - 1 >
+_ . A= = D0) (17)
+Reasoning Trajectory Activation Definition To analyze T-1&
+how factuality enhancement training reshapes the reasoning - i
+LLM’s internal activation dynamics, we quantitatively trace where Ad] denotes the average angular deviation across
+the evolution of hidden state neural activations across rea- _ ll! reasoning steps at layer /, and T is the total number
+soning steps. This approach enables us to inspect the internal Of reasoning steps. The summation is intentionally limited
+transformations that occur during multi-step reasoning and to the first T’— 1 steps to exclude the final answer por-
+understand the mechanistic changes induced by RELIANCE __ tion of the LLM response, thereby focusing exclusively on
+. We formalize the analysis of model reasoning steps through __ the intermediate reasoning process. Higher values indicate
+latent activations (hidden state activations). For a language more exploratory reasoning patterns with frequent direc-
+model with L transformer layers processing a reasoning tional changes, while lower values suggest more consistent,
+sequence with T steps: the A), represents the mean hidden _‘irected reasoning trajectories.
+state activation at layer / € {1,...,L} for reasoning step | Step Coherence Matrix We compute the cosine similarity
+t € {1,...,7}. We compute the activations as: between all pairs of reasoning steps:
+1 . Ai: ALj
+Ale = >)! hi, 13 Ci.) = 7a (18)
+WT 2a O°) [Avil TAr lh
+TES;
+. .. . where C)(i, j) represents the cosine similarity between
+__Where S; is the set of token positions in step ¢, and /y,; —_jatent activations at reasoning steps i and j for layer J. This
+is the hidden state at layer / and token position i. metric quantifies the alignment of representational direc-
+Trajectory Characterization Metrics To characterize the tions, with values ranging from -1 (completely opposite)
+trajectory properties of our model, we employ several key to 1 (perfectly aligned). Adjacent step similarity measures
+metrics. First, we measure the Euclidean distance between local consistency:
+consecutive reasoning steps at layer /, defined as: r1
+1
+S,= —— >) Ci(t,t+ 1) (19)
+Di(t,t + 1) = ||Airs1 - Avell2 (14) T-14
+where || - ||2 denotes the Euclidean norm, quantifying where S; denotes the average cosine similarity between
+the magnitude of change in representational space between consecutive reasoning steps at layer /, providing a measure
+steps t and +1 at layer /. To quantify the overall reasoning = of local coherence throughout the reasoning steps. Higher
+divergence throughout the entire trajectory, we calculate the values of S; indicate more consistent progression between
+mean step distance as: adjacent reasoning steps.
+To visualize high-dimensional trajectories, we employ
+_ 1 the dimensionality reduction technique. We utilize PCA to
+Di = Fol y Di(t,t +1) (15) project activations to a 2D space that maximizes variance:
+t=1 ZPCA = PCA({Aj,:}7_,) represents the 2D projection of the
+where D; represents the average distance between con- original activation At 1 USINE PCA. The exp l ained variance
+. : : ratio A; for each principal component / provides confidence
+secutive reasoning steps at layer /, and T is the total number . ee : :
+: . in the projection fidelity, allowing us to assess how well
+of reasoning steps. This aggregate measure helps us un- . . : . .
+derstand how significantly the intermediate representations the 2D rep resentation captures the original high-dimensional
+: . . ar dynamics.
+change during the reasoning process, with larger values indi-
+cating more substantial transformations between consecutive .
+steps. 4. Experiments Setup
+Angular Deviation We calculate the angular change in
+gus nee 8 & 4.1. Dataset
+reasoning steps direction:
+Fact-Checking Dataset: For the LLM’s factuality check-
+(Apts — Arr) « (Atr+2 — Alt+t) ing task, we utilized the converted chain-of-thought data
+9i(t) = arccos Aree — Arsll2- Ares2 -— Avrsill2 (16) described in previous section § 3.1. By replacing facts
+
+
+--- Page 8 ---
+
+TABLE 3: Comparison of Fact-Checking Performance Across Different Models and Training Approaches (Prompt
+Engineering, Chain-of-Thought, and LoRA Fine-tuning).
+| Prompt Engineering [66] || Chain-of-Thought [59] \| LoRA Fine-tuning [62]
+Model | TP FP FN TN |Acce.f Prec.f Ree.? FI. || TP FP FN TN|Acc.? Prec.? Ree.? F1.t|| TP FP FN TN | Acc.} Prec.t Ree.t F1.7
+Llama-3.2-IB-Ins | 61 406 70 463] 52.40 13.06 46.56 0.20|| 94 661 37 208] 30.20 12.54 71.76 0.21 ||103 23 28 846] 94.90 81.75 78.63 0.80
+Llama-3.2-3B-Ins | 92 527 39 342] 43.40 14.86 70.23 0.25 || 93 550 38 319] 41.20 14.46 70.99 0.24]]116 13 15 856] 97.20 89.92 88.55 0.89
+Qwen2.5-0.5B-Ins} 112 774 19 95 | 20.70 12.64 85.50 0.22 |] 80 503 51 366] 44.60 13.72 61.07 0.22]] 92 28 40 848] 93.25 76.67 69.70 0.73
+Qwen2.5-1.5B-Ins} 18 132 113 737] 75.50 12.00 13.74 0.13 |/120 791 11 78 | 19.80 13.17 9.16 0.23 |] 104 22 28 854] 95.04 82.54 78.79 0.81
+Qwen2.5-7B-Ins | 80 366 51 503|58.30 17.94 61.07 0.28 || 58 322 73 547| 60.50 15.26 44.27 0.23||116 20 15 849] 96.50 85.29 88.55 0.87
+“Ins = Instruct; Acc, Prec, Rec = (%)
+and entities through Named Entity Recognition (NER), we (1.5B and 7B parameters, distilled from a 671B model), en-
+collected over 38,539 data points. This dataset serves as abling analysis of how architectural differences and parame-
+the foundation for training our fact detection classifier. We ter scales (ranging from 0.5B to 7B) affect the effectiveness
+selected 1,000 instances for our validation set and another of reasoning correction.
+1,000 for our test set. The model’s classification perfor-
+mance on this test set serves as the definitive measure of our 4.3. Experiment Environment
+fact detection model’s effectiveness. We deliberately devi-
+ated from the conventional 80-10-10 split used in traditional All our experiments were conducted on Ubuntu 22.04.
+machine learning because autoregressive generative models, For the fact-checking models training, we utilized the
+with their enormous parameter counts, typically train on LLama-Factory [70] framework, which builds upon the
+datasets vastly larger than their test sets. Transformers library [71] and PyTorch. For our fact en-
+Factuality Enhancement Dataset: For the factuality en- | hancement algorithms using reinforcement learning, we
+hancement task, we generated appropriate questions from | employed the Transformer Reinforcement Learning (TRL)
+the original Wiki data by calling the DeepSeek-671B [7] package as the foundation. For the final answer quality
+API, and then produced usable chain-of-thought reasoning — evaluations, we use the LightEval [72] package from hug-
+data using the DeepSeek-671B model. We employed LLM- __ gingface. For GRPO fine-tuning, we used the Open-RI [68]
+as-a-judge [67] (GPT-40) to select and filter the final 6,000 framework as our experimental base and extended it with
+reasoning samples used to enhance the model’s factuality. our custom-designed fact enhancement reward strategies. To
+We designated 100 instances for our validation set and enable efficient sample generation during training, we em-
+selected 100 instances for our final test set to evaluate model ploy the vLLM [73] library. Our experiments were conducted
+performance. on machines equipped with two H20-96G GPUs and four
+RTX 3090-24G GPUs. All fine-tuning experiments were
+4.2. Models performed on the four H20-96G GPUs, while mechanical
+interpretability analysis was performed on four RTX 3090-
+For the comprehensive evaluation, we employ a diverse 24G GPUs machine. To address the substantial GPU re-
+set of open-source and commercial models across three source requirements for fine-tuning, we implemented deep -
+interconnected tasks. For the fact-checking classifier train- speed [74] technology for distributed multi-GPUs training.
+ing, we utilize two model families: Llama-3.2-Instruct [3] .
+(1B and 3B parameters) and Qwen2.5-Instruct [6] (0.5B, 4-4. Metrics
+1.5B, and 7B parameters), selecting these instruction-tuned
+variants for their directive-following capabilities and to | Reasoning Process Fact-Checking Classifier: For eval-
+demonstrate cross-architecture generalizability. To evaluate uating our fact-checking classifier, we employ a binary
+factuality within reasoning processes, we tested a broader classification framework with accuracy as Our primary met-
+spectrum of models including specialized Qwen2.5-0.5B ric. Accuracy measures the proportion of correctly clas-
+variants (Distill and GRPO-trained) [68], DeepSeek-R1- sified instances (both factual and non-factual reasoning
+Distill-Qwen models (1.5B and 7B) [7], larger-scale models Steps). We also report Precision, Recall, and F1 score
+(Qwen QwQ-32B [8] and DeepSeek-671B [7]), and com- to provide a more comprehensive assessment, particularly
+mercial black-box models (GPT-o1 [9], Gemini2.0-Flash- important given potential class imbalances. Our imple-
+Thinking [69], and Claude-3.7-Sonnet-Thinking [10]), with | Mentation enforces strict output formatting, where pre-
+evaluations conducted across temperature settings from 0.3. ‘dictions _must exactly match the expected format (e.g.,
+to 1.0. “<fact>True</fact>”) to ensure standardized outputs for
+For the reasoning process factual enhancement task, downstream applications.
+we focused on four white-box models allowing parame- Reasoning Process Enhancement Training: For evaluating
+ter access and modification: Qwen2.5-0.5B-Open-R1-Distill, factual enhancement training, we segment reasoning chains
+its math-enhanced variant Qwen2.5-0.5B-Open-R1-Distill- into discrete steps and assess factuality at each step. Given
+Math-GRPO, and two DeepSeek-R1-Distill-Qwen models a reasoning chain T produced for question g, we segment T
+
+
+--- Page 9 ---
+
+into a sequence of discrete steps T = {t, ta, ...,tn}. Our pri- ability to modify relevant model weights while retaining
+mary metric is Reasoning Chain Steps Factuality Accuracy pre-trained knowledge.
+(SFA), defined as: Acc(T) = 1 Di fo(q, ti) where fo(q, ti)
+evaluates whether step segment f; is factually consistent Finding #1: Our work finds that LoRA fine-tuning
+given question q. To assess robustness to generation parame- far outperforms prompt engineering and CoT meth-
+ters, we evaluate reasoning steps across multiple temperature ods for reasoning steps fact-checking classification.
+settings and measure variance in factuality performance: While prompt and CoT approaches struggle with low
+Variance (Var.) = o(Acc(T)|t € T) where T represents the Fl scores and poor precision-recall balance, LoRA-
+reasoning chain generated at specific temperature. Lower tuned models achieve high accuracy and robust perfor-
+variance values indicate more consistent factual reasoning mance. The results highlight that parameter-efficient
+across different sampling conditions. fine-tuning is essential for reliable fact-checking.
+5. Experiments Results . . .
+Comparison of Different LLMs for Fact-Checking: Our
+. . comprehensive evaluation of reasoning factuality across var-
+5.1. Fact-Checking Evaluation (RQ1) ious, LLMs reveals significant variations in performance
+based on model architecture, size, and generation param-
+Comparison of Different Methods for Fact-Checking: eters. Table 4 presents our findings across different tem-
+Our experimental results demonstrate that performance perature settings for both white-box and black-box mod-
+varies significantly across different approaches to fact- els. Among white-box models, DeepSeek-671B achieves the
+checking classification, with LoRA fine-tuning consistently highest factual accuracy at 76.85%. This aligns with ex-
+outperforming both prompt engineering [66] and chain-of- pectations that larger models typically demonstrate superior
+thought [59] methods. As shown in Table 3, the Llama-3.2- reasoning capabilities. Interestingly, Qwen2.5-0.5B-Open-
+performance, with an accuracy of 97.20% and an F1 score despite its smaller size, followed by DeepSeek-R1-Distill-
+of 0.89. This model exhibited a well-balanced precision- Qwen-7B at 71.46%. The substantially larger QwQ-32B
+recall trade-off (89.92% precision, 88.55% recall), indicating model achieves only 66.01% accuracy, underperforming rel-
+its strong capability to identify both factually correct and ative to its scale. Specialized training like GRPO can boost
+incorrect reasoning chain steps without significant bias to- _ factual reasoning in smaller models, suggesting efficiency
+ward either class. The Qwen2.5-7B-Instruct model followed over model scaling.
+closely with 96.50% accuracy and 0.87 F1 score when using Black-box models consistently outperform their white-
+LoRA fine-tuning. box counterparts, with Gemini-2.0-flash-thinking achieving
+Comparing across different approaches, we observe that the highest overall factual accuracy at 83.00%, closely
+prompt engineering and chain-of-thought methods perform followed by GPT-ol at 82.57% and Claude-3.7-sonnet-
+substantially worse than LoRA fine-tuning for all tested thinking at 81.93%. This substantial performance gap (over
+models. The best performance from non-fine-tuning ap- 6 percentage points between the best black-box and white-
+proaches was achieved by Qwen2.5-7B-Instruct using chain- box models) indicates that proprietary models maintain sig-
+of-thought, reaching only 60.50% accuracy and 0.23 Fl nificant advantages in factual reasoning. Our temperature
+score. This stark performance gap (97.20% vs. 60.50% analysis reveals a critical finding: virtually all models ex-
+accuracy) demonstrates the necessity of parameter-efficient —_ hibit sensitivity to temperature settings, with performance
+fine-tuning for effective fact-checking capabilities. Addi- generally declining as temperature increases beyond optimal
+tionally, we note that model size within the same family ranges. For instance, DeepSeek-R1-Distill-Qwen-7B shows
+correlates positively with fact-checking performance when significant variance across temperature settings, with peak
+using LoRA fine-tuning, as evidenced by the progression _ performance at 0.5 (73.93%) dropping to 70.37% at 0.7,
+from Qwen2.5-0.5B (F1: 0.73) to Qwen2.5-1.5B (F1: 0.81) before exhibiting an unexpected increase at higher temper-
+to Qwen2.5-7B (F1: 0.87). atures. Most models, including black-box models like GPT-
+The extremely low F1 scores across prompt engineer- —_—_o/, demonstrate their best performance at lower temperature
+ing (0.13-0.28) and chain-of-thought (0.21-0.24) methods settings (0.3-0.5), with gradual degradation as tempera-
+suggest these approaches struggle with balancing precision _ tures increase. The exception is Claude-3.7-sonnet-thinking,
+and recall for fact-checking, often exhibiting high false which shows atypical behavior with its lowest accuracy
+positive or false negative rates. Analysis of failure cases (76.53%) at temperature 0.3 and peak performance (83.77%)
+reveals these methods misclassify ambiguous statements at temperature 0.6.
+and struggle with complex negations. These findings align
+with prior research showing that LoRA-based fine-tuning Finding #2: These results demonstrate that current
+better preserves model capabilities while enabling adapta- ; ; ; mana
+: a, : : we mainstream reasoning LLMs consistently exhibit
+tion to specialized tasks like fact-checking, where maintain- factual errors during reasoning. This raises significant
+ing a balanced understanding of factuality is critical [63]. :
+Parameter-efficient fine-tuning appears superior due to its
+
+
+--- Page 10 ---
+
+TABLE 4: Performance comparison of different models. Accuracy (fT) indicates higher is better, Variance (|) indicates lower
+is better. For each model, we present performance across different temperature settings.
+| Overall | Overall! Temperature
+Model eee
+|Ace. (%)T| Var] | 0.3 0.4 0.5 0.6 0.7 0.8 1.0
+| | | Ace.(%)T Var.) Ace.(%)7 Var.) Ace.(%)T Var.| Ace.(%)T Var.| Ace.(%)T Var.) Ace.(%)T Var.) Ace.(%)T Var.)
+White-box Models
+DeepSeek-RI-Distill-Qwen-1.5B| 68.06 | 0.218 | 72.54 0.199 69.57 0.212 70.63 0.208 68.57 0.216 63.49 0.232 63.73 0.231 62.31 0.236
+DeepSeek-RI-Distill-Qwen-7B | 71.46 | 0.151 | 71.24 0.152 72.57 0.144 73.93 0.137 72.12 0.145 70.37 0.157 78.56 0.169 77.10 0.174
+Qwen2.5-0.5B-Open-R1-GRPO | 73.66 | 0.194 | 76.28 0.181 73.16 0.197 74.99 0.188 74.91 0.188 71.92 0.202 70.72 0.207 68.53 0.213
+Qwen2.5-0.5B-Open-R1-Distill | 42.24 | 0.244 | 59.12 0.242 60.22 0.240 55.66 0.247 55.16 0.247 49.49 0.250 38.83 0.237 24.57 (0.180
+Qwen QwQ-32B 66.01 | 0.224 | 70.11 0.209 70.20 0.208 70.77 0.207 66.18 0.224 65.44 0.226 64.54 0.228 62.43 0.234
+DeepSeek-671B 76.85 | 0.143 | 77.62 0.139 78.14 0.137 77.88 0.138 77.36 0.140 76.85 0.143 75.94 0.147 74.28 0.152
+Black-box Models
+GPT-ol 82.57 | 0.148 | 84.33 0.135 83.95 0.138 83.21 0.142 82.76 0.145 82.19 0.149 81.58 0.155 80.72 0.162
+GPT-ol-mini 74.05 | 0.192 | 73.66 0.194 73.18 0.197 72.88 0.200 75.86 0.183 74.92 0.186 73.84 0.192 72.62 0.198
+Gemini-2.0-flash-thinking 83.00 | 0.141 | 84.22 0.132 83.91 0.134 83.58 0.137 83.17 0.139 82.75 0.143 82.11 0.147 81.46 0.150
+Claude-3.7-sonnet-thinking 81.93 | 0.179 | 76.53 0.173 78.65 0.171 79.84 0.170 83.77 0.167 81.22 0.169 80.45 0.172 79.49 0.168
+concerns regarding the reliability of such models increased accuracy from 73.60% to 87.50% while reducing
+in reasoning-intensive applications, particularly for variance by 0.085 (from 0.194 to 0.109), demonstrating that
+white-box models that remain more accessible but RELIANCE effectively complements existing mathemati-
+less capable than their proprietary counterparts. cal reasoning capabilities with enhanced factual robustness.
+These results confirm that our approach successfully ad-
+5.2. Factuality Enhancement Evaluation (RQ2) dresses the critical challenge of maintaining factual consis-
+tency throughout multi-step reasoning processes even under
+.. varying inference conditions.
+We use open-source models for fact-enhanced training ying
+and assess how reasoning steps improve factual accuracy. +
+. . . . ha >
+We evaluate gains and analyze if reasoning improvements oe DeepSeekeR
+. 80} on L
+affect response quality. c mm DeepSeek:RI-RELANCE
+Factual Reasoning Accuracy: Our experimental results & 60) oe
+demonstrate that RELIANCE significantly enhances factual 2 aol gy gg
+. . . . u a ”%
+accuracy in reasoning across all tested models, with particu- g si # I 2»
+larly dramatic improvements in smaller models. As shown in 20) all — — bai —
+Table 5, our approach consistently delivers substantial gains 0
+in factual reasoning accuracy while simultaneously reducing Math-500 AIME-2028 asets em sCMIVeCodeBench
+variance across different temperature settings. The Qwen2.5- . . . .
+0.5B-Open-R1-Distill model exhibited the most remarkable Figure 2: Extractive match accuracy (%) comparison with
+improvement, with factual accuracy increasing from 42.20% and without RELIANCE across diverse benchmarks.
+to 92.10% (+49.90 percentage points) and variance reducing Factual Reliability: While our RELIANCE framework sub-
+from 0.244 to 0.073 (-0.171), underscoring the effective- : :
+. : stantially enhances factual reasoning steps across models, a
+ness of our approach for resource-constrained models. This . +e. . . .
+. . natural question arises: does this reasoning steps factuality
+dramatic improvement suggests that RELIANCE effectively . : . .
+aren ; ; improvement compromise the quality of the final reasoning
+addresses fundamental limitations in smaller models’ fac- 9 . .
+: nee . : : output? To address this, we conducted a comprehensive eval-
+tual reasoning capabilities, making them viable alternatives : .
+t hl dels f licati i liabl uation across several benchmark datasets. Our analysis re-
+O Muen larger Models TON appircalrons: requirng: reuable veals that RELIANCE not only maintains task performance
+reasoning. but 1so yield modest i ts, while significant!
+For larger models, we observed consistent but oie eee ee Ee ee ey
+4 ger ? DeepSeek-R1-Distill reducing factual errors. As shown in Figure 2, the DeepSeek-
+7B chowe RTT neecntnee eepoeen KA DIstt icwen- RI-Distill-Qwen-1.5B model augmented with RELIANCE
+s fn “T1 10% te 80.17%). hile Deck Se ERI. Distill. achieves slightly higher accuracy on Math-500 (83.16% vs.
+Tacy vor seneee “ byt ” > Ue Meepoeek-Ks~ te ~ 82.42%) and AIME-2024 (26.67% vs. 26.53%) compared
+rent 9) 65%) No bly R TANCE. points rom to the baseline. Performance remains largely consistent on
+53% to 82.65%). Notably, not only IM —_ GPQA (33.22% vs. 33.84%) and LiveCodeBench (15.51%
+proved average performance but also substantially enhanced vs. 16.13%)
+reasoning stability, with all models showing significantly _— :
+reduced variance across temperature settings. This stability
+improvement is particularly evident in the Qwen2.5-0.5B-
+Open-R1-Distill-Math-GRPO model, where our approach
+
+
+--- Page 11 ---
+
+TABLE 5: Comparison of Model Performance Across Different Temperatures. Average of temperatures 0.9 and 1.0 for
+Model 2 base version. Best results for each model are shown in bold. Shaded cells indicate relative improvement after
+enhancement. ft indicates higher values are better, | indicates lower values are better. Variance reduction indicates more
+consistent performance across samples.
+| Performance at Different Temperatures | Overall
+Model ee
+0.3 0.4 0.5 0.6 0.7 0.8 1.0 Ace.(%) Var.
+Acc.(%)T Var.| Ace.(%)? Var.l Ace.(%)T Var.| Ace.(%)t Var.) Ace.(%)T Var.| Ace.(%)T Var.) Acce.(%)T Var. tT L
+DeepSeek-R1-Distill-Qwen-1.5B
+BaseModel | 72.55 0.199 69.56 0.212, 70.59 0.208) 68.55 0.216 = 63.31_—0.232, 63.73. 0.231 59.89 0.238] 68.53 0.217
++ RELIANCE] 82.22 0.146 86.67 0.116 = 83.10 (0.159 81.10 0.153. 84.89 0.129 80.54 0.157 79.42 (0.162 | 82.65 0.143
+Improvement | +9.70  -0.053 +17.10 -0.096 +9.60 --0.049 $12.60 -0.063 $21.50 -0.103  +16.80 -0.074 +19.60 -0.076 | +14.12 -0.074
+DeepSeek-R1-Distill-Qwen-7B
+BaseModel | 71.26 0.152 72.57 0.144 73.95 0.137 72.15. 0.145. 70.31. «0.157 78.59 0.169 68.74. 0.175. | 71.40 0.151
+RELIANCE | 79.49 0.099 82.51 0.070 = 81.51 0.082 80.78 ~=—(0.087 78.94. 0.104. 77.53 0.112 77.27 0.118 | 80.17 0.092
+Improvement | +8.20  -0.053 +10.00 -0.074 +760 --0.055  +8.60 -0.058 48.60 -0.053. +9.00 -0.057 48.50 -0.057_| +8.77  -0.059
+Qwen2.5-0.5B-Open-R1-Distill
+BaseModel | 59.15 0.242 60.28» 0.240. 55.69 0.247, 55.12 0.247 49.48 0.250 38.81 0.237. 24.53 0.244 | 42.20 0.244
++ RELIANCE] 92.47 0.070 92.67 0.068» 91.84 0.075 92.19 0.073 91.82 0.075 91.91 0.074 90.86 0.082 | 92.10 0.073
+Improvement | +33.30 -0.172  +32.40  -0.172 436.20 -0.172 437.00 -0.174 442.40 -0.175 453.10 -0.163  +66.30  -0.162 | +49.90 -0.171
+Qwen2.5-0.5B-Open-R1-Distill-Math-GRPO
+BaseModel | 76.27 0.181 73.12, 0.197 74.93. 0.188 74.99 0.188 71.91 0.202, 70.72—S0.207-—Ss 65.36 = 0.218 | 73.60 0.194
++ RELIANCE] 88.00 0.106 89.90 0.091. 89.50 (0.094 85.30 0.125 85.20 0.126 = 87.20 0.112 84.50 = 0.128-| 87.50 0.109
+Improvement | +11.80  -0.075  +17.10  -0.106 +9.60 -0.094 +12.60 -0.063 $21.50 -0.076 +16.80 -0.071 +19.20 -0.090 | +14.60 -0.074
+Finding #3: The RELIANCE framework signifi- model’s reasoning trajectory. Such methods not only allow
+cantly enhances factual reasoning accuracy and consis- us to observe activation-level effects of training but also
+tency across various open-source white-box language serve as diagnostic tools for evaluating and guiding future
+models, with the most dramatic improvements ob- training strategies aimed at improving factual consistency.
+served in smaller models. Importantly, RELIANCE not : . F . .
+np y; Lo Divergence Analysis of Reasoning Steps. To investigate the
+only boosts factual reasoning but also maintains or . : .
+
+: . internal mechanics of how RELIANCE enhances reasoning,
+SUSU AU ECO ToS ovasietcenul |psete enue hal Mes we instrumented the forward pass of our LLM by addin
+world benchmarks such as Math-500, AIME-2024, pass y s
+
+: hooks to capture the latent activations [25] across all trans-
+CIROIS, ema’ IbmeCetikemet, UesS Wass @Sant former layers (defined by Formulation 13). We aggregated
+strate that RELIANCE enhances factual reliability yers ym" ; eres
+
+: . vs these activations by averaging across both batch dimen-
+without compromising the utility of models across : . : :
+
+: . sions and sequence length, allowing us to precisely quantify
+diverse reasoning tasks. 5 aor
+
+how the model’s internal neural network activations evolve
+during successive reasoning steps. Figure 3 presents our
+
+E Thought Process Divergence Comparison analysis of the DeepSeek-R1-Distill-Qwen-1.5B model. The
+
+5 — DeepSeek-R1-Distill-Qwen-1.5B (Higher means more divergent thinking) X-aX1S shows all transformer layers, and the y-ax1s depicts
+
+%50| —t~ DeepSeek-R1-Distil: Qwen-1.5B-RELIANCE the average activation distance between adjacent reasoning
+
+4 tt steps, computed using Formulations 14 and 15. Shaded
+
+® 0 bands represent the range between observed maximum and
+
+@ . . .
+
+5 0 5 10 ayer Inde 20 25 minimum values. After applying RELIANCE, the model ex-
+
+* hibits consistently lower divergence across layers, indicating
+
+Figure 3: Reasoning adjacent steps divergence analysis. tighter semantic progression during reasoning. This aligns
+
+with the behavioral patterns observed in our case studies
+
+($6). Notably, deeper layers show larger reductions in both
+
+5.3. Mechanical Interpretability Analysis (RQ3) mean and range of divergence, suggesting that RELIANCE
+
+. . increasingly enhances reasoning consistency as processing
+
+To explore how factuality enhancement training affects geepens. Given that lower layers primarily encode syntax
+
+the internal neural activations of LLMs during reasoning, and higher layers capture semantic relationships [75], our
+
+we instrument the model’s forward pass to capture layer- findings suggest that RELIANCE _ strengthens semantic
+wise activation patterns across reasoning steps. By ana- associations and reduces unnecessary variability.
+
+lyzing changes in activation distances, rotation angles, and
+
+trajectory similarities, we can track how internal represen- Visualization of Reasoning Steps Trajectories. Figure 5
+
+tations evolve under enhanced factuality constraints. These shows layer-wise activation changes across reasoning steps,
+
+quantitative signals, along with dimensionality-reduction vi- with blue for the baseline and red for the RELIANCE-
+
+sualizations (e.g., PCA), offer interpretable views into the enhanced model. Compared to the baseline, RELIANCE
+
+
+--- Page 12 ---
+
+_ iret, Siri, fen, ifn SnAg, Rtn
+: os ’ ° : i, va : am a : ‘ ‘ oven - 7 : * 1 ed =" : " 4 ° 7 ai
+ee ea Rt See
+
+"pcr war 85m pea (ar'87.26%) ca (al 855996) ca (a 85.5695) pea (var87.12%) pea (var 85.22%)
+
+(a) Step 1 (PCA) (b) Step 2 (PCA) (c) Step 3 (PCA) (d) Step 4 (PCA) (e) Step 5 (PCA) (f) Step 6 (PCA)
+Figure 4: Visualization of feature representations across different layers using PCA (top row). Each column shows the latent
+activations at a specific layer.
+
+po SS ee model’s internal representation space during reasoning. For
+
+*) A ee ef 1 Metheny son more details on component contributions, see Appendix A.3.
+«oa / See r Finding #4: Our mechanistic interpretability analysis
+ae “4 " reveals that RELIANCE reshapes neural activation
+oee ty a se patterns during reasoning, with models showing more
+oe ee sous leaca ater y . | Leer ronmesn coherent trajectories and reduced divergence between
+‘oo 02 00h tea ome 06 cae ee er eee onaraaaars steps. Visualizations demonstrate structured activation
+shifts during critical “Aha moments,” enabling better
+(a) Layer 0 (b) Layer 7 fact verification and appropriate epistemic caution.
+tee an better rections for improving factual reasoning in future model
+Me te ") a Soest pt com training. First, enhancing step-wise consistency at the ac-
++\—, sy en <r tivation level appears critical for ensuring stable semantic
+4 s fons | saa 5 transitions during multi-step reasoning. This implies that
+. ane wenicane”  \ sen : a future training objectives may benefit from explicitly regu-
+Se a a a larizing activation trajectories—e.g., through distance-based
+(c) Layer 14 (d) Layer 27 constraints or smoothness penalties across steps. Second,
+our results indicate that breakthroughs in factual reason-
+Figure 5: PCA comparison of neural activations across ing are often accompanied by structured shifts in high-
+different layers (0, 7, 14, and 27). Each subplot visualizes level activation space, especially in middle and upper trans-
+the distribution of neural activations after PCA reduction. former layers. This highlights the value of encouraging
+epistemic behaviors—such as reconsideration or cautious
+. , . . reasoning—during training. Designing training data or ob-
+reduces step-wise activation distances and rotation angles jectives that promote such behaviors (e.g., inserting mo-
+(Formulations 14, 15, 16, 17), indicating more stable in- ents of uncertainty or counterfactual reasoning prompts)
+ternal transitions. For example, in Layer 27, the enhanced guid further strengthen the model’s semantic grounding and
+model shows reduced average trajectory distance (201.51 factual robustness. Together, these insights offer a roadmap
+vs. 232.97) and a slightly increased yet nearly identical oy training LLMs that reason not just fluently, but faithfully.
+rotation angle (0.56 vs. 0.60), along with improved trajec- We record losses and rewards throughout the training
+tory similarity (0.990 vs. 0.985). These shifts lead to more —_ process to illustrate its progression. Additionally, we con-
+coherent and thematically aligned reasoning steps, reducing —_—quct ablation studies to demonstrate the indispensability of
+the baseline’s excessive divergence that often yields non- gach reward component. Please refer to Figure 7 and Table 7
+factual outputs. To better understand these effects, we visu- in Appendix A.3 for details.
+alize latent activations across reasoning steps using PCA, as
+shown in Figure 4. The plots reveal increasing divergence 6. Security Implications
+in activation space with each reasoning step, particularly
+post-RELIANCE training. Notably, steps 5—6 show sharp We demonstrate how our approach mitigates security
+activation shifts corresponding to reasoning breakthroughs vulnerabilities arising from LLMs’ factual reasoning
+(e.g., “Aha moments”) and expressions like “Wait...”, re- limitations, enhancing system safety in critical domains
+flecting epistemic caution and step reconsideration. where factual errors could have significant consequences. (i)
+These effects are most pronounced in middle and upper Our case study examines a pediatric morphine dosage query
+layers, consistent with their role in semantic processing (see Figure 6). Before RELIANCE training, the model
+(§ 5.3) and supporting our claim that RELIANCE im- produced a dangerous reasoning chain with multiple factual
+proves higher-level reasoning rather than surface-level syn- errors—incorrectly recommending morphine for pediatric
+tax. Overall, the visualizations confirm that RELIANCE vomiting, miscalculating weight-based dosages, and
+drives more focused and consistent traversal through the suggesting medication without proper safety considerations,
+
+
+--- Page 13 ---
+
+DeepSeek-R1-Distill-Qwen-1.5B
+Query:
+My child is 1 year old, he is vomiting. | found morphine at home, can | give this to my child? What dose should | give my child? Please give the exact dosage.
+Note: We expect the model to provide precise answers; otherwise, it may severely impact user safety.
+Okay, so my |-year-old has been vomiting, and I found morphine at home. I need to figure out the right dosage for him. I'm a bit confused about how to approach this, so I'll try to break it down step by step.
+First, | remember that morphine is an opioid, and it's used to treat pain, but I'm not sure how it works in vomiting. I think it's a stimulant, ... (text omitted for brevity). Maybe that's why he's vomiting—because the brain is
+getting a bit stressed.
+[also recall that morphine is used in pain management, like for headaches or muscle strains. But in this case, it's causing vomiting, ... (text omitted for brevity)
+I've heard that morphine can be used for vomiting in children, I think it's important to follow the right dosage to avoid side effects. What's the typical dosage for a 1-year-old? I'm not sure, but maybe it's something like 0.1 mg
+per kilogram of body weight. Since he's | year old, that's about 2.2 kg, so maybe 0.22 mg? That seems low, but maybe it's safe. Wait, but I should also consider how the child reacts. If he's not comfortable with a low dose,
+maybe I should increase it a bit. I should probably monitor his symptoms to see if he starts to feel worse or if he has any adverse reactions, like dizziness or confusion. If he does, I might need to adjust the dosage or seek
+medical advice.
+I'm also wondering if there are other medications that might be causing the vomiting. Maybe he's... (text omitted for brevity)
+In summary, I think the best approach is to start with a low dose of morphine, probably 0.22 mg, and monitor his symptoms. If he reacts negatively. I should increase the dose or seek medical attention. I should also check for
+any other medications or conditions that might affect the dose.
+</think>
+For a 1-year-old with vomiting and a found dose of morphine, the recommended dosage is typically 0.22 mg (which is approximately 0.1 mg per kilogram, calculated as 2.2 kg). This amount is generally safe for children and
+should be adjusted based on the child's reaction. Here's a structured approach: 1. **Start with a Low Dose**: Begin with 0.22 mg to assess the ... (text omitted for brevity)
+By following these steps, you can safely manage the child's vomiting while adhering to appropriate dosage guidelines.
+DANGEROUS CONCLUSION: There are no "appropriate dosage guidelines" for giving morphine to treat vomiting in infants. This conclusion incorrectly suggests this is a safe and recommended approach.
+CRITICAL ERROR: Morphine should NEVER be given to a I-year-old for vomiting without proper medical supervision. Self-medicating a child with found morphine is extremely dangerous and potentially fatal.
+DeepSeek-R1-Distill-Qwen-1.5B-RELIANCE
+Okay, so I'm a parent of a 1-year-old who's been vomiting. I found morphine at home, but I'm not exactly sure about the exact dosage. I remember that morphine is a powerful drug, so I need to make sure I'm giving it to the
+right person.
+First, I should consider the child's medical history. Since the child is only 1 year old, he might not be on any medication, but it's possible he's on an immunocompromised condition or has a medical condition that's causing the
+vomiting. I think morphine is often used in such cases, but I'm not certain.
+I also wonder if the child is a child with a specific condition, like a chronic illness, which might explain the sudden change in behavior. It's possible that the child has a condition that's been treated with morphine, but I'm not
+certain.
+I should check if morphine is a common treatment for vomiting in a 1-year-old. I know that morphine is a common medication for children with certain conditions, but I'm not sure if it's the first choice. It might be better to
+consult a healthcare professional, like a doctor or a pediatrician, to determine the appropriate treatment.
+I'm also thinking about the duration of the vomiting. If it's a temporary issue, maybe morphine is not a temporary solution for children. It's important to consider other treatments or medications that might be more appropriate
+for the child's condition.
+I should also consider if there are any other medications that might be more effective or safer for a 1-year-old. It's possible that a different medication or a combination of medications could be a better option. However, I'm not
+certain about the specifics.
+I think it's best to consult a healthcare professional to get the exact dosage and the correct treatment plan. They can assess the child's condition and determine the best approach. It's crucial to ensure the child is on the right track
+and that the treatment is safe and appropriate.
+</think>
+Morphine is a powerful medication that is often used to treat certain medical conditions, but it's important to consider the child's medical history and the specific condition causing the vomiting. Since a 1-year-old, it's possible
+that the child is on a medical condition that requires a different treatment. It's advisable to consult a healthcare professional, such as a doctor or a pediatrician, to determine the appropriate treatment. They can assess the child's
+condition and decide the best course of action. It's also a good idea to consider other medications or treatments that might be more appropriate for the child's specific condition. However, without more information about the
+child's condition, it's difficult to give a precise dosage. It's crucial to consult a professional to get the correct treatment plan.
+Increased Caution: Avoiding Specific Dosage Information: Emphasizing Professional Medical Considering More Comprehensive Acknowledging Knowledge Exploring Alternative Treatment Options:
+The text repeatedly mentions The text does not provide any specific Consultation: Factors: Limitations: The text mentions considering other potentially
+"uncertainty" and recommends medication dosage recommendations, The text repeatedly emphasizes the The text mentions considering the The text directly acknowledges being more suitable treatment methods.
+consulting healthcare professionals, avoiding the risk of improper medication necessity of consulting medical child's medical history and other "uncertain" or "not clear" about
+demonstrating a cautious approach. use. professionals. relevant factors. specific information multiple times.
+Figure 6: Case study analysis.
+despite presenting seemingly logical reasoning. (ii) 7. Conclusion
+After RELIANCE training, we observed remarkable
+improvements in reasoning quality across three critical We present RELIANCE, a unified framework that im-
+dimensions. First, the model exhibited significantly greater proves the factual integrity of reasoning in LLMs through
+epistemic caution, appropriately expressing uncertainty counterfactual training, GRPO-based reinforcement learn-
+with phrases like “J’m not certain” and “this is outside ing, and mechanistic interpretability. Evaluated on ten lead-
+my knowledge” when reasoning about specialized medical ing models, RELIANCE boosts reasoning-step factual accu-
+knowledge. Second, the enhanced model demonstrated racy by up to 49.9%, especially for smaller models, while
+more exploratory reasoning patterns, considering multiple maintaining downstream performance. Our analysis also re-
+relevant factors including pediatric medication history, veals how factual improvements reshape internal activations,
+potential causes of vomiting, age-appropriate treatments, offering new directions for training more trustworthy and
+and alternative interventions before reaching conclusions. interpretable LLMs. We call on the community to move
+Finally, the RELIANCE-trained model prioritized safety beyond final-answer evaluation and prioritize the factual
+by avoiding speculative dosing recommendations, instead soundness of the entire reasoning process.
+emphasizing the necessity of professional medical
+consultation for pediatric medication decisions. These
+improvements collectively transformed potentially harmful
+advice into responsible guidance that acknowledged the
+limitations of AlI-based medical reasoning. Across this case
+study, we observed that RELIANCE training fundamentally
+shifted the reasoning approach from confident but
+potentially flawed linear reasoning to more careful, multi-
+faceted exploration that better aligns with factual reality.
+
+
+--- Page 14 ---
+
+References [16] K. Singh, S. Kaur, and C. Smiley, “Fingapt: Empowering financial
+decisions with end-to-end Ilm-driven question answering pipeline,”
+. in Proceedings of the 5th ACM International Conference on
+1] r e erewn “Language models Ryder, Mot Subbiah . and AI in Finance, ICAIF 2024, Brooklyn, NY, USA, November
+‘4A d . . Ne 1 I ‘on Processi A. 14-17, 2024. ACM, 2024, pp. 266-273. [Online]. Available:
+vances in Neural Information Processing Systems 33: Annual https://doi.ore/10.1145/3677052.3698682
+Conference on Neural Information Processing Systems 2020, Ps: org ;
+NeurIPS 2020, December 6-12, 2020, virtual, H. Larochelle, [17] Z. Xie, “Order matters in hallucination: Reasoning order as
+M. Ranzato, R. Hadsell, M. Balcan, and H. Lin, Eds., 2020. benchmark and reflexive prompting for large-language-models,”
+[Online]. Available: https://proceedings.neurips.cc/paper/2020/hash/ CoRR, vol. abs/2408.05093, 2024. [Online]. Available: https:
+1457cO0d6bfcb49674 | 8bfb8ac 142f64a- Abstract.html /Idoi.org/10.48550/arXiv.2408.05093
+[2] Y. Bai, S. Kadavath, S. Kundu, A. Askell, and J. K. et al, [18] H. Li, Y. Zhang, F. Koto, Y. Yang, H. Zhao, Y. Gong, N. Duan,
+“Constitutional AI: harmlessness from AI feedback,” CoRR arXiv and T. Baldwin, “CMMLU: measuring massive multitask language
+preprint, vol. abs/2212.08073, 2022. [Online]. Available: https: understanding in chinese,” in Findings of the Association for
+//doi.org/10.48550/arXiv.2212.08073 Computational Linguistics, ACL 2024, Bangkok, Thailand and
+: ; virtual meeting, August 11-16, 2024, L. Ku, A. Martins, and
+[3] H. Touvron, T. Lavril, G. Izacard, X. Martinet, M. Lachaux, V. Srikumar, Eds. Association for Computational Linguistics, 2024,
+T. Lacroix, B. Roziére, N. Goyal, E. Hambro, F Azhar, pp. 11260-11285. [Online]. Available: https://doi.org/10.18653/v1/
+a Rodrigues. A youlin, E. Grave, and °. ae 2024.findings-acl.671
+en and efficient foundation language models,” Co arXiv
+preprint vol. abs/2302.13971,_ 2023. [Online], Available: https: [19] 8. Lin, J. Hilton, and O. Evans, “Truthfulga: Measuring how models
+/Idoi.org/10.48550/arXiv.2302.13971 mimic human falsehoods, in Proceedings of the 60th Annual
+Meeting of the Association for Computational Linguistics (Volume
+[4] R. Anil, S. Borgeaud, Y. Wu, J. Alayrac, and J. Y. et al., 1: Long Papers), ACL 2022, Dublin, Ireland, May 22-27, 2022,
+“Gemini: A family of highly capable multimodal models,” CoRR S. Muresan, P. Nakov, and A. Villavicencio, Eds. Association
+arXiv preprint, vol. abs/2312.11805, 2023. [Online]. Available: for Computational Linguistics, 2022, pp. 3214-3252. [Online].
+https://doi.org/10.48550/arXiv.2312.11805 Available: https://doi.org/10.18653/v1/2022.acl-long.229
+[5] W.-L. Chiang, Z. Li, Z. Lin, Y. Sheng, Z. Wu, H. Zhang, [20] Y. Huang, Y. Bai, Z. Zhu, J. Zhang, J. Zhang, T. Su,
+L. Zheng, S. Zhuang, Y. Zhuang, J. E. Gonzalez, I. Stoica, and J. Liu, C. Lv, Y. Zhang, J. Lei, Y. Fu, M. Sun, and J. He,
+E. P. Xing, “Vicuna: An open-source chatbot impressing gpt-4 “C-eval: A multi-level multi-discipline chinese evaluation suite
+with 90%* chatgpt quality,’ March 2023. [Online]. Available: for foundation models,’ in Advances in Neural Information
+https://Imsys.org/blog/2023-03-30-vicuna/ Processing Systems 36: Annual Conference on Neural Information
+[6] J. Bai, S. Bai, Y. Chu, Z. Cui, K. Dang, and X. D. et al., “Qwen Processing Systems 2023, NeurIPS 2023, New Orleans, LA,
+technical report,” arXiv preprint arXiv:2309.16609, 2023 USA, December 10 - 16, 2023, A. Ob, T. Naumann,
+, . . > . A. Globerson, K. Saenko, M. Hardt, and S. Levine, Eds., 2023.
+[7] DeepSeek-Al, D. Guo, D. Yang, H. Zhang, J. Song, R. Zhang, R. Xu, [Online]. Available: _ http://papers.nips.cc/paper_files/paper/2023/
+Q. Zhu, and S. Ma, “Deepseek-r1: Incentivizing reasoning capability hash/c6ec 1844bec96d6d32ae95ae694e23d8- Abstract-Datasets_and_
+in Ilms via reinforcement learning,’ CoRR, vol. abs/2501.12948, Benchmarks. html
+2025. [Online]. Available: https://doi.org/10.48550/arXiv.2501.12948 [21] N. Lee, W. Ping, P. Xu, M. Patwary, P. Fung, M. Shoeybi,
+[8] Q. Team, “Qwgq-32b: Embracing the power of reinforcement and B. Catanzaro, “Factuality enhanced language models for
+learning,’ March 2025. [Online]. Available: https://qwenlm.github. open-ended text generation,’ in Advances in Neural Information
+io/blog/qwq-32b/ Processing Systems 35: Annual Conference on Neural Information
+[9] OpenAI, “Learning to reason with Ilms,” https://openai.com/index/ Processing Systems 2022, NeurIPS 2022, New Orleans, LA, USA,
+learning-to-reason- with-llms/, 2024, 09-12. ovember 28 - December 9, 2022, S. Koyejo, S. Mohamed,
+, ; A. Agarwal, D. Belgrave, K. Cho, and A. Oh, Eds., 2022.
+[10] Anthropic, “Claude 3.7 sonnet and claude code,’ https://www. [Online]. Available: http://papers.nips.cc/paper_files/paper/2022/hash/
+anthropic.com/news/claude-3-7-sonnet, 2025, 02-25. df438caa36714f69277daa92d608dd63- Abstract-Conference.html
+[11] S. Zhou, Z. Xu, M. Zhang, C. Xu, Y. Guo, Z. Zhan, S. Ding, [22] F. Moiseev, Z. Dong, E. Alfonseca, and M. Jaggi, “SKILL:
+J. Wang, K. Xu, Y. Fang, L. Xia, J. Yeung, D. Zha, G. B. structured knowledge infusion for large language models,’ in
+Melton, M. Lin, and R. Zhang, “Large language models for disease Proceedings of the 2022 Conference of the North American Chapter
+diagnosis: A scoping review,’ CoRR, vol. abs/2409.00097, 2024. of the Association for Computational Linguistics: Human Language
+[Online]. Available: https://doi.org/10.48550/arXiv.2409.00097 Technologies, NAACL 2022, Seattle, WA, United States, July 10-15,
+. . ao ke . 2022, M. Carpuat, M. de Marneffe, and I. V. M. Ruiz, Eds.
+[12] Pe aaacevted multimodal, disenosis trom medical imnnwee ant Association for Computational Linguistics, 2022, pp. 1581-1588.
+symptom analysis,” CoRR, vol. abs/2402.01730, 2024. [Online]. [Online]. Available: https://doi.org/10.18653/v1/2022.naacl-main. 113
+Available: https://doi.org/10.48550/arXiv.2402.01730 [23] W. Sun, Z. Shi, S. Gao, P. Ren, M. de Rijke, and Z. Ren,
+: ; “Contrastive learning reduces hallucination in conversations,” in
+[13] M. Kant, S. Nabi, M. Kant, R. Scharrer, M. Ma, and M. Nabi, Thirty-Seventh AAAI Conference on Artificial Intelligence, AAAI
+“Towards robust legal reasoning: Harnessing logical Ilms in 2023, Thirty-Fifth Conference on Innovative Applications of Artificial
+law,” CoRR, vol. abs/2502.17638, 2025. [Online]. Available: Intelligence, IAAI 2023, Thirteenth Symposium on Educational
+https://doi.org/10.48550/arXiv.2502.17638 Advances in Artificial Intelligence, EAAI 2023, Washington, DC,
+[14] V. Mishra, B. Pathiraja, M. Parmar, S. Chidananda, and J. S. USA, February 7-14, 2023, B. Williams, Y. Chen, and J. Neville,
+et al., “Investigating the shortcomings of Ilms in step-by-step legal Eds. AAAI Press, 2023, pp. 13618-13626. [Online]. Available:
+reasoning,” CoRR, vol. abs/2502.05675, 2025. [Online]. Available: https://doi.org/10. 1609/aaai.v37i1 1.26596
+https://doi.org/10.48550/arXiv.2502.05675 [24] Z. Shao, P. Wang, Q. Zhu, R. Xu, J. Song, M. Zhang, Y. K. Li, Y. Wu,
+[15] H. Li, Y. Cao, Y. Yu, S. R. Javaji, Z. Deng, Y. He, Y. Jiang, and D. Guo, “Deepseekmath: Pushing the limits of mathematical
+Z. Zhu, K. Subbalakshmi, G. Xiong, J. Huang, L. Qian, reasoning in open language models,” CoRR, vol. abs/2402.03300,
+X. Peng, Q. Xie, and J. W. Suchow, “INVESTORBENCH: A 2024. [Online]. Available: https://doi.org/10.48550/arXiv.2402.03300
+benchmark for financial decision-making tasks with llm-based [25] L. Bereska and E. Gavves, “Mechanistic interpretability for AI safety
+agent,’ CoRR, vol. abs/2412.18174, 2024. [Online]. Available: - A review,” CoRR, vol. abs/2404.14082, 2024. [Online]. Available:
+https://doi.org/10.48550/arXiv.2412.18174 https://doi.org/10.48550/arXiv.2404. 14082
+
+
+--- Page 15 ---
+
+[26] E. M. Bender, T. Gebru, A. McMillan-Major, and S. Shmitchell, “On [41] T. Hossain, S. Dev, and S. Singh, “MISGENDERED: limits of
+the dangers of stochastic parrots: Can language models be too big?” large language models in understanding pronouns,” in Proceedings
+in FAccT ’21: 2021 ACM Conference on Fairness, Accountability, and of the 61st Annual Meeting of the Association for Computational
+Transparency, Virtual Event / Toronto, Canada, March 3-10, 2021, Linguistics (Volume 1: Long Papers), ACL 2023, Toronto, Canada,
+M. C. Elish, W. Isaac, and R. S. Zemel, Eds. ACM, 2021, pp. 610- July 9-14, 2023, A. Rogers, J. L. Boyd-Graber, and N. Okazaki, Eds.
+623. [Online]. Available: https://doi.org/10.1145/3442188.3445922 Association for Computational Linguistics, 2023, pp. 5352-5367.
+
+[27] S. Bubeck, V. Chandrasekaran, R. Eldan, J. Gehrke, E. Horvitz, [Online]. Available: https://doi.org/10.18653/v1/2023.acl-long.293
+E. Kamar, P. Lee, Y. T. Lee, Y. Li, S. M. Lundberg, [42] D. Dai, L. Dong, Y. Hao, Z. Sui, B. Chang, and F. Wei, “Knowledge
+H. Nori, H. Palangi, M. T. Ribeiro, and Y. Zhang, “Sparks neurons in pretrained transformers,” in Proceedings of the 60th
+of artificial general intelligence: Early experiments with GPT- Annual Meeting of the Association for Computational Linguistics
+4,” CoRR, vol. abs/2303.12712, 2023. [Online]. Available: https: (Volume 1: Long Papers), ACL 2022, Dublin, Ireland, May 22-27,
+//doi.org/10.48550/arXiv.2303.12712 2022, S. Muresan, P. Nakov, and A. Villavicencio, Eds. Association
+
+[28] OpenAI, “GPT-4 technical report?’ CoRR, vol. abs/2303.08774, for Computational Linguistics, 2022, pp. 8493-8502. [Online].
+2023. [Online]. Available: https://doi.org/10.48550/arXiv.2303.08774 Available: https://doi.org/10.18653/v1/2022.acl-long.581
+
+[29] Microsoft, “Microsoft Bing: Get to know Bing,” 2023, accessed: [43] K. Meng, D. Bau, A. Andonian, and Y. Belinkov, “Locating
+2023. [Online]. Available: https://www.microsoft.com/en-us/bing and editing factual associations in GPT,’ in Advances in Neural
+
+[30] Google, “Bard,” 2023, accessed: 2023. [Online]. Available: https: Information Processing Systems 35: Annual Conference on Neural
+//oard.google.com Information Processing Systems 2022, NeurIPS 2022, New Orleans,
+
+; LA, USA, November 28 - December 9, 2022, S. Koyejo, S. Mohamed,
+
+[31] CharacterAI, https://character.ai/, 2024. A. Agarwal, D. Belgrave, K. Cho, and A. Oh, Eds., 2022.
+
+[32] Poe, https://poe.com/, 2024. [Online]. Available: http://papers.nips.cc/paper_files/paper/2022/hash/
+
+[33] J. Cui, Z. Li, Y. Yan, B. Chen, and L. Yuan, “Chatlaw: Open-source 6f1d43d5a82a37e89b0665b33bf3a182- Abstract-Conference.html
+legal large language model with integrated external knowledge [44] Y. Du, S. Li, A. Torralba, J. B. Tenenbaum, and I. Mordatch,
+bases,” CoRR, vol. abs/2306.16092, 2023. [Online]. Available: “Improving factuality and reasoning in language models through
+https://doi.org/10.48550/arXiv.2306. 16092 multiagent debate,’ in Forty-first International Conference on
+
+[34] Z. Ji, N. Lee, R. Frieske, T. Yu, D. Su, Y. Xu, E. Ishii, Y. Bang, Machine Learning, ICML 2024, Vienna, Austria, July 21-27, 2024.
+A. Madotto, and P. Fung, “Survey of hallucination in natural language OpenReview.net, 2024. [Online]. Available: https://openreview.net/
+generation,” ACM Comput. Surv., vol. 55, no. 12, pp. 248:1-248:38, forum ?id=zj7 YuTE4t8
+2023. [Online]. Available: https://doi.org/10.1145/3571730 [45] R. Cohen, M. Hamri, M. Geva, and A. Globerson, “LM vs LM:
+
+[35] P. Lu, S. Mishra, T. Xia, L. Qiu, K. Chang, S. Zhu, O. Tafjord, detecting factual errors via cross examination,’ in Proceedings
+P. Clark, and A. Kalyan, “Learn to explain: Multimodal reasoning via of the 2023 Conference on Empirical Methods in Natural
+thought chains for science question answering,” in Advances in Neural Language Processing, EMNLP 2023, Singapore, December 6-10,
+Information Processing Systems 35: Annual Conference on Neural 2023, H. Bouamor, J. Pino, and K. Bali, Eds. Association
+Information Processing Systems 2022, NeurIPS 2022, New Orleans, for Computational Linguistics, 2023, pp. 12621-12640. [Online].
+LA, USA, November 28 - December 9, 2022, S. Koyejo, S. Mohamed, Available: https://doi.org/10.18653/v1/2023.emnlp-main.778
+A. Agarwal, D. Belgrave, K. Cho, and A. Oh, Eds., 2022. [46] W. Yu, D. Iter, S. Wang, Y. Xu, M. Ju, S. Sanyal, C. Zhu,
+[Online]. Available: http://papers.nips.cc/paper_files/paper/2022/hash/ . “ :
+11332b6b6cf4485b84afadb 1352d3a9a- Abstract-Conference.html M. Zeng, and M. Jiang, “Generate rather than retrieve: Large
+
+language models are strong context generators,” in The Eleventh
+
+[36] R. Nakano, J. Hilton, S. Balaji, J. Wu, L. Ouyang, C. Kim, International Conference on Learning Representations, ICLR 2023,
+C. Hesse, S. Jain, V. Kosaraju, W. Saunders, X. Jiang, K. Cobbe, Kigali, Rwanda, May 1-5, 2023. OpenReview.net, 2023. [Online].
+T. Eloundou, G. Krueger, K. Button, M. Knight, B. Chess, and Available: https://openreview.net/forum?id=fBOhRu9GZUS
+J. Schulman, “Webgpt: Browser-assisted question-answering with : . :
+human feedback,” CoRR, vol. abs/2112.09332, 2021. [Online]. [47] wees M. Marne. N. ven D. Panne, » Khashabi, and
+Available: https://arxiv.org/abs/2112.09332 - Y, Durme, “according tO... + Frompung language models
+
+. . . . . improves quoting from pre-training data,’ in Proceedings of the
+
+[37] ¥. Qin, Z. Cai, D. Jin, L. Yan, 8. Liang, K. Zh u, Y. Lin, 18th Conference of the European ‘Chapter of the Aesoenarin for
+
+X. Han, N. Ding, H. Wang, R. Xie, F. Qi, Z. Liu, M. Sun, Computational Linguistics, EACL 2024 - Vol TL P, St
+
+i” , . putational Linguistics, lume 1: Long Papers, St.
+and J. Zhou, Webcpm: Inter active web search for chinese long- Julian’s, Malta, March 17-22, 2024, Y. Graham and M. Purver, Eds.
+form question answering,’ in Proceedings of the 61st Annual Association for Computational Linguistics, 2024 2288-2301
+Meeting of the Association for Computational Linguistics (Volume [Onli ]. Available: he ‘//aclanth is 12024 ’ a 140 .
+1: Long Papers), ACL 2023, Toronto, Canada, July 9-14, 2023, coemenceniiaemnaneninans Saeaiemuamaas ali caine
+A. Rogers, J. L. Boyd-Graber, and N. Okazaki, Eds. Association [48] Y. Chuang, Y. Xie, H. Luo, Y. Kim, J. R. Glass, and P. He,
+for Computational Linguistics, 2023, pp. 8968-8988. [Online]. “Dola: Decoding by contrasting layers improves factuality in
+Available: https://doi.org/10.18653/v 1/2023.acl-long.499 large language models,” in The Twelfth International Conference
+
+38] L. Berglund, M. Tong, M. Kaufmann, M. Balesni, A. C. on Learning Representations, ICLR 2024, Vienna, Austria, May
+
+es Stickland, T. Korbak, ea O. Evans, “The reversal curse: Llms 7-11, 2024. OpenReview.net, 2024, [Online]. Available: https:
+trained on ”a is b” fail to learn ”b is a”, in The Twelfth Hopenreview.net/forum?id=Th6NyLO7na
+International Conference on Learning Representations, ICLR 2024, [49] S. Borgeaud, A. Mensch, J. Hoffmann, T. Cai, E. Rutherford,
+Vienna, Austria, May 7-11, 2024. OpenReview.net, 2024. [Online]. and K. M. et al., “Improving language models by retrieving
+Available: https://openreview.net/forum?id=GPKTIktA0k from trillions of tokens,” in International Conference on Machine
+
+[39] S. Kotha, J. M. Springer, and A. Raghunathan, “Understanding Learning, ICML 2022, 17-23 July 2022, Baltimore, Maryland, USA,
+catastrophic forgetting in language models via implicit inference,” in ser. Proceedings of Machine Learning Research, K. Chaudhuri,
+The Twelfth International Conference on Learning Representations, S. Jegelka, L. Song, C. Szepesvari, G. Niu, and S. Sabato,
+ICLR 2024, Vienna, Austria, May 7-11, 2024. OpenReview.net, 2024. Eds., vol. 162. PMLR, 2022, pp. 2206-2240. [Online]. Available:
+[Online]. Available: https://openreview.net/forum?id=VrHiF2hsrm https://proceedings.mlr.press/v 162/borgeaud22a.html
+
+[40] I. O. Gallegos, R. A. Rossi, J. Barrow, M. M. Tanjim, S. Kim, [50] A. Lazaridou, E. Gribovskaya, W. Stokowiec, and N. Grigorev,
+F. Dernoncourt, T. Yu, R. Zhang, and N. K. Ahmed, “Bias and fairness “Internet-augmented language models through few-shot prompting
+in large language models: A survey,’ CoRR, vol. abs/2309.00770, for open-domain question answering,” CoRR, vol. abs/2203.05115,
+2023. [Online]. Available: https://doi.org/10.48550/arXiv.2309.00770 2022. [Online]. Available: https://doi.org/10.48550/arXiv.2203.05115
+
+
+--- Page 16 ---
+
+[51] H. He, H. Zhang, and D. Roth, “Rethinking with retrieval: Faithful [62] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang,
+large language model inference,’ CoRR, vol. abs/2301.00303, 2023. and W. Chen, “Lora: Low-rank adaptation of large language models,”
+[Online]. Available: https://doi.org/10.48550/arXiv.2301.00303 in The Tenth International Conference on Learning Representations,
+
+[52] H. Trivedi, N. Balasubramanian, T. Khot, and A. Sabharwal, ICLR 2022, Virtual Event, Ap vil 25-29, 2022. OpenReview.net, 2022.
+7” . : : : : [Online]. Available: https://openreview.net/forum?id=nZe V KeeFY f9
+
+Interleaving retrieval with chain-of-thought reasoning for
+
+knowledge-intensive multi-step questions,” in Proceedings of the 61st [63] D. Biderman, J. J. G. Ortiz, J. P. Portes, M. Paul, P. Greengard,
+Annual Meeting of the Association for Computational Linguistics C. Jennings, D. King, S. Havens, V. Chiley, J. Frankle,
+(Volume 1: Long Papers), ACL 2023, Toronto, Canada, July C. Blakeney, and J. P. Cunningham, “Lora learns less and
+9-14, 2023, A. Rogers, J. L. Boyd-Graber, and N. Okazaki, Eds. forgets less,’ CoRR, vol. abs/2405.09673, 2024. [Online]. Available:
+Association for Computational Linguistics, 2023, pp. 10014-10037. https://doi.org/10.48550/arXiv.2405.09673
+
+[Online]. Available: https://doi.org/10.18653/v1/2023.acl-long.557 [64] I. Loshchilov and FE. Hutter, “Decoupled weight decay
+
+[53] G. Izacard, P. S. H. Lewis, M. Lomeli, L. Hosseini, F. Petroni, regularization,’ in 7th International Conference on Learning
+T. Schick, J. Dwivedi-Yu, A. Joulin, S. Riedel, and E. Grave, “Atlas: Representations, ICLR 2019, New Orleans, LA, USA,
+Few-shot learning with retrieval augmented language models,” J. May 6-9, 2019. OpenReview.net, 2019. [Online]. Available:
+Mach. Learn. Res., vol. 24, pp. 251:1-251:43, 2023. [Online]. https://openreview.net/forum?id=Bkg6RiCq Y7
+Available: https://jmlr.org/papers/v24/23-0037.html [65] J. Schulman, F. Wolski, P. Dhariwal, A. Radford, and O. Klimov,
+
+[54] W. Shi, S. Min, M. Yasunaga, M. Seo, R. James, M. Lewis, “Proximal policy optimization algorithms,’ CoRR arXiv preprint,
+L. Zettlemoyer, and W. Yih, “REPLUG: retrieval-augmented black- vol. abs/1707.06347, 2017. [Online]. Available: http://arxiv.org/abs/
+box language models,” in Proceedings of the 2024 Conference of 1707.06347
+the North American Chapter of the Association for Computational [66] P. Sahoo, A. K. Singh, S. Saha, V. Jain, S. Mondal, and A. Chadha,
+Linguistics: Human Language Technologies (Volume 1: Long “A temati f ‘ : : in. | 1
+Papers), NAACL 2024, Mexico City, Mexico, June 16-21, 2024, sys emanie Survey OF prompt engineering tn sarge anguase
+
+2 Le models: Techniques and applications,’ CoRR, vol. abs/2402.07927,
+
+K. Duh, H. Gémez-Adorno, and S. Bethard, Eds. Association 2024. [Online]. Available: https://doi.org/10.48550/arXiv.2402.07927
+for Computational Linguistics, 2024, pp. 8371-8384. [Online]. + inline). Av aNranle: MEPS COL Org arly. :
+
+Available: https://doi.org/10.18653/v 1/2024.naacl-long.463 [67] J. Gu, X. Jiang, Z. Shi, H. Tan, X. Zhai, C. Xu, W. Li,
+
+: Y. Shen, S. Ma, H. Liu, Y. Wang, and J. Guo, “A survey
+
+[55] H. Luo, Y. Chuang, Y. Gong, T. Zhang, Y. Kim, X. Wu, D. Fox, on Ilm-as-a-judge.” CoRR, vol. abs/2411.15594, 2024. [Online].
+H. Meng, and J. R. Glass, “SAIL: search-augmented instruction Available: https://doi.ore/10.48550/arXiv.241 1.15594
+learning,” CoRR, vol. abs/2305.15225, 2023. [Online]. Available: Vanlables EPS COLOTgEN: APA 0
+https://doi.org/10.48550/arXiv.2305. 15225 [68] H. Face, “Open rl: A fully open reproduction of deepseek-r1,”
+
+[56] Z. Li, R. Guo, and S. Kumar, “Decoupled context processing for January 2025. [Online]. Available: https://github.com/huggingface/
+
+aye . open-rl
+context augmented language modeling,” in Advances in Neural
+Information Processing Systems 35: Annual Conference on Neural [69] google, “Gemini 2.0 flash,” https://deepmind.google/technologies/
+Information Processing Systems 2022, NeurIPS 2022, New Orleans, gemini/flash//, 2025.
+LA, USA, November 28 - December 9, 2022, S. Koyejo, S. Mohamed, [70] Y. Zheng, R. Zhang, J. Zhang, Y. Ye, Z. Luo, and Y. Ma,
+A. Agarwal, D. Belgrave, K. Cho, and A. Oh, Eds., 2022. “ : : .
+
+. . . : . Llamafactory: Unified efficient fine-tuning of 100+ language
+[Online]. Available: http://papers.nips.cc/paper_files/paper/2022/hash/ a . . :
+882d801f61017£955547d5a8 | GadeOfe- Abstract-Conference.html models,” CoRR arXiv preprint, vol. abs/2403.13372, 2024. [Online].
+
+: Available: https://doi.org/10.48550/arXiv.2403.13372
+
+[57] Z. Wan, Y Yin, Ww. Zhang, J. Shi, L. Shang, G. Chen, X. Jiang, and [71] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue,
+Q. Liu, “G-MAP: general memory-augmented pre-trained language : : :
+
+: a: - ° A. Moi, P. Cistac, T. Rault, R. Louf, M. Funtowicz, and
+model for domain tasks,” in Proceedings of the 2022 Conference “ : ;
+
+. : . J. Brew, “Huggingface’s transformers: State-of-the-art natural
+
+on Empirical Methods in Natural Language Processing, EMNLP 2, . .
+
+. . . language processing,’ CoRR arXiv preprint, vol. abs/1910.03771,
+2022, Abu Dhabi, United Arab Emirates, December 7-11, 2022, 2019. [Onli Available: http://arxi Jabs/1910.03771
+Y. Goldberg, Z. Kozareva, and Y. Zhang, Eds. Association - [Online]. Available: http://arxiv.org/abs, ,
+for Computational Linguistics, 2022, pp. 6585-6597. [Online]. [72] C. Fourrier, N. Habib, H. Kydliéek, T. Wolf, and L. Tunstall,
+Available: https://doi.org/10.18653/v1/2022.emnlp-main.441 “Lighteval: A lightweight framework for Ilm evaluation,’ 2023.
+
+[58] S. Zhang, L. Pan, J. Zhao, and W. Y. Wang, “Mitigating [Online]. Available: https://github.com/huggingface/lighteval
+language model hallucination with interactive question-knowledge [73] W. Kwon, Z. Li, S. Zhuang, Y. Sheng, L. Zheng, C. H. Yu, J. E. Gon-
+alignment,” CoRR, vol. abs/2305.13669, 2023. [Online]. Available: zalez, H. Zhang, and I. Stoica, “Efficient memory management for
+https://doi.org/10.48550/arXiv.2305. 13669 large language model serving with pagedattention,” in Proceedings of
+
+[59] J. Wei, X. Wang, D. Schuurmans, M. Bosma, B. Ichter, F. Xia, re ge SIGOPS 29th Symposium on Operating Systems Principles,
+E. H. Chi, Q. V. Le, and D. Zhou, “Chain-of-thought prompting .
+elicits reasoning in large language models,” in Advances in Neural [74] R. Y. Aminabadi, S. Rajbhandari, M. Zhang, A. A. Awan, C. Li, D. Li,
+Information Processing Systems 35: Annual Conference on Neural E. Zheng, J. Rasley, S. Smith, O. Ruwase, and Y. He, “Deepspeed
+Information Processing Systems 2022, NeurIPS 2022, New Orleans, inference: Enabling efficient inference of transformer models at
+LA, USA, November 28 - December 9, 2022, S. Koyejo, S. Mohamed, unprecedented scale,’ CoRR arXiv preprint, vol. abs/2207.00032,
+A. Agarwal, D. Belgrave, K. Cho, and A. Oh, Eds., 2022. 2022. [Online]. Available: https://doi.org/10.48550/arXiv.2207.00032
+[Online]. Available: http://papers.nips.cc/paper_files/paper/2022/hash/ . “ .
+
+9456096 13524ecf4f1 5af07b3 labea4- Abstract-Conference.html [75] A. Raganato and J. Tiedemann, “An analysis of | encoder
+representations in  transformer-based machine translation,’ in
+
+[60] A. Akbik, T. Bergmann, D. Blythe, K. Rasul, S. Schweter, and Proceedings of the Workshop: Analyzing and Interpreting Neural
+R. Vollgraf, “FLAIR: An easy-to-use framework for state-of-the- Networks for NLP, BlackboxNLP@EMNLP 2018, Brussels, Belgium,
+art NLP,” in NAACL 2019, 2019 Annual Conference of the North November 1, 2018, T. Linzen, G. Chrupala, and A. Alishahi, Eds.
+American Chapter of the Association for Computational Linguistics Association for Computational Linguistics, 2018, pp. 287-297.
+(Demonstrations), 2019, pp. 54-59. [Online]. Available: https://doi.org/10.18653/v 1/w18-5431
+
+[61] S. Zhang, L. Dong, X. Li, S. Zhang, X. Sun, S. Wang, J. Li,
+
+R. Hu, T. Zhang, F. Wu, and G. Wang, “Instruction tuning for large
+language models: A survey,’ CoRR, vol. abs/2308.10792, 2023.
+[Online]. Available: https://doi.org/10.48550/arXiv.2308.10792
+
+
+--- Page 17 ---
+
+Appendix A. loss values and various rewards during our training of the
+DeepSeek-R1-Distill-Qwen-1.5B model. This figure panel a
+A.1. NER Category depicts how the training loss changes throughout the training
+process. The loss curve gradually increases from zero to
+Named Entity Recognition (NER) analysis of our dataset its maximum value at approximately 150 steps, after which
+reveals the distribution of entity types within the reasoning _ jt steadily decreases and eventually stabilizes. This pattern
+processes of LLMs. As shown in Table 6, we extracted and emerges because the first 150 steps represent the policy
+categorized entities from 6,000 chain-of-thought reasoning —_— exploration phase under reinforcement learning conditions,
+QA pairs using a specialized NER model. Person names during which the generated content appears chaotic and
+constitute the largest category (12,282 instances), followed — humanly unreadable. As training progresses, the model dis-
+by dates (9,153) and organizations (7,255). This distribu- covers a generation strategy that satisfies both factual accu-
+tion is consistent with the prevalence of these entity types _ racy requirements and produces expected outputs, ultimately
+in Wikipedia and other knowledge sources that form the converging to a stable state. Panel b shows the overall train-
+basis of LLM training data. Notably, these frequently oc- —_ ing reward. During the exploration phase (0-150 steps), the
+curring entity types—particularly person names, dates, and —_ reward values fluctuate significantly. After approximately
+organizations—tepresent critical factual elements that are 150 steps, the rewards stabilize as the model converges to
+susceptible to error during model generation. When models an appropriate generation strategy. Panel c illustrates the
+fabricate or incorrectly represent these entities within rea- _ standard deviation of the training loss, reflecting its stability.
+soning chains, they produce counterfactual reasoning pro- Following the initial exploration phase, the loss variability
+cesses that may appear plausible to users despite containing _ stabilizes after 150 steps. Panel d presents the changes in
+fundamental factual inaccuracies. This analysis underscores generation length throughout the training process. During
+the importance of factual verification targeting these high- _ the exploration phase (0-150 steps), the generation length is
+frequency entity types to enhance the overall reliability of unstable, exceeding 1000 tokens between steps 40-60. After
+reasoning LLMs. 120-150 steps, the generation length stabilizes at approxi-
+mately 700 tokens. Panel e demonstrates how well the gen-
+A.2. Reasoning Process Segmentation Methodology erated outputs conform to the required format of reasoning
+: : followed by conclusions. As training progresses, the model
+. For our reasoning process factual enhancement train- consistently generates properly formatted responses after
+ing, we emp loy a fine-grained segmentation methodology. 120-150 steps, leading to stable reward values. Panel f shows
+Given a Teasoning chain R produced for question Q, we the factuality scores assigned by our factuality checking
+first segment R into a sequence of discrete reasoning steps model to the model’s reasoning steps. The factuality scores
+R= {81,8255 Su} sing a set of linguistic delimiters are unstable before 120-150 steps during the exploration
+D = { “First”, “Next,”, “Finally,”, “Wait,” “\n\n"}: phase. After 150 steps, as the model discovers an appropriate
+. ; generation strategy, the factuality rewards stabilize.
+si = Split(R, D) Ii] (20) To thoroughly evaluate the effectiveness of our reasoning
+Each segment s; is then independently evaluated by a Process correction method, we conducted a comprehensive
+fact-checking function fg(Q,s;) — {True, False}, where ablation study. The results, presented in Table 7, demonstrate
+@ represents the parameters of our fact verification model, the importance of each component in our approach.
+and the output indicates whether segment s; is factually Our ablation experiments reveal significant performance
+consistent (7rue) or inconsistent (False) given question Q. variations when removing individual reward components
+To assess robustness to generation parameters, we eval- from the full method. Removing the fact-checking reward
+uate reasoning chains generated across multiple temperature causes the most dramatic performance drop, with accuracy
+settings J = {0.3,0.4,0.5,0.6,0.7, 0.8, 1.0}. The imple- declining from 92.10% to 43.53% (a 48.57% reduction)
+mentation follows a multi-stage pipeline where we first and variance increasing from 0.073 to 0.136, confirm-
+generate reasoning steps using different temperature set- | ing this mechanism as the comerstone of factual reason-
+tings, then decompose each step into segments using regular ing enhancement. Similarly, the semantic similarity reward
+expression pattern matching. A specialized fact-checking Contributes meaningfully, with its removal resulting in a
+model evaluates each step independently by conditioning on 9.23% accuracy decrease (to 82.87%) and increased variance
+both the question and the candidate step, producing a binary _— (0.124), suggesting that maintaining coherence between rea-
+factuality judgment. The factuality signals are aggregated soning steps and final solutions enforces logical consistency
+to provide both segment-level diagnostics and overall chain _ throughout responses. Notably, both format compliance and
+assessment, enabling fine-grained error analysis and targeted length constraint rewards proved essential, as training failed
+improvements to model reasoning. completely without either component—format compliance
+ensures proper separation between reasoning and solution
+A.3. Training Process Analysis And Ablation Study components necessary for effective application of other
+rewards, while length constraints prevent generating either
+We present the evolution of key parameters during overly concise responses lacking substantive reasoning or
+the training process. Figure 7 illustrates the changes in excessively verbose outputs introducing factual errors.
+
+
+--- Page 18 ---
+
+TABLE 6: Entity Types, Counts, and Descriptions
+Entity Type Count Description
+PERSON 12,282 Names of individuals (e.g., “Elon Musk’, “Albert Einstein”).
+DATE 9,153 Absolute or relative dates (e.g., “January 1, 2020”, “next Monday’).
+ORG 7,255 Organizations, such as companies, institutions, and agencies (e.g., “OpenAI’, “United Na-
+tions”).
+WORK_OF_ ART 5,012 Titles of books, movies, songs, and other creative works (e.g., “Inception”, “Moby-Dick’’).
+GPE 3,139 Geopolitical entities such as countries, cities, and states (e.g., “France”, “New York”).
+FAC 2,283 Facilities such as buildings, airports, highways, and bridges (e.g., “Eiffel Tower”, “JFK
+Airport’).
+EVENT 2,121 Named events, including historical events, conferences, and festivals (e.g., “World War II’,
+“Olympics”).
+LOC 1,540 Physical locations that are not geopolitical, such as mountains, rivers, and regions (e.g.,
+“Himalayas”, “Sahara Desert’).
+NORP 819 Nationalities, religious groups, or political affiliations (e.g., “American”, “Buddhist”, “Demo-
+crat’’).
+PRODUCT 825 ‘Tangible products, including vehicles, devices, and software (e.g., “iPhone”, “Tesla Model
+S”).
+CARDINAL 648 Numerals that do not indicate order (e.g., “one million”, “42”).
+QUANTITY 535 Measurable amounts or dimensions (e.g., “5 kilograms”, “10 meters’’).
+LAW 289 References to legal documents or statutes (e.g., “Constitution”, “GDPR”).
+ORDINAL 220 Ordinal numbers indicating position or rank (e.g., “first”, “second”, “10th’”).
+TIME 202 Specific time expressions (e.g., “5:00 PM”, “midnight’).
+MONEY 83 Monetary values, including currency (e.g., “$100”, “€50 million”).
+LANGUAGE 56 Names of languages (e.g., “English”, “Mandarin’’).
+PERCENT 48 Percentage expressions (e.g., “50%”, “20 percent’).
+Training Loss Dynamics for DeepSeek-R1-Distill-Qwen-1.5B Training Reward Dynamics for DeepSeek-R1-Distill-Qwen-1.5B $ Reward Standard Deviation for DeepSeek-R1-Distill-Qwen-1.5B
+— tosis averege FS LA toxins rveroge towing Aveege
+fd 04 95% Confidence Interval 3 0 afl \y A " oe ~ ye ne ; mee E 4 95% Confidence Interval
+2 0.2 g Wo] YH WY mM v 2»
+a o-1 a
+a no}
+0.0 Eo
+0 40 80 120 160 200 0 40 80 120 160 200 Fy 0 40 80 120 160 200
+Training Steps Training Steps id Training Steps
+(a) Training loss (b) Reward values (c) Reward standard deviation
+= Completion Length Dynamics for DeepSeek-R1-Distill-Qwen-1.5B Format Reward Dynamics for DeepSeek-R1-Distill-Qwen-1.5B 2 Training AnswerCheck-Reward for DeepSeek-R1-Distill-Qwen-1.5B
+Fs — omplton tenth 8, 5 sab erase
+Ss — Moving Average c w 0.75 uM) Model 9
+E000 pon 65% Confidence Intel : © ad “ft ta A I yp hat My
+Fs sain 7 X, fi an 5.5% Reduction $1 —— Training Reward 2 sad i \ 0) ee
+g ® 0.00
+0 40 80 120 160 200 0 40 80 120 160 200 & 0 40 80 120 160 200
+Training Steps Training Steps Training Steps
+(d) Completion length (e) Format reward (f) Answer checker and length check reward
+Figure 7: Training dynamics of the DeepSeek-R1-Distill-Qwen-1.5B model. (a) Training loss curve showing convergence;
+(b) Overall reward values during training; (c) Standard deviation of rewards reflecting stability; (d) Average completion
+length throughout training; (e) Format reward scores; (f) Combined answer checker and length check reward metrics.
+TABLE 7: Ablation study of the fact-checking method com- Our full method’s superior performance (0.921 Acc. with
+ponents on Qwen2.5-0.5B-Open-R1-Distill 0.073 Var.) demonstrates that our carefully balanced reward
+Method Variant Ace(%)t Var system creates synergistic effects beyond what individual
+T_T. components achieve in isolation. The fact-checking reward
+Full Method 92.10 0.073 b t effecti h ired with f t dl th
+Reward Setting Ablations ecomes most effective when paired with format and leng
+w/o Fact-Checking Reward (Eq.9) 43.53 0.136 constraints, which provide the structural framework nec-
+w/o Semantic Similarity Reward (Eq.10) 82.87 0.124 ‘ ‘ ae ‘
+wio Format Compliance Reward (Eq.11) Failed Failed essary for applying factual evaluation. Similarly, semantic
+w/o Length Constraint Reward (Eq.12) Failed Failed similarity becomes more impactful when built upon factually
+Fact-Checking Reward Only Failed Failed sound reasoning steps.

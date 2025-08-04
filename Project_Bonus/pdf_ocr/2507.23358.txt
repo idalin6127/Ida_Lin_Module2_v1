@@ -1,0 +1,1338 @@
+
+
+--- Page 1 ---
+
+Text-to-SQL Task-oriented Dialogue Ontology Construction
+Renato Vukovic, Carel van Niekerk, Michael Heck, Benjamin Ruppik,
+Hsien-chin Lin, Shutong Feng, Nurul Lubis, Milica Gasié
+Heinrich Heine University Diisseldorf, Germany
+{revuk100,niekerk, heckmi, ruppik, linh, fengs, lubis, gasic}@hhu.de
+Abstract numbers of parameters, which makes it very diffi-
+cult to understand their behaviour, even via prob-
+Large language models (LLMs) are widely ing (Cffka and Liutkus, 2023). It is therefore ex-
+Va) used as general-purpose knowledge SOUTCeS, tremely challenging to verify their inherent knowl-
+N but they rely on P: arametric knowledge, lim- edge (Zhong et al., 2024). Moreover, LLMs of-
+) iting explainability and trustworthiness. In
+. . ; ten produce confident but non-factual outputs that
+N task-oriented dialogue (TOD) systems, this : . ;
+— separation is explicit, using an external just appear plausible on a superficial level (Sahoo
+= database structured by an explicit ontology et al., 2024; Feng et al., 2024). Finally, many
+to ensure explainability and controllability. LLMs and their training data are closed-source.
+cr However, building such ontologies requires Ontologies provide a human-readable means of
+manual labels or supervised training. reconstructing knowledge-based reasoning in lan-
+) We introduce TeQoDO: a Text-to-SQL guage models (Gruber, 1995; Lo et al., 2024).
+task-oriented Dialogue Ontology construc- M lly build; log} f ll rel
+UO tion method. Here, an LLM autonomously anua y un ing onto Oogles or am te evant
+a builds a TOD ontology from scratch with- domains is infeasible (Milward and Beveridge,
+O out supervision using its inherent SQL pro- 2003). To ensure broad applicability, ontolo-
+gramming capabilities combined with dia- gies should be constructed automatically, reliably,
+ce logue theory provided in the prompt. and consistently. Automatic ontology construction
+> We show that TeQoDO outperforms trans- presents a promising solution to these challenges.
+oO fer learning approaches, and its constructed . .
+Vay . ws . In this work, we focus on constructing task-
+cn ontology is competitive on a downstream di- . . ; .
+raat alogue state tracking task. Ablation studies oriented dialogue (TOD) ontologies from raw di-
+NAN demonstrate the key role of dialogue theory. alogue data. The goal is to extract relevant infor-
+~ TeQoDO also scales to allow construction mation and organise it into a meaningful hierarchy
+>) of much larger ontologies, which we inves- for handling user queries. TOD ontologies con-
+a) tigate on a Wikipedia and ArXiv dataset. We sist of domains, slots, and values, with system ac-
+N view this as a step towards broader applica- tions and user intents defined over this domain-
+. = tnt ° ntologies to increase LLM explain- slot-value structure. Figures 1 and 2 illustrate on-
+ability. : : : :
+< y tology construction in this setting. Such ontolo-
+=| gies are essential for modern TOD systems (Young
+1 Introduction et al., 2013; Hudecek and Dusek, 2023).
+L \ dels (LLMs) h b Most TOD ontology construction approaches
+ae eine Lk. els ( f s) have en follow two steps (Hudecek et al., 2021; Vukovic
+th hee vench se P ce burn fon wit et al., 2022): (1) term extraction from dialogue
+the abl - to Feac " surp oI man per ormance data and (2) relation extraction between the terms
+on a wide varlety of natura anguage Processing from the previous step. Existing approaches tackle
+tasks. These models are pre-trained on massive h ly and rel d trai
+dalioned via human feedback usine re. these steps separately and rely on annotated train-
+Nora an j gne 1500-0 8 ing data (Vukovic et al., 2024; Finch et al., 2024).
+inforcement earning ( rown et al, ’ uyang This has the downside of additional and poten-
+et al., 2022). Despite these remarkable abilities, . . .
+; “ ; tially error-prone training, and the danger of in-
+there are some inherent problems associated with . .
+th t Their knowledge is stored j t formation loss between the two processing steps.
+ese systems. Their knowledge is stored in vas
+y e We propose TeQoDO, a Text-to-SQL task-
+‘Code will be released upon publication. oriented Dialogue Ontology construction ap-
+
+
+--- Page 2 ---
+
+proach. Figure 3 provides an overview of the Unstructured Knowledge ———————> Structured Knowledge
+method. TeQoDO uses LLMs’ code understand-
+ing and generation capabilities (Chen et al., 2023) Pitercheap,.. SS
+to build ontologies from scratch via SQL. It in-
+crementally constructs the database by iterating oe ‘@!
+over dialogues, retrieving relevant existing con- —
+tent, and updating the DB with new information. Menace eee
+The model uses state tracking from dialogue the- Assent oH
+ory to distinguish new content from existing data es pore: Reauest Hotel
+in the DB. The update prompt includes a notion ; .
+. . Figure 1: An example of ontology construction
+of success to help align schema changes with the ; ; ;
+, . shows the extraction of the domain “Hotels”, with
+user’s goals. Query results are augmented with i” ls ats
+: . the value “cheap” assigned to the slot “Price”.
+semantically similar concepts or example values . .
+wae . System actions and user intents are defined based
+from existing columns to improve coverage and . ; .
+. on the domains and slots specified in the ontology.
+consistency.
+Text-to-SQL provides a structured format famil- 2 Related Work
+iar to LLMs through code encountered during pre- .
+training (Deng et al., 2022; Zhao et al., 2024). It 2.1 Ontology Construction
+reduces the need for textual prompts, as SQL ta- _ Prior to deep learning, ontology construction re-
+bles, columns, and values align with TOD ontol- __ lied on frequency-based rules and linguistic fea-
+ogy domains, slots, and values. To our knowledge, tures. With language models, clustering and su-
+we are the first to use text-to-SQL to builda TOD __ pervised methods enabled feature-based learning,
+ontology from scratch. We also adapt similarity- _as outlined below.
+based evaluation metrics for ontology learning (Lo
+. Sy 8 ( Rule-based ontology construction (Frantzi and
+et al., 2024) to reflect the hierarchical nature of . :
+. . . . Ananiadou, 1999; Nakagawa and Mori, 2002) re-
+TOD ontologies. This enables evaluation of vari- .
+ous concent types, such as domains and slots lies on frequency-based methods to extract key
+Peeyp _ ; subsequences from text. Wermter and Hahn
+We mun experiments on two widely used TOD (2006) use linguistic features for more advanced
+datasets: MultiWOZ (Eric et al., 2020) and term extraction. While interpretable, these meth-
+oe Dialogue (SGD) (Rastogi et al., ods are hard to adapt across domains and often
+020). TeQoDO outperforms recent TOD on- yield low precision.
+tology construction methods (Finch et al., 2024;
+Vukovic et al., 2024). To test generalisation, we | Clustering-based approaches, such as Yu et al.
+apply TeQoDO to general ontology datasets from (2022), apply unsupervised parsing and hierarchi-
+Lo et al. (2024) and show it scales to large ontolo- _—_ cal clustering to group extracted terms into do-
+gies. In summary, our contributions are: mains and slots. Finch et al. (2024) train a gen-
+erative slot induction model to extract domain-
+slot-value triples, which are then clustered into
+° We propose a text-to-SQL framework for 4 slot hierarchy. These methods usually produce
+building TOD ontologies from scratch, al- many slots, whose interpretation depends entirely
+lowing LLMs to update a DB with each on how well they match the ground truth. This is
+newly observed dialogue without supervision because evaluation compares slots solely based on
+or rule-based aggregation. their values. They also rely heavily on data qual-
+ity, embedding representations, and sensitive hy-
+* The constructed ontology enables dialogue  perparameters, such as the minimum cluster size.
+sae tracking we 4 ervormanee comparable Supervised Lo et al. (2024) fine-tune LLMs
+O MSIE Be STONE NTT OMo"osy: to predict ontology sub-graphs at the document
+level and merge them using frequency-based rules
+¢ TeQoDO generalises to large-scale ontology —_ to construct ontologies for Wikipedia and ArXiv
+datasets like Wikipedia and ArXiv, perform- _—_ datasets. They also propose evaluation functions
+ing competitively. covering both verbatim content and higher-level
+
+
+--- Page 3 ---
+
+Ores a intents ations Vaser_intent U Veystem_action U Volot U Values forming
+(CES Cuisine Price enn oe foun a three-level hierarchy. The edge set FE is a
+italian QM asian expensive cheap be cucine ae price subset of edges between specific node types, F C
+(Vaomain x Vatot) U (Vatot x Value) U (Vaser_intent x
+Figure 2: Example TOD ontology. Vaser_intent ) U (Vsystem_action x Voystem_action)-
+See Figure 2 for an example TOD ontology,
+; with domains in blue, slots in brown, values in
+structural semantics compared to the ground truth, . . . .
+; ; green, and intents and actions in red. Domains
+which we adapt to TOD. Vukovic et al. (2024) . . . .
+; ; represent broad topics, while slots specify particu-
+train a model to predict TOD ontology subgraphs fl f inf . Val d
+he dialocue level and assresate them by mere. ar types of information. Values provide concrete
+att “ i . Th 88 8 - ha content for the slots. User intents and system ac-
+ae bs P ‘tL oh d i mp ‘th. genera isa ‘a tions define how domain-slot pairs can be used,
+ity Dy updating the eco ing with constraints ant based on the domain-slot-value hierarchy.
+confidence-based adjustments. However, their
+method focuses only on relation extraction, us- 3,2 Method
+ne ground truth terms as inp ut. . These meth- Our main prompting approach combines task-
+ods require costly annotated training data from . . . . .
+(Budzi ki et al., 2018) oriented dialogue modelling with SQL, as outlined
+1 Z1ANOWSKI Ct als h ; . below. We then detail the steps of our iterative on-
+n contrast, our approac requites No training tology construction pipeline. We utilise an LLM
+and conducts both term and relation extraction. . .
+. . that creates SQL queries, which are then executed
+We use Vukovic et al. (2024) and Finch et al. .
+, . using Python.
+(2024) as competitive baselines.
+SQL-Background SQL is a query language
+2.2 Text-to-SQL for relational databases (Chamberlin and Boyce,
+Li et al. (2024) present a large benchmark for 1974). We use SQLite,” a serverless relational
+text-to-SQL queries on big databases and find DB management system suitable for small-scale
+LLMs underperform compared to humans. Zhou _ databases and schema-based knowledge represen-
+et al. (2024) apply LLMs to database tasks tation. SQLite stores data in tables with columns
+such as query rewriting and index tuning using and values, e.g., a “restaurant” table with a “price”
+automatic prompt generation, DB-specific pre- Column and “expensive” as a value. This struc-
+training, model design, and fine-tuning. Yang ture aligns with TOD ontology formats, making it
+et al. (2024) enhance text-to-SQL parsing for well-suited for ontology construction. For intents
+smaller models by synthesising training data with | and actions, there are separate tables that store
+larger models. Allemang and Sequeda (2024) im- names of intent and action entries.
+prove text-to-SPARQL (Polleres, 2014) by using a TeQoDO primarily uses data retrieval, defini-
+rule-based query checker leveraging the underly- tion, and manipulation queries. To access cur-
+ing ontology, with an LLM repairing queries based rent DB content, a SELECT query retrieves ta-
+on this feedback. In contrast to our work, these | ble names. PRAGMA queries fetch column names
+methods work with existing ontologies and do not and data types for each table. SELECT can also
+build ontologies from scratch using text-to-SQL. query specific values from tables and columns.
+Tables are created with CREATE TABLE, speci-
+3 Text-to-SQL Ontology Construction fying column names and types. ALTER TABLE
+. adds columns, INSERT INTO adds entities, and
+3.1 Problem Formulation UPDATE modifies column values.
+Given a task-oriented dialogue dataset Task-oriented dialogue modelling We incor-
+D = {dj,...,d,}, each dialogue d; is com- .
+. : porate two concepts from modular task-oriented
+prised of alternating user and system turns . .
+. dialogue models (Young et al., 2013) into our
+{U1,$1,---,Um,;;5m,} containing —_unstruc- . .
+. on . ae prompt to improve the quality of generated up-
+tured information about user-queried entities. . . . .
+; . date queries. First, dialogue state tracking (DST)
+The goal is to induce an ontology Op for. ee woe
+. . is used as a separate step to distinguish existing
+the dataset. The ontology is a directed graph
+Op = (V, E) with five node types V = Vaomain U *https ://www.sqlite.org
+
+
+--- Page 4 ---
+
+| +
+S42 5s l e)
+PRAGMA table_info(restaurants); Ge»
+Step 1 Query DB
+y === name: TEXT example value: “Pizza Hut”
+location: TEXT = SQL DB
+€&> food_type: TEXT =
+Step 2
+No Result for “Yu Garden”
+Result for similar value “Yu Garden Restaurant”:
+sy (Yu Garden Restaurant, None, Asian)
+~restaurants-name: Yu Garden Restaurant y ay
+-restaurants-location: east = p
+= restaurants
+we SET location="east‘ oy
+WHERE name=‘ Yu Garden Restaurant‘
+Step 3 Update DB
+Dialogue Success
+
+Figure 3: TeQoDO Overview with example DB queries and results.
+database content from new input, based onthe cur- states using the DB’s table and column names,
+rent schema. Second, we prompt the model tocon- _as well as intents and actions. This summary in-
+sider dialogue success, guiding itto make updates _—_ cludes information from both the user and the sys-
+that support achieving the user goal. For a more tem. By predicting the state, the model condenses
+formal description, see Table 7 in the appendix. the dialogue’s information into a concise, model-
+
+. determined format not fully detailed in the prompt.
+TeQoDO Prompting Steps See Figure 3 for an y : . promp
+. : . Notably, the model tracks the entire dialogue at
+overview of TeQoDO with example queries and :
+
+. -o, . . once, not turn-by-turn. It must track all mentioned
+results. More detailed pipeline steps are given in information, not only what the user queries
+Algorithm 1 and are described in the following , :
+paragraphs. Step 3: DB Update In the final step, the model
+Step 1: Query existing DB information To generates database update queries based on the
+ensure structural and naming consistency in current DB state and dialogue information. ; It
+TeQoDO, the model is first prompted to query is prompted to create update queries considering
+the current DB tables. Initially, as the ontology ude ca and DST results. Update queries id
+is built from scratch, the DB is empty, and thus nol © and t TABLE, ad val Th to ‘I 1
+no results are returned. The resulting table list colunms, an UPDATE to add’ values. “Nhe mode
+T = {t, tn} is included with the dialogue must follow the existing DB structure and gener-
+in step 2. The model is prompted to query column ate consistent updates, preferring existing tables
+info for tables relevant to the dialogue. We then over creating new ones. Additionally, the model
+append the column query results to the prompt so is prompted to update the DB to support fulfilling
+the model generates SELECT queries consistent the user’s goal by incorporating dialogue success
+with the DB state. In step 3, it generates SELECT into the prompt.
+
+ueries to retrieve specific entity values from the .
+
+dialogue P y 4 Experiments
+
+Step 2: Dialogue State Tracking with DB infor- 4.1 Datasets
+
+mation In this step, the model restructures DB MultiWOZ = The first dataset we employ is Mul-
+query results into dialogue state tracking style la- | tiWOZ 2.1 (Eric et al., 2020), a large-scale, multi-
+bels. It predicts the current dialogue’s value for domain dialogue dataset containing human-human
+each table-column pair and compares it with the conversations annotated with domain, slot, and
+DB’s stored information. This improves the dis- value labels. It covers information such as ho-
+tinction between existing DB information and new __ tel bookings, restaurant reservations, taxi services,
+information from the dialogue. and attractions. We utilise the test set with 1,000
+
+The model is prompted to summarise dialogue _— dialogues and 6 domains.
+
+
+--- Page 5 ---
+
+Algorithm 1 TeQoDO tinuous F1 as soft metrics, as these capture most
+1 Input: Dialogue dataset D, Existing Database DB, Prompt po relevant evaluation aspects (Lo et al., 2024). The
+; for Ouery ¢ ee set of tables T = {1, ..,tn} € DB: hard metric captures syntactic similarity, respec-
+4 Query table columns cr,q, using prompt p = po + d; + T tively, while the soft metrics capture some human
+5 Generate SELECT queries u7,q, using p = p + cr,a; intuition on semantic similarity. Since these met-
+6 Track information STy, using p = p+ vq, .
+
+7 Generate update queries Ug, for success using p = p+STu, rics treat all ontology graph edges equally — over-
+8 end for looking infrequent higher-level relations — we ex-
+tend them to account for hierarchical levels and
+
+SGD Second, we use the schema-guided dia- their specific edge types. ;
+
+logue (SGD) dataset (Rastogi et al., 2020). Itis a We compute the macro average of each metric
+
+diverse, multi-domain dataset for TOD modelling, across the node classes: domains, slots, values, in-
+featuring detailed schema annotations. It cov- tents, and actions. Let Vi,,., denote the predicted
+
+ers services like flight booking, calendar schedul- nodes and V;,,, the ground truth for class 7.
+
+ing, banking, and media services, including un- Literal Metric In the literal score, only exact
+
+seen services at test time. We use the SGD test term matches count: true positives are Vigrea Vie
+
+split for evaluation in the main results, containing _false positives are Vinea \ Vines and false negatives
+
+4,201 dialogues and 18 domains. We load these are Vine \ Viprea
+
+with ConvLab-3 (Zhu et al., 2023).
+
+Fuzzy Metric In both the fuzzy and continuous
+
+General Ontology Data To test whether  cetups, we map nodes above a similarity thresh-
+
+TeQoDO’s concepts apply beyond TOD data, we oid to ground truth nodes. We use a sentence
+
+apply it to the Wikipedia and ArXiv datasets by transformer and set the threshold at tim — 0.436
+
+Lo et al. (2024). The Wikipedia test set contains tg consider two concepts equivalent as in (Lo
+
+242,148 article titles and abstracts; its gold  & aj, 2024). For the fuzzy setup, all predicted
+
+ontology graph has 4 hierarchy levels with 8,033 nodes above the threshold are mapped to ground
+
+nodes and 14,673 edges. Topics include various — tryth. True positives are predicted nodes with co-
+types of “injuries” or “legislative bodies”. sine similarity above the threshold to at least one
+
+The ArXiv test set has 27,630 title-abstract ground truth node, ic, {up € Ving | due €
+pairs, 2 hierarchy levels with 61 nodes and 61 Vine : Sim(Vp,v;) > tsim}. False positives are
+edges. Main topics are ArXiv categories like predicted nodes with similarity below or equal
+
+“Mathematics” with subcategories such as “Com- tg the threshold for all ground truth nodes, ice.,
+
+mutative Algebra”, making this ontology more ab- {Uy € Vira | Vor © Vine 1 Sim(Yp, v1) < teim}.
+
+stract and higher level than Wikipedia’s. These on- _ Flajge negatives are ground truth nodes without any
+tologies do not follow the domain-slot-value hier- predicted node mapped above the threshold, ice.,
+archy resembling SQL’s table-column-value struc- {vt © Vine | Wop € Vinea : Sima(Up, Ue) < tsim}-
+ture. TeQoDO is applied to the test sets of both
+
+datasets. Continuous Metric For the continuous metric,
+
+only the predicted node with the highest similarity
+
+4.2 Evaluation to each ground truth node above tsim is a true pos-
+
+We run TeQoDO on a dataset, generating the on- _ itive, i.e., {Up © Vijeg | Wve © Viue + SiM(Up, Vt) >
+
+tology by executing all update queries per dia-  tsim A sim(vp, v4) = MAX EV) 4 sim(v,, Uz) }-
+
+logue. For evaluation, tables map to domains, This stricter metric penalises multiple predictions
+columns to slots, and values to ground truth val- _—_— for the same ground truth node. We use this as
+ues. System actions and user intents are matched __ the primary metric, as it accounts for surface-form
+by aligning table names with the “system actions” —_ variations without allowing significantly different
+“and user intents” keys and comparing values di- _ structures — an approach that, through qualitative
+rectly to the ground truth. analysis, proved to reward the best ontologies in
+We adapt the evaluation framework of Lo et al. terms of downstream usability.
+
+(2024) to our task-oriented dialogue ontology We match the hierarchy top-down: domains
+
+structure, which includes domains, slots, values, _ first, then slots, values, intents, and actions. Only
+
+system actions, and user intents. Specifically, we — slots of matched domains are considered; un-
+use literal F1 as a hard metric and fuzzy and con- —_ matched domains exclude their slots. This applies
+
+
+--- Page 6 ---
+
+similarly to values, intents, and actions. et al., 2024), which includes SQL coding tasks.
+On Wikipedia and ArXiv, comparison results Full pipeline prompts appear in Appendix A.1.
+are from Lo et al. (2024) using their evaluation SQLite* is used via Python’s sqlite3.4 Final
+scripts. We report their literal, fuzzy, continuous, | prompts were manually crafted according to best
+and graph F1 metrics. Graph Fl embeds predicted practices’ and refined with ChatGPT (see Ap-
+and ground truth graphs, comparing their structure pendix B.2 for prompt variant performance).
+through graph convolutions. For more consistency, we sample values for
+each table column to expose the LLM to concrete
+4.3 Models instances in the column value example set-up.
+DORE (Vukovic et al., 2024) stands for di- To reduce variation in column values (e.g.
+alogue ontology relation extraction, which uses “Alexander Bed and Breakfast” vs “Alexander B
+Gemma-2B instruct (Team et al., 2024) to predict & B”) and improve naming consistency in the DB,
+dialogue-level ontology relations between known we also experiment with query results for similar
+terms in the prompt. DORE enhances transfer tables, columns, and values. We call this simi-
+learning via constrained chain-of-thought decod- larity matching. This decreases duplicate entries
+ing (Wang and Zhou, 2024), restricting decod- by increasing the chance of reusing existing val-
+ing to known terms and relations. Final outputs ues. The model tends to use the LIKE operator
+are chosen based on confidence across sampled in SQLite, which matches substrings but fails in
+responses. Table | presents the best-performing cases like the example above. Instead, we compute
+DORE models on both TOD datasets, including — semantic similarity using the “all-MiniLM-L6-
+fine-tuned and transfer models, trained on the re- v2” sentence-transformers model (Reimers and
+spective other dataset. Gurevych, 2019) and a similarity threshold of
+GenDSI (Finch et al., 2024) is the generative 2°496. This threshold, found by Lo et al. (2024),
+; ; corresponds to the median similarity for synonyms
+dialogue state inference approach (GenDSI). It. . .
+in WordNet (Miller, 1994) using the same model.
+fine-tunes TS-3B (Raffel et al., 2020) on a large For each query, we return up to 5 similar concepts
+synthetic TOD dataset (Finch and Choi, 2024) to -
+; that exceed this threshold.
+generate dialogue state updates from user-system
+turns. State updates, as slot-values, are clustered, 4.4 Task-oriented Ontology Construction
+with the most frequent slot name in each clus-
+ter chosen as representative. For evaluation, do- SOTA Comparison Table | shows that DORE
+mains are extracted from slots using the first word  ©Verfits to domains and slots in the training set
+of each slot name to form the ontology hierarchy. but outperforms TeQoDO on value-level and lit-
+Predictions lacking domain names are discarded.  ¢tal metrics. This stems from supervised fine-
+As DORE and GenDSI do not predict user in- tuning, enabling DORE to learn exact value phras-
+tents or system actions, evaluation is limited todo-  g-_ GenDSI surpasses DORE on domains and
+mains, slots, and values, with averages calculated slots but is outperformed by TeQoDO on all met-
+accordingly in Table 1. rics. GenDSI’s lack of explicit domain prediction
+causes slot predictions to be dropped if domains
+OLLM (Lo et al., 2024) is fine-tuned on are not the first word in slot names. These re-
+Wikipedia and ArXiv ontologies and uses a cus- sults show that TeQoDO predicts higher-level hi-
+tom masking loss and rule-based aggregation of —_ erarchical concepts far better than the other meth-
+article-level predictions. On these datasets, we ods.
+also compare to Hearst patterns (Roller et al.,
+2018), which use hand-crafted lexico-syntactic Ablation Table 2 shows the ablation study re-
+rules, e.g. “mammals such as humans’’, to predict sults, while Appendix B.1 details results for do-
+is-a relations. REBEL (Huguet Cabot and Navigli, mains, slots, values, intents, and actions.
+2021) treats relation extraction as a translation task = —j—————
+. . “https://www.sqlite.org
+and trains a language model to generate relations. ‘nttps://docs.python.org/3/library/
+TeQoDO We use GPT-4o-mini (gpt-4o-mint- we ttpa://help openai.com/en/axticles/
+2024-07-18”) (OpenAL, 2024) for all experiments. ¢¢54000-best—pract ices-for—prompt -\
+The model performs well on HumanEval (Du — engineering-with-the-openai-api
+
+
+--- Page 7 ---
+
+Approach Domains Slots Values Intents Actions Average Supervised
+MultiWOZ
+
+TeQoDO (ours) 60.04 57.25 70.65 56.21 82.11 65.25 x
+
+DORE fine-tuned on MWOZ 15.53. 20.39 84.01 - - 39.98 v
+
+DORE fine-tuned on SGD 15.24 2.94 22.14 - - 13.44 x
+
+GenDSI 29.79 25.64 33.94 - - 29.15 x
+
+SGD
+
+TeQoDO (ours) 72.19 43.70 48.57 76.48 67.28 61.64 x
+
+DORE fine-tuned on MWOZ = :12.84 16.35. 60.04 - - 29.74 x
+
+DORE fine-tuned on SGD 17.27 11.94 85.05 - - 38.05 v
+
+GenDSI 27.07 29.08 41.28 - - 32.47 x
+Table 1: Ontology construction comparison. DORE (Vukovic et al., 2024) and GenDSI (Finch et al.,
+2024) do not predict the intents and actions; hence, their average is only over domains, slots, and values.
+
+In the table, direct update refers to generating continuous metric. Note that the combination
+updates without querying the database. Query up- of similarity matching and success yields no im-
+date involves querying the database before apply- — provements, and is therefore omitted for brevity.
+ing updates. DST Step indicates the use of the DST —_ Dialogue theory narrows the gap between fuzzy
+step. Success indicates that user goal fulfilment is | and continuous metrics, indicating more consis-
+included in the update prompt (Section 3.2). Sim. — tent DB updates. The influence of dialogue order
+denotes the use of similarity matching. Ex. refers _ is notably diminished, as evidenced by the drop in
+to column value examples (Section 4.3). variance when dialogue theory is applied.
+
+The large discrepancy between literal and Comparing the direct update baseline to the
+similarity-based metrics aligns with the findings | query and update pipeline, the number of tables
+of Lo et al. (2024), highlighting numerous sur- is significantly reduced. As seen in Table 3, the
+face form variations that literal evaluation fails direct update baseline yields 168 tables for Multi-
+to capture. For example, a domain named “ho- WOZ, while the pipeline results in only 14, much
+tel_bookings” is a false positive in literal evalua- Closer to the ground truth of 6 domains. Pipeline
+tion despite being a reasonable prediction, since variants using DST show similar table counts,
+the ground truth domain is “hotel’’. Comparing which are further reduced by incorporating SUC-
+fuzzy and continuous metrics, precision on the lat- cess, closest to the 18 ground truth domains. This
+ter is lower on both datasets, as only one of several reduction is even more pronounced on the SGD
+predictions can match each ground truth concept. dataset. The direct update baseline produces many
+
+Using the query and update pipeline improves redundant tables per domain, €.g., over 15 train-
+all scores on both datasets, already surpassing related domains. In contrast, the pipeline typically
+DORE in the more expressive similarity-based results in one train_bookings table.
+metrics (Lo et al., 2024). This is expected, as al- Incorporating dialogue success into the DB up-
+lowing the model to query existing tables leads date prompt significantly reduces erroneous SQL
+to better alignment and more consistent update query ratios, achieving single-digit error rates on
+queries. Without querying first, the model tends both datasets. This suggests that applying dia-
+to create new table names for every dialogue, re- logue theory improves the model’s handling of the
+ducing precision. Recall is generally higher in the database and generation of SQL update queries,
+direct update approach due to generating more ta- _ 48 Most errors arise from incorrect column names,
+bles, but this substantially lowers precision. indicating poor schema handling.
+
+On both datasets, incorporating dialogue the- 4.5 Downstream Application: DST
+ory improves performance and reduces variance.
+
+The DST step alone does not significantly outper- | To demonstrate downstream usability, we apply
+form the query and update baseline. On Multi- the TeQoDO-induced ontology in a specialised di-
+WOZ, similarity matching, column value exam- _ alogue state tracking model. We replicate the zero-
+ples, and success yield significantly better per- shot leave-one-domain-out setup from Heck et al.
+formance. On SGD, using success together with (2022). Using their TripPy-R model, we train
+column value examples significantly improves the — with one domain held out and infer on that do-
+
+
+--- Page 8 ---
+
+Approach Literal Fuzzy Continuous
+Fl Precision Recall | Fl Precision Recall | Fl Precision Recall
+MultiWOZ
+Direct Update 2.8402 2.5403 16140.8|37-743.2 32.2423 88-lt05 | 19.2410 19-940.4  58.549.5
+Query Update 13.l424 14.7422 13.642.7| 62.349.2 60.7+7.9 77.741.6 | 50.1+6.7 45.0+6.3 73.446.2
++ DST Step 11.543.5 14.544.5 12.244.9| 70.4+4.7 70.346.2 75.543.8 | 58.8443 54.544.9 74.8438
++ DST, Sim. 111434 12.5444 12.743.7| 71.3431 69.444.8 77.7+2.9 | 60.7+3.7 55.0+4.9 77.142.9
++ DST, Ex. 12.141.8 16.4+42.5 12.4493] 74.744.0 74.345.9 79.842.2 | 65.245.5 61.24+6.5 78.542.4
++ DST, Ex., Success 12.344.3 16.847. 12.943.4] 73.344.6 75.345.9 76.245.9 | 65.244.7 64.6+7.0 75.344.7
+SGD
+Direct Update 2.540.2 2.140.3 17.4+0.2 | 42.6+7.0 34.947.5 91.24+0.7 | 18.642.3 18.6+1.6 66.7+13.0
+Query Update 7042.7 13.045.5 6.543.4 |53.8424.2 76.9420.3 54.5498.1/44.6421.1 64.0i19.7 49.2426.6
++ DST Step 10.041.9 15.7+4.4 8.941.8 | 75.0491 89.1489 69.1+7.3 | 61.4491 72.2416.3 61.9+10.3
++ DST, Sim. 7.0426 11.845.7  6.541.9 | 70.l45.1 85.549.2 65.2410.7| 53.447.4 65.6414.4 55.1i12.4
++ DST, Ex. 9041.9 14.7448 8.2425 | 73.543.2 90.348.7  66.1410.0] 60-.847.5 74.3417.2 59.5110.8
++ DST, Ex., Success 8.3+92.2 14.745.1 7.0+2.8 | 70.2+5.7 93.4+6.2 60.5+10.5 | 61.645.4 80.7412.5 58.0+10.7
+Table 2: TOD ontology construction ablation study for MultiWOZ and SGD test sets. We report the macro
+average scores and standard deviation for 5 seeds of different dialogue orders over the five hierarchy
+classes: domains, slots, values, system actions, and user intents. Bold F1 scores are significantly better
+than Query Update (p < 0.05). On SGD Query Update approaches, we input batches of 10 dialogues
+for faster inference.
+Approach # Tables SQL Error Ratio | Domains
+————————————————————————— Ontology . .
+MultiWOZ (6 domains) hotel rest. attr. train taxi | avg.
+Direct Update 168 28.72% Ground truth Ontology 41.3 25.2 24.9 30.9 28.3 | 30.1
+Query and Update 14 37.31% TeQoDO Ontology 26.7 23.9 44.8 29.1 33.2 | 31.5
++ DST 12 30.45% Ml Oe
++ DST, Sim 16 23.19% .
++ DST. Ex. 9 37 760% Table 4: Zero-shot DST results for TripPy-R (Heck
++ DST, Ex. Success 9 4.71% et al., 2022) with ground truth and TeQoDO in-
+SGD (18 domains) duced ontology inference on MultiWOZ 2.1 in
+Direct Update 432 30.27% joint goal accuracy per domain.
+Query and Update 92 32.50% : : : : .
++DST 69 32.81% taxi_bookings-pickup_location instead of ground
++ DST, Sim 88 17.71% . :
+, truth taxi- rture. This shows that TeQoDO can
++ DST, Ex. 67 22.92% ; axi-departure QobO
++ DST, Ex. Success 37 5.22% induce a useful ontology for downstream DST.
+Table 3: Comparison of Approaches by Number of 4.6 General Ontology Construction
+Tables and SQL Error Ratio in update queries. . .
+
+Q P q When applying TeQoDO to general ontologies, we
+main using the TeQoDO-induced ontology instead _ truncate the prompt from the left to fit the model’s
+of ground truth. Only domain and slot predictions context window, needed only for Wikipedia.
+are used in this setup. Wikipedia’s table count reaches thousands, indi-
+
+See Table 4 for results comparing inference us- _ cating that pre-filtering tables in TeQoDO’s first
+ing the ground truth and TeQoDO-induced ontol- step may be necessary—this is left for future work.
+ogy. TripPy-R performs similarly with the induced On ArXiv, we evaluate only the first two hierar-
+ontology across all domains except “hotel”. Inthis chy levels, as the ground truth ontology contains
+case, the slots hotel-book people and hotel-book just two. Due to the dataset’s size and the small
+stay are missing due to unmapped slot predic- _ target ontology, directly applying TeQoDO results
+tions. The “restaurant” and “train” domains also —_ in too many predicted tables. To address this, we
+lack some slots, leading to lower performance. cluster table names and select representative tables
+In the “taxi” and “attraction” domains, all slots based on their proximity to each centroid. This
+are mapped, and performance surpasses that with — clustering approach mirrors OLLM’s frequency-
+ground truth slots. This may result from more in- _ based aggregation but avoids hand-crafted rules.
+formative slot names in the induced ontology, e.g. | We use k-means (MacQueen et al., 1967), choos-
+
+
+--- Page 9 ---
+
+Approach Literal Fl Fuzzy Fl Continuous Fl GraphFl Supervised
+Wikipedia
+
+TeQoDO 0.03 64.94 34.76 64.15 x
+
+Hearst Patterns (Roller et al., 2018) 0.30 53.80 35.00 54.40 x
+
+REBEL (Huguet Cabot and Navigli, 2021) +0.40 62.40 $35.60 7.20 v
+
+OLLM (Lo et al., 2024) 9.30 91.50 50.00 64.40 v
+
+ArXiv
+
+TeQoDO + Clustering 0.00 $33.95 $34.15 89.89 x
+
+Hearst Patterns (Roller et al., 2018) 0.00 0.00 15.10 55.30 x
+
+REBEL (Huguet Cabot and Navigli, 2021) 0.00 6.00 28.10 54.60 v
+
+OLLM (Lo et al., 2024) 4.00 57.00 35.70 $63.30 v
+Table 5: Ontology construction results for Wikipedia and ArXiv test sets from (Lo et al., 2024). We use
+the metrics from their code base and the Hearst, REBEL and OLLM results from their work. In bold the
+best F1 score for each column is highlighted and with a + the second highest.
+ing / via the silhouette score (Rousseeuw, 1987), be effectively induced on much larger ontologies,
+with & ranging from 5 to 20. To speed up in- — showing the generalisability of our approach.
+ference, we prompt with batches of 5 articles for
+
+Analysis
+Results See Table 5 for the final TeQoDO re- When prompting the model to generate an SQL
+sults compared to models from Lo et al. (2024) DB, the induced hierarchy aligns more closely
+(see Appendix A.4 for prediction and ground truth — with the desired structure than when explicitly
+examples). On Wikipedia, TeQoDO does not out- —_ prompting for domains, slots, and values. The lat-
+perform OLLM on most metrics, likely due to ter leads to more misclassifications, such as pre-
+OLLM’s extensive supervised training. However, — dicting slots as domains.
+TeQoDO surpasses REBEL in fuzzy and graph FI, See Table 6 for a qualitative comparison of up-
+where it performs comparably to OLLM. On the date queries on MultiWOZ test dialogues, detailed
+continuous metric, TeQoDO performs on par with — jn Appendix A.3. In the similarity matching ex-
+Hearst patterns and REBEL. ample, only “Allenbell” appears in the dialogue,
+By clustering and merging tables, we reduce while “The Allenbell” is stored from a previous
+predicted table numbers and achieve competitive dialogue. Without similarity matching, the model
+results on ArXiv. TeQoDO attains the highest queries “Allenbell’”, yielding no result due to the
+graph F1 and second-best continuous F1 on ArXiv, missing “The”. Similarity matching retrieves “The
+outperforming fine-tuned and few-shot models Allenbell” from the database. The model chooses
+and matching supervised OLLM. This shows _ which results to include, as less related concepts
+TeQoDO’s induced ontologies closely match the _ may also be retrieved.
+ground truth structure. In fuzzy and continu- In the second example, we illustrate the impact
+ous F1, TeQoDO surpasses Hearst patterns and _ of adding the DST step, which clarifies the distinc-
+REBEL. Lower literal Fl scores reflect the ab- tion between new dialogue information and exist-
+sence of supervision in TeQoDO. Results suggest ing DB content. Without DST, the model inserts
+text-to-SQL can adapt to ontologies beyond TOD, a new entry for “Alexander Bed and Breakfast”.
+though ArXiv requires adjustments. The differ- With DST, it updates the existing DB entry by
+ing hierarchy depth poses challenges, as SQL suits —_ adding only the missing information.
+the three-level TOD structure best. We argue that Column value examples help the model generate
+ArXiv’s high-level labels, with only 61 nodes for more general intents and actions, e.g., find_pool”
+thousands of abstracts, underrepresent its content —_ instead of “find_swimming_in_east”. Mention-
+richness. ing dialogue success encourages system actions
+The main challenges for TeQoDO on general like “ask_clarification” that support user goals.
+
+ontologies are the dataset size and differing hierar- | See Appendix A.2 for predicted ontology excerpts
+chy levels compared to TOD ontologies. However, from the “restaurant” (MultiWOZ) and “flights”
+the graph F1 results indicate that the structure can (SGD) tables.
+
+
+--- Page 10 ---
+
+Query Update Query Update + DST
+INSERT INTO hotel_bookings (hotel_name, UPDATE hotel_details SET address = ‘56 saint
+location, price_category, star_rating) barnabas road’, phone_number = ‘01223525725’
+VALUES (‘Alexander Bed and Breakfast’, WHERE name = ‘Alexander Bed and Breakfast’
+‘Centre’, ‘cheap’, 4); AND address IS NULL AND phone_number IS NULL;
+Query Update Query Update + DST Similarity Matching
+SELECT name, location, free_wifi FROM SELECT name, location, free_wifi FROM
+guesthouses WHERE name = ‘Allenbell’; guesthouses WHERE name = ‘The Allenbell’;
+— No Result — Result: [(‘The Allenbell’, ‘east’, 0)]
+Query Update Query Update + DST Column Value Examples
+INSERT INTO intents (intent) VALUES INSERT INTO intents (intent_name) VALUES
+(’ find_swimming_in_east’); (’find_pool’);
+Query Update Query Update + DST Value Examples and Success
+INSERT INTO actions (action) VALUES INSERT INTO system_actions (action) VALUES
+(‘provide_information’), (’ recommend’ ); (’ask_clarification’ );
+Table 6: Qualitative comparison between the query and update baseline and proposed improvements.
+Note that the hotel tables were named differently in the different runs of the ablations.
+4.8 Discussion and Future Work ods by considering the hierarchy levels of TOD
+Our results show that SQL’s structured format im- ontologies: domains, slots, values, system actions,
+. . . and user intents. Using an off-the-shelf similar-
+proves ontology quality when LLMs interact with. . s .
+a database. The SQL-enhanced model aligns val- ity model with a fixed threshold may introduce
+es more ace rately using fi ichine or bias, though qualitative analysis confirms align-
+u u yu semantic matching . ;
+
+. . ment with ontolo uality. In future work, we
+column value examples. Dialogue theory distin- aim to inco orate human deement into evalua
+guishes existing database information from new . P . ues
+input, making the database more user-focused tion to reduce reliance on fixed thresholds.
+
+: Lo —- Dennett (1987) distinguishes competence from
+TeQoDO significantly outperforms the supervised ( ) . s P .
+fine-tuned DORE and GenDSI. It also reduces comprehension, arguing that the latter is not re-
+
+re . , . uired for the former. Inspired by this, we view
+sensitivity to dialogue order. Future work will en- PEM’ ability to perform i" sks like SQL genera
+able database restructuring through a global view . ym P e
+
+ae . tion as a form of competence to extract task knowl-
+to minimise order effects, since the model could edge in the form of an ontolo
+unify table names instead of clustering, as done on We see this work as an oy tant step in dis
+ArXiv. Smaller models could improve scalability. vay: P P .
+
+Revard; ‘nine d h tilling human-readable knowledge from otherwise
+egar Ing training ata contamination, the Te- black-box LLMs. Extracting ontologies automati-
+sults of the a im “p date app roach wants lars cally with LLMs and analysing their structure may
+hae not, in ta © thine TOD cas that t le moce enhance their interpretability in downstream tasks.
+as not memorisec’ the atasets, as teannot Foy instance, we might hope to detect hallucina-
+recall the exact table names for each dialogue tions based on the constructed ontology
+For larger or structurally different ontologies
+than TOD, our results show TeQoDO can gener- 5 Conclusion
+alise, though SQL struggles to express multiple ;
+hierarchy levels. We aim to scale TeQoDO to We introduce TeQoDO, a method that uses large
+. . language models to build ontologies from task-
+diverse ontology structures by adapting the text- ; . ;
+to-SQL component; however, its sequential na- oriented data, exploiting the inherent SQL pro-
+ture limits parallelisation. The large batch size for nae — ee di-
+concatenated Wikipedia articles may affect perfor- ' ogue het © nt TOD a t © - A wue t eh
+mance, though evaluating this is computationally wo wicely use’ atasets ance ia eae
+expensive. Finally, our approach is sensitive to proposed step improves performance, surpassing
+prompt phrasing, a common issue with large lan- current SOTA. We also show that TeQoDO gener-
+guage models (Razavi et al., 2025) alises to large ontologies with different structures.
+Our evaluation captures all necessar informa Our results motivate further exploration of this ap-
+ur evalu u y - eee
+. . : a roach for explainability.
+tion and is more fine-grained than existing meth- P P y
+
+
+--- Page 11 ---
+
+References length probing. In Proceedings of the 61st An-
+nual Meeting of the Association for Computa-
+Dean Allemang and Juan Sequeda. 2024. Increas- tional Linguistics (Volume 2: Short Papers),
+ing the Accuracy of LLM Question- Answering pages 1067-1079, Toronto, Canada. Associa-
+Systems with Ontologies. In The Semantic tion for Computational Linguistics.
+Web — ISWC 2024: 23rd International Semantic
+Web Conference, Baltimore, MD, USA, Novem-  Naihao Deng, Yulong Chen, and Yue Zhang.
+ber 11-15, 2024, Proceedings, Part III, page 2022. Recent Advances in Text-to-SQL: A Sur-
+324-339, Berlin, Heidelberg. Springer-Verlag. vey of What We Have and What We Expect.
+. In Proceedings of the 29th International Con-
+Tom Brown, Benjamin Mann, Nick Ryder, ference on Computational Linguistics, pages
+Melanie Subbiah, Jared D Kaplan, Prafulla 2166-2187, Gyeongju, Republic of Korea. In-
+Dhariwal, Arvind Neelakantan, Pranav Shyam, ternational Committee on Computational Lin-
+Girish Sastry, Amanda Askell, Sandhini Agar- guistics.
+wal, Ariel Herbert-Voss, Gretchen Krueger,
+Tom Henighan, Rewon Child, Aditya Ramesh, Daniel C. Dennett. 1987. The Intentional Stance.
+Daniel Ziegler, Jeffrey Wu, Clemens Winter, MIT Press, Cambridge, MA.
+Chris Hesse, Mark Chen, Eric Sigler, Ma-
+teusz Litwin, Scott Gray, Benjamin Chess, Xueying Du, Mingwei Liu, Kaixin Wang, Hanlin
+Jack Clark, Christopher Berner, Sam McCan- Wang, Junwei Liu, Yixuan Chen, Jiayi Feng,
+dlish, Alec Radford, Ilya Sutskever, and Dario Chaofeng Sha, Xin Peng, and Yiling Lou. 2024.
+Amodei. 2020. Language Models are Few-Shot Evaluating Large Language Models in Class-
+Learners. In Advances in Neural Information Level Code Generation. In Proceedings of the
+Processing Systems, volume 33, pages 1877-— IEEE/ACM 46th International Conference on
+1901. Curran Associates, Inc. Software Engineering, ICSE ’24, New York,
+NY, USA. Association for Computing Machin-
+Pawet Budzianowski, Tsung-Hsien Wen, Bo- ery.
+Hsiang Tseng, Ifigo Casanueva, Stefan Ultes,
+Osman Ramadan, and Milica Gasié. 2018. Mihail Eric, Rahul Goel, Shachi Paul, Abhishek
+MultiWOZ - A Large-Scale Multi-Domain Sethi, Sanchit Agarwal, Shuyang Gao, Adarsh
+Wizard-of-Oz Dataset for Task-Oriented Dia- Kumar, Anuj Goyal, Peter Ku, and Dilek
+logue Modelling. In Proceedings of the 2018 Hakkani-Tur. 2020. MultiWOZ 2.1: A con-
+Conference on Empirical Methods in Natural solidated multi-domain dialogue dataset with
+Language Processing, pages 5016-5026, Brus- state corrections and state tracking baselines.
+sels, Belgium. Association for Computational In Proceedings of the Twelfth Language Re-
+Linguistics. sources and Evaluation Conference, pages 422-
+428, Marseille, France. European Language Re-
+Donald D. Chamberlin and Raymond F. Boyce. sources Association.
+1974. SEQUEL: A structured English query
+language. In Proceedings of the 1974 ACM Shutong Feng, M4sien-chin Lin, Christian
+SIGFIDET (Now SIGMOD) Workshop on Data Geishauser, Nurul Lubis, Carel van Niek-
+Description, Access and Control, SIGFIDET erk, Michael Heck, Benjamin Matthias Ruppik,
+74, page 249-264, New York, NY, USA. As- Renato Vukovic, and Milica Gasic. 2024.
+sociation for Computing Machinery. Infusing Emotions into Task-oriented Dialogue
+Systems: Understanding, Management, and
+Wenhu Chen, Xueguang Ma, Xinyi Wang, and Generation. In Proceedings of the 25th An-
+William W. Cohen. 2023. Program of Thoughts nual Meeting of the Special Interest Group
+Prompting: Disentangling Computation from on Discourse and Dialogue, pages 699-717,
+Reasoning for Numerical Reasoning Tasks. Kyoto, Japan. Association for Computational
+Transactions on Machine Learning Research. Linguistics.
+Ondiej Cifka and Antoine Liutkus. 2023. Black- James D. Finch and Jinho D. Choi. 2024. Di-
+box language model explanation by context verse and Effective Synthetic Data Generation
+
+
+--- Page 12 ---
+
+for Adaptable Zero-Shot Dialogue State Track- EMNLP 2021, pages 2370-2381, Punta Cana,
+
+ing. In Findings of the Association for Com- Dominican Republic. Association for Compu-
+
+putational Linguistics: EMNLP 2024, pages tational Linguistics.
+
+12527-12544, Miami, Florida, USA. Associa-
+
+tion for Computational Linguistics. Jinyang Li, Binyuan Hui, Ge Qu, Jiaxi Yang, Bin-
+hua Li, Bowen Li, Bailin Wang, Bowen Qin,
+
+James D. Finch, Boxin Zhao, and Jinho D. Choi. Ruiying Geng, Nan Huo, Xuanhe Zhou, Chen-
+2024. Transforming Slot Schema Induction hao Ma, Guoliang Li, Kevin C.C. Chang, Fei
+with Generative Dialogue State Inference. In Huang, Reynold Cheng, and Yongbin Li. 2024.
+Proceedings of the 25th Annual Meeting of the Can LLM Already Serve as A Database Inter-
+Special Interest Group on Discourse and Dia- face? A BIg Bench for Large-Scale Database
+logue, pages 317-324, Kyoto, Japan. Associa- Grounded Text-to-SQLs. In Proceedings of the
+tion for Computational Linguistics. 37th International Conference on Neural In-
+
+formation Processing Systems, NIPS ’23, Red
+
+Katerina T Frantzi and Sophia Ananiadou. 1999. Hook, NY, USA. Curran Associates Inc.
+
+The C-value/NC-value domain-independent
+
+method for multi-word term extraction. Journal Andy Lo, Albert Q Jiang, Wenda Li, and Mateja
+
+of Natural Language Processing, 6(3):145-179. Jamnik. 2024. End-to-End Ontology Learn-
+, ing with Large Language Models. In Advances
+
+Thomas R. Gruber. 1995. Toward principles for in Neural Information Processing Systems, vol-
+the design of ontologies used for knowledge ume 38. Curran Associates, Inc.
+sharing? ‘International Journal of Human-
+
+Computer Studies, 43(5):907-928. James MacQueen et al. 1967. Some methods for
+; ; ; classification and analysis of multivariate ob-
+
+Michael Heck, Nurul Lubis, Carel van Niekerk, servations. In Proceedings of the fifth Berke-
+Shutong Feng, Christian Geishauser, Hsien- / . thematical statistics and
+Chin Lin, and Milica Ga8ié. 2022. Robust Di- CY SYMP OSTA ON ING
+
+: ; i probability, volume 1, pages 281-297. Oak-
+alogue State Tracking with Weak Supervision land, CA, USA.
+and Sparse Data. Transactions of the Associ-
+ation for Computational Linguistics, 10:1175- George A. Miller. 1994. WordNet: A lexical
+1192. database for English. In Human Language
+
+Vojtéch Hudetek and Ondrej Dusek. 2023. Are ones x. . Cone hs one ele a
+Large Language Models All You Need for Task- , , , ,
+Oriented Dialogue? —_In Proceedings of the David Milward and Martin Beveridge. 2003.
+24th Annual Meeting of the Special Interest Ontology-based dialogue systems. In Proceed-
+Group on Discourse and Dialogue, pages 216- ings of the 3rd Workshop on Knowledge and
+228, Prague, Czechia. Association for Compu- reasoning in practical dialogue systems (IJ-
+tational Linguistics. CAI), pages 9-18. Citeseer.
+
+Vojtéch Hudecek, Ondrej DuSek, and Zhou Yu. Hiroshi Nakagawa and Tatsunori Mori. 2002. A
+2021. Discovering Dialogue Slots with Weak Simple but Powerful Automatic Term Extrac-
+Supervision. In Proceedings of the 59th An- tion Method. In COLING-02: COMPUTERM
+nual Meeting of the Association for Compu- 2002: Second International Workshop on Com-
+tational Linguistics and the 11th International putational Terminology.
+
+Joint Conference on Natural Language Pro-
+cessing (Volume 1: Long Papers), pages 2430— = OpenAI. 2024. GPT-40 mini: advancing cost-
+2442, Online. Association for Computational efficient intelligence. Accessed 2025-01-13.
+Linguistics.
+
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo
+
+Pere-Llufs Huguet Cabot and Roberto Navigli. Almeida, Carroll Wainwright, Pamela Mishkin,
+2021. REBEL: Relation Extraction By End- Chong Zhang, Sandhini Agarwal, Katarina
+to-end Language generation. In Findings of Slama, Alex Ray, John Schulman, Jacob Hilton,
+the Association for Computational Linguistics: Fraser Kelton, Luke Miller, Maddie Simens,
+
+
+--- Page 13 ---
+
+Amanda Askell, Peter Welinder, Paul F Chris- 358-363, Melbourne, Australia. Association for
+
+tiano, Jan Leike, and Ryan Lowe. 2022. Train- Computational Linguistics.
+
+ing language models to follow instructions with
+
+human feedback. In Advances in Neural Infor- Peter J. Rousseeuw. 1987. Silhouettes: A graph-
+
+mation Processing Systems, volume 35, pages ical aid to the interpretation and validation of
+
+27730-27744. Curran Associates, Inc. cluster analysis. Journal of Computational and
+Applied Mathematics, 20:53-65.
+
+Axel Polleres. 2014. SPARQL. fn Encyclo- Pranab Sahoo, Prabhash Meharia, Akash Ghosh,
+pedia of Social Network Analysis and Min- Sriparna Saha, Vinija Jain, and Aman Chadha
+ing, pages 1960-1966, New York, NY. Springer 024 A Comprehensive Survey of Halluci-
+New York. nation in Large Language, Image, Video and
+
+Colin Raffel, Noam Shazeer, Adam Roberts, Audio Foundation Models. In Findings of
+Katherine Lee, Sharan Narang, Michael the Association for Computational Linguistics:
+Matena, Yanqi Zhou, Wei Li, and Peter J. Liu. EMNLP 2024, pages 11709-11724, Miami,
+2020. Exploring the limits of transfer learning Florida, USA. Association for Computational
+with a unified text-to-text transformer. J. Mach. Linguistics.
+
+Learn. Res., 21(1). Gemma Team, Morgane Riviere, Shreya Pathak,
+
+Abhinav Rastogi, Xiaoxue Zang, Srinivas Pier Giusepp © Sessa, Cassidy Hardin, Surya
+Sunkara, Raghav Gupta, and Pranav Khaitan. Bhupatiraju, Léonard Hussenot, Thomas Mes-
+2020. Towards scalable multi-domain conver- nard, Bobak Shahriari, Alexandre Ramé, et al.
+sational agents: The schema-guided dialogue 2024. Gemma 2 Improving open language
+dataset. In Proceedings of the AAAI Conference models at a practical size. arXiv preprint
+on Artificial Intelligence, volume 34, pages arXiv:2408.00118.
+
+8689-8696. Renato Vukovic, David Arps, Carel van Niekerk,
+
+Amirhossein Razavi, Mina Soltangheis, Negar See eee nas wae TS an eon ra
+brahim Base +, 2025. Benchmarking Prompt alogue Ontology Relation Extraction via Con-
+Sensitivity in Large Language Models. In strained Chain-of-Thought Decoding. In Pro-
+Advances in Information Retrieval: 47th Eu- ceedings of the 25th Annual Meeting of the Spe-
+
+. . cial Interest Group on Discourse and Dialogue,
+ropean Conference on Information Retrieval, pages 370-384, Kyoto, Japan. Association for
+ECIR 2025, Lucca, Italy, April 6-10, 2025, Pro- . re, ‘
+ceedings, Part Ill, page 303-313, Berlin, Hei.  ©OMPUtational Linguistics.
+delberg. Springer-Verlag. Renato Vukovic, Michael Heck, Benjamin Rup-
+; ; ik, Carel van Niekerk, Marcus Zibrowius, and
+
+Nils Reimers and Iryna Gurevych. 2019. Milica Gasic. 2022. Dialogue Term Extrac-
+Sentence-BERT: Sentence Embeddings USINE tion using Transfer Learning and Topological
+Siamese BERT-Networks. In Proceeding 8 of Data Analysis. In Proceedings of the 23rd An-
+the 2019 Conference on Emp trical Methods nual Meeting of the Special Interest Group on
+in Natural Language Processing and the 9th Discourse and Dialogue, pages 564-581, Edin-
+International Joint Conference on Natural Lan- burgh, UK. Association for Computational Lin-
+guage Processing (EMNLP-IJCNLP), pages guistics.
+
+3982-3992, Hong Kong, China. Association
+for Computational Linguistics. Xuezhi Wang and Denny Zhou. 2024. Chain-of-
+thought reasoning without prompting. arXiv
+
+Stephen Roller, Douwe Kiela, and Maximilian preprint arXiv:2402.10200.
+
+Nickel. 2018. Hearst Patterns Revisited: Au-
+
+tomatic Hypernym Detection from Large Text Joachim Wermter and Udo Hahn. 2006. You Can’t
+Corpora. In Proceedings of the 56th Annual Beat Frequency (Unless You Use Linguistic
+Meeting of the Association for Computational Knowledge) — A Qualitative Evaluation of As-
+Linguistics (Volume 2: Short Papers), pages sociation Measures for Collocation and Term
+
+
+--- Page 14 ---
+
+Extraction. In Proceedings of the 21st Inter- Shutong Feng, Michael Heck, Nurul Lu-
+national Conference on Computational Linguis- bis, Dazhen Wan, Xiaochen Zhu, Jianfeng
+tics and 44th Annual Meeting of the Associa- Gao, Milica GaSi¢, and Minlie Huang. 2023.
+tion for Computational Linguistics, pages 785— ConvLab-3: A Flexible Dialogue System
+792, Sydney, Australia. Association for Compu- Toolkit Based on a Unified Data Format. In
+tational Linguistics. Proceedings of the 2023 Conference on Empir-
+ical Methods in Natural Language Processing:
+Jiaxi Yang, Binyuan Hui, Min Yang, Jian Yang, System Demonstrations, pages 106-123, Singa-
+Junyang Lin, and Chang Zhou. 2024. Syn- pore. Association for Computational Linguis-
+thesizing Text-to-SQL Data from Weak and tics.
+Strong LLMs. In Proceedings of the 62nd An-
+nual Meeting of the Association for Compu-
+tational Linguistics (Volume 1: Long Papers),
+pages 7864-7875, Bangkok, Thailand. Associ-
+ation for Computational Linguistics.
+Steve Young, Milica GaSi¢, Blaise Thomson, and
+Jason D Williams. 2013. POMDP-based sta-
+tistical spoken dialog systems: A review. Pro-
+ceedings of the IEEE, 101(5):1160-1179.
+Dian Yu, Mingqiu Wang, Yuan Cao, Izhak
+Shafran, Laurent Shafey, and Hagen Soltau.
+2022. Unsupervised Slot Schema Induction for
+Task-oriented Dialog. In Proceedings of the
+2022 Conference of the North American Chap-
+ter of the Association for Computational Lin-
+guistics: Human Language Technologies, pages
+1174-1193, Seattle, United States. Association
+for Computational Linguistics.
+Yang Zhao, Li Du, Xiao Ding, Kai Xiong,
+Zhouhao Sun, Shi Jun, Ting Liu, and Bing Qin.
+2024. Deciphering the Impact of Pretraining
+Data on Large Language Models through Ma-
+chine Unlearning. In Findings of the Associa-
+tion for Computational Linguistics: ACL 2024,
+pages 9386-9406, Bangkok, Thailand. Associ-
+ation for Computational Linguistics.
+Ming Zhong, Chenxin An, Weizhu Chen, Ji-
+awei Han, and Pengcheng He. 2024. Seeking
+Neural Nuggets: Knowledge Transfer in Large
+Language Models from a Parametric Perspec-
+tive. In The Twelfth International Conference
+on Learning Representations (ICLR).
+Xuanhe Zhou, Zhaoyan Sun, and Guoliang Li.
+2024. DB-GPT: Large Language Model Meets
+Database. Data Science and Engineering,
+9(1):102-111.
+Qi Zhu, Christian Geishauser, Hsien-chin Lin,
+Carel van Niekerk, Baolin Peng, Zheng Zhang,
+
+
+--- Page 15 ---
+
+A Supplementary Information
+A.1 TeQoDO Prompt
+
+1. You’re working with a dialogue system that stores structured data from conversations in an SQLite3 database. The database includes
+
+tables covering user intents, system actions, and information about various entities. You will be provided with two inputs: the current
+set of database tables and their names (but not their schemas). New dialogue(s) — this contains user and system turns with references to
+specific intents, actions, or queried information. Your task:
+Identify which tables from {db_result_input} are relevant to the new dialogue(s) based on: User intents expressed in the dialogue(s).
+System actions performed in response. Specific information or entities being queried or discussed. For each relevant table, generate the
+following SQLite command to inspect its schema: PRAGMA table_info(<table_name>); This will allow you to understand the structure
+(columns and data types) of the tables you will be working with. Do not create or modify tables yet — only inspect existing ones using
+PRAGMA.
+
+2. You’ve already examined the database schema using PRAGMA table_info(...) queries. The schema details are provided, which contain
+
+the structure (columns and types) of the current tables in the SQLite3 database. Now, based on the same dialogue and the table definitions,
+your task is to: Generate SQL SELECT queries to retrieve: User intents expressed in the dialogue — in general form (e.g., find_flight,
+book_hotel) without including specific parameters (e.g., cities, dates). Use the table column schema to determine which table holds this
+information and write a query to retrieve matching intents: {db_result_input}
+System actions carried out in the dialogue — again in a generalized form (e.g., recommend, confirm, inform). Use the appropriate
+table from above and generate a query to retrieve those action types. Information explicitly requested by the user — such as facts
+about entities (e.g., list of Italian restaurants, hotel prices, flight times), but only if that data is already present in the database. Generate
+SELECT queries from the relevant tables, based on what was asked in the dialogue. Do not: Create or alter tables (no CREATE, INSERT,
+or UPDATE); Use timestamp fields or session-specific filters; Use specific slot values from the dialogue (e.g., exact restaurant names or
+locations) in the intent or action queries — keep them general.
+
+3. You’ve already run a set of SELECT queries based on the previous dialogue, and the results of those queries are provided in the following.
+
+These results represent all the information currently stored in the database that matches the dialogue. {db_result_input} Your task now
+is to perform Dialogue State Tracking (DST) by extracting structured information from the dialogue — but only if that information is
+already present in the database, as confirmed by the query results.
+Specifically: Use the dialogue to identify user intents, system actions, and information about entities (e.g., preferences, attributes,
+categories). For each matching element, only include it in the tracked state if it appears in the DB results above. Represent the extracted
+state using a table + column — value structure, reflecting exactly how the information maps to the current database. Do not: Track or
+infer values that do not exist in the current DB results; Use placeholder values or hypothetical interpretations; Modify, insert, or extend
+the database structure in any way. Your output should reflect only what is both: Mentioned in the dialogue, and Already stored in the
+database results above.
+
+4. You have already reviewed the current database contents using SELECT queries. The structure and current entries of the database are
+given in: {db_result_input}. You’ve also performed Dialogue State Tracking (DST), which revealed the information from the dialogue
+that is already present in the DB. Now, based on the dialogue and what is missing from the DST results (i.e., what’s not yet in the DB),
+generate SQL queries (SQLite3 syntax) to bring the database up to date. This will ensure that the dialogue can be successfully handled
+using only the data in the database.
+
+Your SQL queries should: Insert missing user intents into the database using general labels (e.g., book_train, find_hotel), as observed
+in the dialogue and not yet stored according to DB results above. Insert missing system actions in generalized form (e.g., inform,
+offer_options, confirm_request) that were present in the dialogue but missing from the DB. Insert or update entity information: Use
+INSERT statements if an entity mentioned in the dialogue does not yet exist in the DB. Use UPDATE statements if an entity exists but
+is missing column values (e.g., NULL) that are provided in the dialogue. Modify the schema if needed: Use ALTER TABLE if the
+dialogue introduces a new attribute not present in any table based on the current DB results. Use CREATE TABLE if a new entity type
+is mentioned in the dialogue that has no table yet. Do not: Generate Python code — write only raw SQL queries; Use timestamps or
+session data; Update values that are already correctly populated; Add user intents or actions with specific slot values from the dialogue
+— keep them generalized. Once the updates are applied, the database should fully support executing and resolving the dialogue based on
+its contents, so that the user’s goal expressed in the dialogue can be successfully fulfilled using only information stored in the database.
+Make sure to have tables for different types of entities, e.g. a restaurants table, etc. and not one table for all entities.
+
+Figure 4: Prompts for TeQoDO steps. db_result_input is the result of the DB queries from the prior step.
+
+
+--- Page 16 ---
+
+Baseline: C, =L(d;), Vdis €D, O; =CoU---UC;, Oo = {@}
+
+Iterative Baseline: C; = L(dj,O;-1), O; =Oj;-1UCi, Oo = {9}
+
+Tracking: C; = L(d;,b;), bs = O;-1(di) = L(di, O;-1, L(di, Oi-1)), O; =Oi-1UCi, Oo = {@}
+Table 7: Update formulas for different SQL-based ontology construction prompts. C; are the update
+messages for a dialogue in structured language L, where we use SQL. The dialogues in the dataset are
+D = {do,...,dn}. The ontology after dialogue d; is O; and b; is the belief state. The final ontology
+contains m concepts: O = {c1,...,¢m}. b; = L(d;,O;_1) is the domain-slot information extracted
+from the DB for the current dialogue.
+
+
+--- Page 17 ---
+
+A.2 Predicted Ontology Excerpts
+‘restaurants’: {’food_type’: {’african’,
+‘asian’,
+‘asian oriental’,
+‘brazilian’,
+‘british’,
+‘chinese’,
+‘european’,
+’french’,
+‘gallery’,
+’gastropub’,
+‘general’,
+‘guesthouse’,
+‘indian’,
+‘international’,
+‘italian’,
+’Japanese’,
+‘korean’,
+’mediterranean’,
+‘modern european’,
+‘portuguese’,
+’seafood’,
+‘spanish’,
+‘thai’,
+seedy
+‘name’: {’acorn guest house’,
+‘anatolia’,
+‘ask restaurant’,
+"bangkok city’,
+‘bloomsbury restaurant’,
+‘cafe jello gallery’,
+’caffe uno’,
+‘cambridge chop house’,
+‘cambridge lodge’,
+‘charlie chan’,
+'chiquito’,
+‘city stop’,
+‘city stop restaurant’,
+re
+‘phone_number’: {'’01223241387',
+'01223308681’',
+"01223312112',
+"01223351707",
+'01223354755’',
+701223358899",
+'01223362433’,
+701223365599",
+'01223368786',
+seedy
+‘price_range’: {’cheap’,
+‘expensive’,
+‘moderate’,
+‘moderately priced’,
+‘pricey’,
+‘varied’ }}
+Figure 5: JSON representation of restaurant table predicted via TeQoDO on MultiWOZ test set.
+
+
+--- Page 18 ---
+
+‘flights’: {’airline’: {’air france’,
+‘alaska airlines’,
+‘american airlines’,
+‘delta airlines’,
+‘generic airline’,
+a n/a’ ,
+‘new airline’,
+‘placeholder airline’,
+‘southwest airlines’,
+‘united airlines’},
+‘arrival_city’: {’arrival city’,
+‘atlanta’,
+‘atlanta, ga’,
+‘berlin’,
+'chi-town’,
+‘chicago’,
+‘london’,
+‘los angeles’,
+‘nairobi’,
+‘new york’,
+‘new york city’,
+‘none’,
+, nyc’ ,
+‘paris’,
+‘philadelphia’,
+‘philly’,
+‘phoenix’,
+‘portland’,
+‘portland, or’,
+‘rio de janeiro’,
+‘san diego’,
+'san francisco’,
+‘seattle’,
+"st! ,
+’sydney’,
+‘toronto’,
+‘vancouver’,
+‘washington’ },
+‘arrival_time’: {’01:50 pm’,
+wee
+, n/a’ ,
+‘none’,
+‘thd’ },
+‘class’: {’n/a’, ‘economy’, 'premium economy’ },
+‘departure_city’: {’atl’,
+ee}
+Figure 6: JSON representation of restaurant table predicted via TeQoDO on SGD test set.
+
+
+--- Page 19 ---
+
+A.3 Example Dialogues
+See Figure 7 for the example input dialogues from MultiWOZ test set for the generated queries in Table 6.
+Dialogue for Similarity Matching Example
+(multiwoz-test-300)
+User: I am looking for a cheap place to stay.
+System: We have ten cheap options, any preferences.
+User: We will need free parking. Do any of the options have 4 stars?
+System: Allenbell matches your requirements, would that work for you?
+User: I need the hotel type, address and to know if they have wifi.
+System: Allenbell is a guesthouse, located at 517a Coldham Lane. Yes, they do have wifi.
+User: I’m also looking for a particular attraction. It’s called Trinity College.
+System: Trinity College’s phone number is 01223338400. They are on Trinity Street with postcode CB21TQ.
+User: Thank you so much for the phone number. Goodbye.
+System: You’re welcome. Have a nice day.
+Dialogue for DST Step Example
+(multiwoz-test-100)
+User: Hi, I’m looking for some places to go in Cambridge.
+System: Sure. Do you know what you would like to do?
+User: A park or swimming on the East side.
+System: There is Cherry Hinton Park and Abbey Pool and Astroturf Pitch. Would you like more information?
+User: What is the phone number for Abbey Pool and Astroturf Pitch?
+System: The phone number is 01223902088. Can I help with anything else?
+User: Could you also tell me Abbey Pool’s address?
+System: The address is Pool Way, Whitehill Road, off Newmarket Road. Can I help you any further?
+User: I would also like help finding a guesthouse.
+System: What type of guesthouse are you looking for?
+User: I'd like to find a cheap 4-star place in the cheap price range, please.
+System: Which area would you like to stay in?
+User: The area does not matter. Just whatever you think is best in that criteria.
+System: In that case, I would recommend the Alexander Bed and Breakfast in the centre.
+User: Thank you! Do they have free WiFi?
+System: Yes, they do. Would you like me to book a reservation for you?
+User: No, thanks. I just need their address and phone number.
+System: Sure thing. Their phone number is 01223525725. The address is 56 Saint Barnabas Road.
+Anything else I can do for you?
+User: No, that will be all. Thank you!
+System: You’re very welcome! Take care!
+Figure 7: Example dialogues for Table 6 queries.
+
+
+--- Page 20 ---
+
+A.4 General Ontology Prediction Examples
+Dataset Predicted Example SQL Queries Ground truth Edge Excerpt
+ArXiv (Quantitative Finance, Risk Management),
+CREATE TABLE IF NOT EXISTS Mathematics ( (Quantitative Finance, Statistical Finance),
+id INTEGER PRIMARY KEY, (Quantitative Finance, Trading and Market
+category_name TEXT, Microstructure), (Statistics, Applications),
+parent_id INTEGER (Statistics, _ Computation), (Mathematics,
+); Commutative Algebra), (Mathematics, Al-
+gebraic Geometry), (Mathematics, Statistics
+INSERT INTO Mathematics (category_name, parent_id) Theory)
+VALUES (’Statistical Analysis Techniques’, 1);
+Wikipedia (Injuries, Wounded and disabled military vet-
+CREATE TABLE Theatre ( erans topics), (Injuries, Healing), (Local gov-
+id INTEGER PRIMARY KEY, ernment, Seats of local government), (Lo-
+category_name TEXT, cal government, Unincorporated areas), (Lo-
+parent_id INTEGER cal government, Water management author-
+); ities), (Scientific problems, Unsolved prob-
+lems in astronomy), (Youth health, Sex edu-
+CREATE TABLE Performance ( cation), (History of organizations, History of
+id INTEGER PRIMARY KEY, schools), (Design history, Architectural his-
+category_name TEXT, tory), (Theatrical occupations, Acting), (The-
+parent_id INTEGER atrical occupations, Dance), (Theatrical occu-
+); pations, Dance occupations), (Theatrical occu-
+pations, Diction coaches), (Theatrical occupa-
+INSERT INTO Theatre (category_name, parent_id) tions, Drama teachers)
+VALUES (’Dialect Coaching’, 1);
+INSERT INTO Theatre (category_name, parent_id)
+VALUES (’Diction Coaching’, 1);
+INSERT INTO Theatre (category_name, parent_id)
+VALUES (’Dramaturgy’, 1);
+INSERT INTO Theatre (category_name, parent_id)
+VALUES (’Costume Design’, 1);
+INSERT INTO Performance (category_name, parent_id)
+VALUES (’Live Performance’, 1);
+INSERT INTO Performance (category_name, parent_id)
+VALUES (’Theatrical Performance’, 1);
+Table 8: Examples comparing predicted SQL queries to ground truth edges, categorised by dataset.
+
+
+--- Page 21 ---
+
+B_ Complementary Results
+B.1 TOD Ontology Results per Nodeclass
+
+Approach EvalType | Literal | Fuzzy | Continous
+| Fl Precision Recall | Fl Precision Recall | FI Precision Recall
+Micro 1.15 0.94 1.49 63.57 56.75 72.24 32.29 23.97 49.46
+Macro 2.96 3.27 16.34 37.16 31.50 88.92 19.50 19.75 62.96
+Domains 6.29 3.31 62.50 21.21 12.07 87.50 8.70 4.58 87.50
+Direct Update Baseline Slots 6.17 3.73 17.86 42.74 28.09 89.29 18.40 11.11 53.57
+Values 2.35 9.29 1.35 80.17 93.48 70.17 59.75 7743 48.64
+User intents 0.00 0.00 0.00 11.87 6.32 98.59 3.16 1.62 69.01
+System actions 0.00 0.00 0.00 29.81 17.55 99.02 7.50 4.02 56.10
+Micro 13.76 26.03 9.35 78.03 85.58 71.71 65.84 69.44 62.60
+Macro 15.55 18.11 16.26 69.01 65.06 79.25 47.33 42.83 61.42
+Iterative Query and Update Domains 47.06 44.44 50.00 62.50 62.50 62.50 55.56 50.00 62.50
+Baseline Slots 15.38 12.00 21.43 60.61 52.63 71.43 49.35 38.78 67.86
+Values 15.28 34.11 9.85 78.37 89.08 69.97 69.37 75.19 64.39
+User intents 0.00 0.00 0.00 53.97 37.57 95.77 43.45 28.10 95.77
+System actions 0.00 0.00 0.00 89.59 83.54 96.59 18.94 22.08 16.59
+Micro 17.71 34.88 11.87 75.22 89.90 64.66 70.97 79.01 64.42
+Macro 20.56 27.72 19.29 71.86 71.01 79.24 61.02 56.84 79.19
+Domains 62.50 62.50 62.50 80.00 85.71 75.00 70.59 66.67 75.00
++ Similarity Matching Slots 19.67 18.18 21.43 63.33 59.38 67.86 59.37 52.78 67.86
+Values 20.62 57.89 12.54 75.32 95.17 62.32 73.81 91.03 62.06
+User intents 0.00 0.00 0.00 55.46 39.52 92.96 30.41 18.18 92.96
+System actions 0.00 0.00 0.00 85.17 75.28 98.05 70.90 55.52 98.05
+Micro 14.04 31.19 9.06 77.78 92.82 66.94 66.88 68.80 65.07
+Macro 16.79 22.21 16.19 78.67 79.10 81.42 65.03 58.04 81.02
+Domains 50.00 50.00 50.00 93.33 100.00 87.50 82.35 77.78 87.50
++ Column Value Examples Slots 18.18 15.79 21.43 60.00 56.25 64.29 54.55 47.37 64.29
+Values 15.75 45.26 9.54 7718 95.39 64.81 67.17 72.22 62.79
+User intents 0.00 0.00 0.00 71.74 58.41 92.96 43.42 28.33 92.96
+System actions 0.00 0.00 0.00 91.12 85.47 97.56 771.67 64.52 97.56
+Micro 11.16 21.80 7.50 73.57 92.61 61.02 69.47 82.16 60.18
+Macro 9.58 13.10 8.74 72.38 74.91 74.44 60.96 59.26 73.55
+Domains 23.53 22.22 25.00 66.67 71.43 62.50 58.82 55.56 62.50
++ DST Step Slots 11.76 13.04 10.71 65.38 70.83 60.71 59.26 61.54 57.14
+Values 12.63 30.26 7.98 72.67 95.92 58.49 70.58 OL.AL 57.61
+User intents 0.00 0.00 0.00 66.67 51.97 92.96 39.64 25.19 92.96
+System actions 0.00 0.00 0.00 90.50 84.39 97.56 76.48 62.89 97.56
+Micro 757 15.97 4.96 74.10 83.70 66.48 68.02 73.55 63.27
+Macro 9.54 11.11 10.68 68.07 64.54 75.53 58.05 51.88 74.13
+Domains 28.57 23.08 37.50 55.56 50.00 62.50 45.45 35.71 62.50
++ DST and Similarity Matching Slots 10.71 10.71 10.71 58.62 56.67 60.71 54.24 51.61 57.14
+Values 8.40 21.75 5.21 73.64 85.93 64.42 68.52 78.20 60.97
+User intents 0.00 0.00 0.00 64.08 48.89 92.96 44.30 29.07 92.96
+System actions 0.00 0.00 0.00 88.44 81.22 97.07 71.73 64.82 97.07
+Micro 3.84 12.13 2.28 82.18 95.55 72.09 78.19 88.54 70.01
+Macro 13.15 17.84 11.52 81.86 85.80 81.46 72.15 71.00 81.01
++ DST and Column Value Domains 42.86 50.00 37.50 85.71 100.00 75.00 80.00 85.71 75.00
+Examples Slots 18.87 20.00 17.86 78.43 86.96 71.43 72.73 74.07 71.43
+. Values 4.04 19.21 2.25 81.91 98.01 70.36 79.31 94.94 68.10
+User intents 0.00 0.00 0.00 72.93 60.00 92.96 49.81 34.02 92.96
+System actions 0.00 0.00 0.00 90.29 84.03 97.56 78.90 66.23 97.56
+Micro 9.83 32.88 5.78 76.83 92.95 65.48 73.73 87.36 63.77
+Macro 18.09 28.29 14.77 78.56 83.31 77.01 71.58 73.10 75.93
++ DST and Column Value Domains 57.14 66.67 50.00 80.00 85.71 75.00 75.00 75.00 75.00
+Examples and Dialogue Success Slots 22.73 31.25 17.86 66.67 80.00 57.14 62.50 75.00 53.57
+Values 10.56 43.53 6.01 75.78 94.26 63.36 73.30 90.61 61.54
+User intents 0.00 0.00 0.00 75.86 64.08 92.96 57.89 42.04 92.96
+System actions 0.00 0.00 0.00 94.51 92.52 96.59 89.19 82.85 96.59
+
+Table 9: All classes results on MultiWOZ test set.
+
+
+--- Page 22 ---
+
+Approach EvalType | Literal | Fuzzy | Continuous
+| Fl Precision Recall | FL Precision Recall | FI Precision Recall
+Micro 0.96 0.67 1.69 63.05 55.08 73.73 23.12 15.50 45.47
+Macro 2.75 2.63 17.51 41.24 35.67 90.76 19.15 18.91 71.64
+Domains 7.09 3.71 78.95 25.00 14.29 100.00 8.98 4.70 100.00
+Direct Update Baseline Slots 4.22 3.01 7.10 59.95 47.06 82.58 24.91 17.39 43.87
+Values 2.45 6.43 1.51 81.65 94.98 71.60 52.11 67.45 42.46
+User intents 0.00 0.00 0.00 17.73 9.73 99.60 4.77 2.45 89.33
+Micro 1.76 1.17 3.61 39.79 26.11 83.57 31.56 20.10 73.39
+Macro 5.67 4.10 12.30 42.60 36.69 88.99 29.48 22.36 84.23
+Iterative Query and Update Domains 20.20 12.50 52.63 61.02 45.00 94.74 35.64 21.95 94.74
+Baseline Slots 3.91 3.15 5.16 58.15 50.23 69.03 39.55 30.53 56.13
+Values 4.22 4.87 3.72 82.55 82.40 82.70 61.54 53.83 71.81
+User intents 0.00 0.00 0.00 5.48 2.82 98.81 5.15 2.64 98.81
+System actions 0.00 0.00 0.00 5.83 3.00 99.66 5.53 2.84 99.66
+Micro 4.43 4.55 4.31 79.02 78.97 79.08 58.46 49.34 71.70
+Macro 5.64 4.82 8.13 73.00 64.53 87.77 48.00 37.41 84.26
+Domains 18.18 12.77 31.58 75.00 62.07 94.74 52.94 36.73 94.74
++ Similarity Matching Slots 4.68 4.86 4.52 65.82 64.60 67.10 53.61 50.28 57.42
+Values 5.34 6.46 4.55 80.03 82.41 71.79 62.82 57.04 69.91
+User intents 0.00 0.00 0.00 66.05 49.51 99.21 32.26 19.26 99.21
+System actions 0.00 0.00 0.00 78.11 64.09 100.00 38.38 23.75 100.00
+Micro 2.66 3.28 2.23 81.17 82.63 79.16 61.65 56.37 68.03
+Macro 5.53 4.42 9.65 76.90 70.50 87.01 50.94 40.34 82.29
+Domains 20.78 13.79 42.11 66.67 51.43 94.74 45.57 30.00 94.74
++ Column Value Examples Slots 3.92 3.97 3.87 65.59 65.38 65.81 50.90 47.49 54.84
+Values 2.97 4.31 2.26 81.17 83.82 78.69 64.07 62.20 66.06
+User intents 0.00 0.00 0.00 84.92 75.62 96.84 45.58 29.81 96.84
+System actions 0.00 0.00 0.00 86.13 76.23 98.99 48.60 32.21 98.99
+Micro 4.50 5.93 3.63 80.22 85.98 75.17 59.53 56.35 63.10
+Macro 6.69 6.05 11.38 T4AAT 69.61 84.67 47.55 38.88 79.12
+Domains 21.69 14.06 47.37 72.00 58.06 94.74 41.86 26.87 94.74
++ DST Step Slots 6.57 7.56 5.81 63.31 71.54 56.77 43.62 45.45 41.94
+Values 5.21 8.62 3.73 80.78 89.26 73.77 62.32 63.86 60.84
+User intents 0.00 0.00 0.00 75.23 60.88 98.42 43.92 28.26 98.42
+System actions 0.00 0.00 0.00 81.04 68.28 99.66 46.05 29.94 99.66
+Micro 2.70 3.42 2.23 80.05 83.84 76.59 58.63 54.87 62.94
+Macro 3.67 3.19 7.29 73.04 66.01 86.31 44.68 36.11 79.40
+Domains 12.37 7.69 31.58 63.16 47.37 94.74 36.73 22.78 94.74
++ DST and Similarity Matching Slots 2.76 2.96 2.58 64.92 66.00 63.87 43.17 42.50 43.87
+Values 3.22 5.27 2.31 80.60 86.86 75.19 62.38 64.22 60.64
+User intents 0.00 0.00 0.00 74.55 60.00 98.42 40.06 25.15 98.42
+System actions 0.00 0.00 0.00 81.99 69.81 99.33 41.05 25.87 99.33
+Micro 3.36 4.53 2.67 81.52 85.40 77.98 62.95 59.08 67.37
+Macro 7.16 6.23 12.35 76.59 71.02 86.53 50.06 41.07 81.04
++ DST and Column Value Domains 24.69 16.13 52.63 69.23 54.55 94.74 42.86 27.69 94.74
+Examples Slots 7.38 8.62 6.45 67.81 72.26 63.87 49.33 51.03 47.74
+Values 3.75 6.39 2.66 81.78 87.55 76.73 65.96 66.51 65.43
+User intents 0.00 0.00 0.00 78.04 65.00 97.63 44.91 29.16 97.63
+System actions 0.00 0.00 0.00 86.09 75.77 99.66 47.22 30.94 99.66
+Micro 3.44 6.58 2.33 75.45 86.81 66.71 64.83 68.25 61.73
+Macro 10.26 10.60 12.27 79.12 79.67 81.37 59.25 53.21 78.00
++ DST and Column Value Domains 39.22 31.25 52.63 87.18 85.00 89.47 64.15 50.00 89.47
+Examples and Dialogue Success Slots 8.40 12.05 6.45 66.42 77.59 58.06 52.94 61.54 46.45
+Values 3.70 9.70 2.29 74.78 88.78 64.60 66.21 74.82 59.38
+User intents 0.00 0.00 0.00 78.39 66.21 96.05 52.77 36.38 96.05
+System actions 0.00 0.00 0.00 88.82 80.77 98.66 60.18 43.30 98.66
+Table 10: All classes results on SGD testset.
+
+
+--- Page 23 ---
+
+B.2. Prompt as Hyperparameter: Search Plots
+
+See Figures 8 and 9 for differences in performance for ChatGPT explanation-based prompts and success
+position in the prompts.
+
+Figure 8: Continuous F1 Performance of different Prompts on MultiWOZ test-set based on LLM expla-
+nation.
+
+Figure 9: Continuous F1 Performance of Prompts on MultiWOZ test-set with success mentioned in dif-
+ferent steps.

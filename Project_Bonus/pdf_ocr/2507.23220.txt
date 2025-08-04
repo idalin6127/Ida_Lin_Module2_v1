@@ -1,0 +1,1484 @@
+
+
+--- Page 1 ---
+
+Model Directions, Not Words:
+Mechanistic Topic Models Using Sparse Autoencoders
+Carolina Zheng”, Nicolas Beltran-Velez”!, Sweta Karlekar™!, Claudia Shi’,
+Achille Nazaret!, Asif Mallik*, Amir Feder*!”, David M. Blei*!
+‘Columbia University, ?Google Research, *Independent
+July 1, 2025
+Abstract uments as simple bag-of-words counts and discover
+; ; topics by modeling patterns of word co-occurrence.
+Traditional topic models are effective at un- However, by operating on bag-of-words represen-
+covering latent themes in large text collec- tations, traditional topic models miss crucial con-
+Sa) tions. However, due to their reliance on bag- L d ; P N. 1 : del
+N of-words representations, they struggle to textua an semantic nuances. Neural topic models
+CN capture semantically abstract features. While (e.g., Bianchi et al., 2021a; Grootendorst, 2022; Wu
+— some neural variants use richer representa- et al., 2024) attempt to mitigate this limitation by
+> tions, they are similarly constrained by ex- leveraging pretrained embeddings to capture richer
+™ pressing topics as word lists, which lim- semantics. However, these models interpret topics
+= its their ability to articulate complex top- as lists of words weighted by importance, which
+ics. We introduce Mechanistic Topic Models restricts their ability to articulate abstract concepts
+— (MTMs), a class of topic models that operate d d ti lationshi E h
+—] on interpretable features learned by sparse an nuance semantic re alton P Ss. Even wien
+OC) autoencoders (SAEs). By defining topics probabilistic neural topic models incorporate pre-
+: i i i trained embeddings, they still fundamentally model
+nH over this semantically rich space, MTMs > — mn
+oO can reveal deeper conceptual themes with word count generation, which implicitly constrains
+— expressive feature descriptions. Moreover, them to bag-of-words assumptions.
+= uniquely among topic models, MTMs en- Independently, recent advances in mechanistic
+> able controllable text generation using topic- interpretability have shown that manv high-level se-
+=) based steering vectors. To properly evalu- e P etabiity ; yg
+AN ate MTM topics against word-list-based ap- mantic concepts in large language models (LLMs)
+~ proaches, we propose topic judge, an LLM- are encoded as linear directions within their inter-
+CN based pairwise comparison evaluation frame- nal activations (Mikolov et al., 2013; Elhage et al.,
+~ work. Across five datasets, MTMs match or 2022). Sparse autoencoders (SAEs) (Tamkin et al.,
+>) exceed traditional and neural baselines on 2023; Cunningham et al., 2024) are neural models
+a) coherence metrics, are consistently preferred that extract these interpretable features from LLM
+N °Y wt Indge, and enable effective steering activations, each of which can be subsequently la-
+. = pas: beled with automatically generated textual descrip-
+< tions (Bills et al., 2023; Paulo et al., 2024).
+oS n this paper, we explore t € use © these fea-
+Topic models are a family of unsupervised algo- res for topic modeling. Unlike traditional bag-of-
+rithms that automatically discover thematic struc- WO ds repr esentations, SAE features capture con-
+ture in document collections (Blei, 2012). Given __ textual and semantic concepts that extend beyond
+a corpus of texts, they produce a predefined num- Word co-occurrence patterns. Moreover, since these
+ber of topics—each represented by a set of words features can be labeled with textual descriptions,
+that characterize the theme—along with a per- they enable discovering and describing topics at
+document breakdown indicating how much each _ higher semantic abstraction levels.
+topic contributes to that document’s content. We introduce Mechanistic Topic Models
+Traditional methods, such as Latent Dirichlet (MTMs), a family of topic models that adapt exist-
+Allocation (LDA) (Blei et al., 2003), represent doc- ing approaches to operate on SAE features rather
+“Equal contribution. Correspondence to: {cz2539, nb2838, than words. This adap tation enables MTMs to:
+58k2275}@columbia. edu. (1) capture context and semantic nuance using pre-
+‘Senior authors. trained LLM representations; (2) generate inter-
+1
+
+
+--- Page 2 ---
+
+oye Themes of race, ethnicity, and cultural identity in historical
+The British and social contexts
+Take some Picts, Celts and Silures * references to historical figures and events concerning race
+And let them settle, relations and indigenous peoples.
+Then overrun them with Roman conquerors. * references to Native American history and culture.
+; + themes related to cultural identity and heritage.
+Remove the Romans after approximately 400 years + references to ethnic or national identities.
+Add lots of Norman French to some
+Angles, Saxons, Jutes and Vikings, then stir
+vigorously.
+Aspects of food, drink, and culinary practices across cultural,
+Mix some hot Chileans, cool Jamaicans, Dominicans, and health contexts
+Trinidadians and Bajans with some Ethiopians, Chinese, .
+Vietnamese and Sudanese. (..) * references to food offerings and related rituals.
+* references to dining items and utensils.
+Sprinkle some fresh Indians, Malaysians, Bosnians, * food-related terms and their descriptions, particularly
+Iraqis and Bangladeshis together with some on flavors, textures, and methods of preparation
+Afghans, Spanish, Turkish, Kurdish, Japanese * references to food and drink consumption, particularly in
+And Palestinians relation to rituals and health contexts.
+Then add to the melting pot.
+Leave the ingredients to simmer. (...) Explorations of identity, social justice, and human connection
+within cultural contexts
+Allow time to be cool.
+* instances of significant literary expressions or metaphors.
+Add some unity, understanding, and respect for the * references to complex scenarios involving relationships and
+future, existential themes.
+Serve with justice * themes of hope, purpose, and community support.
+And enjoy * references to personal and collective experiences of identity
+and belonging.
+Figure 1: Sample MTM topic outputs on the PoemSum dataset. The poem excerpt (left) from “The British”
+by Benjamin Zephaniah uses a culinary metaphor to celebrate British multiculturalism. The top 3 topics
+identified by our model (mLDA) are shown on the right, with each topic’s LLM-generated summary and
+top 4 SAE features. The first and third topics demonstrate how MTMs express complex semantic content
+through interpretable, high-level features that are hard to capture via word lists alone.
+pretable topic descriptions using SAE features that — strate MTMs’ utility as a practical improvement to
+directly capture abstract concepts like style, tone, | topic modeling and provide a case study in using
+and discourse patterns; and (3) enable topic-based _ interpretability tools for downstream tasks beyond
+controlled generation through learned steering vec- model analysis.
+tors. Figure 1 illustrates some of these capabilities,
+demonstrating that MTMs identify nuanced themes 2 Related Work
+such as cultural identity and social justice ina po- Mechanistic interpretability. We build on work
+etry dataset through high-level semantic features. establishing that many high-level concepts in large
+We instantiate MTMs by adapting three stan- —_Janguage models (LLMs) are encoded as recover-
+dard topic models to SAEs: mechanistic LDA able linear directions (Mikolov et al., 2013; Elhage
+(mLDA) from Blei et al. (2003), mechanisticETM et al., 2022; Park et al., 2024), and that dictionary
+(mETM) from Dieng et al. (2020), and mecha- _Jearning methods such as SAEs can extract these
+nistic BERTopic (mBERTopic) from Grootendorst _ directions at scale (Yun et al., 2021; Bricken et al.,
+(2022). 2023; Tamkin et al., 2023; Templeton et al., 2024;
+We make three contributions. First, we introduce Cunningham et al., 2024; Gao et al., 2025a). Prior
+Mechanistic Topic Models (MTMs) alongside three —_ applications have primarily focused on model inter-
+variants and demonstrate that these models excel _ pretability and control—using extracted directions
+on challenging corpora including abstract texts and —_as steering vectors or for ablation (Rimsky et al.,
+short, context-limited documents. Second, we de- 2024; Turner et al., 2023; Tan et al., 2024; Arditi
+velop topic judge, a new evaluation method that __ et al., 2024)—-with applications in refusal mitiga-
+uses LLM-based pairwise comparisons to assess __ tion, enhancing truthfulness, reasoning correction,
+how well topics describe documents, enabling fair _ and style transfer, among others (Sakarvadia et al.,
+cross-vocabulary evaluation while capturing seman- 2023; Hernandez et al., 2024; Arditi et al., 2024;
+tic nuance. Third, we demonstrate that MTMs O’Brien et al., 2025; Cao et al., 2024; Wang et al.,
+enable controllable text generation through topic- 2025). We extend this line of research by applying
+based steering vectors without sacrificing genera- | SAE features beyond their original interpretability
+tion quality. Together, these contributions demon- _—_ contexts and demonstrate their usefulness for dis-
+2
+
+
+--- Page 3 ---
+
+covering topics. Recent work has identified some judgments to systematically compare topic models.
+limitations to SAEs, such as underperformance on
+downstream tasks (Smith et al., 2025; Wu et al., 3 Background
+2025) and w LLM ie dnear 3025), Howe of The linear representation hypothesis (Mikolov
+concepts in s (Engels et al., . However, ; ; ;
+., . et al., 2013; Elhage et al., 2022; Park et al., 2024;
+these concems are less critical for our topic mod- Costa et al., 2025) suggests that LLMs encode
+eling application, which uses SAEs for semantic . . eo, .
+featurization and tequires onlv that some high-level 2" high-level features as linear directions in their
+feat d ted li y 7 & activation spaces. It can be formalized as follows:*
+eatures are represented linearly.
+Definition 1. Linear Representation Hypothesis
+Neural topic models. Neural topic models ad- (LRH): Any activation vector a € R" produced
+dress limitations of purely probabilistic approaches Dy a transformer model can be decomposed as
+(Blei et al., 2003). They generally fall into three dis- Ww
+tinct paradigms. The first paradigm involves proba- _ _
+bilistic models aiming to reconstruct a word count a= » cuwi +b, ()
+matrix, often augmented with pretrained embed- -
+dings (Burkhardt and Kramer, 2019; Dieng et al, where
+2020; Bianchi et al., 2021a,b; Wu et al., 2024). * bis an input-independent constant vector,
+The second paradigm frames topic discovery as * the set {W1, W2,..., ww} consists of nearly
+a clustering task, leveraging embeddings usually orthogonal unit vectors (i.e., || wi||2 = 1 and
+derived from pretrained neural models (Angelov, |(wi, w;)| < € fori F j, with € being a small
+2020; Grootendorst, 2022; Zhang et al., 2022). positive constant),
+The third paradigm employs LLMs directly, us- * each vector w;, corresponds to a human-
+ing prompt-based techniques to aggregate or de- interpretable feature (e.g., semantic content,
+fine topics (Pham et al., 2024). Mechanistic Topic syntactic structure, or style),
+Models (MTMs) extend the first two paradigms by * each scalar a; represents the strength of fea-
+using SAEs instead of standard embeddings. This ture 1 in the activation vector a, with sparse
+enables MTMs to generate richer, context-aware activation (i.e., |{i : a; #O}| < W),
+topic descriptions and allows for controlled text ¢ the number of vectors W is typically much
+generation through learned steering vectors. We larger than their dimension H.
+do not directly compare MTMs against the third . Seer Ls
+aradiom. as “holy he liance on co API access This decomposition implies that (i) high-level
+‘h ° b ted for oth y semantic features that LLMs extract from text can
+eaves them best suited for other contexts. be recovered from model activations, and (ii) we
+. Ww
+Topic model evaluation. Automated and human can construct steering veerors S = Din iwi that
+coherence metrics (Chang et al., 2009; Newman when added to a ~ Di=1 %Wi + b, are equiv-
+et al., 2010; Lau et al., 2014) have long been alent to modifying its feature strengths a+ s =
+the standard for topic model evaluation, but are Dini (0% + di)wi + b. They can be used in gener-
+known to be imperfect proxies for human prefer- ating text to modulate the expression of particular
+ences (Hoyle et al., 2021; Doogan, 2022). Recently, features, by setting 6; > O to increase the expres-
+LLMs have demonstrated effectiveness as scalable “10” van and 4; . 0 to crores It. w
+evaluators across diverse language tasks (Naismith To identi y the LRH feature directions { wi};-1,
+et al., 2023; Chiang and Lee, 2023; Stammbach we can train sparse autoencoders (SAEs)—
+et al., 2023; Li et al., 2025). Pairwise preference unsupervised models that learn to reconstruct LLM
+rankings by LLMs have proven particularly useful activations. SAEs are parameterized by a single-
+in contexts where relative comparisons are straight- layer neural network,
+forward but eliciting global rankings or pointwise _
+scores is challenging, such as in chatbot evaluation o(a) = o(Wina + in); (2)
+(Zheng et al., 2023; Liet al., 2024; Liu et al., 2024; (a) = Wouwa(a) + Bout, (3)
+Chiang et al., 2024; Gao et al., 2025b). Building 3Several formalizations exist, but we adopt a definition close
+on these insights, we introduce a tournament-style to that of Costa et al. (2025), as we think it adheres closely
+evaluation framework that leverages pairwise LLM to its conventional usage.
+3
+
+
+--- Page 4 ---
+
+where o is an activation function (e.g., ReLU, First, unlike words that either appear or not, SAE
+JumpReLU), and the learnable parameters are — features have continuous activations at each token
+Win € RY*4, Wor € RY*™”, bin € R™, and position. We address this issue with a thresholding
+Dout € R”. The network is trained to minimize a approach: for document d with token activations
+regularized reconstruction error, (Aq.1,---,Ad,N,,)» We count how often each feature
+1 7 activates strongly,
+L£(a) = 5 lala) —all2 +Alle(a)ilo. 4) y
+tok
+Once trained, the feature directions {wi}, are Cai = S- L{a;(aaj) > a}, (5)
+identified with the columns of Woy. The encoder j=l
+network a(a) can also be used to decompose any
+activation onto the feature directions and obtain its | Where a;(aq,j) is feature 7’s activation on token j,
+feature activation strengths a;. and q; is the 80th percentile of feature 7’s activation
+After training, the learned feature directions distribution on the original SAE training data. This
+can be automatically interpreted into textual de- | 4Pproach produces interpretable counts, adapts to
+scriptions {di}, through computational methods each feature’s typical activation range, and prevents
+(Bills et al., 2023; Paulo et al., 2024; Templeton _ activation false positives.
+et al., 2024). A common approach involves com- Second, SAEs can learn spurious features with
+puting feature activation strengths over a large cor- | unclear meanings or mislabeled descriptions. We
+pus, selecting tokens with the highest activation address this through preprocessing steps that fil-
+strengths along with their surrounding context, and ter _ out likely spurious or topic-irrelevant fea-
+prompting an LLM to produce a short description _ tures (¢.g., low-level grammatical features), and
+of the underlying feature (Bills et al., 2023). a post-training refinement of topic descriptions.
+These quality control measures are detailed in Ap-
+4 Mechanistic Topic Models pendix A.
+We introduce Mechanistic Topic Models (MTMs), The feature vectors {eahia1 serve as input to all
+which extend topic modeling by using SAE fea- MTMs described below. For the rest of the paper,
+tures. This shift provides three advantages: (1) W© Se Ww to denote the number of features after
+semantic richness, as SAE features capture context- this filtering.
+aware and semantically abstract concepts; (2) topic 4.2 MTM Variants
+descriptions that can articulate complex themes
+that are hard to convey through word lists alone; | Having transformed documents into SAE feature
+and (3) topic steering vectors that can be used for —_ vectors {Ea} a4, we now apply topic modeling
+topic-based controlled generation. algorithms to these representations.
+All MTMs share the same workflow. Given a We propose three variants with different adapta-
+corpus and desired number of topics kK’, we tion strategies: mechanistic LDA (mLDA) provides
+1. Transform the corpus D of D documents into a straightforward extension of LDA (Blei et al.,
+SAE feature counts (Section 4.1), 2003) by treating features as words; mechanistic
+2. Learn topic-feature weights 3, € RW and ETM (mETM) more deeply integrates with the
+document-topic distributions 0, € A*~-1! — mechanistic framework by modeling topics as LLM
+(Section 4.2), activation vectors (Dieng et al., 2020); and mecha-
+3. Generate interpretable topic descriptions t,  mistic BERTopic (mBERTopic) takes a clustering
+from learned features (Section 4.3), and approach using SAE feature directions to construct
+4. Construct steering vectors s; for controllable | document embeddings (Grootendorst, 2022).
+generation (Section 4.3). a
+We first describe the featurization process and 4.2.1 Mechanistic LDA (mLDA)
+then detail three specific MTM variants. Latent Dirichlet Allocation (LDA) (Blei et al.,
+2003) is a foundational probabilistic topic model
+4.1 From Documents to SAE Features that represents documents as mixtures of topics
+MTMs represent documents as SAE feature counts _and topics as distributions over words. Mechanis-
+rather than word counts or raw embeddings. This — tic LDA (mLDA) adapts this model by replacing
+presents two challenges. the topic-word distributions with distributions over
+4
+
+
+--- Page 5 ---
+
+SAE features. Following LDA’s generative process, This distribution is chosen to respect the constraint
+we assume that each feature activates at most once per to-
+ken. Following Dieng et al. (2020), we use amor-
+Bx ~ Dirichlety (7), (6) tized variational inference with neural networks pg
+04 ~ Dirichlet x(a), (7) and og to parameterize the variational distribution
+do(da) = N(p5(Ea), 7o(Ea)). The parameters ¢,
+where 3; € A“~—! is a distribution over the W {vx}, and b are jointly optimized by maximizing
+feature directions learned by the SAE and 0; € _ the ELBO,
+A*~—1 is the document distribution over K topics. D .
+The SAE feature counts are generated b p(Calda, {ve}, b)
+g y SE q5(5a) [log 5 . (13)
+d=1 p(da)
+€q ~ Multinomial(@a9, Nsae), (8) 4.2.3. Mechanistic BERTopic (mBERTopic)
+
+where Neue = Yo, ai is the total SAE feature BERTopic (Grootendorst, 2022) frames topic mod-
+count in the document. While the multinomial eling as a clustering P roblem m document embed-
+assumption has limitations (Section 4.2.2), here we ding sp ace. Mechanistic BERTopic (mBERTopic)
+
+. ae . takes a similar approach but forms document em-
+retain it to leverage existing LDA inference algo- ; . ;
+rithms. Depending on the dataset, we use standard beddings €g from the SAE feature representation,
+collapsed Gibbs sampling (Griffiths and Steyvers, 1 &
+2004) or variational inference (Blei et al., 2003) to eq = Wan S- Ca,iWis (14)
+approximate posterior distributions over {;} and tk G1
+{Oa} (see Appendix C). where w,; is the i feature direction from the SAE
+
+as decoder matrix.
+
+4.2.2 Mechanistic ETM (mETM) Following Grootendorst (2022), we apply
+The Embedded Topic Model (ETM) (Dieng et al.,  UMAP (McInnes et al., 2018) for dimensional-
+2020) represents topics as vectors in word embed- ity reduction followed by HDBSCAN clustering
+ding space, leveraging these word embeddings to (McInnes et al., 2017) to the document embeddings
+capture semantic relationships. Mechanistic ETM {€q}. We then extract topic-feature distributions
+(mETM) extends this idea to the space of LLM using class-based TF-IDF, which treats each cluster
+activations, representing each topic k asalearned a. 4 meta-document
+LLM activation v; € R".
+
+The generative process first samples document- Bra X thy; - log (1 + =) , (15)
+
+topic proportions from a logistic-normal, tf
+where tf, ; = >> deD, qa, is the count of feature 7
+da ~ N(0,1), (9) across all documents in cluster k, A is the average
+04 = softmax(6q). (10) count of all features per cluster, and tf; is the total
+
+count of feature 2 across all clusters.
+
+Each topic-feature distribution 3, € [0,1] is We experimented with alternative embeddings in
+obtained by transforming the learned activation v, | Equation (14), including using the SAE activations
+as in the SAE encoder, as opposed to counts, and skipping the pre-filtering
+
+step detailed in Section 4.1. However, the formu-
+By = 0 (Winvz, +b), (11) lation in Equation (14) was consistently chosen
+by our hyperparameter optimization procedures,
+where Wi, is initialized with the SAE encoder which we believe affirms the usefulness and impor-
+matrix and fixed during training, b is alearned bias _ tance of the steps detailed in Section 4.1.
+vector, and a is the sigmoid function. Here, (x ; .
+represents the probability that feature 7 is active in 4.3 Using MTMs
+a document token from topic k. Once trained, all the MTMs above produce
+Unlike in mLDA, feature counts are drawn from §document-topic proportions 04 and topic-feature
+a binomial distribution distributions 3; that can be used in downstream
+applications. Of particular significance to MTMs
+Ca, ~ Binomial ([0¢3]i, Ntok)- (12) are topic interpretations and steering vectors.
+5
+
+
+--- Page 6 ---
+
+Interpreting Topics. Topic interpretation in For example, one specific topic learned by
+MTMs follows an approach similar to conventional ©mLDA on the Bills dataset (Section 5) places high
+topic models. Given a learned topic k, we identify | weights on SAE features with descriptions: “spe-
+the top n SAE features by selecting those with the cific legal terms and conditions related to immi-
+highest weights in the topic-feature vector G,. We gration status”, “references to government policies
+then construct the textual topic representation t, and legal regulations”, and “references to labor
+from the automatically generated descriptions d; | conditions and economic structures”. We then
+corresponding to these n features. form a steering vector sz, from this topic using
+The last step can be done in two ways. The Equation (16). Applying this steering vector to
+TopFeatures (TF) approach directly uses the fea- the prompt “A text about” results in the continu-
+ture descriptions d; and concatenates them. The ation “ a person who is not of the United States,
+Summarization approach (Sum.) further processes but has been granted permission to enter the coun-
+the concatenated text by passing it through an LLM _ try. The term ‘temporary resident’ (TR) refers to
+to convert it into a one-sentence summary. Sum- __ people who have entered the U.S. and are allowed
+marization is beneficial, as it can also be applied __ to stay in the US...”, an example of successful
+to word-based models for standardization in eval- _ topic-guided text generation.
+uations. Figure 1 shows both approaches in use.
+Appendix F.2 provides the summarization prompt. 5 Empirical Studies
+Steering. One advantage of MTMs is their ability We evaluate MTMs and baselines using standard
+to steer text generation toward discovered topics. topic modeling metrics (coherence, topic diversity,
+We achieve this by constructing a topic-specific | and alignment) and a novel metric, topic judge,
+steering vector s;, that we add to the LLM’s activa- | which performs a series of comparisons between
+tions to bias generation toward topic k. pairs of models, asking an LLM judge which set of
+Each steering vector s;, is constructed by weight- _ topics they prefer with respect to a reference doc-
+ing SAE feature directions {w;} according to their | ument from the corpus. We find that an MTM is
+importance in topic k as captured by the topic- _ preferred by topic judge in four of the five studied
+feature weights 3; € RW, datasets, and that MTMs are comparable with base-
+lines on standard metrics. Finally, we show that
+s, = View BriWi (16) MTMs capture novel topics, and that their topics
+I oicw Brawills can successfully be used to steer LLM generations.
+Equation (16) is a unit vector that points in the di- Datasets. We study three standard benchmark
+rection most characteristic of topic k in the LLM’s _ datasets as well as two more challenging datasets:
+activation space. (i) online newsgroup posts (20NG; Lang (1995))
+To control the intensity of topic steering, we use (ii) bill summaries from the 110-114" U.S. con-
+an intervention that first removes any existing topic —_gresses (Bills; Adler and Wilkerson (2018); Hoyle
+signal before adding the desired amount. Consider et al. (2022))
+centered activations A = a— b, where b is the bias (iil) articles labeled as “good” by editors on
+from Equation (1). We decompose the activation | Wikipedia (Wiki; Merity et al. (2017))
+into components parallel and perpendicular to the (iv) short texts (Reddit comments) that express
+steering direction, emotion (GoEmotions; Demszky et al. (2020))
+(v) acollection of poems (PoemSum; Mahbub
+A = (A- Sx) Sz, (17) — etal. (2023))
+a, =a-—ay. (18) We expected GoEmotions and PoemSum to be
+more challenging due to their short length and ab-
+The steered activation replaces the parallel compo- __ stract themes, respectively.
+nent with a scaled steering vector, Appendix B contains dataset statistics, prepro-
+cessing steps for word-based models, and informa-
+Asteered = A, + ASz +b, (19) tion on labels used for the topical alignment metric.
+where A controls the steering strength, allowing for Models. We compare to the word-based coun-
+modulation of topic expression in generated text. terparts of MTMs: LDA (Blei et al., 2003), ETM
+6
+
+
+--- Page 7 ---
+
+20NG Bills Wiki GoEmotions PoemSum
+
+Model TF Sum. TF Sum. TF Sum. | TF Sum. TF Sum.
+
+D-VAE 1123. 1342 «1173 «1408 = :1305—Ss«*1417 | 1092. 1389 »=—- 1185-1360
+
+FASTopic 1392 1439 1301 1468 1341 1431 1498 1449 1306 1412
+
+LDA 1588 1545 1599* = 1571 1580 1453 1461 1573 1522
+
+ETM 1501 1543 1556 1491 1441 1424 1524 1446
+
+BERTopic Fal 1489 190 58 1455 1385 1474 1429. 14531530
+
+MTM (w/ ETM) 1584 1562
+
+MTM (w/ BERTopic) | 1535: 1415 1401
+Table 1: Topic judge Elo scores. MTMs significantly outperform counterparts in GoEmotions and Poem-
+Sum, and perform comparably in benchmark datasets. Scoring uses top features (TF) or summarization
+(Sum.) for topic descriptions. Bold values are largest in each column and statistically significant against
+unbolded values (two-sided t-test, p < 0.05); underlined values have p > 0.05. The top two scores in
+each column are marked with asterisks. Green indicates an equal or higher score than the model’s
+counterpart in the column; purple ™ indicates a lower score.
+(Dieng et al., 2020), and BERTopic (Grootendorst, tionship to documents; and automated metrics like
+2022). We also compare to two other neural Cypmi may correlate poorly with human judgments
+models: Dirichlet VAE (D-VAE) (Burkhardt and (Hoyle et al., 2021) and cannot compare models
+Kramer, 2019), which is a VAE product-of-experts with different vocabularies. These limitations moti-
+model; and FASTopic (Wu et al., 2024), which isa vated us to develop topic judge, a new evaluation
+model using optimal transport alongside pretrained framework for topic models.
+embeddings.
+
+Methodology. Topic judge is inspired by Chat-
+Setup. For MTMs, we use the GemmaScope __ bot Arena-style rankings (Chiang et al., 2024). It
+family of SAEs trained on Gemma 2-9B LLM _ evaluates topic models using pairwise comparisons,
+activations (Team et al., 2024; Lieberum et al., | where an LLM judge determines which model’s
+2024). The SAE feature metadata, including de- _ topic assignments better capture a given docu-
+scriptions, are downloaded from Neuronpedia (Lin, ment’s content. The comparison results are then
+2023). Additional details about the SAEs are in —_ aggregated via a Bradley-Terry model (Bradley and
+Appendix A.3. The implementation details for the — Terry, 1952). The assumption is that superior topic
+baseline models are in Appendix C. models should produce topics that are more de-
+For our experiments, we choose the number of __ scriptive of the documents they are assigned to.
+topics to be K = 50 for PoemSum, as it is a consid- In detail, the method works by performing pair-
+erably smaller dataset, and AK = 100 for the other —_ wise comparisons between all model pairs (m, m’)
+datasets. To select model hyperparameters, we use _ to score M models. For each of T comparisons
+Bayesian optimization and optimize the topic qual- _ per pair, topic judge: (1) randomly samples a docu-
+ity metric proposed in Dieng et al. (2020) foreach _ ment d; (2) identifies the set of top topics for each
+model-dataset pair. Appendix D contains details model according to 9;—either the top q topics or
+on this procedure. all topics with cumulative mass below a threshold
+p, whichever yields fewer topics; (3) creates text
+5.1 Topic Judge representations for each topic set tz, using either
+Topic model evaluation is challenging. Existing | of the two approaches (TopFeatures or Summa-
+metrics have limitations: topical alignment (Hoyle _rization); and (4) prompts an LLM judge to select
+et al., 2022) requires labeled data for attributes | which representation better captures the document
+of interest and does not assess topic description according to the specified criteria (e.g., relevance
+quality; coherence metrics like ratings or intrusion _ or Style).
+(Chang et al., 2009; Newman et al., 2010) measure After collecting all pairwise comparisons, topic
+feature relatedness in topics but ignore their rela- judge aggregates the results using a Bradley-Terry
+7
+
+
+--- Page 8 ---
+
+20NG Bills Wiki GoEmotions PoemSum
+Model Rat. Int. TD Rat. Int. TD Rat. Int. TD | Rat. Int. TD Rat. Int. TD
+D-VAE ZOINNO5S5") 0.90 0.90 0.86 |MUSTNO26" 0.81 TENOR 0.82
+FASTopic 2.43 0.71 0.99 1.00 0.98 0.99 | 1.97 0.43 0.99
+LDA 0.61 0.43 0.63 | S289 053% 0.45 23055") 0.47
+ETM 0.62 0.55 0.71 | 1.94 037 0.75 | 217 0.51 0.71
+BERTopic 0.75 0.69 0.65 0.74 2.36 0.51 0.63
+MTM (w/ LDA) 0.68 0.42 0.68 0.73 0.64
+MTM (w/ ETM) 0.65 0.46 0.61 0.72 0.62
+MTM (w/ BERTopic) 0.62 0.48 0.59 0.73 0.53 0.38
+Table 2: Results on ratings (Rat.), intrusion (Int.), and topic diversity (TD) averaged over five runs.
+MTMs perform comparably to counterparts on standard datasets and outperform them on PoemSum
+and GoEmotions. Bold values are largest in each column and statistically significant against unbolded
+values (two-sided t-test, p < 0.05); underlined values have p < 0.05. Ratings and intrusion scores are
+color-coded: for ratings, purple @ (< 2.0) transitions to green ™ (> 2.8); for intrusion, purple M@ (< 0.5)
+transitions to green ™ in 0.1 increments.
+model to compute final scores. This model as- summarization approach instead of raw features,
+sumes that model m defeats model m’ with prob- | MTM performance equals or exceeds word-based
+ability o(7m — 7m), Where 7, represents model models across all datasets. MTMs show strong
+m’s strength and o is the sigmoid function. We — performance on the more abstract datasets GoE-
+use maximum likelihood estimation to infer these | motions and PoemSum, supporting the hypothesis
+strength parameters and convert them to Eloratings that SAE features capture semantic nuances beyond
+(normalized to average 1500) for interpretability. simple word co-occurrence patterns.
+Topic judge addresses limitations of existing
+metrics: it evaluates topic-document relationships 5.2 Standard Evaluation Metrics
+directly without requiring labeled data, USES Pal While topic judge is a holistic measure of model
+wise comparisons that capture relative quality dif-
+; ; performance, we also report two complementary
+ferences across different vocabularies (words vs. . .
+: metrics: coherence—the semantic relatedness of
+SAE features), and leverages an LLM judge to as- os f d o di ‘y-—th
+; directly rather than through a topic’s top teatures—and fopic diversity—the
+Sess like Chan y fi F topic j ne distinctiveness of topics.
+roxies like . An assumption of topic judge ; .
+P NPMI ; P Pre ues We measure coherence in two ways. First, we
+is that the LLM judge is a good assessor of rela- . . .
+. . . . . . measure the average rating assigned to each topic
+tive topic quality; we discuss previous work using . .
+. . . on a 1-3 scale based on how semantically related its
+LLMs to elicit preferences in Section 2. For the
+; ar top features are (Rat.) (Newman et al., 2010). Sec-
+specific prompt and examples with judge responses,
+. ond, we measure how accurately an evaluator can
+see Appendix G. . . cc ” .
+identify an “intruder” feature from another topic
+Results. We perform 100 comparisons foreach When it’s mixed with the target topic’s features
+model pair across all datasets (2800 total compar- Int.) (Chang et al., 2009). Following Stamm-
+isons) using GPT-4.1 with temperature 0, prompt- bach et al. (2023), we use GPT-4.1 as the rater
+ing the LLM to choose the set of topics that best and evaluator in both tasks (see Appendix F.3 for
+captures the general meaning of the document. the prompts). For ratings, we present the top 10 fea-
+Table 1 shows that MTMs achieve the highest _ tures per topic and report the average rating across
+Elo scores in four of five datasets, with the excep- all topics. For intrusion, we perform 25 trials with
+tion being Bills using the TF representation. In _ 5 true features and | intruder per trial and report
+this case, the judge found MTM’s raw SAE feature _ the average accuracy. For both, we use zero tem-
+descriptions less specifically relevant to documents _ perature to sample.
+compared to the precise keywords learned by word- To measure topic diversity (TD), we use the
+based models. Both Bills and 20NG showed in- metric by Dieng et al. (2020) explained in Ap-
+stances where MTM outputs contained spurious _ pendix D.3.
+features (Section 4.1). However, when using the Results in Table 2 show that all models achieve
+8
+
+
+--- Page 9 ---
+
+20NG Bills Wiki GoEmotions PoemsSum
+;
+—. °
+, ee =
+I c-- ie I 1 -1
+46 84 72 97 76 99 0 34 6 36
+Figure 2: Heatmap representations of how similar mLDA topics (columns) and LDA topics (rows) are in
+terms of their proportions across documents; topics are aligned greedily. The two models learn similar
+topics on Bills and Wiki, but mLDA finds new topics on 20NG, GoEmotions, and PoemSum. Dashed gray
+boxes show submatrices: within, the two models’ topics have medium (< 0.5) or low (< 0.2) correlations.
+mid-to-high coherence on benchmark datasets, 0.2, highlighting where MTMs discover different
+with word-based models slightly outperforming __ topics.
+MTMs. On the challenging GoEmotions dataset, On Bills and Wiki, over 70% of mLDA topics
+characterized by very short documents, and Poem- correlate at least 0.5 with LDA topics, suggesting
+Sum, composed of highly abstract poems, MTMs that the topics represent similar themes. On GoE-
+excel, indicating that SAE directions remain inter- _ motions and PoemSum, nearly all topics fall below
+pretable even under these conditions. Topic diver- _ 0.5 correlation (many below 0.2), indicating they
+sity is variable among word-based models; MTMs __are new. 20NG lies between these extremes—we
+maintain generally high diversity except on Bills think this is due to MTMs capturing stylistic qual-
+(0.40.5 vs. 0.6—0.7), indicating that the SAE fea- ities like argumentation that word co-occurrence
+ture counts in Bills are relatively homogeneous. misses. ETM and BERTopic pairs show similar
+Additionally, we provide topical alignment re- _ patterns (Figure 5). We provide more examples of
+sults in Table 7 of the Appendix. MTM topics, including novel topics, in Figure 7.
+5.3 Topic Novelty Analysis 5.4 Steering Evaluation
+We have found that MTMs achieve strong per- TMs enable text generation via steering vectors
+formance in Section 5.1 and Section 5.2. We formed from discovered topics (Section 4.3). To
+now investigate whether they discover new top- evaluate this capability, we conduct three exper-
+ics or instead redescribe topics that word-based iments. We measure two criteria for successful
+models already find. To address this, we analyze steering: topic relevance—steering increases the
+how similarly topics from different models weigh expression of the target topic in text; and fluency—
+documents—if two topics assign similar weights steering preserves the coherence and naturalness of
+across documents, they likely capture the same con- the generated text.
+cepts regardless of description. Throughout, we use p(-) and p(-; As) for un-
+We formalize this idea by computing correla- steered and steered LLM probabilities, respec-
+tions between document-topic distributions. Con- tively (steering vector s,, magnitude \), x =
+sider trained models m and me with document- (1, --+;2Nyx) for sampled token sequences, and
+topic matrices 8",8” € RY”, where row d Xd = (%a1,---;Ld,Ni,) for document d sequences.
+contains document d’s topic weights and column we describe each ‘experiment below, with addi-
+@"; is topic 2’s prevalence across documents. We tional details in Appendix E.
+compute the cross-correlation matrix C € R***,
+where each entry is C;,; = corr(8?";, 6”). Topic Relevance Win Rate. We first verify
+Figure 2 visualizes these correlations after | whether MTM steering vectors effectively guide
+greedy alignment: we iteratively select the un- LLM-generated text toward exhibiting specific top-
+paired column with the strongest correlation inthe ics. We take a “best-of-2L” approach: for each
+entire matrix and pair it from among the remaining __ topic &, we sample L steered texts with different
+rows, placing matches consecutively along the di- _ steering strengths and L unsteered texts using the
+agonal (see Appendix I for details). Dashed boxes same prompt. An LLM judge then selects the text
+mark regions where correlations fall below 0.5 or — most representative of the topic according to its
+9
+
+
+--- Page 10 ---
+
+Topic Summary: "Achievements, statistics, and aspirations in college and professional sports, focusing on tournaments,
+records, player performance, and team accomplishments."
+A= 10 "A text about the history of a place, its people and their customs.\n\nThe book is written in an easy language, with many illustrations
+to make it more interesting for children. It also contains some words in the local dialect, which will help them learn new vocabulary"
+A = 20 "A text about the 2019 novel coronavirus (COVID-19) outbreak in China has been circulating on WhatsApp. The message claims that
+a new strain of the virus, which is more deadly than SARS and MERS, has emerged from Wuhan city in"
+A = 30 "A text about the 2018 NBA draft has been circulating on social media, and it’s a doozy.\n\nThe text is from an anonymous source
+who claims to have inside information that says Zion Williamson will be drafted by the New York Knicks with"
+A = 40 "A text about the 2014-15 NBA All Star Game was announced on Thursday.\n\nThe game will be held at Madison Square Garden in
+New York City, and it will feature a team of all stars from both leagues. The game is scheduled"
+A= 50 "A text about the best-selling player in college basketball, a 10th place finish and an All-American selection.\n\nThose are just some
+of the accomplishments that have been achieved by Baylor’s senior forward John Wall. He has also earned his second"
+Table 3: Examples of generated text at various steering strengths (A) for a sports-related topic found by
+mLDA on the Wiki dataset. Higher \ values result in increasingly topic-focused content.
+summarized description tz. We record a win if any 20NG Bills Wiki GoEmo Poem
+steered text is chosen.
+XUIS © TWR (%) 87.0 99.0 88.1 883 85.8
+We repeat this procedure FR times for each topic. SS.
+We then define the topic relevance win rate (TWR) PPLcontrot 6.23 6.22 6.22 6.22 6.23
+. . . PPL)=10 6.32 6.30 646 6.28 6.46
+as the fraction of comparisons where the judge se-
+lect f the L st d 1 d PPLy=20 7.39 7.64 7.17 675 7.19
+ects one 0 e L steered samples, average across PPLy—39 9.10 10.00 880 7.97 8.89
+the KR trials. When computed fora single topic, a PPLy_49 12.25 12.96 11.48 11.04 11.55
+TWR greater than 0.5 indicates that steering biased PPLy—s0 16.91 17.24 15.52 20.64 16.86
+text generation toward the desired topic. TT
+oo re ae : . Table 4: Steering metrics for mLDA. TWR: fraction
+Topic Likelihood Difference. We next assess if ; s ;
+. . . of times steered text better matches target topic.
+steering vectors correctly capture topic semantics . .
+. : Per . PPL: perplexity of steered generations under the
+by comparing their effect on the likelihood of differ- _ . .
+ae original model at various steering strengths 4.
+ent documents from the training corpus. Intuitively,
+if s; accurately represents topic k, increasing the
+steering strength should increase the likelihood Perplexity. Finally, we evaluate whether steering
+of documents about topic & more than other docu- maintains natural-sounding generations. We com-
+ments from the corpus. pute the perplexity (PPL) of the sampled steered
+Formally, let D;, contain documents highly as- generations x nA p(x’; Ask) under the original
+sociated with topic k and D_;, be an equally sized model p(x). We report the perplexity for 10 gen-
+random sample from the set of documents highly __ erations per topic under five values of A, and the
+associated with another topic (see Appendix E.3). perplexity of unsteered generations as a baseline.
+We measure the relative log likelihood difference Values close to the baseline indicate that fluency is
+when steering as comparable to that of the unsteered texts.
+S :
+1 P(X y+ ASK) 5.4.1 Results
+Ae, (A) = = log ——+—__ 20 .
+BA) S » 6 P(X 4-3 AS)’ (20) Table 3 shows representative examples of text
+steered toward a sports-related topic. This topic
+where d; € D;, andd; € D_x. A positive value — was discovered by mLDA trained on the Wiki
+for Aé,(A) when \ > 0 indicates successful top- dataset, and the table illustrates outputs generated
+ical steering, while a negative value when 1 = 0 __ using a range of steering strength values (\). At
+indicates successful topic ablation. We let A¢@(\) _ lower values of \, generated texts remain generic
+without subscript denote the average over all topics. _ and off-topic, while at higher values, the content
+We also use this metric to evaluate partial steer- aligns with the targeted sports theme. Additional
+ing vectors s\”), constructed from only the top n examples spanning other models, datasets, and
+features in the topic, to verify the advantage of steering strengths are provided in Table 6.
+using the full steering vector. Quantitatively, steering improves topic relevance.
+10
+
+
+--- Page 11 ---
+
+20NG Bills Wiki GoEmotions PoemSum
+ae errr 2 ee 2 25 = Features
+
+= | oe 1 <= wee erst Pyare --r- Top 1 features
+Ss a | “te Top 5 features
+
+i 0 50 100 150 -t 0 50 100150 0 50 100150 0 50 100 150 0 50 100 150
+
+A A A A A
+
+Figure 3: Average document log likelihood differences A@(A) between on-topic and off-topic documents
+for mLDA. Lines show A¢(X) with steering vectors s\”) constructed using n = 1, 5, 10, or all SAE
+features. Negative A? at \ = 0 shows the topics are ablated; positive A? at higher \ demonstrates steering
+toward target topics, with better steering when using all features.
+As shown in Table 4, the topic relevance win rate References
+(TWR) exceeds 85% across all datasets, reaching
+99% on Bills. This indicates that steering shifts text E. Scott Adler and John D. Wilkerson. 2018. Con-
+generation toward intended topics. Figure 3 further gressional bills project: 1995-2018.
+illustrates this effect by showing how relative doc-
+ument log likelihood changes as steering strength © Dimo Angelov. 2020. Top2Vec: Distributed
+increases. At baseline (A = 0), ablation reduces representations of topics. arXiv preprint
+log likelihood for on-topic documents. Moreover, arXiv:2008.09470.
+positive steering (A > 0) increases the likelihood
+of on-topic documents relative to off-topic ones. Andy Arditi, Oscar Obeso, Aaquib Syed, Daniel
+Steering vectors that use all topic features produce Paleka, Nina Panickssery, Wes Gurnee, and Neel
+the largest differences, indicating that the full fea- Nanda. 2024. Refusal in language models is me-
+ture set effectively characterizes topic expression. diated by a single direction. In Advances in Neu-
+
+Finally, the perplexities of steered outputs (Ta- ral Information Processing Systems, volume 37,
+ble 4) remain close to baseline values, showing that pages 136037-136083.
+steering preserves the fluency of generated text. ; ; oe, ; ;
+
+Results for mBERTopic and mETM can be found Federico Bianchi, Silvia Terragni, and Dirk Hovy.
+in Figure 6 and Table 8. 2021a. Pre-training is a hot topic: Contextual-
+
+ized document embeddings improve topic co-
+6 Discussion herence. In Proceedings of the Association for
+Computational Linguistics and the International
+
+We introduced Mechanistic Topic Models (MTMs), Joint Conference on Natural Language Process-
+a family of topic models that operate on SAE ac- ing, pages 759-766.
+tivation patterns rather than word counts or raw
+text embeddings. Our empirical evaluation shows __ Federico Bianchi, Silvia Terragni, Dirk Hovy, Deb-
+MTMs perform comparably to baselines on stan- ora Nozza, and Elisabetta Fersini. 2021b. Cross-
+dard benchmarks and can better identify abstract lingual contextualized topic models with zero-
+themes in complex corpora. MTMs enable con- shot learning. In Proceedings of the European
+trolled text generation, allowing researchers to syn- Chapter of the Association for Computational
+thesize new texts with specific topic compositions. Linguistics, pages 1676-1683.
+
+Finally, MTMs suggest how, despite some recent
+negative results, interpretability tools like SAEs — Steven Bills, Nick Cammarata, Dan Mossing, Henk
+can be successfully repurposed for downstream Tillman, Leo Gao, Gabriel Goh, Ilya Sutskever,
+tasks. We argue such tools can be useful when: Jan Leike, Jeff Wu, and William Saunders. 2023.
+(1) the downstream application does not require Language models can explain neurons in lan-
+the linear representation hypothesis to strictly hold guage models. Technical blog post.
+for all features, only a sufficiently large subset; (2)
+appropriate filtering steps can be applied; and (3) David M. Blei. 2012. Probabilistic topic models.
+the downstream task is robust to some degree of Communications of the Association for Comput-
+noise and mislabeling. ing Machinery, 55(4):77—84.
+
+11
+
+
+--- Page 12 ---
+
+David M. Blei, Andrew Y. Ng, and MichaelI. Jor- Valérie Costa, Thomas Fel, Ekdeep Singh Lubana,
+dan. 2003. Latent Dirichlet allocation. Journal Bahareh Tolooshams, and Demba Ba. 2025.
+of Machine Learning Research, 3:993-1022. From flat to hierarchical: Extracting sparse repre-
+
+Ralph A. Bradley and Milton E. Terry. 1952. Rank ose oa0oN pursuit. arXiv preprint
+analysis of incomplete block designs: I. the , : ,
+method of paired comparisons. Biometrika, Yoagy Cunningham, Aidan Ewart, Logan Riggs,
+39(3/4):324-345. Robert Huben, and Lee Sharkey. 2024. Sparse
+
+Trenton Bricken, Adly Templeton, Joshua Bat- autoencoders find highly interpretable features in
+son, Brian Chen, Adam Jermyn, Tom Con- language models. In Proceedings of the Interna-
+erly, Nick Turner, Cem Anil, Carson Deni- tional Conference on Learning Representations.
+son, Amanda Askell, Robert Lasenby, Yifan Dorottya Demszky, Dana Movshovitz-Attias,
+Wu, Shauna Kravec, Nicholas Schiefer, Tim Jeongwoo Ko, Alan Cowen, Gaurav Nemade,
+Maxwell, Nicholas Joseph, Zac Hatfield-Dodds, and Sujith Ravi. 2020. GoEmotions: A dataset
+Alex Tamkin, Karina Nguyen, Brayden McLean, of fine-grained emotions. In Proceedings of
+Josiah E. Burke, Tristan Hume, Shan Carter, the Association for Computational Linguistics,
+Tom Henighan, and Christopher Olah. 2023. To- pages 4040-4054.
+wards monosemanticity: Decomposing language
+models with dictionary learning. Technical blog —Adji B. Dieng, Francisco J. R. Ruiz, and David M.
+post. Blei. 2020. Topic modeling in embedding
+
+. spaces. Transactions of the Association for Com-
+
+Sophie Burkhardt and Stefan Kramer. 2019. De- : oe
+coupling sparsity and smoothness in the Dirich- putational Linguistics, 8439-453.
+let variational autoencoder topic model. Journal — Caitlin Doogan. 2022. A Topic Is Not a Theme: To-
+of Machine Learning Research, 20(131):1—27. wards a Contextualised Approach to Topic Mod-
+
+Yuanpu Cao, Tianrong Zhang, Bochuan Cao, Ziyi elling. Ph.D. thesis, Monash University, Clayton,
+Yin, Lu Lin, Fenglong Ma, and Jinghui Chen. Vic, Australia.
+
+2024. Personalized steering of large language Nelson Elhage, Tristan Hume, Catherine Ols-
+models: Versatile steering vectors through bi- son, Nicholas Schiefer, Tom Henighan, Shauna
+directional preference optimization. In Ad- Kravec Zac Hatfiel d-Do dds. Robert Lasenby
+vances in Neural Information Processing Sys- Dawn Drain, Carol Chen, Roger Grosse, Sam
+ems, volume 37, pages 49519-49551. McCandlish, Jared Kaplan, Dario Amodei, Mar-
+
+Jonathan D. Chang, Jordan L. Boyd-Graber, Sean tin Wattenberg, and Christopher Olah. 2022.
+Gerrish, Chong Wang, and David M. Blei. 2009. Toy models of superposition. arXiv preprint
+Reading tea leaves: How humans interpret topic arXiv:2209. 10652.
+models. In Advances in Neural Information Pro- ; ; ;
+cessing Systems, volume 22, pages 288-296. Joshua Engels, Eric J. Michaud, Isaac Liao, Wes
+
+Gurnee, and Max Tegmark. 2025. Not all lan-
+
+Cheng-Han Chiang and Hung-yi Lee. 2023. Can guage model features are one-dimensionally lin-
+large language models be an alternative to hu- ear. In Proceedings of the International Confer-
+man evaluations? In Proceedings of the As- ence on Learning Representations.
+sociation for Computational Linguistics, pages
+15607-15631. Association for Computational Leo Gao, Tom Dupré la Tour, Henk Tillman,
+Linguistics. Gabriel Goh, Rajan Troll, Alec Radford, Ilya
+
+Sutskever, Jan Leike, and Jeffrey Wu. 2025a.
+
+Wei-Lin Chiang, Lianmin Zheng, Ying Sheng, Scaling and evaluating sparse autoencoders. In
+Anastasios Nikolas Angelopoulos, Tianle Li, Proceedings of the International Conference on
+Dacheng Li, Hao Zhang, Banghua Zhu, Michael Learning Representations.
+
+Jordan, Joseph E. Gonzalez, and Ion Stoica.
+
+2024. Chatbot Arena: An open platform for §Mingqi Gao, Yixin Liu, Xinyu Hu, Xiaojun Wan,
+
+evaluating LLMs by human preference. arXiv Jonathan Bragg, and Arman Cohan. 2025b.
+
+preprint arXiv:2403.04132. Re-evaluating automatic LLM system ranking
+12
+
+
+--- Page 13 ---
+
+for alignment with human preference. In Find- 2024. LLMs-as-judges: A comprehensive sur-
+
+ings of the Association for Computational Lin- vey on LLM-based evaluation methods. arXiv
+
+guistics: North American Chapter of the Associ- preprint arXiv:2412.05579.
+
+ation for Computational Linguistics, pages 4605—
+
+4629. Qintong Li, Leyang Cui, Lingpeng Kong, and Wei
+Bi. 2025. Exploring the reliability of large lan-
+
+Thomas L. Griffiths and Mark Steyvers. 2004. guage models as customized evaluators for di-
+Finding scientific topics. Proceedings of the Na- verse NLP tasks. In Proceedings of the Interna-
+tional Academy of Sciences of the United States tional Conference on Computational Linguistics,
+of America, 101(Suppl 1):5228-5235. pages 10325-10344.
+
+Maarten Grootendorst. 2022. BERTopic: Neural Tom Lieberum, Senthooran Rajamanoharan,
+topic modeling with a class-based TF-IDF pro- Arthur Conmy, Lewis Smith, Nicolas Sonnerat,
+cedure. arXiv preprint arXiv:2203.05794. Vikrant Varma, Jénos Kramér, Anca Dragan, Ro-
+
+Evan Hernandez, Belinda Z. Li, and Jacob Andreas. hin Shah, and Neel Nanda. 2024. Gemma Scope:
+2024. Inspecting and editing knowledge repre- Open sparse autoencoders everywhere all at once
+
+. . : on Gemma 2. arXiv preprint arXiv:2408.05147.
+sentations in language models. In Proceedings
+of the Conference on Language Modeling. Johnny Lin. 2023. Neuronpedia: Interactive refer-
+
+Matthew Honnibal, Ines Montani, Sofie Van Lan- ence and tooling for analyzing neural networks.
+ener ane Dern’ Bove. 2020. sp acy: Yinhong Liu, Han Zhou, Zhijiang Guo, Ehsan
+; g uae PFOCESSINE Shareghi, Ivan Vuli¢é, Anna Korhonen, and Nigel
+in Python. Collier. 2024. Aligning with human judgement:
+
+Alexander M. Hoyle, Pranav Goel, Andrew Hian- The role of pairwise preference in large language
+Cheong, Denis Peskov, Jordan L. Boyd-Graber, model evaluators. In Proceedings of the Confer-
+and Philip Resnik. 2021. Is automated topic ence on Language Modeling, pages 1-20.
+model evaluation broken? The incoherence of Ridwan Mahbub, Ifrad Khan, Samiha Anuva,
+coherence. In Advances in Neural Information : : .
+
+Processing Systems, volume 34, pages 2018- Md Shihab Shahriar, Md Tahmid Rahman
+2033. Laskar, and Sabbir Ahmed. 2023. Unveiling
+the essence of poetry: A dataset and benchmark
+
+Alexander M. Hoyle, Rupak Sarkar, Pranav Goel, for poem summarization. In Empirical Methods
+and Philip Resnik. 2022. Are neural topic mod- in Natural Language Processing, pages 14878—
+els broken? In Findings of the Association for 14886.
+
+Computational Linguistics: Empirical Methods
+in Natural Language Processing, pages 5321- Andrew K. McCallum. 2002. MALLET: A ma-
+5344. chine learning for language toolkit.
+
+Ken Lang. 1995. NewsWeeder: Learning to filter Leland McInnes, John Healy, and Steve Astels.
+netnews. In Proceedings of the International 2017. hdbscan: Hierarchical density based
+Conference on Machine Learning, pages 331- clustering. Journal of Open Source Software,
+339. 2(11):205.
+
+Jey Han Lau, David Newman, and Timothy Bald- Leland McInnes, John Healy, Nathaniel Saul, and
+win. 2014. Machine reading tea leaves: Auto- Lukas Grofberger. 2018. UMAP: Uniform man-
+matically evaluating topic coherence and topic ifold approximation and projection. Journal of
+model quality. In Proceedings of the European Open Source Software, 3(29):861.
+
+Chapter of the Association for Computational
+Linguistics, pages 530-539. Stephen Merity, Caiming Xiong, James Bradbury,
+and Richard Socher. 2017. Pointer sentinel mix-
+
+Haitao Li, Qian Dong, Junjie Chen, Huixue Su, ture models. In Proceedings of the International
+
+Yujia Zhou, Qingyao Ai, Ziyi Ye, and Yiqun Liu. Conference on Learning Representations.
+13
+
+
+--- Page 14 ---
+
+Tomas Mikolov, Wen-tau Yih, and Geoffrey Zweig. Chapter of the Association for Computational
+2013. Linguistic regularities in continuous space Linguistics, pages 2956-2984.
+word representations. In Proceedings of the _
+North American Chapter of the Association for Nina Rimsky, Nick Gabrieli, Julian Schulz, Meg
+Computational Linguistics, pages 746-751. Tong, Evan Hubinger, and Alexander Turner.
+2024. Steering Llama 2 via contrastive activa-
+Ben Naismith, Phoebe Mulcaire, and Jill Burstein. tion addition. In Proceedings of the Associa-
+2023. Automated evaluation of written dis- tion for Computational Linguistics, pages 15504—
+course coherence using GPT-4. In Proceedings 15522.
+of the Workshop on Innovative Use of NLP for
+Building Educational Applications, pages 394— | Mansi Sakarvadia, Aswathy Ajith, Arham Khan,
+403. Daniel Grzenda, Nathaniel Hudson, André
+Bauer, Kyle Chard, and Ian Foster. 2023. Mem-
+David Newman, Jey Han Lau, Karl Grieser, and ory injections: Correcting multi-hop reasoning
+Timothy Baldwin. 2010. Automatic evaluation failures during inference in transformer-based
+of topic coherence. In Proceedings of the North language models. In Proceedings of the Black-
+Amer rean Chap fer of the Association for Com- boxNLP Workshop: Analyzing and Interpreting
+putational Linguistics, pages 100-108. Neural Networks for NLP, pages 342-356.
+Kyle O Brien, David Majercak, Xavier Fernan- Lewis Smith, Senthooran Rajamanoharan, Arthur
+des, Richard Edgar, Blake Bullwinkel, Jingya .
+. : ; ; Conmy, Callum McDougall, Tom Lieberum,
+Chen, Harsha Nori, Dean Carignan, Eric Horvitz, , , .
+; ; Janos Kramar, Rohin Shah, and Neel Nanda.
+Poursabzi-Sangde, and Forough Poursabzi- .
+. 2025. Negative results for SAEs on downstream
+Sangde. 2025. Steering language model refusal Le
+; : tasks and deprioritising SAE research (GDM
+with sparse autoencoders. In Proceedings of the mech interp team progress update #2). Techni-
+Workshop on Reliable and Responsible Founda- P prog P .
+. cal blog post.
+tion Models.
+OpenAI. 2024. GPT-40 mini: Advancing cost- Dominik Stammbach, Vileém Zouhar, Alexander
+efficient intelligence. Hoyle, Mrinmaya Sachan, and Elliott Ash. 2023.
+Revisiting automated topic model evaluation
+OpenAI. 2025. Introducing GPT-4.1 in the API. with large language models. In Empirical Meth-
+Kiho Park, Yo Joong Choe, and Victor Veitch. 2024. “ oe Language Processing, pages
+The linear representation hypothesis and the ge- 7 :
+ometry of large language models. In Proceed- Alex Tamkin, Mohammad Taufeeque, and Noah D.
+ings of the International Conference on Machine Goodman. 2023. Codebook features: Sparse
+Learning, volume 235, pages 39643-39666. and discrete interpretability for neural networks.
+Goncalo Paulo, Alex Mallen, Caden Juang, and arXiv preprint arXiv:2310.17230.
+Nora Belrose. 2024. Automatically interpreting Haniel Chee Hian Tan, David Chanin, Aen-
+millions of features in large language models. gus Lynch, Brooks Paige, Dimitrios Kanoulas,
+arXiv preprint arXiv:2410.13928. Adria Garriga-Alonso, and Robert Kirk. 2024.
+Fabian Pedregosa, Gaél Varoquaux, Alexandre Analysing the generalisation and reliability of
+Gramfort, Vincent Michel, Bertrand Thirion, steering vectors. In Advances in Neural Infor-
+Olivier Grisel, Mathieu Blondel, Peter Pretten- mation Processing Systems, volume 37, pages
+hofer, Ron Weiss, Vincent Dubourg, et al. 2011. 139179-139212.
+Scikit-learn: Machine learning in Python. Jour-
+ees . seme waning mey oO Gemma Team, Morgane Riviere, Shreya Pathak,
+nal of Machine Learning Research, 12:2825- . . ; .
+830 Pier Giuseppe Sessa, Cassidy Hardin, Surya
+, Bhupatiraju, Léonard Hussenot, Thomas Mes-
+Chau Minh Pham, Alexander M. Hoyle, Simeng nard, Bobak Shahriari, Alexandre Ramé, et al.
+Sun, Philip Resnik, and Mohit Iyyer. 2024. Top- 2024. Gemma 2: Improving open language
+icGPT: A prompt-based topic modeling frame- models at a practical size. arXiv preprint
+work. In Proceedings of the North American arXiv:2408.00118.
+14
+
+
+--- Page 15 ---
+
+Adly Templeton, Tom Conerly, Jonathan Marcus, for topics. In Proceedings of the North American
+Jack Lindsey, Trenton Bricken, Brian Chen, Chapter of the Association for Computational
+Adam Pearce, Craig Citro, Emmanuel Ameisen, Linguistics, pages 3886-3893.
+
+Andy Jones, Hoagy Cunningham, Nicholas L
+
+Turner, Callum McDougall, Monte MacDiarmid, Lianmin Zheng, Wei-Lin Chiang, Ying Sheng,
+C. Daniel Freeman, Theodore R. Sumers, Ed- Siyuan Zhuang, Zhanghao Wu, Yonghao
+ward Rees, Joshua Batson, Adam Jermyn, Shan Zhuang, Zi Lin, Zhuohan Li, Dacheng Li, Eric P.
+Carter, Christopher Olah, and Tom Henighan. Xing, Hao Zhang, Joseph E. Gonzalez, and Ion
+2024. Scaling monosemanticity: Extracting in- Stoica. 2023. Judging LLM-as-a-judge with MT-
+terpretable features from Claude 3 Sonnet. Tech- Bench and Chatbot Arena. In Advances in Neu-
+nical blog post. ral Information Processing Systems, volume 36,
+
+pages 46595-46623.
+
+Alexander Matt Turner, Lisa Thiergart, Gavin
+Leech, David Udell, Juan J. Vazquez, Ulisse ° A
+Mini, and Monte MacDiarmid. 2023. Steer- A MTM Implementation Details
+ing language models with activation engineering. Appendix A.1 and Appendix A.2 detail the qual-
+arXiv preprint arXiv:2308.10248. ity control measures used to address challenges
+
+Tianlong Wang, Xianfeng Jiao, Yinghao Zhe, 2 tips details onthe SABS used for our date’
+Zhongzhi Chen, Yifan He, Xu Chu, Junyi Gao, :
+Yasha Wang, and Liantao Ma. 2025. Adaptive : eet
+activation steering: A tuning-free LLM tenth A.I Preprocessing: Feature Filtering
+ness improvement method for diverse hallucina- | Before training MTMs, we filter out SAE features
+tions categories. In Proceedings of the Associa- that are likely spurious or irrelevant for topic mod-
+tion for Computing Machinery Web Conference, eling. We remove features in the following cate-
+pages 2562-2578. gories:
+
+; ; ¢ Features with textual descriptions about pro-
+
+Xiaobao Wu, Thong Nguyen, Delvin Ce Zhang, gramming, math, grammar, text formatting, or
+William Yang Wang, and Anh Tuan Luu. 2024. stop words.
+
+FASTopic: Pretrained transformer isa fast, adap- * Features that activate in more than 1% of the
+tive, stable, and transferable topic model. In SAE training data.
+
+Advances in Neural Information Processing Sys- * Features that appear in more than 90% of cor-
+tems, volume 37, pages 84447-84481. pus documents (analogous to removing high-
+
+Zhengxuan Wu, Aryaman Arora, Atticus Geiger, frequency words in traditional topic model-
+Zheng Wang, Jing Huang, Dan Jurafsky, Christo- ing).
+pher D. Manning, and Christopher Potts. 2025. This filtering step is crucial. Without it, the re-
+AxBench: Steering LLMs? Even simple base- sulting models do poorly in our benchmarks. To
+lines outperform sparse autoencoders. In Pro- Temove the features with irrelevant textual descrip-
+ceedings of the International Conference on Ma- tions, we use the OpenAI 40-mini model (OpenAI,
+chine Learning. 2024, version 2024-07-18).
+
+Zeyu Yun, Yubei Chen, Bruno Olshausen, and Yann A.2  Post-training: Topic Refinement
+LeCun. 2021. Transformer visualization via dic- . oo.
+
+. . . . Even after preprocessing, SAE feature descriptions
+tionary learning: Contextualized embedding as . . .
+a linear superposition of transformer factors. In can occasionally be mislabeled. These mislabel-
+. ings often become apparent when examining the
+Proceedings of the Workshop on Knowledge Ex- . .
+; . ; full textual representation t, of a topic (see Sec-
+traction and Integration for Deep Learning Ar- . . . .
+hitectures. pages 1-10. tion 4.3). An example of this type of mislabeling
+c > Pas is provided in Appendix H.
+
+Zihan Zhang, Meng Fang, Ling Chen, and Moham- To address this, we apply a post-training refine-
+mad Reza Namazi Rad. 2022. Is neural topic ment step:
+modelling better than clustering? An empirical 1. For each topic k, retrieve the top n + m fea-
+study on clustering with contextual embeddings tures by weight (where m is small, e.g., 2).
+
+15
+
+
+--- Page 16 ---
+
+2. Prompt an LLM to identify and remove up to 20NG (20 categories): — talk.politics.guns,
+m features that appear irrelevant or mislabeled = comp.graphics, misc.forsale.
+relative to the other features. Bills (114 subtopics): drug coverage and cost,
+3. Retain the resulting top n features as the final = water resources, insurance, postal service.
+topic representation. Wiki (279 subcategories): architecture build-
+This refinement is cost-effective since the num- _ ings, 1990-1999 songs, fungi, warships of Russia.
+ber of topics and features per topic is typically GoEmotions (28 annotated emotions): anger,
+small. The specific prompt used for this task is pro- disappointment, optimism, neutral.
+vided in Appendix F.1. We set n = 10 and m = 2
+in our experiments. C_ Baseline Implementations
+ne ensure fair cnt Sorat and avoid biasing me We implement the baselines as follows. For LDA,
+coherence metrics m avor of MTMs, we apply the we default to using the Mallet package (McCal-
+exact same post-training refinement to all models lum, 2002), which implements Gibbs sampling
+in our experiments, including word-based baselines for «nference For the Wiki dataset. due to the
+(see Section 5). large number of words/tokens, we instead use
+A323 Additional SAE Details the LDA scikit-learn implementation (Pedregosa
+et al., 2011) with coordinate ascent variational in-
+We vary the SAE used by dataset. For the bench- ference. For the four neural models, we use the
+mark datasets, we use the 16k feature SAE trained authors’ provided code when it is available—we
+on yer esau poemotions eo we use the bertopic and fastopic PyPI packages, and
+AN e de th; hoice hes ayer fi d that for ETM and D-VAE, we use the authors’ provided
+. © made Has CHOICE ecause we foun mat cal model code and re-implement the model training
+lier layer SAEs had more localized feature cover- in our codebase using PyTorch Lightning. We will
+age on the latter datasets, e.g., using a later layer release all code to replicate our results.
+we oi PoemSum res e ar reanures wi For the baseline models, we use the default set-
+ESCHPHONS OMIY VETY DFO TENCE 10 Ponty: tings from either the paper or codebase (if unspeci-
+On the other hand, later layer SAEs on the bench- fied in the paper), unless detailed as follows.
+mark datasets contained more features capturing For LDA we use the default settines in the
+higher-level document themes. Mallet acka ° s
+We anticipate that practitioners will use different For orm i specifically use the Labeled ETM
+layers based on prior information they may have variant (i.e. we train skip-gram embeddings on the
+about the dataset they are trying to model and the dataset and initialize the word embeddings with
+sort of topics they might care about, them, which are frozen during training), as we
+B_ Datasets found that it outperformed regular ETM.
+For BERTopic and FASTopic, we use the all-
+The dataset statistics are in Table 5. For the word- _ mpnet-base-v2 embedding model. For BERTopic,
+based models, the documents are preprocessed into _we set the top n words for c-TF-IDF to 25.
+word counts using the soup-nuts package (Hoyle We allow ETM and D-VAE to use a separate
+et al., 2021) with the following settings: words _ validation set for early stopping. For mechanistic
+are lowercased and named entities are automati- ETM, we instead form a validation set from 10%
+cally detected and merged together using spaCy of the training set.
+(Honnibal et al., 2020) (e.g., “New York” be-
+comes “‘New_ York”); words must match the regex D Bayesian Optimization
+“[\w-]*[La-zA-Z][\w-J*$, contain at least 2 charac- . ee . .
+. We run Bayesian optimization for 25 iterations for
+ters, and appear in less than 90% of documents. . : .
+. each model-dataset pair. The first subsection lists
+The vocabulary size is set to 15,000 for the bench- the hvperparameter search space for each model
+mark datasets, and 5,000 for GoEmotions and Po- YPetP ; 7 SP . ,
+emSum. After preprocessing. documents with less The next subsections provide mathematical formu-
+; prep S . lations of the topic quality metrics used in the opti-
+than 5 words are removed from the training corpus. 8 : :
+mization objective. Following Dieng et al. (2020),
+Labels. Listed below are label information for we set the optimization objective to be the product
+each dataset, along with some examples of labels. | of NPMI coherence and topic diversity.
+16
+
+
+--- Page 17 ---
+
+Word-based Mechanistic
+Corpus #Docs #Words |V| Avg. Len. #Tokens |V| Avg. Len.
+20NG 10,496 780,825 15k 74.4 3,001,856 8,606 286.0
+Bills 32,659 3,442,488 15k 105.4 = 7,729,628 8,606 236.7
+Wiki 14,290 14,037,490 15k 982.3 38,065,712 8,599 2663.8
+GoEmotions 19,264 131,293 5k 6.8 462,336 8,750 24.0
+PoemSum 2,398 184,695 5k 77.0 707,794 8,743 295.2
+Table 5: Training corpus statistics after preprocessing for the word-based and mechanistic topic models.
+D.1 Hyperparameter Ranges D.2. NPMI Coherence
+Here, [a,b] denotes the set of integers from a to b. NPMI (Normalized Pointwise Mutual Information)
+coherence, or CNpmy, measures the semantic relat-
+D-VAE edness of the top words within each topic based on
+their co-occurrence patterns in a reference corpus.
+topic density € [0.01, 5.0] (log-uniform) For a given topic, NPMI coherence is defined as
+learning rate € (10-3, 10-4] (log-uniform)
+n KL divergence warmup epochs € [100, 200]
+10 j=l Jog Plwitey)
+use RSVI € {true, false} 8 D(wi)plw;)
+, CNPMI = S- S- —_———, (21)
+FASTopic jin log p(w, w;)
+DT alpha € [1, 25]
+TW alpha € [1, 25] where {w;}i2, are the top 10 words in a
+n epochs € [100, 400] topic, and p(w;, w;) is estimated using word co-
+Sinkhorn threshold € (10-7, 0.05] (log-uniform) occurrences in a sliding context window across
+LDA & mLDA focumen's va et al., 2014). : om experiments,
+. tt t the t -
+topic density € [0.01, 5.0] (log-uniform) We Set the TeNenence COFPUS BO De ENS HANS COP
+. . pus, and the entire document is used as the context
+word/feature density € [0.01, 0.1] (log-uniform) . vee
+window. The probabilities p(w;) and p(w) repre-
+ETM sent the individual word frequencies in the corpus.
+learning rate € [10~4, 1077] (log-uniform)
+weight decay € [10~", 10~>] (log-uniform) D.3 Topic Diversity
+use doc. completion validation € {true, false} Topic diversity measures how distinct topics are
+mETM from each other by computing the fraction of
+learning rate € [10~3, 10-2] (log-uniform) unique words among the top words across all topics.
+weight decay € [10~7, 10~°] (log-uniform) Formally, topic diversity is calculated as
+dropout € [0, 0.1] RK
+decoder dropout € [0, 0.1] TD = |Up-1 Top Words)
+scheduler type € {none, cosine} Kx [TopWords,,|
+BERTopic where TopWords, represents the set of top 25
+n UMAP neighbors € [5,50] wor’s ne ‘opie 0, is the total number of
+n UMAP components € [5, 50] opics (Dieng et al., )
+min topic size € [5, 15] D.4_ Limitations for Cross-Model Comparison
+mBERTopic While topic diversity is roughly comparable across
+n UMAP neighbors € [5, 50] mechanistic and word-based topic models, NPMI
+n UMAP components € [[5, 50] coherence is not directly comparable between these
+min topic size € [5, 15] model types due to their differing vocabulary dis-
+use SAE count embeddings € {true, false} tributions. Mechanistic models operate on SAE
+use Sentence Transformer embs. € {true,false}* feature spaces, while word-based models use tradi-
+tional word vocabularies, making direct coherence
+“This option was always chosen to be false. comparisons problematic.
+17
+
+
+--- Page 18 ---
+
+E_ Steering Experiment Details F.2 Topic Summarization
+. . System prompt. You are a helpful assistant specializing in topic
+E.1 Steering Intervention summarization. You will be given a list of either topic keywords
+. . . (some of them may be several words concatenated with "_") or de-
+For all steering, we perform the topic ablation and scriptions of text generated by an automated method. Your task is
+subsequent topic addition interventions across all to summarize these keywords or descriptions into no more than |
+ous . sentence describing the topic’s central theme.
+layers and all token positions using a p re-hook on Provide a concise and informative summary that captures the
+the forward activations. topic’s essence. Here are some specific guidelines:
+1. Do not use a full sentence or a complete thought.
+E.2 Topic Relevance Win Rate 2. Use your world knowledge to help you decide what the topic is
+about.
+We run R = 10 trials per topic with temperature 3. The summary should be general, capturing the commonalities
+of the items as a single main theme. In particular, do not rely on lists
+set to 0.3 for both the steered and unsteered models. in your response, or include specifics that only pertain to a few items
+We generate a maximum of 50 tokens. We use _ in the topic.
+GPT-4o0 mini (Open AI. 202 A) as the LLM judge 4. If unsure, err on the side of being more general rather than too
+: ? : . > specific in your summary.
+and the prompt is provided in Appendix F.4. User prompt. Topic: [topic]
+E.3 Topic Likelihood Difference F3 Ratings and Intrusion
+We select the most relevant documents for each _—_ System prompt. The goal of this task is to evaluate a list of [word |
+: : feature]s produced by an automatic method. We call this list a "topic".
+topic using a threshold-based app roach. For thresh- Given a topic, you will determine how related its [word | feature]s
+old rt = 0.5, we define Dr = {d : Oa k= Th and are on a 3-point scale. The rating options are: (1) Not Very Related,
+set , (2) Somewhat Related, (3) Very Related. A helpful question to ask
+yourself is: "What is this group of [word | feature]s about?" If you
+~ ~ can answer easily, then the [word | feature]s are probably related. Use
+D ks 38< |D | < 10 your world knowledge and the context provided by the other [word |
+~ ~ feature]s to help determine your rating. Here is some guidance and
+Dr = Topi (Dr ), |Dy, | > 10 examples on how to apply these ratings.
+~ Very Related - Most of the [word | feature]s are clearly related to
+Top3 ({ 1, ae) D} ) . ID | <3 each other, and it would be easy to Seontibe how they are Telated.
+Example 1: [example]
+This ensures 3-10 documents per topic. We use Example 2: [example]
+all threshold-exceeding documents when feasible, Somewhat Related - The [word | feature]s are loosely related to
+; ; ; each other, but there may be a few that are ambiguous, generic, or
+capping at 10 for topics with many relevant doc- unrelated.
+uments. When fewer than 3 documents meet the Example 1: [example]
+Example 2: [example]
+threshold, we select the top 3 from the corpus. Not Very Related - The [word | feature]s do not share any obvious
+relationship to each other. It would be difficult to describe how the
+F Prompts [word | feature]s are related to each other.
+Example: [example]
+We provide the prompt templates used for post- Reply with a brief reasoning for your choice and a single number,
+os : : : indicating the overall relatedness of the [word | feature]s in that topic.
+training topic refinement (Appendix A.2), topic u ae
+ser prompt. Topic: [topic]
+summarization (Section 4.3), and the LLM-based
+evaluations in Section 5. For the topic judge prompt System prompt. The goal of this task is to evaluate a list of [word
+. | feature]s produced by an automatic method. We call this list a
+and examples, see Appendix G. "topic". Given a topic, you’ll be answering the question: "Which
+The prompted LLM is GPT-4.1 (OpenAI, 2025, [word | feature] doesn’t belong in this list?" For each topic, choose the
+. . . [word | feature] with the meaning or usage that is most different from
+version 2025-04-14), except for topic relevance win the others. If you feel that multiple [word | feature]s do not belong,
+rate (see Appendix E.2). choose the one that you feel is most out of place.
+Here are some examples: [example]
+Fl To pi c Refinement Here is another, harder example: [example]
+
+. You might be given multiple topics. For each topic, reply with a
+System prompt. The goal of this task is to evaluate a list of features brief reasoning for your choice and the number of the [word | feature]
+produced by an automatic method. We call this list a "topic". Given a that doesn’t belong.
+topic, you'll be answering the question: "Which [word | feature](s) User prompt. Topic: [topic]
+don’t belong in this list?" For each topic, choose the [word | feature](s)
+whose meaning does not match with what the list seems to be about.
+
+Here is an example: [example] F4 Topic Relevance Win Rate (TWR)
+
+Here is another example: [example]
+
+Reply with a brief reasoning for your choice. and up to two num- System prompt. You are an expert evaluator of text relevance to
+
+ply 'g tor y > Pp : : : : F
+
+bers corresponding to the [word | feature]s that don’t belong (or -1 if topics. You will be given a topic summary and a list of text samples.
+there are less than two). Your task is to determine which text sample is most relevant to the
+
+Important: Prioritize identifying [word | feature](s) that are oddly given topic. ; ;
+specific and/or clearly out of place. Use your world knowledge in User prompt. Topic summary: [topic summary]
+considering whether a [word | feature] belongs. If you are not sure, Text samples: [texts]
+do not choose the [word | feature]. Which text sample (by index number) is most relevant to the topic?
+User prompt. Topic: [topic] Provide the index (starting from 0) and a brief explanation.
+
+18
+
+
+--- Page 19 ---
+
+G Topic J udge - "phrases related to news and information dissemination"
+- "phrases related to online interactions and web activities"
+In our experiments, we set qg= 2, p= 0.75, and - "references to email notifications and configurations"
+- "instances of conflict resolution and moderation in community guide-
+T = 100. For TopFeatures, we always take the ines"
+top 10 words for baselines, and take either the top Topic:
+. . - "terms related to religious doctrine and authority"
+10 (for documents with 1 topic) or top 5 (for docu- - "references to church doctrines and religious beliefs"
+ments with 2 topics) features for MTMs. - "references to interfaith dialogues and the complexities of religious
+: : beliefs"
+We pr ovide the prompt and examp le Inputs and - "themes related to student engagement and spiritual involvement in a
+responses for topic judge below. religious context"
+- "discussions about religious beliefs and justifications"
+Choice: B
+G.1 Prompt Reasoning: Set A focuses on specific Christian figures, denominations,
+System prompt. In this task, you will be presented with a document, and theological terms, which are not the main focus of the document.
+a criteria, and two sets of "topics". [A given topic is a list of either The document is about the intersection of Christianity and martial
+single words (or occasionally, instead of a single word, several words arts, inviting discussion on how Christians relate to martial arts, and
+concatenated with "_") or descriptions of text about 5-15 words long. includes references to online communication and information sharing.
+| A given topic will be shown as a summary description no more than Set B, while somewhat generic, includes topics about opinions, online
+1 sentence long.| Each set of topics includes 1-2 topics total. The interactions, religious doctrine, and discussions about religious beliefs
+task is to choose which of the two sets of topics is better suited to the and justifications, which better capture the document’s content and
+document based on the provided criteria. Reply with "A" if the first intent. Therefore, Set B is more aligned with the document’s subject
+set of topics is better or "B" if the second set of topics is better. If matter and style.
+you think that the two sets of topics are equally good, please reply Example 2: Bills with Summarization
+with "tie". Only use "tie" if the two sets of topics are very similar and Document:
+you cannot choose one over the other. Before making your choice, Amends part A of title I of the Elementary and Secondary Education
+provide a brief reasoning for your decision. Act of 1965 to alter the percentage of school improvement funds that
+User prompt. Document: [document] are reserved for outlying areas and Indian education. Reserves 0.5%
+Criteria: Consider how well each topic captures the general mean- of those funds for outlying areas and 0.75% for Indian education.
+ing of the document. Consider all types of meaning, including the (Currently, 1% of those funds are reserved for outlying areas and
+text’s subject matter and the text’s affect, emotive content, and style. Indian education.)
+If Set of Topics A presents a better overall summary of the document Set of Topics A:
+compared to Set of Topics B, then "A" should be chosen, and vice _- Educational policies, administration, and support strategies
+versa. - Financial management, funding, and policy in public and organiza-
+Set of Topics A: tional contexts
+Topic: [topic] Set of Topics B:
+Set of Topics B: - Primary and secondary education systems and funding
+Topic: [topic] - Geographical regions and territories in the United States
+Choice: B
+G.2 Examples Reasoning: Set B is more specific to the content of the document,
+Example 1: 20NG with TopFeatures which discusses changes to funding allocations within the Elementary
+Document: and Secondary Education Act, specifically for outlying areas and
+Greetings and Salutations! Indian education. ‘Primary and secondary education systems and
+I would like to get in touch with people who (a) consider them- funding’ directly addresses the subject matter, and ‘Geographical
+selves Christians (you define it), and (b) are in the Martial Arts regions and territories in the United States’ captures the focus on
+Some topics for discussion: outlying areas and Indian education. Set A is broader and less directly
+- your particular martial art tied to the specifics of the document.
+- your view of the relationship between Christianity and your art Example 3: PoemSum with TopFeatures
+- your view of the relationship between “your* Christianity and Document:
+your art I saw in Louisiana a live-oak growing,
+- why should a Christian participate in MA All alone stood it and the moss hung down from the branches,
+- why shouldn’t a Christian participate in MA Without any companion it grew there uttering joyous leaves of dark
+- Biblical views of MA; pro or con. green,
+For example, I heard from one fellow: “...I tried the Karate for And its look, rude, unbending, lusty, made me think of myself,
+Christ thing and it wasn’t for me...” But I wonder’d how it could utter joyous leaves standing alone there
+- why or why not? without its friend near, for I knew I could not,
+As an aside, I am involved (in *NO* official way) with an organi- And I broke off a twig with a certain number of leaves upon it, and
+zation called the Christian Black Belt Association and I would also twined around it a little moss,
+like to distribute info regarding upcoming events to *those who are And brought it away, and I have placed it in sight in my room,
+interested*. No, you won’t be put on any “mailing list” nor will your It is not needed to remind me as of my own dear friends,
+name be “sold”. (For I believe lately I think of little else than of them,)
+However, if you ARE intested in an email list, let me know. Yet it remains to me a curious token, it makes me think of manly love;
+I am interested in email replies ONLY as this is cross-posted to For all that, and though the live-oak glistens there in Louisiana solitary
+groups I don’t normally read. If anyone wants a summary or, of in a wide flat space,
+course, on-going discussion, then let me know. Uttering joyous leaves all its life without a friend a lover near,
+Shalom, I know very well I could not.
+Robert Switzer Set of Topics A:
+ka2czu@cbnewsh.att.com Topic: "tree", "plants", "leaves", "trees", "green", "earth",
+Set of Topics A: "poughs", "leaf", "life", "growth"
+Topic: "matthew", "jesus", "paul", "resurrection", "isaiah", "mor- Topic: "spring", "summer", "autumn", "winter", "fields", "heart",
+mon", "gentiles", "tomb", "judas", "christ" "long", "year", "beauty", "snow"
+Topic: "pope", "catholic", "church", "holy", "spirit", "schism", Set of Topics B:
+"godhead", "trinity", "liturgy", "lutheran" Topic:
+Set of Topics B: - "literary elements and themes related to poetry"
+Topic: - "specific types of flowering plants and their characteristics"
+- "references to opinions and subjective statements" - "descriptions and characteristics of autumn foliage"
+19
+
+
+--- Page 20 ---
+
+- "descriptions of agricultural practices and related processes" e Add pair (2*, j*) to alignment and re-
+- "references to specific plants and their biochemical properties" move from consideration
+Topic: . . . :
+- "emotional connections and feelings of companionship" 3. Visualize: Reorder topics by alignment order
+- "themes of longing and escape" to create the heatmap, with strongest column
+- "instances of humor or comedic elements in the text" : :
+- "sentences that imply existential questions or dilemmas regarding matches ap P caring first along the diagonal.
+trust and character integrity" High correlations along the diagonal indicate
+“ogeressions related to doubt or uncertainty" shared concepts between models, while low-
+O1ce: . .
+Reasoning: Set A focuses on nature, trees, and the cycle of seasons, correlation regions (dashed boxes) reveal novel
+which are present in the poem, but it misses the deeper emotional topics unique to one model.
+and thematic content about solitude, companionship, and longing.
+Set B, while a bit broad and including some irrelevant elements (like
+humor and agricultural practices), does include topics about emotional
+connections, companionship, and existential questions, which are
+central to the poem’s meaning. Despite some extraneous topics, Set B
+better captures the poem’s affective and thematic depth.
+H_ Topic Refinement Example
+— references to Azerbaijani cultural elements, particularly
+music and instruments
+— references to protests and related incidents
+— events or actions involving protests and their consequences
+— topics related to the Holocaust and atrocities committed
+during wartime
+— references to combat and military actions
+— topics related to military actions and warfare
+— references to military involvement or actions related to
+Russia
+— keywords related to violence and its victims
+— references to violent or aggressive actions
+— instances of violence or conflict
+— phrases related to archaeological discoveries and remains
+— mentions of military divisions or actions
+Figure 4: The features identified as spurious in topic
+refinement for this topic are italicized. The doc-
+uments associated with this topic discuss the Ar-
+menian genocide. The two identified feature de-
+scriptions have an incorrect focus (music and in-
+struments) or context (archaeological discoveries).
+I Topic Alignment Procedure for
+Cross-Correlation Heatmaps
+To create the cross-correlation heatmaps in Fig-
+ure 2, we use greedy alignment:
+1. Compute correlations: For models m and
+m’ with K topics each, compute the K x
+kK correlation matrix C where Ci; =
+/
+corr(9?;, 0"; ).
+2. Greedy matching: Starting with all topics
+unmatched, iteratively:
+¢ Find the column j* with highest
+maximum across all rows: j* =
+arg MAX; eremaining MAX; Ci, i]
+« Among’ remaining rows, find
+the best match for this column:
+i = arg MaXicremaining Ci,j*
+20
+
+
+--- Page 21 ---
+
+Model: mETM | Dataset: Bills
+Topic Summary: "Legal terminology and concepts surrounding property rights, ownership, environmental conservation, and
+financial transactions in real estate and land management."
+A= 10 "A text about the history of a house in New York City, with an emphasis on its architecture and interior design.
+The author explores how the house has changed over time, from its original construction to its current state as a
+museum.\n\nThe book is divided into three"
+A = 20 "A text about the history of a 10-acre plot in San Bernardino County, California. The property is located near the
+town of Twentynine Palms and was owned by John W. Smith from 1924 until his death in 1"
+A = 30 "A text about the 1980s of a parcel in the Town of Silverton, Colorado. The property is located at approximately
+35°24’N and 67°W on the west side of Main Street between E.S"
+A = 40 "A text about 1.02 acres in the town of East Helena, Montana is for sale by sealed bid No. 49-3758 (the "Property")
+located at approximately 6 miles north and west from the city limits of East"
+A= 50 "A text about 10 acres in the City of San Bernardino, County of Maricoa.\n\nThe property is located on a road that
+was granted by the State of Arizona and United States for the purpose of which is to be used as an irrigation water
+under"
+Model: mBERTopic | Dataset: Poems
+Topic Summary: "Exploration of agriculture, plant varieties, propagation techniques, and their interactions with environmental
+factors and literary themes."
+A= 10 "A text about the history of a house, its inhabitants and their memories.\n\nThe book is divided into three parts: 1)
+The story of the house; 2) A series of short stories by different authors from around the world that are inspired by
+the"
+A = 20 "A text about a woman who is in love with her best friend.\n\nI’ve been thinking of you all day,\nAnd I can’t help
+but wonder if you feel the same way?\nYou are my best friend and I know that we will"
+A = 30 "A text about a girl who was born on the 4th of July, and grew up in the shadow of her mother’s love. Her father had
+died when she was young, but he left behind him a memory that never faded from her heart; for"
+A = 40 "A text about the beauty of a flower,\nThe fragrance that it gives to air;\nAnd how its petals fall in showers,\nLike
+stars from heaven’s starry hair.\n\nBut soon they fade and die away,\nAs if their hearts were broken"
+A= 50 "A text about the tree is a beautiful sight to behold.\n\nThe branches of this tree are full of fruit, and it’ens with
+blossoms that bloom in the spring. The leaves of this plant are green and red, and they grow on the ground. And"
+Unsteered examples (control)
+"A text about a new study on the role of women in science, technology and innovation (STI) was published by UN
+Women.\n\nThe report “Women’s participation in STI: A review of evidence” is based on an analysis of 41 studies from"
+"A text about the new Star Wars movie, which is set to be released in December of this year.\n\n<blockquote>The film will
+follow a group of young heroes and villains who are on the run from an evil empire that has taken over their"
+"A text about the 1970s, and how it was a time of great change for women.\n\nThe author talks about her own experience as a
+young woman in the 70’s, when she had to fight against sexism and discrimination."
+Table 6: Representative examples of steered and unsteered text generations for different values.
+20NG Bills Wiki GoEmotions
+Model P, NMI P, NM P, NMI | Pi NMI
+D-VAE 0.27 0.33 0.33 0.38 =0.45* ~—-0.71* | 0.28 0.05
+FASTopic 0.58 0.47 0.44 0.48 0.41 0.65 0.29 0.06
+LDA 054 044 050" 051 028 0.06
+ETM 0.54 0.45 0.46 0.50 0.36 0.69 0.07
+BERTopic (default) 0.27 0.47 0.27 0.04
+BERTopic (reduce outliers) 0.69 0.28 0.05
+MTM (w/ LDA) 0.53 0.49* 0.41 0.70
+MTM (w/ ETM)
+MTM (w/ BERTopic) (default) 0.42 0.43 0.34
+MTM (w/ BERTopic) (reduce outliers) | 0.59*  _0.55* 0.47 0.53* 0.40
+Table 7: Alignment metrics Purity (P,) and NMI for labeled datasets, averaged over five runs (top two
+scores per column marked with *). Purity quantifies single-category clusters; NMI measures topic-label
+mutual information. Bold values (column maxima) denote statistical significance (p < 0.05) via two-
+sided t-tests against other models. Green indicates equal/higher scores versus the paired model; purple
+indicates lower scores. BERTopic and mBERTopic excel on benchmark datasets, while MTMs outperform
+non-mechanistic counterparts on the GoEmotions dataset, where short texts are labeled with their emotion.
+21
+
+
+--- Page 22 ---
+
+20NG Bills Wiki GoEmotions PoemSum
+". *s, fp TE aad
+ee LE ". "., . ! fe Pre en
+41 83 56 93 77 36 3 31 5 37
+20NG Bills Wiki ___GoEmotions ___PoemSum
+38 72 26 74 59 80 2 36 1 12
+Figure 5: Heatmap representations of how similar mETM and ETM topics (top), and mBERTopic and
+BERTopic topics (bottom), are in terms of their proportions across documents; topics are aligned greedily.
+20NG Bills Wiki GoEmotions PoemSum
+4 —= 2 Aa eee! Features
+— (me 1 ee | ae 2 em 2 --- Top 1 features
+sl ~_ f i) | a qeeeesiir; + Top 5 features
+= 0 Le” mn | y 4 ce + Top 10 feature
+= OlF M 0 ¥ : é — Nees: -
+a1 0 0
+0 50 100150 0 50 100150 0 50 100150 0 50 100150 0 50 100150
+A A A A A
+20NG Bills Wiki GoEmotions PoemSum
+i aa 0.5 Features
+— SD 7 : --+- Top 1 feat
+= \ \ 0.0 \ *~ Top 10 features
+4 —— All features
+eo -0.25 0.0 = -0.2
+“0 50 100150 0 50100150 0 50100150 0 50100150 0 50100150
+A A A A A
+Figure 6: Document log-likelihood difference A@(A) for mETM (above) and mBERTopic (below). For
+mETM, A¢? generally increases as \ increases, confirming bias toward the target topic. In contrast,
+mBERTopic does not always show positive A? shifts. We think this may be because it is the only model
+that uses class-based TF-IDF to learn its topic-vocabulary weights, but further investigation is needed.
+Nevertheless, mBERTopic performs comparably to the other MTMs on metrics measuring the quality of
+its generated text (Section 5.4), indicating that its steering vectors are still generally effective.
+TWR Perplexity (+SE)
+Model Dataset %+SE Control A= 10 » = 20 A = 30 A = 40 A = 50
+20NG 87.0+1.1 | 6.23+0.03 6.32+0.06 7.394007 9.10+0.10 12.25+0.14 16.91 +0.20
+Bills 99.0 +0.3 | 6.22+0.03 6.3040.06 7.64+40.08 10.00+0.11 12.9640.15 17.24+0.22
+mLDA Wiki 88.1+1.0 | 6.22+0.03 6.46+0.06 7.174007 8.80+0.09 11.48+0.13  15.5240.19
+GoEmotions | 88.3 + 1.0 | 6.224£0.03 6.28+0.06 6.75+0.06 7.9740.08 11.04+40.12 20.64 +0.27
+PoemSum | 85.8+1.6 | 6.23+0.04 6.46+0.09 7.1940.10 8.89+0.13 11.55+0.17 16.86 +£0.28
+20NG 84.2+1.2 | 6.24+0.03 6.374006 7.144007 8.80+0.09 11.9140.13 16.45 +0.20
+Bills 94.0+0.8 | 6.22+0.03 6.39+0.06 7.48+0.07 9.42+0.10 11.85+0.14 16.20+0.20
+mETM Wiki 86.1+1.1 | 6.24+0.03 6.43+0.06 7.174007 8.98+0.09 11.48+0.13 15.15 40.18
+GoEmotions | 83.8 + 1.2 | 6.20£0.03 6.27+0.06 6.80+0.07 8.0340.08 11.22+0.12 20.93+0.27
+PoemSum | 85.8+1.6 | 6.22+0.04 6.31+0.08 7.0540.09 8.66+0.12 11.5140.17 17.33 40.30
+20NG 89.3+1.0 | 6.23+0.03 6.36+0.06 7.014007 845+0.09 11.3140.13 15.60+0.19
+Bills 97.5£0.5 | 6.21+0.03 6.22+0.06 6.97+0.07 8.98+0.10 11.674£0.13 16.15 +0.20
+mBERTopic Wiki 86.4+1.1 | 6.23+0.03 6.22+0.06 6.934007 841+0.09 10.66+0.12 13.55+0.16
+GoEmotions | 92.8 +0.8 | 6.2140.03 6.15+0.06 6.77+0.06 7.98+0.08 10.34+0.11 22.16+0.31
+PoemSum | 97.0+0.5 | 6.24+0.03 6.23+0.06 7.1040.07 8.93+0.09 11.46+0.13 16.48 + 0.20
+Table 8: Topic relevance win rate (TWR) and perplexity metrics (mean + standard error (SE)) for each
+mechanistic model.
+22
+
+
+--- Page 23 ---
+
+species, shark, cap, stem, sharks, brown, fungus, shaped, smooth government, political, minister, party, military, prime,
+, fruit, spores, fins, bodies, surface, genus, typically, president, national, economic, leader, country, opposition
+thick, distribution, habitat, fin , policy, parliament, foreign, secretary, leadership,
+independence, general, leaders
+- scientific classifications and descriptions of plant species
+- terms related to flora and plant characteristics - references to historical or political movements and conflicts
+- details about plant characteristics and descriptions - references to political dynamics, power struggles, and social
+- terms related to cryptic species and their ecological studies discrimination
+- specific colors and descriptions related to plants and their - references to specific groups or organizations
+characteristics - references to U.S.-backed interventions and coups in foreign
+- terms related to biological and anatomical features nations
+- references to political factions or militia groups involved in
+“ps : : flict
+(a) [Wiki] mETM uncovers high-level botanical taxon- cones
+. . - references to historical events involving the Soviet Union
+omy concepts, robust to varied word choice.
+people, law, government, right, rights, laws, like, case, think, (f) [Wiki] mETM provides rich contextual descriptions
+state, public, crime, use, time, person of historical conflicts versus ETM’s generic political
+terms.
+- negative sentiments directed towards authority and governance
+- references to freedom of speech and expression - references to characters or individuals from Greek mythology
+- references to extremist ideologies and discriminatory language - nouns associated with historical events and figures
+- names of political figures and references to political actions - instances of significant literary expressions or metaphors
+- themes related to political criticism and party dynamics - mythological figures and their related narratives
+- phrases related to political accountability and ethics - religious or spiritual references and concepts
+- references to mythological gods and their interactions
+(b) [2ONG] mLDA captures both critical tone and con-
+tent in political discourse, whereas LDA captures only _ (g) [PoemSum] mETM discovers novel Greek mythol-
+the broader political theme. ogy theme (max correlation 0.12 with any ETM topic).
+- expressions of disbelief or surprise beauty, woman, greece, maid, thy, praise, eyes, white, lovely,
+- expressions of unexpectedness or surprise in various contexts thee, world, skill, face, darkened, love, wan, fleet,
+- words expressing strangeness or oddity deeds, lip, art
+- expressions of emotions and connections between people
+- expressions of doubt, reflection, and introspection - concepts related to existential purpose and the divine
+- expressions of surprise or shock in personal experiences - themes related to existential questions and the nature of God
+- instances of significant literary expressions or metaphors
+: : : : - lit 1 t d th lated t t
+(c) [GoEmotions] mLDA identifies complex emotional merary erements ang memes resared to poetry
+. . . . - concepts related to spirituality and eternal life
+States (surprise, disbelief) as a coherent topic. - descriptive phrases related to physical characteristics or
+appearances
+- references to relationship dynamics and communication issues
+- references to workplace disputes and grievances
+- familial relationships and conflicts (h) [PoemSum] mBERTopic captures existential and
+- references to psychological distress and coping mechanisms religious motifs beyond surface-level poetic vocabulary.
+- phrases and terms related to emotional support and effective
+communication in caregiving - literary elements and themes related to poetry
+~ emotions related to anger and frustration - information about an artist’s biography and professional
+background
+(d) [20NG] mBERTopic reveals nuanced interpersonal - emotional connections and feelings of companionship
+conflict and coping themes - references to poetry and poets
+ping . - instances of humor or comedic elements in the text
+- expressions related to rudeness and offensive behavior ~ sentences that imply existential questions or dilemmas
+_ . . . regarding trust and character integrity
+expressions of anger and strong negative emotions oT
+- terms associated with negative character traits or behavior ~ keywords or phrases related to judicial or legal processes
+. saa ae - mentions of struggles and hardships faced by individuals
+- expressions of criticism and critical comments
+- themes related to feelings of embarrassment and shame
+- references to feedback, accountability, and constructive (i) [PoemSum] mLDA demonstrates a potential MTM
+criticism failure mode: while the features correctly represent a
+. . poetic theme, they’re too broad to be useful, and spu-
+(e) [GoEmotions] mLDA captures sentiment and tone tious features irrelevant to the topic’s top documents
+ma unified topic, identifying negative sentiment and persist despite post-training refinement (Appendix A.2).
+social disapproval themes.
+Figure 7: Illustrative examples of topic sets from MTMs (mLDA, mETM, mBERTopic) across diverse
+datasets. Each mechanistic topic is represented by its top 6-8 SAE features. When appropriate, mechanistic
+topics are contrasted with their most similar word-based topic (top 20 words), selected based on correlation
+of document-topic distributions (see Section 5.3). The word-based topic is shown above the corresponding
+mechanistic topic.
+23

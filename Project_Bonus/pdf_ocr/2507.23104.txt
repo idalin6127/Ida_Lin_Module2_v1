@@ -1,0 +1,940 @@
+
+
+--- Page 1 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive
+Database Text-to-SQL
+Jeffrey Eben Aitzaz Ahmad Stephen Lau
+jeffeben@amazon.com aitzaza@amazon.com lausteph@amazon.com
+Amazon Amazon Amazon
+Jersey City, NJ, USA Seattle, WA, USA Seattle, WA, USA
+ABSTRACT and well-defined database-table hierarchies [23], employ compu-
+Despite advances in large language model (LLM)-based natural lan- tationally intensive multi-agent frameworks that process entire
+guage interfaces for databases, scaling to enterprise-level data cata- schemas through many LLM calls [21], or use complex optimiza-
+Val logs remains an under-explored challenge. Prior works addressing tion techniques that don’t scale to truly massive schemas [6]. These
+CN this challenge rely on domain-specific fine-tuning—complicating methods struggle in real-world deployments where database ar-
+oO deployment—and fail to leverage important semantic context con- chitectures often follow monolithic NoSQL paradigms, metadata
+N tained within database metadata. To address these limitations, we about Jom relationships is incomplete, or database schema is often
+— introduce a component-based retrieval architecture that decom- changing. The scalability challenge becomes exponentially worse as
+5 poses database schemas and metadata into discrete semantic units, database size increases: while methods may work reasonably well
+ee each separately indexed for targeted retrieval. Our approach prior- on benchmarks with hundreds of tables, they fail to maintain ac-
+=) itizes effective table identification while leveraging column-level ceptable performance and cost efficiency when scaled to enterprise
+crt) information, ensuring the total number of retrieved tables remains catalogs with thousands of tables [21].
+within a manageable context budget. Experiments demonstrate We present Retrieval Augmented Schema Linking (RASL), a
+a that our method maintains high recall and accuracy, with our sys- novel approach designed specifically for text-to-SQL over massive
+— tem outperforming baselines over massive databases with varying database schemas without requiring fine-tuning or well defined
+UO structure and available metadata. Our solution enables practical database relations. RASL decomposes schemas into semantic enti-
+7p text-to-SQL systems deployable across diverse enterprise settings ties, indexes them in a vector database, and employs a multi-stage
+oO without specialized fine-tuning, addressing a critical scalability gap retrieval process with relevance calibration to efficiently narrow
+— in natural language database interfaces. the search space while maintaining compatibility with hosted LLM
+services.
+> KEYWORDS Our contributions include:
+aw Retrieval Augmented Generation, Text-to-SQL, Schema Linking, e A zero-shot schema linking architecture that scales to massive
+) Table Retrieval databases with minimal preprocessing, no model training, and
+— no requirement of known database hierarcy and join relations
+foe) 1 INTRODUCTION e An entity-level decomposition strategy with keyword-based
+CN Text-to-SQL systems translate natural language questions into exe- context retrieval and entity-typ € relevance calibration
+(— cutable SOL queries, enabling non-technical users to extract insights + Empirical evidence of RASL’s effectiveness on industrial-scale
+= from databases without SQL expertise. While these systems have benchmarks
+q evolved from rule-based approaches to powerful large language Our work bridges the gap between academic text-to-SQL re-
+ee model (LLM) solutions [8], scaling them to industrial settings with search and industrial requirements, providing a practical solution
+. = massive database catalogs remains an underexplored challenge. for natural language interfaces to massive data environments.
+Sd Current state-of-the-art methods primarily leverage LLMs using
+fa techniques like task decomposition and prompt optimization, avoid- 2 RELATED WORKS
+3 ing the overhead of maintaining fine-tuned models [11, 13, 17, 22]. Schema linking—mapping natural language elements to database
+However, these approaches face critical limitations when applied components—becomes exponentially more challenging as database
+to enterprise environments with thousands of tables and tens of size increases. While some works have found schema-linking to
+thousands of columns. In such massive database settings, provid- be unnecessary on standard benchmarks with the latest founda-
+ing comprehensive schema context to LLMs becomes untenable tion model offerings [15], others have shown that text-to-SQL per-
+due to token limitations, computational costs, and semantic over- formance degrades as database size increases and state-of-the-art
+load [12, 21, 23]. For example, a typical enterprise data catalog with methods are unable to scale to full industry-scale data catalogs [21].
+10,000 tables averaging 50 columns each would require over 500,000 Several approaches have been proposed for massive database en-
+schema entities—far exceeding current LLM context windows and vironments, each with limitations in industrial settings. DBCopilot
+creating prohibitive costs for commercial API usage. [23] models schema linking as path generation through a hierarchi-
+Existing solutions for scaling to massive catalogs either rely on cal graph, first predicting the database, then tables, before generat-
+hierarchical selection methods that require domain-specific training ing SQL. While effective with clear database boundaries and known
+Paper accepted to the KDD Workshop on Structured Knowledge for Large Language join relations, this approach struggles in monolithic data lake set-
+Models (SKnowLLM °25), Toronto, Canada. tings and requires extensive training on synthetic question-schema
+
+
+--- Page 2 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+pairs, making adaptation to schema changes difficult. CHESS [21] At build time, RASL decomposes database schema S into se-
+incorporates an Information Retriever and Schema Selector to re- mantic entities E,,, and E,., which are embedded and indexed in
+trieve and prune context, but faces severe scalability issues with a vector database with metadata tags incorporating full schema
+industry-sized datasets. It processes the full schema via many LLM context for later reconstruction. At inference time, given a natural
+calls, only using retrieval to augment already-identified schema language question g, RASL extracts keywords K and performs par-
+elements with additional indexed context. allel retrieval for each k € K U {q} across each entity type Aj € A.
+
+CRUSHA4SQL [12] embeds column names during build time and For each retrieval query, RASL applies entity-type-level calibration
+hallucinates a candidate schema from input questions to retrieve rel- to account for variably discriminative entity types when training
+evant columns. While conceptually similar to our approach, CRUSH samples are available. RASL then filters entities to retain only those
+is limited to column name schema context, showing degraded per- belonging to the top N tables, considering both table-level and
+formance on complex benchmarks containing additional context column-level entities for table ranking. This filtered subset serves
+such as descriptions and value formats. Additionally, its reliance as input for LLM-based table prediction to identify the most rele-
+on LLMs to hallucinate schemas for querying can lead to misalign- vant tables for the query. Finally, RASL loads the complete schema
+ment with ground truth database schemas where columns follow context for these predicted tables to support downstream SQL gen-
+non-standard naming conventions. eration.
+
+RASL addresses these limitations through a zero-shot architec-
+ture that leverages both column-level and table-level context with- 4.2 Knowledge Base Construction
+
+t iring database hi hy knowled, hensive tabl . was
+OnE TEGUTNG Catabase Merarcay Knowledge or comprenensive tabie Schema Entity Decomposition. We decompose database schema
+relationship metadata. By separating build-time schema decompo- : . ays .
+
+as : : : . : S into semantic entities at table and column levels as defined in our
+sition from inference-time retrieval, RASL provides an effective co. . . .
+. . . preliminaries. Specific E vary by dataset, with examples of E,,, in-
+balance between accuracy and efficiency for industrial deployments . : ae
+. . cluding table names, aliases, and descriptions and examples of Ej.
+where schemas frequently evolve across diverse storage paradigms. a . wae
+containing column names, aliases, descriptions, and value format
+descriptions. For example, consider a table student_club.member
+3 PRELIMINARIES with columns first_name, last_name, and zip. RASL would cre-
+We begin by establishing notation for the components of our ap- ate separate entities: e(student_club.member, Atable name) = "stu-
+proach. dent_club.member", e(first_name, Acoiumn name) = “first_name’,
+e(last_name, A, ="last_name", and e(zip, A
+Database Schema. We define a database schema S as a collection ( ow co umn name) ~ (zip column name)
+: = "zip". Each entity e € E is indexed with metadata tags linking it to
+of tables T = {t, t2,..., tn}. Each table t; consists of a set of columns .. : . . . :
+; . the original schema structure, preserving hierarchical relationships
+Ci = {Ci.1,Ci.2,..-,Cim;}, Where mj; is the number of columns in : : ;
+pe mt : for inference-time schema re-construction.
+table t;. The complete set of columns across all tables is denoted as . . . .
+C=u"C Vector Embedding and Indexing. Each semantic entity e € E
+~ ister is embedded using the embedding function ¢ to capture its seman-
+
+Entity Types. We define A = {Aj,A2,...,A)} as the set of all tic meaning in a d-dimensional vector space. These embeddings
+entity types, where each A; represents a specific type of schema are indexed in a vector database optimized for similarity search,
+information (e.g., table description). Entity types are partitioned enabling efficient retrieval without task-specific fine-tuning.
+into table-level types Ar C A and column-level types Ac C A. Table description Synthesis. For tables with limited or missing
+
+descriptions, which is common across all datasets evaluated, we
+
+Schema Entities. For each table t; and entity type Aj € Ar, we explore synthesizing descriptive text using an LLM that analyzes
+define entity e(t;,A;) as the representation of table t; according to table structure, column names, and available metadata. This descrip-
+type A; (e.g., its name or description). Similarly, for each column tion is saved as Atable descr. € AT, With specific details on synthesis
+ciz and entity type Aj € Ac, we define entity e(c;,,A;) as the prompts provided in C.4. For fair comparison with baselines, we
+representation of column c;; according to type A;. The complete primarily evaluate our system without the inclusion of E Jrable deser
+set of all entities is denoted as E. with ablation studies exploring the effect of adding additional syn-
+
+. . . thesized context on RASL’s performance.
+
+Vector Representations. Each entity e € E is embedded in a d-
+
+dimensional space using an embedding function ¢ : E > R?. : . 1:
+P 6 ean’ ? d 4.3 Retrieval-Augmented Schema Linking
+Similarly, a natural language question q is embedded as $(q) € R®.
+The similarity between two embeddings is measured using cosine 4.3.1 Question Decomposition. Inspired by CHESS-SQL [21], we
+similarity. decompose each user question g into keywords K = {ky, ka, ..., km}
+using a light-weight LLM to enhance retrieval effectiveness for
+4 METHODOLOGY complex questions referencing multiple schema elements, with
+. prompt details provided in C.3. These extracted keywords serve as
+4.1 Overview independent retrieval queries that help capture relevant schema
+RASL addresses the challenge of scaling text-to-SQL to massive elements even when the full question’s semantic representation
+database catalogs through a two-phase approach: build-time knowl- doesn’t closely match corresponding schema elements.
+edge base construction and inference-time retrieval augmented For each e € E we concurrently perform retrieval across each
+schema linking. Figure 1 illustrates our pipeline. k € K U {q}, with an ablation study in 5.7 analyzing the impact
+
+
+--- Page 3 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+| Build-time Process | Inference-time Process |
+i " Q: How many matches in the 2008/2009 season were held in '
+' matchs The matchs table... hometeam - Name of Home i
+' Team hi '
+matchs The matchs table... date - Match Date YYYY-MM-DD Keyword extraction
+matchs The matchs table... fthg Final-time Home- 2 i
+team Goals - i
+comments The comments table... Score - Rating score The score is
+from 0 to 100. fh '
+1 in oncurrent asynchronous '
+sevsssassns Mcsnssnsnnssssuntn en SS i Vector | keyword-level retrieval by
+> f Table Entity Chunks ‘ Y Column Entity Chunks % - i DB en ope
+| Table-level | | Table-level + —
+' hi i ii : | Column-level |
+metadata ri bi i schema i [re] [cama | | tae | 3 a
+save iL The comments 7 The score saved i Relevance score calibration
+Jy vee DA wo GL i +  ROC-AUC-optimized entity type re-weighting
+i Table SQL A: SELECT
+en | | Prediction Generation FROM country... |
+Figure 1: System overview. (left) Build-time process of constructing the schema metadata knowledge base. (right) Inference-time
+retrieval process for text-to-SQL applications.
+of keyword-level and question-level retrieval. We also evaluate it from our results; details on the component methodology and
+appending k directly to q as done in CHESS, but we find that this observed impact are discussed in B.
+under-performs direct keyword-level retrieval.
+4.4 SOL Generation
+4.3.2 Entity-Type Relevance Calibration. We hypothesize that each Q . : . .
+A € Awill have varying levels of importance within each dataset, Table Prediction. While the resulting schema entities can be used
+which may not be captured by direct relevance scores. To account directly to construct a schema for SQL generation, we find It is
+for this, we propose an entity-type relevance score calibration, beneficial to perform an intermediary table prediction prior to
+where weights are calibrated over ground truth training samples final query generation. This step constructs a candidate schema
+when available. For each entity type A € A, we compute: and applies an LLM to predict rank-ordered tables relevant to q,
+with specific prompts used detailed in C.1. Full schemas of tables
+|A| - AUC(A)2 identified as revelant are then loaded for final SQL generation. We
+Wa = ¥ yea AUC(V)2 (1) find that this step is especially beneficial for covering unknown
+ved join relations which cannot be inferred from q, as well as better
+where AUC(A) is the area under the table-level recall curve for leveraging semantic context in Eq,
+entity type A over training data. We Square the AUC values to SQL Generation. Following retrieval, any SQL generation pipeline
+amplify differences between entity types, giving greater weight can be applied to the final schema, with our specific evaluations
+to those with stronger predictive power. These weights are then using zero-shot text-to-SQL with self-correction. Details on the
+applied to scale relevance scores at inference time, ensuring that specific prompt used in experiments is provided in C.2.
+entity types with consistently stronger predictive power receive
+higher influence in the final ranking. 5 EXPERIMENTS
+Inspired by CRUSH [12], we also explored keyword-level entropy- .
+guided relevance calibration prior to entity-level calibration, which 5.1 Dataset Details
+is designed to address the variable discriminative power of different We evaluate our method over three benchmarks with dataset sta-
+keywords across schema entities. However, we found that this com- tistics provided in Table 1. The Spider and BIRD benchmarks are
+ponent did not improve system performance and have excluded designed for the single-database setting, which we adapt to the
+
+
+--- Page 4 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+massive catalog setting by considering the full set of training and e DBCopilot [23]: DBCopilot synthesizes text-to-SQL pairs over
+test schema for each test record. a hierarchical graph of known database and table relations and
+
+© Spider [24]: A widely-used cross domain text-to-SQL bench- uses these to train a constrained decoder for table prediction.
+mark with Ac = {column name, column alias}, At = Similar to DTR, this requires synthesis of training data over
+{table name, table alias}. Database schemas are well-named, the target database schema.
+with schema elements that are well-aligned with questions. . .
+e BIRD [14]: A challenging text-to-SQL benchmark emphasiz- 5.3. Evaluation Details
+ing database content understanding. BIRD contains richer Consistent with previous works [10, 12, 23], we primarily evaluate
+schema context designed to test text-to-SQL systems’ abili- our method using macro-average Recall@N with respect to ground
+ties to incorporate domain knowledge, with Ac = {column truth tables used in each SQL query, which measures the fraction
+name, column alias, column descr., value descr}, Ar = {table of relevant instances in the top-N predicted tables. For primary
+name}. Questions may involve references to associated schema evaluations on Recall@N, we directly adopt the metrics reported
+context, as opposed to direct column and table names as in in [23], where specific method configurations are provided in F
+Spider. and RASL is applied over identical testing sets. For ablation studies,
+e Fiben [19]: An enterprise-focused benchmark developed by we focus on comparison to retrieval-based baselines which do not
+IBM across financial schemas. Fiben uses minimal metadata involve model fine-tuning, as these methods are most relevant to
+with Ac = {column name}, Ar = {table name}. Questions industry settings with evolving catalog schemas. For all ablations,
+often lack context, making schema identification challenging. we closely follow the implementation details reported in [23], with
+For all datasets, we additionally synthesize E),,,.. jee, from table the exception of using Anthropic Claude 3.5 Sonnet-v2 [2] instead
+schemas following the process in C.4 and analyze the impact of of OpenAI GPT-3.5-turbo [16] for CRUSH schema hallucination
+adding it to Ay on token consumption and performance in ablations. due to model access constraints.
+Primary evaluations are reported with Atable descr, excluded for fair
+comparison. Model Fiben
+ROS_ ROT
+> BM25 86.5 93.9 68.3 82.8 33.3 38.6
+NN N Avg Cols : :
+Spider | 7000 1034" | 166 876 4503. 5.1 CRUSHsxrmr | 82.2 93.9 | 70.6 85.1 | 341 50.8
+BIRD | 9427 15342 | 80 597 4337 7.26 DTR 37.7 48.9
+Fiben 1 152 374 2.46 DBCopilot 91.6 97.6 85.8 94.6 41.1 56.9
+Table 1: Statistics of datasets. * We use the original develop- mas con eo
+ment sets for testing. - . -
+Table 2: Primary performance comparison measuring
+Recall@N, where N is the maximum number of tables. RASL
+is applied without Ataple descr, in this setting.
+5.2 Baseline Methods
+We compare RASL to various retrieval baselines, including both
+general methods adapted to text-to-SQL and methods proposed . .
+specifically for text-to-SQL schema retrieval. 5.4 Experiment Settings
+¢ BM25 [5]: BM235 is a lexical retrieval method widely used for For all experiments, RASL uses Anthropic Claude 3.5 Haiku [1] for
+document retrieval and ranking. We adapt this to table retrieval keyword extraction, Cohere Embed-v3-English [7] in OpenSearch
+by treating each table’s complete schema as one document. Serverless through Amazon Bedrock Knowledge Bases [3] for vec-
+e Sentence transformer (SXFMR) [18]: The sentence trans- tor database embedding, and Anthropic Claude 3.5 Sonnet-v2 [2]
+former is a semantic retrieval model designed to embed text to for table prediction and SQL generation; temperature is set to 0.0
+the same latent representation. Similar to BM25, table schemas throughout for reproducibility.
+are treated as documents for embedding. For all datasets except Fiben, which does not contain a training
+e CRUSH [12]: CRUSH uses an LLM to hallucinate a schema set, we perform entity-type weight calibration using 200 randomly
+from q, followed by retrieving target schema columns by lex- sampled training instances. During retrieval, the top 100 entities
+ical or semantic similarity to hallucinated schema columns. within each keyword and entity type are retrieved prior to relevance
+For table-level retrieval evaluations, we take the distinct tables calibration and filtering, as this is the maximum allowed by Bedrock
+corresponding to top ranking columns. Knowledge Bases.
+e DTR [10]: DTR uses contrastive learning on (q, t) pairs to .
+train a table retriever. This method requires synthesizing ex- 5.5 Table Retrieval Results
+tensive training data over the target database, and may not be In Table 2 we evaluate RASL against baseline systems for table
+best suited for enterprise settings with continuously evolving retrieval. We evaluate RASL in two settings: (1) retriever-only, which
+databases. ranks tables by calibrated relevance scores across all entities E, and
+
+
+--- Page 5 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+BIRD Recall@N Fiben Recall@N
+1.0 —@ All Entities
+__ eS 09 *~ table_name 3
+= = a ~*~ table_description «
+- “ - lu *
+08 ea Le column_name °
+a + t 3 0.8 Ss —
+—— - * a
+0.8 4 i - t ; _—- 4
+7 / . —® All Entities o7 a a A
+= i *— table_name —_ -
+OH 07 hd —*— table_descripti
+Q ‘ + original column, pare a #
+co A *~ column_name 0.6 4
+H *— column_description ~
+0.6 . / *~ value_description a <
+. 0.5 ; f
+0.5 - . . . .
+A . 1
+0.4 -
+044 A
+10 20 30 40 50 10 20 30 40 50
+Number of tables (N)
+Figure 2: Table Recall@N over BIRD (left) and Fiben (right). BIRD benefits from both Ac and Az, achieving notable recall
+improvement over individual 4 at higher N, while Fiben primarily leverages Ec.
+(2) full-system, which applies table prediction after filtering E to Without RASL Table Descriptions _
+entities from the top N ranked tables. For full-system, we limit the Model LLM Filtered Prediction Initial Retrieval Pool
+: : sas : Spider BIRD Fiben | Spider BIRD  Fiben
+retrieved candidate entities to N = 50 tables, as we find that this mR 5) (R@5) (R@S R@N) (R@N) (R@N)
+consistently keeps schema entities below 3% per type (A) while @5) @5) @5) | (R@N)_(R@N) @
+intaining high table recall, ensuring manageable prompt lengths oes 87.0 m8 “8 877 3 4
+main taming Ag 8 Beadle prompt tens SXFMR 88.0 66.9 401 | 890 701 418
+for prediction. CRUSH3y25 91.7 835 571 96.4 86.7 61.1
+RASL yl) out-performs all baselines, with similar R@5 and R@15, CRUSHsxpmr | 94.2 93.4 58.2 97.6 97.7 73.7
+demonstrating the effectiveness of our dual-stage retrieve-then- RASL¢atl 97.0 97.5 69.1 99.3 98.1 90.6
+predict apporach for precise table identification using rich granular With RASL Table Descriptions
+context. While RASLyetriever Shows lower recall at N = 5, analyses Model LLM-Filtered Prediction Initial Retrieval Pool
+in E attributes this to highly overlapping columns/tables across Spider BIRD  Fiben | Spider BIRD  Fiben
+databases, with performance improving at higher N and consis- (R@5) (R@5)_ (R@5) | R@N)_ (R@N) (REN)
+tently ranking among the top three retrieval-based methods at BM25 95.6 84.8 68.9 96.7 86.5 99.9
+N = 15. This stronger recall at higher N proves particularly valu- SXFMR 96.2 83.2 70.0 99.1 87.8 99.9
+able when combined with entity-level schema construction, as we CRUSH tas 25.4 87.8 70.7 100.0 99.0 99.1
+ionifi tl d text whil ine th tink CRUSHsxemr 94.5 93.1 67.1 100.0 99.5 99.9
+can significantly reduce context while preserving the most infor- RASLéul 982 97.5 776 991 98.9 90.4
+mative schema entities for table prediction and SQL generation. : :
+. . Table 3: Performance comparison across datasets with and
+Figure 2 further demonstrates the advantages of our combined en- . so, . as
+. . . . . without RASL table descriptions. LLM-Filtered Prediction
+tity retrieval approach, which outperforms entity-specific methods . . was .
+: : shows the recall@5 after filtering, while Initial Retrieval
+on both context-rich (BIRD) and context-sparse (Fiben) datasets. Lae .
+Pool shows the table recall@N of the initial retriever output
+prior to filtering, where N varies by model and dataset.
+5.6 Impact of Retrieval Mechanism on Table
+Prediction the table level, and CRUSH operates at the column level—we im-
+We believe that RASL’s primary strength lies in efficiently loading plement a standardized protocol to ensure fair comparison across
+relevant context for precise table identification within manageable these diverse approaches:
+context budgets, rather than standalone context retrieval. To val- e For RASL: Filter entities to those from top N=50 tables by
+idate this, we compare RASLyetriever against BM25, SXFMR, and relevance
+CRUSH for context retrieval prior to LLM-based table prediction. e For baselines: Add schema elements until reaching RASL’s
+However, since these methods operate at different granularities— context budget
+RASL employs multi-entity retrieval, BM25 and SXFMR work at — BM25/SXFMR: Add full table schemas
+
+
+--- Page 6 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+— CRUSH: Add column names, where the first column in- 5.7 RASL Component Ablation
+cludes the table name ; ; Table 5 presents our analysis of keyword-level retrieval and entity-
+~ All baselines: Include all benchmark-provided E, in con- type relevance score calibration. Maintaining our experimental
+structed schemas setup of RASL¢,) with N=50 table filtering, we evaluate both fi-
+Given Atable descr, S Substantial length compared to other entity nal table prediction and initial retrieval pool recall. Results show
+types, we evaluate performance both with and without it, adjusting keyword-based retrieval (K) significantly outperforms question-
+baseline context budgets accordingly. While this approach doesn’t based retrieval (q) across all datasets, demonstrating the impor-
+guarantee identical contexts, it ensures RASL’s context size never tance of granular search queries for E retrieval. While combining
+exceeds baselines. both approaches (K U {q}) yields slight improvements in most
+Results in Table 3 show RASL significantly outperforming base- settings, keyword-based retrieval remains the primary driver of
+lines in both settings, demonstrating strong synergy between multi- performance.
+entity retrieval and table prediction. Without table descriptions, The impact of entity-type weight calibration (W,) varies by
+RASL achieves higher initial retrieval recall than all baselines under dataset, providing substantial gains for Spider but only modest
+equal context budgets. With table descriptions included, baselines improvements for BIRD; results are excluded for Fiben due to no
+often achieve higher initial recall by fitting more distinct schemas training samples being available. We observe that while Wa can
+within the budget. However, RASL still achieves superior table be beneficial, it is not a necessary component of RASL, which
+prediction performance, suggesting it retrieves more relevant con- demonstrates strong utility even in settings where no labeled data
+text. This is further evidenced by RASL’s larger improvements in exists.
+prediction recall versus initial pool recall when including table
+descriptions, indicating these descriptions provide unique value RASL¢utt RASLretriever
+beyond other retrieved entities. Dataset Configuration R@5_ R@15 R@50
+Kv {q} 97.0 98.0 99.3
+5.6.1. Impact of Table Descriptions on Context Usage. While in- ; K only 96.6 98.2 99.1
+cluding Atable descr, improves RASL’s table prediction performance Spider q only 92.7 93.2 97.8
+(Table 3), it significantly increases token consumption. Analysis of KU{q}w/oW, | 94.3 95.8 96.8
+token usage statistics in Table 4 reveals that consumption patterns Ku {q} 97.5 97.8 98.1
+strongly depend on dataset structure, and given RASL’s fixed N=50 BIRD K only 96.8 97.1 98.3
+table retrieval limit, Arable decr, token usage inversely correlates with q only 90.1 90.1 95.8
+average columns per table. For BIRD, which has 7.26 columns/table, KU {q} wloWa | 97.2 97.4 98.0
+table descriptions consume only 3% of the original schema tokens. oa (a ot oa son
+In contrast, for Fiben, with just 2.46 columns/table and significantly Fiben ony , : ,
+: _. : q only 67.4 67.5 79.4
+smaller total database size, table descriptions exceed the entire
+aes KU{q} wioWs | - = -
+origina sc ema size. ; a. ; Table 5: Ablation study on the impact of retrieval query type
+While experiments validate the utility of comprehensive table : ; . .
+_ : . : (K vs. q) and entity-level weight calibration (W,). RASLfuy
+descriptions, their token consumption generally outweighs perfor- . eae
+. filters E to the top N = 50 tables prior to table prediction,
+mance benefits across tested datasets. Though this approach may . oe eae
+: : : : with recall reported over final table prediction and initial
+prove valuable for settings with wide tables or high-accuracy re- .
+: , : candidate tables.
+quirements, we believe future work on more concise table context
+synthesis could better serve RASL under tight context budgets.
+Fiben
+Toks. Avg. Toks. | Toks. Avg Toks. | Toks. Avg Toks. .
+Component | (rotal) _ (N=50) | (Total) (N=50) | (Total) (N=50) 5.8 Error Analysis
+Table name 3,120 63 1,594 39 1,180 210 Next we cover some common error cases observed across baseline
+Table alias 3,178 a4 : ; - : methods. In Figure 3 we show how assumptions in CRUSH schema
+Column name | 15,143 65 11,257 50 1,887 339 i : : ;
+Column alias | 15,657 93 10,105 38 - . hallucination can impact retrieval performance. In this case, we see
+Column descr. - - 34,903 202 - - that an incorrect person table name causes all segments to over-
+Value deser. - - 28,379 58 ° - index on people-related columns and associated tables. In contrast,
+Table descr. | 259,885 _-3,670_—'|: 146,442 ——2,357_—‘| 37,780 6,441 : .
+Total without RASL uses granular and isolated keywords directly extracted from
+table descr. 37,098 266 86,238 384 3,067 549 the question. When paired with entity-level retrieval, this allows
+Total with Lassoss a936 | 280 ane _| for highly relevant specific tables and columns to be loaded from
+table descr. 296,983 3,936 | 232,680 ~—-2,741_—| 40,847 6,990 . . .
+any keywords extracted from the question, without assumptions
+Table 4: Token usage breakdown by schema components :
+th and with ‘ncluding A h on how the schema is structured.
+with and without including table descr. We compare the to- In Figure 4 and 5 we show the most common causes of error
+tal database schema tokens to the average tokens used by in table retrieval baseli hich is insufficient 1 trieval
+7 h token is approximately 3.5 chay- in table retrieval baselines, which is insufficient granular retrieva!
+RASLretriever at N = 50. Each to PP y’. context. We see that important keywords, such as circuits in Figure
+acters. 4 or cards in Figure 5 are not sufficiently captured in table-level
+similarities, resulting in necessary tables being missed.
+
+
+--- Page 7 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+Incorrect CRUSH hallucinated schema Failure of Lexical Retrieval
+Question: Where is Amy Firth’s hometown? Hometown refers to Question: List down the name of artists for cards in Chinese
+city, county, state Simplified. Chinese Simplified’ is the language;
+Ground Truth Tables: [’student_club.member’, Ground Truth Tables: [’card_games.cards’,
+*student_club.zip_code’] ‘card_games.foreign_data’]
+Ground Truth Columns: [’member.first_name’, Ground Truth Columns: [’cards.artist’, ’cards.uuid’,
+*member.last_name’, member.zip’, ’zip_code.city’, ’zip_code.state’, *foreign_data language’, foreign_data.uuid’]
+*zip_code.county’, ’zip_code.zip_code’] Ho AT
+a BM25
+CRUSHsxemr Top 3 Tables: [’language_corpus.langs’, ’mondial_geo.language’,
+Hallucinated Schema: [’person.first_name’, ’person.last_name’, *mondial_geo.religion’]
+PATONG TS OTS i. Saison wanibihy Index of Correct Table: {’card_games.cards’: 61,
+person.hometown_state’] 5 . 5
+card_games.foreign_data’: 15}
+Top 5 Tables: [’human_resources.employee’, DDI
+*works_cycles.person’, ’movie_3.actor’, ’address.state’, RASL
+’address.country’] Keywords: [’artists’, cards’, ‘language’, name’ ]
+Index of Correct Table: {’student_club.member’: 31,
+’ student_club.zip_code’: 30} Top 3 Tables: [’card_games.cards’, ’card_games.foreign_data’,
+a ‘card_games.set_translations’]
+RASL
+Keywords: [’person’ town’, city’, county’, state’, name’, first . . . .
+ore last [pes Toaniftont] y Y Figure 5: Failure of lexical table retriever due to lack of gran-
+ular context.
+Top 5 Tables: [’law_episode.person’, ’regional_sales‘store
+locations’, ’student_club.zip_code’, ’student_club.member’,
+retail_complains.district’]
+5.9 End-to-End SQL Generation
+Figure 3: Example of schema hallucination leading to poor In Table 6 we compare the performance of RASL to retrieval-based
+matching by CRUSH. baselines on end-to-end SQL generation. This evaluation applies
+the full RASL pipeline with the same setting as previously, where
+all E belonging to the top N = 50 tables by relevance are used
+for table prediction. For SQL generation we load the full original
+Failure of Semantic Table Retrieval schema for each predicted table, retaining only A provided by the
+benchmarks and excluding A;able descr, from RASL due to increased
+Question: How many formula_1 races took place on the circuits token consumption outweighing benefits for practical enterprise
+in Italy? applications. Due to relatively low recall at N = 5 for all baseline
+Ground Truth Tables: [’formula_1.circuits’, *formula_1.races’] methods, we evaluate performance over N = 15 and N = 30, as
+; OS well as compare to the standard single database text-to-SQL setting
+Ground ruth Coles i formula circuits circuit where all tables corresponding to the target database are loaded.
+ormula_t.circuits.country’, ‘formula_t.races.circuitid’] We report text-to-SQL execution accuracy and table recall with
+SXFRMR respect to ground truth SQL queries as our primary metrics. We
+; ces ; also list the average number of tokens used to construct schemas
+Top 3 Tables: [’formula_1.qualifying’, ‘formula_1.results’, : : : : :
+, ae used in prompting. Since RASL contains two prompting steps (table
+formula_1.constructorstandings’ ] . ,
+prediction and SQL generation), we sum the total schema tokens
+Index of Correct Table: {’formula_1.races’: 4, over both steps for RASL.
+‘formula_t.cireuits’: 24} We see that RASL consistently ranks best in both SQL table recall
+RASL and execution accuracy compared with all baselines. We note that
+; , , oa, for both BIRD and Spider, RASL never predicts over 15 tables, ac-
+May oes [formula races), country’, ‘circuits, nace counting for identical metrics for both N = 15 and N = 30. We also
+circuits'] observe that RASL constructs token-efficient schemas, being the
+Top 3 Tables: [’formula_1.circuits’, ’formula_1.races’, most efficient method at N = 30 and ranking second at N = 15. For
+"formula_1.qualifying’] both Spider and BIRD, we see that on average the table prediction
+schema accounts for approximately 2/3 of the total schema tokens,
+. . . . with the final SQL generation over full schemas from selected ta-
+Figure 4: Failure of semantic table retriever due to lack of bles accounting for the other 1/3. A detailed cost analysis based on
+granular context. commercial API pricing is provided in Appendix G.
+
+
+--- Page 8 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+Spider
+Nai N=s0
+Model Toe__Recall_ Tokens
+BM25 47.4 84.6 4,057 49.5 89.3 8,577 58.3 87.0 1,304 59.3 89.2 2,662
+SXFMR 43.6 82.6 4,989 48.0 89.1 8,993 58.0 85.7 1,182 59.0 87.9 2,364
+CRUSHgm25 43.5 80.92 5,133 50.1 87.5 9,978 60.1 89.3 1,395 62.5 90.3 2,764
+CRUSHsxemr | 49.4 91.6 5,589 52.9 93.0 10,385 55.9 87.0 1,374 58.0 91.6 2,744
+RASLeu 53.5 94.6 4,696 53.5 94.6 4,696 64.5 92.5 1,266 64.5 92.5 1,266
+Gold 69.0 99.5 389
+Table 6: Execution accuracy and table recall of RASL versus baselines on end-to-end SQL generation. Token counts represent
+total schema tokens consumed for each method, including both table prediction and SQL generation steps for RASL. Bold
+indicates best method.
+6 DISCUSSION AND NEXT STEPS different N values would help identify optimal trade-offs between
+RASL successfully addresses the challenge of scaling text-to-SQL context size and retrieval effectiveness.
+systems to enterprise-level databases through an effective component- Lastly, while RASL proves effective using independent entity
+based retrieval architecture. Our experiments demonstrate signifi- retrieval, we believe that further information may be contained
+cant performance improvements over baseline retrieval-based meth- in relative relevance across entity types. For instance, it may be
+ods while maintaining practical context budgets. We outline key beneficial to increase column-level entity scores when multiple
+insights, limitations, and future research directions that emerge distinct entities are retrieved from the same table.
+from our work.
+6.3 Future Directions
+6.1 Key Insights Several promising research directions emerge from our work. Syn-
+Entity-level decomposition proves highly effective for context thesizing more concise and granular table context entities may
+retrieval under token constraints. By decomposing both questions improve retrieval quality while keeping token consumption man-
+and schemas into granular semantic units, RASL preserves critical ageable. Exploring dynamic entity-level token allocation based on
+information while scaling to massive schemas without requiring database characteristics could further enhance performance. Ad-
+domain-specific training. This approach shows particular strength ditional opportunities include extending evaluation of RASL over
+in context-rich environments like BIRD, where entity-level retrieval cross-database queries, integrating with recent advances in SQL
+achieves greater recall improvements over table-level methods, generation techniques (e.g., multi-prompting and self-verification),
+which often fail at covering important details within user questions. and using agentic retrieval approaches to iteratively retrieve context
+Two-stage retrieval-prediction creates a powerful synergy using guided keyword searches based on past retrieval observations.
+that consistently outperforms alternative methods. Our approach RASL represents a significant step toward practical natural lan-
+first narrows the search space through multi-entity retrieval, then guage interfaces for massive database environments. By addressing
+applies LLM reasoning to identify the most relevant tables. While the critical bottleneck of schema linking at scale without requiring
+RASLvetriever does not excel directly at stand-alone high-precision specialized fine-tuning, it enables more accessible deployment of
+table identification, we find that it retrieves more valuable context text-to-SQL systems across diverse enterprise settings. Future work
+than baseline retrieval methods under the same token budget, with building on this foundation has the potential to further bridge the
+improved performance on table prediction. Furthermore, we show gap between natural language understanding and database access.
+that our end-to-end system consistently enables higher SQL gen-
+eration accuracy than baseline methods while consuming fewer 7 CONCLUSION
+overall input tokens. In this work, we present RASL, a zero-shot framework for scaling
+toe. natural language querying to massive databases. RASL decomposes
+6.2 Limitations database schemas into granular semantic entities, retrieves relevant
+While we validate that synthesizing additional semantic context context via calibration-enhanced similarity to important question
+such as table descriptions can further improve performance, their components, and reasons over the resulting reduced schema for pre-
+inclusion creates significant token consumption trade-offs, partic- dicting relevant tables and generating SQL queries. We demonstrate
+ularly for databases with few columns per table. We believe that that RASL out-performs baselines across multiple datasets vary-
+although promising, the proposed approach requires more refine- ing in database size, relational information, and available semantic
+ment before additional synthesized context can provide low-cost context. While prior works addressing this challenge often rely on
+performance benefits. domain-specific fine-tuning, which complicates deployment, RASL
+For all evaluations, we apply RASL to retrieve context relating is designed to be robust to database schema and context changes—
+to the top N = 50 tables by relevance. While absolute token usage only requiring syncing the vector database with no model training
+at this setting is significantly lower than LLM context window required—and can be easily deployed in serverless computing envi-
+budgets, we believe that a deeper analysis of performance over ronments.
+
+
+--- Page 9 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+REFERENCES
+
+[1] Anthropic. 2024. Claude 3.5 Haiku. https://www.anthropic.com/claude/haiku
+
+[2] Anthropic. 2024. Claude 3.5 Sonnet-v2. _https://www.anthropic.com/news/
+claude-3-5-sonnet
+
+[3] Amazon Web Services (AWS). [n. d.]. Bedrock Knowledge Base. https://docs.
+aws.amazon.com/bedrock/latest/userguide/knowledge-base-build.html
+
+[4] Amazon Web Services (AWS). [n. d.]. Bedrock Pricing. https://aws.amazon.com/
+bedrock/pricing/
+
+[5] Dorian Stuart Brown. [n.d.]. Okapi BM25 Algorithm. https://pypi.org/project/
+rank-bm25/
+
+[6] Peter Baile Chen, Yi Zhang, and Dan Roth. 2025. Is Table Retrieval a Solved
+Problem? Exploring Join-Aware Multi-Table Retrieval. arXiv:2404.09889 [cs.IR]
+https://arxiv.org/abs/2404.09889
+
+[7] Cohere. 2022. Cohere Embed v3. https://cohere.com/blog/introducing-embed-v3
+
+[8] Dawei Gao, Haibin Wang, Yaliang Li, Xiuyu Sun, Yichen Qian, Bolin Ding, and
+Jingren Zhou. 2023. Text-to-SQL Empowered by Large Language Models: A
+Benchmark Evaluation. arXiv:2308.15363 [cs.DB] https://arxiv.org/abs/2308.
+15363
+
+[9] Yingqi Gao, Yifu Liu, Xiaoxia Li, Xiaorong Shi, Yin Zhu, Yiming Wang, Shigqi Li,
+Wei Li, Yuntao Hong, Zhiling Luo, Jinyang Gao, Liyu Mou, and Yu Li. 2025. A
+Preview of XiYan-SQL: A Multi-Generator Ensemble Framework for Text-to-SQL.
+arXiv:2411.08599 [cs.AI] https://arxiv.org/abs/2411.08599
+
+[10] Jonathan Herzig, Thomas Miiller, Syrine Krichene, and Julian Martin Eisensch-
+los. 2021. Open Domain Question Answering over Tables via Dense Retrieval.
+arXiv:2103.12011 [cs.CL] https://arxiv.org/abs/2103.12011
+
+[11] Zijin Hong, Zheng Yuan, Qinggang Zhang, Hao Chen, Junnan Dong, Feiran
+Huang, and Xiao Huang. 2025. Next-Generation Database Interfaces: A Survey
+of LLM-based Text-to-SQL. arXiv:2406.08426 [cs.CL] https://arxiv.org/abs/2406.
+08426
+
+[12] Mayank Kothyari, Dhruva Dhingra, Sunita Sarawagi, and Soumen Chakrabarti.
+2023. CRUSH4SQL: Collective Retrieval Using Schema Hallucination For
+Text2SQL. arXiv:2311.01173 [cs.CL] https://arxiv.org/abs/2311.01173
+
+[13] Dongjun Lee, Choongwon Park, Jaehyuk Kim, and Heesoo Park. 2024. MCS-SQL:
+Leveraging Multiple Prompts and Multiple-Choice Selection For Text-to-SQL
+Generation. arXiv:2405.07467 [cs.CL] https://arxiv.org/abs/2405.07467
+
+[14] Jinyang Li, Binyuan Hui, Ge Qu, Jiaxi Yang, Binhua Li, Bowen Li, Bailin Wang,
+Bowen Qin, Rongyu Cao, Ruiying Geng, Nan Huo, Xuanhe Zhou, Chenhao
+Ma, Guoliang Li, Kevin C. C. Chang, Fei Huang, Reynold Cheng, and Yongbin
+Li. 2023. Can LLM Already Serve as A Database Interface? A BIg Bench for
+Large-Scale Database Grounded Text-to-SQLs. arXiv:2305.03111 [cs.CL] https:
+//arxiv.org/abs/2305.03111
+
+[15] Karime Maamari, Fadhil Abubaker, Daniel Jaroslawicz, and Amine Mhedhbi.
+2024. The Death of Schema Linking? Text-to-SQL in the Age of Well-Reasoned
+Language Models. arXiv:2408.07702 [cs.CL] https://arxiv.org/abs/2408.07702
+
+[16] OpenAI. [n.d.]. gpt-3.5-turbo-0125. https://platform.openai.com/docs/models
+
+[17] Mohammadreza Pourreza, Hailong Li, Ruoxi Sun, Yeounoh Chung, Shayan Talaei,
+Gaurav Tarlok Kakkar, Yu Gan, Amin Saberi, Fatma Ozcan, and Sercan O. Arik.
+2024. CHASE-SQL: Multi-Path Reasoning and Preference Optimized Candidate
+Selection in Text-to-SQL. arXiv:2410.01943 [cs.LG] https://arxiv.org/abs/2410.
+01943
+
+[18] Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence Embeddings
+using Siamese BERT-Networks. arXiv:1908.10084 [cs.CL] https://arxiv.org/abs/
+1908.10084
+
+[19] Jaydeep Sen, Chuan Lei, Abdul Quamar, Fatma Ozcan, Vasilis Efthymiou, Ayushi
+Dalmia, Greg Stager, Ashish Mittal, Diptikalyan Saha, and Karthik Sankara-
+narayanan. 2020. ATHENA++: Natural Language Querying for Complex Nested
+SQL Queries. Proc. VLDB Endow. 13, 11 (2020), 2747-2759.
+
+[20] sentence transformers. [n.d.]. all-mpnet-base-v2. _ https://huggingface.co/
+sentence-transformers/all-mpnet-base-v2
+
+[21] Shayan Talaei, Mohammadreza Pourreza, Yu-Chen Chang, Azalia Mirhoseini, and
+Amin Saberi. 2024. CHESS: Contextual Harnessing for Efficient SQL Synthesis.
+arXiv:2405.16755 [cs.LG] https://arxiv.org/abs/2405.16755
+
+[22] Bing Wang, Changyu Ren, Jian Yang, Xinnian Liang, Jiaqi Bai, LinZheng Chai,
+Zhao Yan, Qian-Wen Zhang, Di Yin, Xing Sun, and Zhoujun Li. 2025. MAC-SQL: A
+Multi-Agent Collaborative Framework for Text-to-SQL. arXiv:2312.11242 [cs.CL]
+https://arxiv.org/abs/2312.11242
+
+[23] Tianshu Wang, Xiaoyang Chen, Hongyu Lin, Xianpei Han, Le Sun, Hao Wang,
+and Zhenyu Zeng. 2025. DBCopilot: Natural Language Querying over Massive
+Databases via Schema Routing. arXiv:2312.03463 [cs.CL] https://arxiv.org/abs/
+2312.03463
+
+[24] Tao Yu, Rui Zhang, Kai Yang, Michihiro Yasunaga, Dongxu Wang, Zifan Li,
+James Ma, Irene Li, Qingning Yao, Shanelle Roman, Zilin Zhang, and Dragomir
+Radev. 2019. Spider: A Large-Scale Human-Labeled Dataset for Complex and
+Cross-Domain Semantic Parsing and Text-to-SQL Task. arXiv:1809.08887 [cs.CL]
+https://arxiv.org/abs/1809.08887
+
+
+--- Page 10 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+A SCHEMA ENTITY USAGE BY N = 50 TOP where o is the sigmoid function and Hj is the mean entropy for
+RELEVANT TABLES entity type A. This calibration is designed to automatically reduce
+Below we show the percent of total database schema entities used the influence of Benenc keywords while amplifying the impact of
+with entities filtered by top N = 50 distinct tables over Spider and specific ones. The scaling parameter controls the sharpness of
+BIRD benchmarks. We see that total schema is consistently reduced the p robability distribution. . .
+to less then 3% of the total schema entities for Ay, and less than 1% While beneficial in CRUSH, we found that the inclusion of
+of total schema entities for Ac. keyword-level entropy calibration had minimal impact on perfor-
+mance, with marginal impact at low a (1.0) and negative impact
+at higher a (2.0, 3.0, 5.0, 10.0). One possible explanation for this is
+Entity Type aan that sharp distributions with few informative e for a given (k, A)
+will result in all e from that (k, A) being up-weighted, leading to
+Table Name 1.78% 1.99% . . oo, .
+Table Alias 127%; i: more non-informative e being included. Another possible explana-
+Table Descr. 132% 2.18% tion is that flat distributions with many high relevance e may not
+Column Name | 0.50% 0.42% necessarily indicate they are uninformative. For instance, we see in
+Column Alias 0.66% 0.37% E that there can be commonly named tables and columns across
+Column Descr. - 0.49% many databases. However, it may be more beneficial to include
+Value Descr. - 0.29% these at higher retrieval budgets, rather than down-weighting them
+Table 7: Entity usage across different datasets due to lower specificity. For these reasons, we have excluded this
+component from our results, but we believe additional refinement
+of this method in future works may benefit RASL’s performance.
+B EXPLORATION OF ENTROPY-GUIDED
+KEYWORD-LEVEL WEIGHT CALIBRATION © LLM PROMPTS
+Information retrieval systems often struggle with keywords that C.1 Table Prediction Prompt
+have varying levels of specificity-some terms may be highly specific
+to certain schema elements, while others may be generic and match You are a database expert assistant that helps identify which
+well with many elements. To address this challenge, we explored tables are relevant to answering SQL questions.
+applying the entropy-guided similarity approach introduced by
+CRUSH [12], adapting it to handle our keyword-level retrieval TASK:
+approach. Analyze the provided database schema and the user’s
+Building on CRUSH’s core insight that keyword specificity should question, then identify which specific tables (and their
+influence matching weights, we developed a calibration system databases) are most relevant for answering the question. You
+that automatically identifies and adjusts for differences in keyword must rank tables in strict order of relevance.
+discriminative power. For example, a keyword like "latitude" that
+strongly matches only geographic coordinates should have more ### Schema:
+influence than "value" which may match well with many different {SCHEMA}
+schema elements.
+We quantify this specificity using an information theory ap- ### User Question:
+proach. For each keyword k and entity type A, we first compute a {QUESTION}
+probability distribution over matching entities:
+### Instructions:
+p(elk, a) = exp(@ - ro(e, k)) (2) 1. Examine the question carefully to understand what data
+de’eCKa exp(a@ - ro(e’, k)) would be needed to answer it
+where ro(e, k) is the initial relevance score and a is a scaling fac- as ASB VES the database schema to determine which tables
+tor that helps differentiate between similar scores. We then measure contain relevant information .
+how focused or diffuse these matches are using entropy: 3. Rank tables by relevance - tables listed first should be most
+central to answering the question
+4. Consider both direct mentions and implied data needs
+H(k, A) = — » plelk, A) log p(elk, A) (3) 5. Select only tables that would contribute to a SQL query
+eSCka answering the question
+A low entropy indicates the keyword strongly prefers certain 6. Consider join paths needed to connect relevant information
+schema elements (high specificity), while high entropy suggests the 7. IMPORTANT: The table schemas are incomplete and only
+keyword matches broadly across many elements (low specificity). contain possibly relevant columns. There are many columns
+We adjust the final relevance scores: mot Ghani within eadh tells,
+r(e,k) = ro(e,k) - o(a(Hy — H(k,A))) (4)
+
+
+--- Page 11 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+iRenaletare Critiondine For extensions to cross-database querying using compatible SQL
+Pai ng eee Di ; wal Teettky excel Pare engines, the database prediction tag can be removed and instruc-
+the cnnicg es: Directly contain data explicitly asked for in tions added on how to properly format tables with database name
+the question _ . prefixes in the generated SQL query. There is no single-database
+- Secondary tables: Needed for joins or containing supple- . . .
+. . constraint on context retrieval or schema construction.
+mentary information
+- Tertiary tables: Might be useful for contextual information
+but not essential
+You are a data science expert.
+First, think through your reasoning step by step. Carefully Below, you are presented with a database schema and a
+consider how to rank the relevance of each table. (22S BTL
+Your task is to generate a SQL query to answer the question.
+Then provide your answer in the following XML format: {DIALECT_INSTRUCTION}
+<thinking> ### Database Schema
+Your detailed analysis explaining why specific tables are {DATABASE_SCHEMA}
+relevant to the question and how you determined their .
+ranking order. Tne QUES TOE
+</thinking> {QUESTION}
+<relevant tables> First, think through your reasoning step by step. If there are
+<database name="database name"> multiple databases, determine which one you should use, and
+<!— Tables in strict order of relevance, most relevant first —> then carefully consider how to rank the relevance of each
+<table rank="1">most_relevant_table</table> table. . . .
+<table rank="2">second_most_relevant_table</table> Then provide your answer in the following XML format:
+<table rank="3">third_most_relevant_table</table> o,
+</database> <thinking>
+<database name="another database name"> Your detailed analysis explaining why specific tables are
+<table rank="1">most_t elev ant t able in this db</table> relevant to the question and how you determined their
+<!— Additional tables in decreasing relevance -> eal order.
+</database> </thinking>
+</relevant_tables>
+<database>
+IMPORTANT: The database you are executing the SQL query on
+- List tables in strict order of decreasing relevance within each </database>
+database
+- The "rank" attribute should reflect overall relevance across <sql_query>
+all databases (1 = most relevant overall) Your executable SQL query
+- Only include tables that are genuinely relevant to answering </sql_query>
+the question
+- If no tables from a particular database are relevant, do not LESSEN
+include that database - Pay close attention to the specific columns used for
+- Only a subset of columns are shown for each table. Leverage selections and filtering, ensuring they are the correct ones.
+these when relevant, but DO NOT assume the table is missing - Pay close attention to any value formats provided in the
+any columns question, as well as specific values. For value conditions, if
+the user question specifies a specific value, follow this closely.
+- Think step by step to find the correct SQL query.
+C.2 End-to-End SQL Generation Prompt
+Below we show the prompt for end-to-end SQL generation. Since all ;
+datasets evaluated contain single-database target SQLs, we apply a C.3 Keyword Extraction
+rompt while involves first predicting the correct database, and then The keyword extraction prompt applied is adapted from CHESS
+promp P g 'y prompt app p
+predicting the correct SQL over that database. For self-correction [21], where various few-shot examples are provided to guide the
+performed in experiments, we apply the same system prompt, with language model. We adopt their core structure, while removing
+follow-up messages on the specific error encountered, or that the instructions on value extraction, which CHESS uses to find relevant
+output table is empty if no results are returned, until the number of schema context based on specific values referenced in user ques-
+self-correction iterations is reached or a populated table is returned. tions. We do not explore additional indexing of database values, as
+
+
+--- Page 12 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+this can lead to extreme cost and complexity for massive enterprise Sas >
+datasets with terabytes of data and constantly changing values. events co to event_name = Silay a ideaiaantaahia
+Freestyle’; events compete in refers to event_id;"
+You will be provided with a user question that can be ["events’, "event_id", "event_name”, "compete in", "competi-
+answered by querying some database system. Your objective tors’, "competitive games", "competitors competing in events"
+is to analyze the question to identify and extract keywords
+and keyphrases which might help indicate what parts of Example 4:
+the database schema to use. These elements are crucial for Question: "List the infant mortality of country with the least
+understanding the core components of the question provided. Amerindian.’
+This process involves recognizing and isolating significant
+terms and phrases that could be instrumental in formulating ["mortality rate”, "infant mortality rate", "country", ethnicity’,
+searches or queries related to the posed question. You should "population", "infant mortality")
+focus on entities such as column or table names that may be
+referenced, as well as descriptions of what these are. Do not Example 5:
+focus on specific column values that may be referenced. Question: "What are the first names of the students who
+live in Haiti permanently or have the cell phone number
+### Instructions 09700166582?"
+- Read the Question Carefully: Understand the primary focus [’students’, “first names’, ‘country’, ‘permanent address’, ‘cell
+and specific details of the question. Look for any named phone number’, ‘contact information’, ’student location’,
+entities types (such as organization, location, etc.), technical ‘student contact details’]
+terms, and other phrases that encapsulate important aspects
+of the inquiry. ### Task
+- Keywords: Single words that capture essential aspects of the Given the following question, identify and list all relevant
+question or hint. keywords and keyphrases which may indicate which parts of
+- Keyphrases: Short phrases or named entity types that a database schema might be necessary to answer the user
+represent specific concepts, locations, organizations, or other question.
+significant details.
+Question: {QUESTION}
+Example 1:
+Question: "What is the annual revenue of Acme Corp in the Please provide your findings as a json list, capturing the
+United States for 2022? Focus on financial reports and U.S. essence of the question through the identified terms and
+market performance for the fiscal year 2022." phrases.
+Only output the json list with no explanations.
+["annual revenue", "corporations", "country", "year", "financial
+reports", "U.S. market performance’, "fiscal year", “corporate
+revenues" ] C.4 Table Description Synthesis Prompt
+Table descriptions are synthesized using the below LLM prompt,
+Example 2: where table schemas are generated following D.
+Question: "In the Winter and Summer Olympics of 1988,
+which game has the most number of competitors? Find
+the difference of the number of competitors between You are a database expert creating semantic table descriptions
+the two games. the most number of competitors refer to for a text-to-SQL retrieval system.
+MAX(COUNT(person_id)); SUBTRACT(COUNT(person_id
+where games_name = °1988 Summer’), COUNT(person_id #4# TASK
+where games_name = °1988 Winter’));" Generate a concise, high-level description of the provided
+database table that captures its semantic purpose and usage
+["olympic games", "competitors", "number of competitors", patterns. This description will be embedded in a structured
+"person_id", "games", "games_name", "competitors competing XML format and used for retrieving relevant tables when
+in olympic games"] processing natural language questions.
+Example 3: ### DATABASE SCHEMA
+Question: "How many Men’s 200 Metres Freestyle events did {TABLE_SCHEMA}
+Ian James Thorpe compete in? Men’s 200 Metres Freestyle
+
+
+--- Page 13 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+First, think through what makes this table important, what <db>$db_id
+business concepts it represents, and how users might refer to
+it in natural language questions. Consider its likely role in <table>$table_name
+the database without listing all columns. <desc>
+$table_description
+Then, create a concise table description that covers: </desc>
+1. The table’s main purpose and real-world concept it
+represents <schema>
+2. Its context within the broader database domain ($column_name:$data_type, $column_alias, Column
+3. Typical query patterns or business questions it helps description: $column_description, Value description:
+answer $value_description),
+4. Key relationships with other tables (if any) ($column_name:$data_type, $column_alias, Column
+5. Alternative terms users might use when referring to this description: $column_description, Value description:
+table $value_description),
+Keep your description under 150 words, focusing on semantic </schema>
+meaning rather than technical details. For tables with many </table>
+columns, focus on the overall table purpose and categories of
+data rather than describing individual columns. <table>$table_name
+<desc>
+Format your response as follows: $table_description
+<thinking> </desc>
+Your analysis of the table and reasoning about its purpose,
+usage, and significance. <schema>
+</thinking> ($column_name:$data_type., ...),
+($column_name:$data_type., ...),
+<description> ee
+Paragraph 1: Purpose and domain context of the table in 2-3 </schema>
+sentences. </table>
+Paragraph 2: Usage patterns and typical questions this table
+answers in 2-3 sentences. oon
+Paragraph 3: Key relationships with other tables in 1-2
+sentences (if applicable). <foreign_keys>
+Alternative terms: comma-separated list of 3-6 alternative $table_name.$column_name=$table_name.$column_name
+phrases users might use. ee
+</description> </foreign_keys>
+</db>
+<db>$db_id
+D SCHEMA FORMAT
+Below is the schema format used for all LLM operations (table ~
+prediction and SQL generation). We adopt a format similar to M- </db>
+Schema [9], with XML tags substituted for better alignment with
+Anthropic Claude models. For any table-level entities we automati-
+cally add table_name from the metadata, and for all column-level
+entities we add in column_name and data_type. We have a separate
+XML section for table_description, as this is the only table-level E ANALYSIS OF CONFLICTING INFORMATION
+contextual entity used, although other sections can be added if addi- OVERLAP
+tional information types exist. For column-level context entities, we oo
+map from a short description of the context type to the value, with Below we highlight some common causes for low table-level recall
+the specific example below shown for the BIRD dataset. Foreign at low N values due to highly overlapping table/column information
+keys are added at the database-level when available. across full datasets. We observe that while performance is affected
+at low N, this effect is eliminated at higher N values, while still
+reducing overall database schema to a small fraction (e.g. < 3% of
+Ey, and < 1% of Ea, at N = 50) of the original schema.
+
+
+--- Page 14 ---
+
+Jeffrey Eben, Aitzaz Ahmad, and Stephen Lau
+E.0.1_ Example 1 (Spider). Question: Find the districts in which G COST ANALYSIS
+there are both shops selling less than 3000 products and shops sell- A detailed input token cost analysis of RASL versus baseline meth-
+ing more than 10000 products. ods for end-to-end SQL generation is provided in Table 8. We adopt
+Ground truth tables: {'employee_hire_evaluation.shop’} standard on-demand commercial API pricing provided by Ama-
+Ground truth columns: {’employee_hire_evaluation.shop.district’, zon Bedrock [4], which charges $0.0008 per 1,000 input tokens for
+‘employee_hire_evaluation. Anthropic Claude 3.5 Haiku, $0.003 per 1,000 input tokens for An-
+shop.number_products’} thropic Claude 3.5 Sonnet v2, and $0.0001 per 1,000 input tokens
+
+RASL-Extracted Keywords: [districts, shops, products, product for Cohere Embed 3 English. Cost metrics are broken down by
+quantity, shop inventory, retail locations] retrieval, LLM prompt, and schema components, with all values
+
+Finding: 19 tables contain the word ‘products’, 6 contain ’shop’, calculated per 100 questions to improve readability. LLM prompt
+and 8 contain ‘store’. Similarly, 51 columns contain "product, 14 includes both the table prediction and SQL generation prompt steps
+contain ’shop’, and 11 contain ‘district’. While entropy-guided rel- for RASL and only SQL generation for baselines, with the schema
+evance calibration down-weights keywords such as column-level prompt component removed to isolate variable costs.
+
+*product’, the effect is less pronounced on high overlap across only The results demonstrate RASL’s superior cost scaling charac-
+5-15 entities, requiring larger top-N values to load all relevant teristics despite retrieval overhead. While RASL incurs additional
+context. costs for retrieval ($0.03 per 100 queries) and more complex prompt-
+
+ing ($0.39-0.41 vs $0.10-0.11 for baselines), its key advantage lies
+E.0.2. Example 2 (BIRD). Question: Where is Amy Firth’s home- in maintaining constant costs as the number of tables increases.
+town? hometown refers to city, county, state Most notably, RASL costs remain identical at N=15 and N=30, while
+Ground truth tables: {’student_club.member’, ’student_club.zip_code’} baseline costs scale linearly with the number of included tables.
+Ground truth columns: {’student_club.member-first_name’, ’stu- For Spider, RASL costs $0.80 per 100 queries at both N=15 and
+dent_club.memberlast_name’, ’student_club.member.zip’, N=30, compared to baselines ranging from $0.45-0.52 at N=15 but
+*student_club.zip_code.city’, ’student_club.zip_code.county’, ’stu- increasing to $0.81-0.93 at N=30. For BIRD, RASL costs $1.85 per
+dent_club.zip_code.state’, ’student_club.zip_code.zip_code’} 100 queries versus $1.32-1.78 for baselines at N=15, but baselines
+
+increase substantially to $2.68-3.22 at N=30. This constant cost scal-
+
+RASL-Extracted Keywords: [’hometown’, ‘city’, ‘county’, ’state’, ing, combined with superior accuracy performance, makes RASL
+‘location’, ‘residence’, ’person details’] particularly attractive for enterprise deployments where database
+
+catalogs continue to grow over time.
+
+Findings: 7 tables contain the word ‘city’, 7 contain ‘location’, We believe further optimizations could provide additional cost
+and 5 contain ‘state. Similarly, 19 columns contain ’city’, 16 contain benefits. Prompt reduction techniques could minimize the fixed
+’state’, and 13 contain ’location’, Due to this highly overlapping prompt overhead ($0.39-0.41 per 100 queries), while evaluations of
+information of similar data across different databases, it can be lighter-weight models for table prediction (e.g., using Claude Haiku
+difficult to retrieve top-N context entities at low N values, whereas instead of Sonnet) represent promising avenues for cost reduction
+at higher N values (e.g. 20-50), all sufficient context can be included that warrant investigation. These optimizations represent impor-
+for schema reasoning. tant directions for future work to enhance RASL’s cost-effectiveness
+
+in resource-constrained environments.
+F BASELINE METHOD IMPLEMENTATION
+DETAILS
+
+For Recall@5 and Recall@15 metrics, we directly adopt the met-
+rics reported by DBCopilot [23] on external benchmarks, which
+serializes table schemas into documents containing table names,
+column names, and column context for use in BM25, SXFMR, and
+DTR. BM25 uses Okapi BM25 with the two adjustable parameters
+optimized over training, and SXFMR uses all-mpnet-base-v2 [20].
+CRUSH uses gpt-3.5-turbo-0125 [16] for schema hallucination and
+adopts the same BM25 and SXFMR settings. DTR and DBCopilot are
+fine-tuned using 1 x 10° question-SQL pairs, which are synthesized
+over the target databases using the process detailed in [23].
+
+For ablation study reproductions, we leverage the same settings
+for BM25 and SXFMR, where we find BM25 works best on training
+samples using shingles of K = 4 for Spider and K = 5 for BIRD
+and Fiben, with word-level indexing performing poorly across all
+datasets. For CRUSH, the same settings are used for BM25 and
+SXFMR, but we leverage Anthropic Calude 3.5 Sonnet-v2 [2] for
+schema hallucination due to access constraints for OpenAI models.
+
+
+--- Page 15 ---
+
+RASL: Retrieval Augmented Schema Linking for Massive Database Text-to-SQL
+athod BIRD (per 100 queries
+Schema Retrieval Prompt Total Schema Retrieval Prompt Total
+
+BM25 $0.39/0.80 $0.00 $0.10 $0.49/0.90 | $1.22/2.57 $0.00 $0.11 $1.32/2.68
+SXFMR $0.35/0.71 $0.00 $0.10 $0.45/0.81 | $1.50/2.70 $0.00 $0.11 $1.60/2.80
+CRUSH_BM25_ | $0.42/0.83 $0.00 $0.10 | $0.52/0.93 | $1.54/2.99 $0.00 $0.11 | $1.65/3.10
+CRUSH_SXFMR | $0.41/0.82 $0.00 $0.10 | $0.51/0.92 | $1.68/3.12 $0.00 $0.11 | $1.78/3.22
+RASI. fal S185/185
+Table 8: Cost breakdown per 100 queries (USD) showing schema, retrieval, and prompt costs.

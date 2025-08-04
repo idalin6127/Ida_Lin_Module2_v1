@@ -1,0 +1,493 @@
+
+
+--- Page 1 ---
+
+DiffLoRA: Differential Low-Rank Adapters for Large Language Models
+Alexandre Misrahi!* Nadezhda Chirkova?_ Maxime Louis? Vassilina Nikoulina”
+‘EPFL ?NAVER LABS Europe
+alexandre.misrahi@epfl.ch, vassilina.nikoulina@naverlabs.com
+Abstract (Xiao et al., 2024). Differential Transformer intro-
+duces a differential attention mechanism (DiffAttn)
+
+Vey Differential Transformer has recently been pro- that amplifies attention to important context while
+
+N posed to improve performance in Transformer 1j . Thi d d
+
+SS models by canceling out noise through a de- canceling out noise. This strategy demonstrate
+
+N noiser attention mechanism. In this work, significant performance improvement in context-
+
+— we introduce DiffLoRA, a parameter-efficient critical tasks such as Retrieval-Augmented Gen-
+
+= adaptation of the differential attention mecha- eration (RAG) or In-Context Learning (ICL), as
+
+_ nism, with low-rank adapters on both positive well as remarkable domain robustness. However, a
+
+cn and negative attention terms. This approach current limitation of this method is that it requires
+
+retains the efficiency of LORA while aiming to to train a model from scratch.
+
+_ benefit from the performance gains of differen- In this work, we explore DiffLoR A! _ a tech-
+
+tial attention. We evaluate DiffLoRA across . . .
+
+O a broad range of NLP tasks, including gen- nique that integrates LoRA and DiffAttn to adapt
+a eral benchmarks, many-shot in-context learn- pre-trained LLMs using low-rank adapters. As in
+Ss) ing, RAG, and long-context tests. We observe (Grattafiori et al., 2024), LoRA adapters are in-
+
+that, although DiffLoRA falls short of other corporated at each layer of the model, enabling
+
+— parameter-efficient fine-tuning methods in most it to learn the denoising weights associated with
+
+iA evaluation tasks, it shows interesting results DiffAttn. The goal of DiffLoRA is to adapt a
+
+CO in certain domains (+11 pts on LoRA for Hu- pre-trained model in a parameter-efficient man-
+
+a) manEval). We analyze the attention patterns ner, while aiming to match the performance im-
+
+roa) post-finetuning to identify the reasons for this , & P ;
+
+CN behavior. provements demonstrated by the Differential Trans-
+
+~ former, and potentially outperform corresponding
+
+oO 1 Introduction baselines in context-heavy tasks.
+
+va)
+
+N Large language models (LLMs) have achieved re- 2 DiffLoRA
+> markable success across diverse NLP tasks, but ; ; ; ,
+
+ioe ; . ; In this section, we provide a formal description
+
+adapting these massive models to new domains or ; — ;
+< . . for our method. DiffLoRA uses a similar attention
+tasks remains challenging and costly. Full fine- functi Diff ‘al Transf
+S tuning of an LLM for each application is often unction as Dilterential Lranstormer:
+infeasible due to the large number of parameters. T Tr
+Fc dj ane P DiffAttn(X) = | sm iki) A+ sm Qaky V
+This drives the need for efficient and robust LLM Vd Vad
+adaptation techniques that can customize model
+behavior for a variety of tasks. Multiple parameter- where d is the model’s hidden size used in trans-
+efficient fine-tuning methods have emerged to ad- _ former layers, and sm is the softmax function. In
+dress this challenge, the most prominent approach __ the setting of a pre-trained LLM, we obtain Q,, iy
+being LoRA (Hu et al., 2021), which injects small _—_ from pre-trained Wg,, Wx, and aim to parameter-
+trainable weight matrices into a pre-trained model _ efficiently train the denoising terms Wo,, Wx,
+instead of updating all weights. such that computation time and resources are simi-
+In parallel, recent architectural innovations like lar to LORA. To do so, we train low-rank adapters
+the Differential Transformer (Ye et al., 2024) have (Huet al., 2021) Bg,, Bx, € R**", Ag,, Ak» €
+tackled the well-known issue of attention sinks § —j~————_ ;
+We release our code at https://github.com/
+“Work done during internship at NAVER LABS Europe alexmsrh/difflora
+1
+
+
+--- Page 2 ---
+
+IR"*¢ such that The task aims to evaluate the capability of Dif-
+fLoRA models to adapt to new tasks in a zero-shot
+Q2 = X(Ba, AQ.) fashion. As in (Yen et al., 2025), we report accu-
+Ky = X(Bxr,Ak,) racy on the test sets.
+We also add adapters on the positive term to in- Needle-in-Haystack. We evaluate Needle-in-
+crease the expressiveness of the adapters: Haystack (NIH) performance across several set-
+tings: Multi-Key (MK) tasks the model to retrieve
+Qi = X(Wa, + Ba, Aa) the correct key in the context with multiple noisy
+ky = X(Wxr, + Br, Ax,) ones, and Multi-Value (MV) tasks the model to
+retrieve all the values associated with a certain key.
+where the new weights {A, B}¢Q,K},,..) are ini-
+tialized and trained as in LORA. This is done for RAG-QA_ We also evaluate our models in RAG
+the attention mechanism at each hidden layer of the Q&A tasks, to assess their capability to exploit
+model. context and generate sound text. We follow RAG
+. settings proposed in (Rau et al., 2024), using
+3 Experiments BERGEN? framework. More details on RAG set-
+We train all models with a single epoch on Tulu- tings are available in the Appendix. We evaluate
+2 (Ivison et al., 2023)? instruction tuning dataset. ©" both general QA benchmarks such as KILT-
+We perform an additional experiment with Tulu-3 NQ (Petroni et al., 2021) and PopQA (Mallen
+(Lambert et al., 2024) to assess the impact of larger &t al., 2023), as well as more specific domain
+training dataset sizes. We rely on the open-instruct?. benchmarks such as biomedical (BioASQ (Nen-
+framework for finetuning. The hyperparameters tidis et al., 2023)), tech-support (TechQA (Castelli
+used for training are given in Appendix Table 2. ¢t al., 2019)) and finance (FiQA). This evaluates
+We proceed by describing the evaluation settings. the ability of DiffLoRA models to effectively an-
+swer questions by using context retrieved from a
+3.1 General Evaluation datastore.
+We first evaluate the performances in terms of core .
+LLM abilities, to investigate whether the fine-tuned 3.3. Baselines
+model preserves its initial capabilities. We select | We use Llama-3.2-1B-Instruct model? as starting
+a subset of datasets representing different types of | point of our experiments. We compare the perfor-
+knowledge encoded into LLMs: (1) Knowledge mance of DiffLoRA to this model to assess the
+recall (TruthfulQA, PopQA, ARC-challenge), (2) | impact of introducing denoiser adapters. In order
+reasoning (DROP, BBH), (3) math (GSM8k), (4) to decouple the effect of finetuning from the effect
+coding (HumanEval). We use the OLMES frame- _ of DiffAttn, we also perform LoRA finetuning on
+work* designed for evaluation reproducibility in the same tuning datasets. We set Full LoRA rank in
+LLMs. We rely on predefined evaluation settings/- | a way to match the number of trainable parameters
+metrics for the above mentioned tasks. of DiffLoRA models (more details at Appendix
+Tab. 2).
+3.2 Context-Sensitive Evaluation
+For In-Context Learning (ICL) and Needle-in-the- 3.4 DiffLoRA Variants
+Haystack (NIH) tasks we rely on evaluation scheme — We hypothesize that some adaptation might be nec-
+from HELMET (Yen et al., 2025). essary in the positive term of attention in order to
+In-Context-Learning. The TREC tasks (Li and better adapt to the introduction of the negative side.
+Roth, 2002) consist in classifying question type To ensure that it 1s comp arable with LoRA and the
+among 6 and 50 labels, respectively. The Clinic150 full denoiser setting in terms of number of parame-
+task (Larson et al., 2019) and the Banking77 task ters, we set the adapter rank for this variant to r/2,
+(Casanueva et al., 2020) consist in classifying ques- where r is the rank for the setting with adapters only
+tion intent among 151 and 77 classes, respectively. ©" the negative term. In our experiments we set
+a r = 64. In (Ye et al., 2024) an extra normalization
+*huggingface.co/datasets/allenai/tulu-v2-sft-mixture
+3 github.com/allenai/open-instruct 5 github.com/naver/bergen
+4 github.com/allenai/olmes ®meta-Iama/Llama-3.2-1B-Instruct
+2
+
+
+--- Page 3 ---
+
+Llama-3.2-1B-Instruct 0.14 0.68 0.64 0.29 0.40 0.37 0.43 0.43
+LoRA- 0.42 0.15 0.76 0.53 0.33 0.36 0.35 0.43 0.42
+DiffLoRA-64 -teRie) 0.14 0.73 0.64 0.26 0.35 0.36 0.45 0.43
+DiffLoRA-64 (fix A=0.1)- 0.44 0.14 0.72 0.61 0.26 0.36 0.36 0.45 0.42
+DiffLoRA-32 -eR¥; 0.14 0.71 0.61 0.26 0.35 0.37 0.44 0.42
+DiffLoRA-32 + GN -3eRe) 0.00 0.39 0.00 0.01 0.01 0.02 0.24 0.15
+DiffLoRA-32 + Tulu3 -3eRZ) 0.13 0.69 0.62 0.26 0.35 0.36 0.45 0.42
+¢ F§ €& $§ § F§ FF °F
+Sy Q (s} ay ax Py a xe x
+s o fea) cS Q 7) a
+Ss a co) (G)
+FS §
+z=
+Figure 1: Evaluation of general LLM capabilities before and after finetuning. DiffLoRA-32: both right and left term
+of diff attention contain learnable parameters, DiffLoRA-64: only right term is learnable
+—e Llama-3.2-1B-Instruct —e— DiffLora, A=0.1, right side, r64 —e Llama-3.2-1B-Instruct —e DiffLora, A=0.1, right side, r64
+—e— FullLora, r8 —e— DiffLora, learn A, both sides, r32 —e— FullLora, r8 —e— DiffLora, A=0.1, both sides, r32
+TREC fine TREC coarse =—e— DiffLora, learn A, both sides, r32
+rates : = 4 , E .
+g 40 15 80 50 80
+l a | la aN | L S
+g ” ° 50000 100000 50000 100000 50000 100000
+60 60 Context Length Context Length Context Length
+# Samples # Samples Figure 3: Needle-in-Haystack tests with variants Mul-
+. . . tikey (MK, one key to retrieve among multiple) and
+Figure 2: Evaluation on Many-shot In-Context Learning MultiValue (MV, retrieve all values corresponding to
+the given key)
+(Group Norm) applied to each head independently
+to stabilize scale across heads, and a correspond- _ malization. We believe that in case of pretrained
+ing scaling factor of (1 — Ainit) to stabilize this model such stabilization of gradients is less critical.
+normalization in the gradient. We therefore add —_ Moreover, it might hurt previously learnt attention
+a model with Group Norm (GN) for comparison _ patterns and therefore degrade the results. In order
+(more details in Appendix 2). Following (Ye et al., to assess whether DiffLoRA deals better with the
+2024), in our experiments we learn the parameter A, context we perform extra evaluations.
+however we generally observe more stable results
+by freezing \ to a small fixed value (0.1). Many-Shot In-Context Learning The ICL re-
+sults (Fig. 2) show that the DiffLoRA models
+4 Results
+Table 1: RAG evaluation, with top-5 retrieved docu-
+variants, as well as baseline results for the origi-
+nal model and LoRA finetuning. First, we note | BioASQ PopQA_ TechQA
+that most of the models stay more or less on par Llama-3.2-1B-Instruct | 0.678 0.494 0.532
+with the original model. We note that model’s FullLoRA | 0.728 0.528 (0.556
+. DiiffLoRA-64 0.629 0.451 0.39
+performances do vary according to the task (+11 DiffLoRA-64-. = 0.1 | 0.638 0.495 0.407
+pts in HumanEval, -7pts in DROP), but generally DiffLoRA-32 | 0.585 0.479 0.344
+stay within the same range as an original model. DiffLoRA-32+GN | 0.025 0.041 0.059
+Lo. . DiffLoRA-32 + Tulu3 0.594 0.466 0.339
+The only exception is the model with Group Nor-——§ ——————————__{~_
+3
+
+
+--- Page 4 ---
+
+Llama-3.2-1B LoRA DLORA-32 DLoRA, Tulu-3
+| —— ] Eh =
+“Sung Seago Sek
+
+Figure 4: Change in attention pattern distribution in different models. For DiffLoRA variants we plot attention
+mass for main component (green) and denoiser component (yellow). Note that attention mass is normalized by the
+number of tokens in each part of the sequence. The negative attention is shown after it is scaled by A. DiffLoRA
+corresponds to the variant with learnable \ and LoRa parameters in both terms.
+perform similarly as the initial model, however that the generation capability of LLM gets broken
+they are outperformed by LoRA. When increasing —_in DiffLoRA (examples in Appendix C). Such de-
+the context length with more sample demonstra- _—_ generation could explain drop in performance on
+tions, DiffLoRA seems to struggle even more in RAG tasks. Most of the core LLM evaluation tasks
+TREC-fine and Banking77. This might be due — are performed in MCQA fashion, and therefore do
+to the nature of instruction tuned data, and the __ not explicitly evaluate generation capability.
+max_sequence_length 7 1096 apP led during Attention Mass. _ A significant characteristic of
+finetuning. LoRA is less impacted, likely because . . : :
+it diverges less from the initial model. DiffTransformer is the allocation of attention mass
+
+on the relevant parts of the context, which effec-
+Needle-in-Haystack tests Needle-in-Haystack _ tively suppresses the attention sinks (Xiao et al.,
+tests reveal different hierarchies among models. 2024). Fig. 4 compares the change in attention
+The initial model seems to outperform finetuned patterns across different models. We note that Dif-
+models in all tasks. However, the hierarchy be-  fLoRA slightly changes attention pattern compared
+tween LoRA and DiffLoRA models is not so clear: _ to initial model (Llama-3.2-1B-Instruct), by denois-
+in MK=2 LoRA significantly outperforms all Dif- ing context around Magic Number, and decreasing
+fLoRA variants (see Appendix C fora degenerate attention mass on BOS token. However, the over-
+example), while in MV task all DiffLoRA variants _all pattern is pretty similar to the one obtained by
+largely outperform LoRA. the model finetuned with LoRA. Therefore, such
+
+behaviour could also be attributed to the data distri-
+RAG-QA In RAG evaluation (Tab. | or full table bution on which models were finetuned. We note
+in Appendix D) the DiffLoRA significantly under- that increasing the number training data (Tulu-3 vs
+performs compared to LoRA. Compared to the ini- TyJu-2) leads to stronger denoising, but we do not
+tial model, DiffLoRA performs better on general observe strong pattern change, compared to the one
+domain benchmarks (KILT-NQ, PopQA), while, reported by (Ye et al., 2024). This suggests that
+surprisingly, DiffLoRA degrades even more on less we would need much more data in order to learn a
+general domain tasks (BioASQ, TechQA, FiQA). different attention mechanism.
+5 Discussion 6 Conclusion
+Our experiments reveal that LoRA outperforms We introduced DiffLoRA, a parameter-efficient
+DiffLoRA in most tasks. However, DiffLoRA out- method that incorporates differential attention into
+performs LoRA in some tasks such as Code ques- __ pre-trained LLMs using low-rank adapters. Initial
+tions and multiple-key retrieval. We performed results demonstrate some encouraging patterns but
+manual inspection of the results to better under- more investigation is required to make such model
+stand models behavior after tuning. We observe — work as expected.
+
+4
+
+
+--- Page 5 ---
+
+References Alrassy, Pengchuan Zhang, Pengwei Li, Petar Va-
+sic, Peter Weng, Prajjwal Bhargava, Pratik Dubal,
+
+Ifigo Casanueva, Tadas Teméinas, Daniela Gerz, Praveen Krishnan, Punit Singh Koura, Puxin Xu,
+Matthew Henderson, and Ivan Vuli¢. 2020. Efficient Qing He, Qingxiao Dong, Ragavan Srinivasan, Raj
+intent detection with dual sentence encoders. In Pro- Ganapathy, Ramon Calderer, Ricardo Silveira Cabral,
+ceedings of the 2nd Workshop on Natural Language Robert Stojnic, Roberta Raileanu, Rohan Maheswari,
+Processing for Conversational AI, pages 38-45, On- Rohit Girdhar, Rohit Patel, Romain Sauvestre, Ron-
+line. Association for Computational Linguistics. nie Polidoro, Roshan Sumbaly, Ross Taylor, Ruan
+Silva, Rui Hou, Rui Wang, Saghar Hosseini, Sa-
+
+Vittorio Castelli, Rishav Chakravarti, Saswati Dana, An- hana Chennabasappa, Sanjay Singh, Sean Bell, Seo-
+thony Ferritto, Radu Florian, Martin Franz, Dinesh hyun Sonia Kim, Sergey Edunov, Shaoliang Nie, Sha-
+Garg, Dinesh Khandelwal, Scott McCarley, Mike ran Narang, Sharath Raparthy, Sheng Shen, Shengye
+McCawley, Mohamed Nasr, Lin Pan, Cezar Pen- Wan, Shruti Bhosale, Shun Zhang, Simon Van-
+dus, John Pitrelli, Saurabh Pujar, Salim Roukos, An- denhende, Soumya Batra, Spencer Whitman, Sten
+drzej Sakrajda, Avirup Sil, Rosario Uceda-Sosa, Todd Sootla, Stephane Collot, Suchin Gururangan, Syd-
+Ward, and Rong Zhang. 2019. The techqa dataset. ney Borodinsky, Tamar Herman, Tara Fowler, Tarek
+Preprint, arXiv:1911.02984. Sheasha, Thomas Georgiou, Thomas Scialom, Tobias
+Speckbacher, Todor Mihaylov, Tong Xiao, Ujjwal
+
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Karn, Vedanuj Goswami, Vibhor Gupta, Vignesh
+Abhinav Pandey, Abhishek Kadian, Ahmad Al- Ramanathan, Viktor Kerkez, Vincent Gonguet, Vir-
+Dahle, Aiesha Letman, Akhil Mathur, Alan Schel- ginie Do, Vish Vogeti, Vitor Albiero, Vladan Petro-
+ten, Alex Vaughan, Amy Yang, Angela Fan, Anirudh vic, Weiwei Chu, Wenhan Xiong, Wenyin Fu, Whit-
+Goyal, Anthony Hartshorn, Aobo Yang, Archi Mi- ney Meers, Xavier Martinet, Xiaodong Wang, Xi-
+tra, Archie Sravankumar, Artem Korenev, Arthur aofang Wang, Xiaoqing Ellen Tan, Xide Xia, Xin-
+Hinsvark, Arun Rao, Aston Zhang, Aurelien Ro- feng Xie, Xuchao Jia, Xuewei Wang, Yaelle Gold-
+driguez, Austen Gregerson, Ava Spataru, Baptiste schlag, Yashesh Gaur, Yasmine Babaei, Yi Wen,
+Roziere, Bethany Biron, Binh Tang, Bobbie Chern, Yiwen Song, Yuchen Zhang, Yue Li, Yuning Mao,
+Charlotte Caucheteux, Chaya Nayak, Chloe Bi, Zacharie Delpierre Coudert, Zheng Yan, Zhengxing
+Chris Marra, Chris McConnell, Christian Keller, Chen, Zoe Papakipos, Aaditya Singh, Aayushi Sri-
+Christophe Touret, Chunyang Wu, Corinne Wong, vastava, Abha Jain, Adam Kelsey, Adam Shajnfeld,
+Cristian Canton Ferrer, Cyrus Nikolaidis, Damien Al- Adithya Gangidi, Adolfo Victoria, Ahuva Goldstand,
+lonsius, Daniel Song, Danielle Pintz, Danny Livshits, Ajay Menon, Ajay Sharma, Alex Boesenberg, Alexei
+Danny Wyatt, David Esiobu, Dhruv Choudhary, Baevski, Allie Feinstein, Amanda Kallet, Amit San-
+Dhruv Mahajan, Diego Garcia-Olano, Diego Perino, gani, Amos Teo, Anam Yunus, Andrei Lupu, An-
+Dieuwke Hupkes, Egor Lakomkin, Ehab AlBadawy, dres Alvarado, Andrew Caples, Andrew Gu, Andrew
+Elina Lobanova, Emily Dinan, Eric Michael Smith, Ho, Andrew Poulton, Andrew Ryan, Ankit Ramchan-
+Filip Radenovic, Francisco Guzman, Frank Zhang, dani, Annie Dong, Annie Franco, Anuj Goyal, Apara-
+Gabriel Synnaeve, Gabrielle Lee, Georgia Lewis An- jita Saraf, Arkabandhu Chowdhury, Ashley Gabriel,
+derson, Govind Thattai, Graeme Nail, Gregoire Mi- Ashwin Bharambe, Assaf Eisenman, Azadeh Yaz-
+alon, Guan Pang, Guillem Cucurell, Hailey Nguyen, dan, Beau James, Ben Maurer, Benjamin Leonhardi,
+Hannah Korevaar, Hu Xu, Hugo Touvron, Iliyan Bernie Huang, Beth Loyd, Beto De Paola, Bhargavi
+Zarov, Imanol Arrieta Ibarra, Isabel Kloumann, Is- Paranjape, Bing Liu, Bo Wu, Boyu Ni, Braden Han-
+han Misra, Ivan Evtimov, Jack Zhang, Jade Copet, cock, Bram Wasti, Brandon Spence, Brani Stojkovic,
+Jaewon Lee, Jan Geffert, Jana Vranes, Jason Park, Brian Gamido, Britt Montalvo, Carl Parker, Carly
+Jay Mahadeokar, Jeet Shah, Jelmer van der Linde, Burton, Catalina Mejia, Ce Liu, Changhan Wang,
+Jennifer Billock, Jenny Hong, Jenya Lee, Jeremy Fu, Changkyu Kim, Chao Zhou, Chester Hu, Ching-
+Jianfeng Chi, Jianyu Huang, Jiawen Liu, Jie Wang, Hsiang Chu, Chris Cai, Chris Tindal, Christoph Fe-
+Jiecao Yu, Joanna Bitton, Joe Spisak, Jongsoo Park, ichtenhofer, Cynthia Gao, Damon Civin, Dana Beaty,
+Joseph Rocca, Joshua Johnstun, Joshua Saxe, Jun- Daniel Kreymer, Daniel Li, David Adkins, David
+teng Jia, Kalyan Vasuden Alwala, Karthik Prasad, Xu, Davide Testuggine, Delia David, Devi Parikh,
+Kartikeya Upasani, Kate Plawiak, Ke Li, Kenneth Diana Liskovich, Didem Foss, Dingkang Wang, Duc
+Heafield, Kevin Stone, Khalid El-Arini, Krithika Iyer, Le, Dustin Holland, Edward Dowling, Eissa Jamil,
+Kshitiz Malik, Kuenley Chiu, Kunal Bhalla, Kushal Elaine Montgomery, Eleonora Presani, Emily Hahn,
+Lakhotia, Lauren Rantala-Yeary, Laurens van der Emily Wood, Eric-Tuan Le, Erik Brinkman, Este-
+Maaten, Lawrence Chen, Liang Tan, Liz Jenkins, ban Arcaute, Evan Dunbar, Evan Smothers, Fei Sun,
+Louis Martin, Lovish Madaan, Lubo Malo, Lukas Felix Kreuk, Feng Tian, Filippos Kokkinos, Firat
+Blecher, Lukas Landzaat, Luke de Oliveira, Madeline Ozgenel, Francesco Caggioni, Frank Kanayet, Frank
+Muzzi, Mahesh Pasupuleti, Mannat Singh, Manohar Seide, Gabriela Medina Florez, Gabriella Schwarz,
+Paluri, Marcin Kardas, Maria Tsimpoukelli, Mathew Gada Badeer, Georgia Swee, Gil Halpern, Grant
+Oldham, Mathieu Rita, Maya Pavlova, Melanie Kam- Herman, Grigory Sizov, Guangyi, Zhang, Guna
+badur, Mike Lewis, Min Si, Mitesh Kumar Singh, Lakshminarayanan, Hakan Inan, Hamid Shojanaz-
+Mona Hassan, Naman Goyal, Narjes Torabi, Niko- eri, Han Zou, Hannah Wang, Hanwen Zha, Haroun
+lay Bashlykov, Nikolay Bogoychev, Niladri Chatterji, Habeeb, Harrison Rudolph, Helen Suk, Henry As-
+Ning Zhang, Olivier Duchenne, Onur Celebi, Patrick pegren, Hunter Goldman, Hongyuan Zhan, Ibrahim
+
+5
+
+
+--- Page 6 ---
+
+Damlaj, Igor Molybog, Igor Tufanov, Ilias Leontiadis, | Pengcheng He, Jianfeng Gao, and Weizhu Chen. 2021.
+Irina-Elena Veliche, Itai Gat, Jake Weissman, James Debertav3: Improving deberta using electra-style pre-
+Geboski, James Kohli, Janice Lam, Japhet Asher, training with gradient-disentangled embedding shar-
+Jean-Baptiste Gaya, Jeff Marcus, Jeff Tang, Jen- ing. Preprint, arXiv:2111.09543.
+nifer Chan, Jenny Zhen, Jeremy Reizenstein, Jeremy a .
+Teboul, Jessica Zhong, Jian Jin, Jingyi Yang, Joe Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan
+Cummings, Jon Carvill, Jon Shepard, Jonathan Mc- Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and
+Phie, Jonathan Torres, Josh Ginsburg, Junjie Wang, Weizhu Chen. 2021. Lora: Low-rank adaptation of
+Kai Wu, Kam Hou U, Karan Saxena, Kartikay Khan- large language models. Preprint, arXiv:2106.09685.
+delwal, Katayoun Zand, Kathy Matosich, Kaushik Hamish Ivison, Yizhong Wang, Valentina Pyatkin,
+Veeraraghavan, Kelly Michelena, Keqian Li, Ki- Nathan Lambert, Matthew Peters, Pradeep Dasigi,
+ran Jagadeesh, Kun Huang, Kunal Chawla, Kyle Joel Jang, David Wadden, Noah A. Smith, Iz Belt-
+Huang, Lailin Chen, Lakshya Garg, Lavender A, agy, and Hannaneh Hajishirzi. 2023. Camels in a
+Leandro Silva, Lee Bell, Lei Zhang, Liangpeng changing climate: Enhancing Im adaptation with tulu
+Guo, Licheng Yu, Liron Moshkovich, Luca Wehrst- 2. Preprint, arXiv:2311.10702.
+edt, Madian Khabsa, Manav Avalani, Manish Bhatt,
+Martynas Mankus, Matan Hasson, Matthew Lennie, Nathan Lambert, Jacob Morrison, Valentina Pyatkin,
+Matthias Reso, Maxim Groshev, Maxim Naumov, Shengyi Huang, Hamish Ivison, Faeze Brahman,
+Maya Lathi, Meghan Keneally, Miao Liu, Michael L. Lester James V. Miranda, Alisa Liu, Nouha Dziri,
+Seltzer, Michal Valko, Michelle Restrepo, Mihir Pa- Shane Lyu, Yuling Gu, Saumya Malik, Victoria
+tel, Mik Vyatskov, Mikayel Samvelyan, Mike Clark, Graf, Jena D. Hwang, Jiangjiang Yang, Ronan Le
+Mike Macey, Mike Wang, Miquel Jubert Hermoso, Bras, Oyvind Tafjord, Chris Wilhelm, Luca Soldaini,
+Mo Metanat, Mohammad Rastegari, Munish Bansal, Noah A. Smith, Yizhong Wang, Pradeep Dasigi, and
+Nandhini Santhanam, Natascha Parks, Natasha Hannaneh Hajishirzi. 2024. Tiilu 3: Pushing frontiers
+White, Navyata Bawa, Nayan Singhal, Nick Egebo, in open language model post-training.
+Nicolas Usunier, Nikhil Mehta, Nikolay Pavlovich .
+Laptev, Ning Dong, Norman Cheng, Oleg Chernoguz, Stefan Larson, Anish Mahendran, Joseph J. Peper,
+Olivia Hart, Omkar Salpekar, Ozlem Kalinli, Parkin Christopher Clarke, Andrew Lee, Parker Hill,
+Kent, Parth Parekh, Paul Saab, Pavan Balaji, Pe- Jonathan K. Kummerfeld, Kevin Leach, Michael A.
+dro Rittner, Philip Bontrager, Pierre Roux, Piotr Laurenzano, Lingjia Tang, and Jason Mars. 2019. An
+Dollar, Polina Zvyagina, Prashant Ratanchandani, evaluation dataset for intent classification and out-of-
+Pritish Yuvraj, Qian Liang, Rachad Alao, Rachel scope prediction. In Proceedings of the 2019 Confer-
+Rodriguez, Rafi Ayub, Raghotham Murthy, Raghu ence on Empirical Methods in Natural Language Pro-
+Nayani, Rahul Mitra, Rangaprabhu Parthasarathy, cessing and the 9th International Joint Conference
+Raymond Li, Rebekkah Hogan, Robin Battey, Rocky on Natural Language Processing ( EMNLP-IJCNLP),
+Wang, Russ Howes, Ruty Rinott, Sachin Mehta, pages 1311-1316, Hong Kong, China. Association
+Sachin Siby, Sai Jayesh Bondu, Samyak Datta, Sara for Computational Linguistics.
+Chugh, Sara Hunt, Sargun Dhillon, Sasha Sidorov, Carlos Lassance, Hervé Déjean, Thibault Formal, and
+Satadru Pan, Saurabh Mahajan, Saurabh Verma, Stéphane Clinchant. 2024. Splade-v3: New baselines
+Seiji Yamamoto, Sharadh Ramaswamy, Shaun Lind- for splade. arXiv preprint arXiv:2403.06789.
+say, Shaun Lindsay, Sheng Feng, Shenghao Lin,
+Shengxin Cindy Zha, Shishir Patil, Shiva Shankar, Xin Li and Dan Roth. 2002. Learning question clas-
+Shugiang Zhang, Shugqiang Zhang, Sinong Wang, sifiers. In COLING 2002: The 19th International
+Sneha Agarwal, Soji Sajuyigbe, Soumith Chintala, Conference on Computational Linguistics.
+Stephanie Max, Stephen Chen, Steve Kehoe, Steve . oo ; .
+Satterfield, Sudarshan Govindaprasad, Sumit Gupta, “lex Mallen, Akari Asai, Victor Zhong, Rajarshi Das,
+Summer Deng, Sungmin Cho, Sunny Virk, Suraj Daniel Khashabi, and Hannaneh Hajishirzi. 2023.
+Subramanian, Sy Choudhury, Sydney Goldman, Tal When not to trust language models: Investigating
+Remez, Tamar Glaser, Tamara Best, Thilo Koehler, effectiveness of parametric and non-parametric mem-
+Thomas Robinson, Tianhe Li, Tianjun Zhang, Tim ories. Preprint, arXiv:2212.10511.
+Matthews, Timothy Chou, Tzook Shaked, Varun Anastasios Nentidis, Georgios Katsimpras, Anasta-
+Vontimitta, Victoria Ajayi, Victoria Montanez, Vijai sia Krithara, Salvador Lima Lépez, Euldlia Farré-
+Mohan, Vinay Satish Kumar, Vishal Mangla, Vlad Maduell, Luis Gasco, Martin Krallinger, and Geor-
+Ionescu, Vlad Poenaru, Vlad Tiberiu Mihailescu, gios Paliouras. 2023. Overview of BioASQ 2023: The
+Vladimir Ivanov, Wei Li, . Wenchen Wang, Wen- Eleventh BioASQ Challenge on Large-Scale Biomedi-
+Tame. Xiaojlan Wa, Xiaclan Wane, Xilon Miaoeneng cal Semantic Indexing and Question Answering, page
+Gao, Yaniv Kleinman, Yanjun Chen, Ye Hu, Ye Jia, 227-250. Springer Nature Switzerland.
+Ye Qi, Yenda Li, Yilin Zhang, Ying Zhang, Yossi Adi, — Fabio Petroni, Aleksandra Piktus, Angela Fan, Patrick
+Youngjin Nam, Yu, Wang, Yu Zhao, Yuchen Hao, Lewis, Majid Yazdani, Nicola De Cao, James Thorne,
+Yundi Qian, Yunlu Li, Yuzi He, Zach Rait, Zachary Yacine Jernite, Vladimir Karpukhin, Jean Maillard,
+DeVito, Zef Rosnbrick, Zhaoduo Wen, Zhenyu Yang, Vassilis Plachouras, Tim Rocktischel, and Sebastian
+Zhiwei Zhao, and Zhiyu Ma. 2024. The llama 3 herd Riedel. 2021. Kilt: a benchmark for knowledge in-
+of models. Preprint, arXiv:2407.21783. tensive language tasks. Preprint, arXiv:2009.02252.
+6
+
+
+--- Page 7 ---
+
+David Rau, Hervé Déjean, Nadezhda Chirkova, Thibault Parameter Value
+Formal, Shuai Wang, Vassilina Nikoulina, and Learning Rate le-4
+arXiv:2407.01102. , , DiffLoRa both terms rank=32, alpha=64
+
+DiffLoRa, right term only | rank=64, alpha=128
+Batch size 64
+
+Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song max_input_length 4096
+Han, and Mike Lewis. 2024. Efficient streaming
+language models with attention sinks. Preprint, Table 2: Hyperparameters used in training. We em-
+arXiv:2309.17453. pirically identify a good learning rate of 1e-4 for both
+
+LoRA and DiffLoRA.
+
+Gao Huang, and Fura Wer, 2024, Differential trans. © -EXamples
+
+former. Preprint, arXiv:2410.05258. Example NIH-MK
+What is the magic uuid for
+
+Howard Yen, Tianyu Gao, Minmin Hou, Ke Ding, 4e6ccf9a-fbc2-41ba-8655-486660d4417c
+Daniel Fleischer, Peter Izsak, Moshe Wasserblat, and
+Danqi Chen. 2025. Helmet: How to evaluate long-
+context language models effectively and thoroughly. LoRA: (correct) The
+In International Conference on Learning Representa- special magic uuid for
+tions (ICLR). 4e6ccf9a-fbc2-41ba-8655-486660d4417c
+
+mentioned in the provided text is:
+3f45a9e6-1ald-4e5d-8e5d-3f5a9e6a6f5a.
+
+A_ RAG settings
+
+DiffLoRA-right, learn : (degen-
+erate) The special magic uuid for
+
+Following (Rau et al., 2024) Given a query, we 4e6ccf9a-fbc2-41ba-8655-486660d4417¢
+
+use SPLADE-v3 (Lassance et al., 2024) retriever mentioned in the provided text is:
+
+to identify a first set of relevant documents from 3£977a9-0e8a-4f2a-8f5a-Oadadal...]
+
+Wikipedia collection. These documents are further
+
+reranked using DeBERTa-v3 (He et al., 2021), a
+
+cross-encoder computing relevance score for each
+
+document relative to the query. For generation, Example RAG-BioASQ
+
+we use instruction-tuned Llama-3.2-1B(Grattafiori . .
+
+: Is  Prasinezumab effective for
+
+et al., 2024). To evaluate the quality of responses, . ; .
+
+. Parkinson’s Disease?
+
+we rely on an evaluation computed by a LLM-as-
+
+ajudge with the SOLAR-10.7B model’ as back- Lake Gorecin: enmest) Yes,
+
+bone. (Rau et al., 2024) find that this metric has . . . .
+
+: : . Prasinezumab is being studied for
+high correlation with GPT4. its effect on Parkinson’s disease.
+
+DiffLoRA-right, learn \: (degenerate)
+
+B Hyperparameters Step 1: The question is not a valid
+question. The question is not a
+
+See Table 2. Notice that we set the LoRA rank to valid question [...]
+
+8 in order to match the total number of parameters
+
+in the model, since LoRA also adds weights to yp) Other Results
+
+the feed-forward layers in addition to the attention
+
+layers, as well as the value and output matrices
+
+inside the attention.
+
+Thuggingface/upstage/SOLAR-10.7B-Instruct-v 1.0
+7
+
+
+--- Page 8 ---
+
+Llama-3.2-1B-Instruct Lora DiffLora, learn |, both  DiffLora, learn |, right DiffLora, |=0.1, right
+$05 Oy, “gy Op, Ce, $05 SO “gy Oy, ey $05 Opp gy Sy, Up, $05 np gy Oy, Ue $05 SO “gy yy, Ue
+“ny Mags? 2 , ee Morag 2 , “ny gg 2 , “, Mag? 2 , on, Migs 2 :
+Figure 5: Disttribution of attention mass depending on the position of learnable parameters in Differentaion attention
+(right and left terms vs right term only), and the choic of A (fixed or learnable). We note that distribution are quite
+similar to the original models. When 4 is learnable and only parameters on the denoiser are learnt the change is
+slightly more pronounced.
+Table 3: RAG evaluation, with top-5 retrieved documents, evaluated with LLM-as-a-judge.
+BioASQ FiQA_ KILTI-NQ PopQA TechQA _ Avg
+Llama-3.2-1B-Instruct | 0.678 0.483 0.594 0.494 0.532 0.5562
+FullLoRA | 0.728 0.527 0.666 0.528 0.556 0.601
+DiffLoRA-64 | 0.629 0.52 0.611 0.451 0.39 0.5202
+DiffLoRA-64-A = 0.1] 0.638 0.511 0.619 0.495 0.407 0.534
+DiffLoRA-32 | 0.585 0.511 0.621 0.479 0.344 0.508
+DiffLoRA-32+GN | 0.025 0.097 0.031 0.041 0.059 0.0506
+DiffLoRA-32 + Tulu3 | 0.594 0.413 0.584 0.466 0.339 0.4792
+8

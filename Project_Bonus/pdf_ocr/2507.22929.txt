@@ -1,0 +1,1732 @@
+
+
+--- Page 1 ---
+
+EH-Benchmark: Ophthalmic Hallucination Benchmark
+and Agent-Driven Top-Down Traceable Reasoning
+Workflow
+Xiaoyu Pan*?, Yang Bai?*, Ke Zou”, Yang Zhou*, Jun Zhou®, Huazhu Fu’,
+Ww Yih-Chung Tham, Yong Liu?
+oS “Institute of High Performance Computing, Agency for Science, Technology and
+N Research (A*STAR), 1 Fusionopolis Way, Singapore, 188632
+— ’Centre for Innovation and Precision Eye Health; and Department of Ophthalmology,
+=) NUHS Tower Block, Level 7, 1E Kent Ridge Road, Singapore, 119228
+— “Singapore Eye Research Institute, Singapore National Eye Centre, 20 College Road,
+as Singapore, 169856
+—
+=
+S Abstract
+a Medical Large Language Models (MLLMs) play a crucial role in ophthalmic
+— diagnosis, holding significant potential to address vision-threatening diseases.
+> However, their accuracy is constrained by hallucinations stemming from lim-
+2) ited ophthalmic knowledge, insufficient visual localization and reasoning ca-
+On pabilities, and a scarcity of multimodal ophthalmic data, which collectively
+N impede precise lesion detection and disease diagnosis. Furthermore, existing
+2 medical benchmarks fail to effectively evaluate various types of hallucina-
+Ss tions or provide actionable solutions to mitigate them. To address the above
+- a) challenges, we introduce EH-Benchmark, a novel ophthalmology benchmark
+N designed to evaluate hallucinations in MLLMs. We categorize MLLMs’ hallu-
+. > cinations based on specific tasks and error types into two primary classes: Vi-
+< sual Understanding and Logical Composition, each comprising multiple sub-
+=| classes. Given that MLLMs predominantly rely on language-based reason-
+ing rather than visual processing, we propose an agent-centric, three-phase
+framework, including the Knowledge-Level Retrieval stage, the Task-Level
+Case Studies stage, and the Result-Level Validation stage. Experimental re-
+sults show that our multi-agent framework significantly mitigates both types
+of hallucinations, enhancing accuracy, interpretability, and reliability. Our
+~ *Corresponding author. Email: Bai_Yang@ihpc.a-star.edu.sg
+Preprint submitted to Information Fusion August 1, 2025
+
+
+--- Page 2 ---
+
+project is available at https://github.com/ppxyl /EH-Benchmark.
+Keywords: Medical Large Language Model, Agent, Hallucination,
+Ophthalmology, Visual Question Answering
+
+1. Introduction
+
+According to the World Health Organization (WHO), eye conditions have
+a major global impact, affecting at least 2.2 billion people with vision prob-
+lems. Low- and middle-income areas face a greater burden, with rates four
+times higher than in high-income regions. Since most conditions show no
+early signs, they often remain unnoticed. Additionally, many people lack
+knowledge about eye health and skip regular checkups [1].
+
+To tackle diagnostic challenges, researchers have developed computer-
+aided diagnosis (CAD) methods, utilizing automated detection and recog-
+nition to reduce clinicians’ workload and provide efficient patient services.
+Recently, CAD has been widely applied in ophthalmic tasks, such as lesion
+detection and disease progression prediction. Despite high accuracy, current
+CAD systems still require physician oversight, which limits their broader
+adoption.
+
+In recent years, Medical Large Language Models (MLLMs) have gained
+attention for their ability to process diverse medical data, including imaging
+modalities (e.g., MRI, CT scans), time-series signals (e.g., outputs from elec-
+troencephalogram), audio recordings (e.g., patient interviews), and clinical
+documentation [2, 3]. These models exhibit strong performance in address-
+ing complex medical queries based on multimodal inputs [4, 5], generating
+structured medical reports from raw clinical data [6, 7], and recommend-
+ing personalized treatment plans grounded in patients’ genetic profiles and
+clinical histories [8, 9]. Despite their promising capabilities, MLLMs often
+produce factually incorrect yet seemingly plausible content, a phenomenon
+known as hallucination. This typically results from a lack of deep domain
+knowledge, weak reasoning, or misinterpretation of context [10]. In addition,
+their decision-making processes lack transparency, making it difficult to trace
+or verify their outputs. These limitations are particularly concerning in the
+medical field, where accuracy and interpretability are essential.
+
+Although MLLMs have advanced quickly, solid ophthalmology bench-
+marks remain scarce. Most studies focus on text-based tasks, such as knowl-
+edge quizzes, open-ended questions, and multiple-choice tests, while few have
+
+2
+
+
+--- Page 3 ---
+
+investigated or evaluated the hallucinations produced by LLMs in ophthalmic
+settings [11, 12]. Existing benchmarks usually cover only one data type or
+a single task, so they fail to capture the mix of images, text, and other sig-
+nals used in real clinics. As Table 1 shows, this lack of broad, multimodal
+benchmarks makes it hard to compare methods fairly and slows progress.
+Creating an ophthalmology benchmark that combines varied data types and
+task formats is therefore an urgent research need.
+
+In this paper, we introduce a novel ophthalmic benchmark comprising
+13 datasets and 3 modalities. It addresses two major categories of halluci-
+nation—Visual Understanding Hallucination and Logical Composition Hal-
+lucination—across three levels of clinical reasoning: instance, pathological,
+and decision-making, totaling 27K questions. Visual Understanding Hal-
+lucination is further divided into five error types: Numerical, Categorical,
+Positional, Diagnosis-Type, and Stage-Level Errors. Logical Composition
+Hallucination consists of 806 questions derived from over 200 published
+case reports, specifically curated to evaluate the reasoning capabilities of
+large language models (LLMs). The proposed framework is extensible and
+can be directly applied to construct new benchmark datasets.
+
+To address the issue of hallucinations in LLMs, researchers have begun ex-
+ploring the use of Agents. However, most existing approaches rely on general
+frameworks that simulate doctor-patient interactions to optimize diagnostic
+reasoning. These methods are limited by significant deficiencies in contextual
+understanding and a lack of interpretability, which obstruct the seamless inte-
+gration of Agents with LLMs. Furthermore, since many LLMs predominantly
+utilize pattern recognition and correlations between symptoms—rather than
+reconstructive reasoning based on clinical guidelines—they encounter sub-
+stantial difficulties in managing complex cases or diagnosing rare diseases.
+To overcome these challenges, we have developed a multi-agent framework
+specifically tailored for ophthalmic tasks. This framework is structured
+around three key stages: Knowledge-Level Retrieval, Task-Level Case Stud-
+ies, and Result-Level Validation. In this initial phase, external data sources
+are leveraged to pair queries with the contextual backgrounds of relevant
+cases, enabling the retrieval of clinical guidelines pertinent to ophthalmol-
+ogy. During the middle phase, a Decision Agent is employed to select and
+sequence professional tools, constructing a diagnostic workflow that ensures
+logical consistency throughout the process. In the final phase, an Evaluation
+Agent conducts a thorough assessment of the tool outputs across three crit-
+ical dimensions: correctness, completeness, and adherence to the predefined
+
+3
+
+
+--- Page 4 ---
+
+workflow. The system addresses identified deficiencies by selectively retrying
+specific tool agents, establishing an iterative self-correction loop. Through
+this structured process, the diagnostic system evolves from an opaque, black-
+box model into a clinically transparent, self-correcting, and trustworthy AI
+assistant. The main contributions are as follows:
+
+e We introduce EH-Benchmark, a new ophthalmology benchmark with
+over 27K ophthalmic questions, designed to evaluate Visual Under-
+standing and Logical Composition hallucinations induced by LLMs.
+
+e To address hallucinations in ophthalmic tasks, we propose a multi-agent
+framework comprising three key stages: Knowledge-Level Retrieval,
+Task-Level Case Studies, and Result-Level Validation.
+
+e In the first stage, external ophthalmic knowledge sources are queried
+to improve retrieval relevance. During the second stage, a Decision
+Agent selects tools and their invocation order, cyclically building the
+diagnostic workflow. In the final stage, an Evaluation Agent ensures the
+workflow is accurate, complete, and consistent, enabling a transparent
+and reliable AI assistant.
+
+e Experiments show that our framework achieves state-of-the-art perfor-
+mance on the EH-Benchmark, surpassing other LLMs, thereby high-
+lighting its potential for visual understanding and reasoning.
+
+2. Literature Review
+2.1. LLM-based AI Agents
+
+LLM-based agents are evolving into autonomous, multimodal systems
+with tool-leveraging capabilities, yet they face persistent challenges in mem-
+ory, deployment, and safety [13]. Architectures like Talebirad et al.’s col-
+laborative framework [14] assign specialized roles to agents in AGI appli-
+cations, which improves complex task handling. However, dynamic team
+coordination within such frameworks often encounters scalability issues. In-
+novations such as DyLAN’s temporal networks [15] and Guo et al.’s lead-
+ership hierarchies [16] enhance adaptability, boosting code generation and
+decision-making accuracy. However, task-agent alignment remains prob-
+lematic and frequently causes conflicts. Meanwhile, tool integration ad-
+vances, with TOOLMAKER’s code repository conversion [17] and Wang et
+
+4
+
+
+--- Page 5 ---
+
+al.’s CodeAct framework [18] utilizing Python interoperability to achieve a
+20% performance increase in complex operations. However, domain-specific
+robustness lags, particularly in healthcare, where hallucination, fragmented
+tool ecosystems, and weak reasoning validation expose vulnerabilities, under-
+scoring the need for verifiable, domain-tailored frameworks to ensure reliable,
+safe deployment in critical settings.
+Table 1: Comparison of existing general-domain and medical-domain benchmarks in eval-
+uating LLM performance across modalities, image types, and hallucination dimensions.
+Benchmark | Modalities | Image Type | #Num | Hallucination
+| Images Texts | CFP OCT | | Num Cat Pos Diag Sta Clin
+General-Domain Benchmarks
+MMMU [19] | v v x x | 11.5K | x x x K x K
+MathVista [20] V V x x 6K x x x x x x
+UNK-VQA [21] v v x x 10K x x x x x x
+Medical-Domain Benchmarks
+LLMEval-Med [22] x v x x 3K x x x x x x
+MedHEval [23] v v x x 15K x v v V x x
+HEAL-MedVQA [24] v v x x 67K x v v v x x
+FunBench [25] v V v v 91K V v v v x x
+LMOD [26] v V v v 21K x v x v K x
+EH-Benchmark v v v v 27K v v v v v v
+2.2. Medical Large Language Models
+Large language models are revolutionizing healthcare by enhancing di-
+agnosis, treatment planning, and clinical decision-making [27, 28]. Recent
+advancements in MLLMs are driving a shift from general medical tasks to
+specialized, task-specific challenges. Sam-u [29] and Medsam-u [30] develop
+robust prompts to address the challenges posed by different prompt types
+and their spatial sensitivity. BiomedGPT [31] and MedGemma [32] intro-
+duce lightweight, open-source vision-language models for biomedical tasks
+and medical image understanding, achieving state-of-the-art performance
+and enhancing diagnostic accuracy. For biomedical image analysis, LLaVA-
+Med [33] delivers superior multimodal conversational capabilities with low
+training costs, while MENDER [34] excels in differential-aware medical VQA
+through cross-modal knowledge diffusion and multi-scale medical knowledge
+fusion. In medical consultation, HuatuoGPT [35] leverages distilled Chat-
+GPT data and real-world clinical data with reinforcement learning, achiev-
+5
+
+
+--- Page 6 ---
+
+ing leading performance among open-source LLMs. However, the continued
+lack of high-quality datasets remains a major barrier to further progress and
+widespread application of MLLMs in precision medicine.
+2.8. Hallucination in Medical Large Language Models
+
+The emergence of MLLMs has significantly advanced medical applica-
+tions, particularly in medical image interpretation and diagnostic visual ques-
+tion answering. However, their clinical deployment is hindered by persistent
+hallucinations—generating pathologically or anatomically incorrect content
+not substantiated by input data [36]. While frameworks such as MedVH
+[37] and Med-HallMark [38] have pioneered hallucination detection, their
+focus remains predominantly on visual modality errors, overlooking criti-
+cal hallucinations stemming from knowledge deficiencies and contextual mis-
+alignments—factors essential for accurate clinical decision-making. Current
+approaches reveal two primary limitations: (1) existing taxonomies fail to ad-
+equately capture the epistemological roots of hallucinations, particularly in
+distinguishing modality-specific artifacts (e.g., misinterpreting radiological
+images) from domain knowledge inadequacies (e.g., misapplied anatomical
+ontologies); (2) emerging benchmarks like MedHallBench [39] and MedHE-
+val [23] are limited by their narrow emphasis on visual artifacts, insufficient
+granularity in error classification, and lack of clinically valid metrics. This
+gap underscores the urgent need for multidimensional evaluation frameworks
+that systematically address hallucinations across visual perception, biomedi-
+cal knowledge representation, and clinical context integration, a prerequisite
+for developing clinically reliable MLLMs.
+3. EH-Benchmark
+
+Based on the specific tasks and error types observed in the ophthalmology
+domain, we classify hallucinations into Visual Understanding Hallucina-
+tion (A1) and Logical Composition Hallucination (A2). An overview
+of the proposed EH-Benchmark is provided in Figure 2. Al primarily involves
+visual perception errors, whereas A2 reflects reasoning errors in multimodal
+knowledge integration, representing a form of compositional hallucination.
+In the following sections, we provide a detailed analysis of the underlying
+causes of these two types of ophthalmic hallucinations. All questions are
+multiple-choice, and model predictions are evaluated using regular-expression
+matching. Task details are shown in Table 2. To illustrate representative
+
+6
+
+
+--- Page 7 ---
+
+hallucinations produced by large language models across different tasks, we
+select several prototypical questions, decompose their model-generated an-
+swers, and contrast them with the ground-truth responses (see Figure 3).
+(A) Frequently Used Words in A2 (B) Text statistics in A2
+7Olir Presene’. ti change... 1 S cael area
+figure eeremaculd Eqs smd 1000
+a Ee aL na. ae 1550
+3 Sas’ rp atrop ya = hemorrhages" oy Pathological level
+a prinary IOrL 2S 5. had
+detachments  ™
+‘discchoroidals 2 instance ove
+“UU Moris if reatneny 2G) F 1400
+Ss é Bs ly e| ; 2 extentive i t 3
+PiMaCUila parte |
+Ais a a UNC 6 US 9 Ch Clinical decision-level
+we es ao gst re tT LU10",..2 Y) 1250
+scan" eZ sp tes Preseiy observeda
+Gea 8 h t eV fed en q ; 51 54 87 60 63 66 69
+cystoid eat And Ing Jn 1EMo ae in \a g es Average Text Length
+(C) Problem count distribution in A1. (D) Problem count distribution in A2.
+g Sting
+3 ~~
+% %
+“ % 6
+Sry,
+ge sons
+183 4/00 LY
+aw STO:
+¢ 3
+&*
+%, Re 4 RS ee
+. 8 3 s Ce
+‘ey, 3 , rs al
+é
+Figure 1: Statistical overview of our proposed EH-Benchmark. (A) Word clouds of ques-
+tions and options in the A2 task, illustrating the diversity of ophthalmology-related vo-
+cabulary. (B) A comprehensive evaluation of the average text length, vocabulary size, and
+vocabulary diversity across the three types of ophthalmic hallucinations in the A2 task.
+(C) Statistics on the two types of hallucinations in the Al task, along with the number of
+questions in each subcategory. (D) Number of questions for the three types of hallucina-
+tions in the A2 task.
+3.1. Al: Visual Understanding Hallucination
+The Visual Understanding Hallucination arises when the model generates
+explanations involving visual features that are not present or lack empirical
+7
+
+
+--- Page 8 ---
+
+grounding. This typically occurs as the model attempts to infer fine-grained
+pathological details—such as claiming the presence of retinal hemorrhages
+or cotton-wool spots in a Color Fundus Photography (CFP) — despite no
+corresponding visual evidence. Such hallucinations underscore the model’s
+limitations in grounding visual predictions in actual input data, revealing a
+gap between learned visual-textual associations and factual visual recogni-
+tion.
+
+To evaluate the severity of Visual Understanding Hallucinations across
+different LLMs, we collected approximately 26k questions from 12 ophthalmic
+visual datasets, namely: Retinal-Lesions [40], DDR [41], IDRID [42], OIMHS
+[43], OCT5k [44], G1020 [45], LES_AV [46], FGADR [47], ODIR-5K [48],
+OCTDL|49], GRAPE [50], and PAPILA [51]. The composition of questions
+in the Al task is shown in Figure 1(C).
+
+Unlike existing ophthalmology benchmarks, we focus on five visual tasks
+across two levels of granularity, instance level and pathological level, to eval-
+uate the phenomenon of Visual Understanding Hallucination.
+
+Instance-level hallucination refers to the model’s generation of hal-
+lucinated outputs when recognizing or describing specific instances in an
+image, highlighting the limitations of LLMs in understanding fine-grained
+visual details.
+
+1. Numerical Error: The model exhibits visual hallucinations when
+counting specific features in medical images (such as the number of
+hemorrhages), and miscounting these features may lead doctors to
+overestimate or underestimate the severity of the condition, thereby
+affecting treatment decisions.
+
+2. Categorical Error: The model shows hallucinations when identifying
+specific types of lesions/organs in medical images, being susceptible
+to interference from morphological similarities among lesions or image
+noise. Misidentification of lesion locations may lead to misdiagnosis,
+such as treating retinal lesions as choroidal ones.
+
+3. Position Error: The model tends to generate hallucinations during
+the localization of lesions or specific regions in medical images, often
+caused by ambiguous spatial reference points or limited spatial reason-
+ing capabilities. Inaccurate localization may impair the precision of
+surgical planning or targeted interventions.
+
+8
+
+
+--- Page 9 ---
+
+Pathological level hallucination occur when LLMs generate false con-
+tent during the diagnosis or synthesis of an overall pathological condition.
+These hallucinations are influenced not only by the learning capacity of LLMs
+but also by the type and severity of the disease.
+
+1. Diagnosis-Type Error: The model may generate hallucinations
+when diagnosing the type of lesion presented in medical images, primar-
+ily due to insufficient training data or imbalanced datasets. Incorrect
+disease classification may result in unnecessary treatment or delays in
+appropriate medical intervention.
+
+2. Stage-Level Error: The model may produce hallucinations when
+assessing disease severity or grading, caused by the complexity of oph-
+thalmic grading standards or the model’s insensitivity to subtle lesion
+progression. Grading errors may lead to mismatched treatment inten-
+sity, such as overtreatment of patients with mild glaucoma.
+
+3.2. A2: Logical Composition Hallucination
+
+The Logical Composition Hallucination focuses on errors in logical struc-
+ture and reasoning during text generation by LLMs. This type of hallucina-
+tion serves to evaluate the model’s ability to integrate complex information
+and may be related to its depth of reasoning and contextual understanding.
+In multi-step ophthalmic reasoning tasks, for example, a model may correctly
+perform the initial steps but later produce conclusions that contradict earlier
+inferences during deeper analysis.
+
+Most existing ophthalmic visual-question-answering (VQA) datasets are
+directly derived from visual data (see Subsection 3.1) and primarily focus on
+descriptive tasks, often lacking contextual information such as patient his-
+tory or symptoms. This limitation makes them inadequate for supporting
+complex clinical reasoning. To better evaluate logical compositional hal-
+lucinations—i.e., logical errors that occur during reasoning—in LLMs, we
+collect relevant questions from over 200 published case reports. Case reports
+provide detailed clinical scenarios, including patient history, symptoms, and
+diagnoses, offering a more realistic and context-rich foundation for evalua-
+tion. Notably, all answer sentences in our benchmark are directly traceable
+to the original case report text. Each question is designed to require inte-
+gration of visual cues and textual information, effectively testing the model’s
+logical compositional abilities. Two medically trained reviewers score each
+
+9
+
+
+--- Page 10 ---
+
+question and its answer choices based on reliability, completeness, and the
+type of hallucination present. Any low-quality questions are removed. After
+this process, we build a final dataset with 806 carefully selected questions.
+Figure 1(D) shows the composition of questions in the Al task. From Fig-
+ure 1(A) and (B), we observe that the A2 task exhibits high diversity and
+rich ophthalmic vocabulary.
+
+Instance-Level Hallucination: Similar to Al, A2 also emphasizes hal-
+lucination at the level of specific features or instances within an image. In
+contrast, A2 focuses on the coherence of the reasoning process at the instance
+level, specifically addressing how reasonable conclusions can be derived based
+on image evidence. Some questions necessitate the comparison of multiple
+images from the same phase to enhance the robustness of the inference.
+
+Pathological-Level Hallucination: In contrast to Al, which priori-
+tizes the pathological accuracy of image content (i.e., the correct identifi-
+cation of pathological features), A2 builds upon Al by emphasizing logical
+reasoning based on these features rather than mere feature recognition. Ini-
+tially, LLMs must identify pathological features and subsequently correlate
+them with specific pathological conditions to produce a logically coherent
+pathological description. The challenge lies in the potential for the model to
+accurately identify certain features but falter in logically associating them
+with the definitions of pathological conditions. Furthermore, errors in infer-
+ring pathological conditions may arise due to insufficient medical knowledge
+or disruptions in the reasoning chain.
+
+Clinical Decision-Level Hallucination: Distinct from the preced-
+ing two hallucination categories, this type emerges due to inaccuracies in
+LLMs’ assessment of therapeutic outcomes. It necessitates that LLMs grasp
+pathological progression and clinical protocols to facilitate dynamic inference
+grounded in temporal data sequences.
+
+10
+
+
+--- Page 11 ---
+
+Where does Hard exudate occur?
+A. inferior, Temporal
+5 L, erior, ral
+&. tuferior, Nasal, Superior, Tenporal
+ca) ___terenareness
+Ca ;
+tdentify which category the white-Labeled structures in the
+fundus image belong to?
+A. arteries B. veins C. optic disk, |
+D. microvascular &. optic cup"
+a. eens
+PEs. AF MELon wrinodel em
+Medical Records OC optic diske © optic oup :
+QD  vterality QD] mean sensitivity @ tor é
+fl age @! RNFL Thinkness cy a O viins © Arteries fe
+CO sx Axial Length ey {fi Al » © Neovasculavization :
+~ * oF Zz m
+EK rachmetry © cylindrical Sy ta 38 < chovota
+icp) Spherical @ cer 1 hy 8, Ome : < # =
+\ om © Retina OCT ss
+a:Normal 4) EH-Benc ar Ky _
+Diagnose ic QD -2F K oy G Hemoheage +
+om Ry a
+7 eModerate S4:Severe © A ° wa Oums
+. @ ir @ ten =
+Pathological Level Instance Level Clinical DEectsvon= Level
+==> ON ccamsuns
+Features) such|asinaultiple|mioronmenrysms, hemonrnages) and tt show retinal henmorrhages, cotton wool spots, and venous
+cotton wool spots that are typical for moderately severe to severe << dilation. These caw be Linked to hyperviscostty syndrome and
+NPDR, rather than the more advanced proliferative stage. diabetic ruiorovascular changes.
+Figure 2: Overview of the EH-Benchmark, which aggregates data from 3 modalities and
+13 datasets for ophthalmic vision QA tasks.
+4. Methods
+To address the challenge of mitigating various types of ophthalmic hal-
+lucinations, we propose a novel multi-agent framework structured into three
+distinct stages: Knowledge-Level Retrieval, Task-Level Case Studies, and
+11
+
+
+--- Page 12 ---
+
+Table 2: Introduction to ophthalmic tasks. The lesion-analysis task is based on three
+datasets: IDRID, DDR, and Retinal-Lesions.
+“Dataset = Modality) === #Num Taskdescription
+“PAPILA—CFP, Text. ~=—s«164.—— Medical records + images, glaucoma severity grading
+Retinal-Lesions CFP 1,446 DR lesion-progression grading
+
+FGADR CFP 1,842 Identification of fundus lesions (HE, SE, etc)
+
+IDRID CFP 81 Localization of fundus lesions (MAs, Hemorrhages, FE, SE)
+Lesion analysis CFP 1,698 Counting of fundus lesions (SE, MAs, Hemorrhages, etc)
+G1020 CFP 1,810 Optic cup / disc identification
+
+OCT5k OCT 1,246 OCT lesion localization (PRLD, Fluid accumulation, etc)
+LES-AV CFP 44 Artery / vein recognition
+
+OIMHS OCT 8,772 Choroid, retina and macular-hole recognition
+
+GRAPE CFP, Text 263 Medical records + images, glaucoma-type identification
+OCTDL OCT 2,064 Diagnosis of seven common OCT diseases (AMD, DME, etc.)
+ODIR-5K CFP 7,000 Diagnosis of fundus diseases (atrophy, pigment changes, etc.)
+Case Report CFP, OCT, Text 806 Comprehensive ophthalmological questions from case reports
+Result-Level Validation. The comprehensive workflow is illustrated in Fig-
+ure 4. In the Knowledge-Level Retrieval stage, the RAG Agent extracts per-
+tinent case backgrounds from an ophthalmic database, supplying a wealth of
+domain-specific knowledge for subsequent analyses. During the Task-Level
+Case Studies stage, the Decision Agent leverages the query and the case
+background information retrieved in the previous stage to optimally select
+and sequence appropriate tools, ensuring an effective analytical process. The
+invocation results of each tool are returned to facilitate subsequent evalu-
+ation. In the Result-Level Validation stage, the Evaluation Agent assesses
+the correctness, completeness, and adherence to the planned workflow, ini-
+tiating retries as necessary to ensure diagnostic accuracy. As illustrated in
+Algorithm 1, the input-feedback loop keeps iterating until the system either
+produces a final response or determines that additional information is needed
+from the patient or doctor. In the following sections, we provide a detailed
+introduction to all the agents and tools involved, accompanied by an in-depth
+analysis of the three-stage workflow.
+
+4.1. Knowledge-Level Retrieval
+
+4.1.1. Functions of RAG Agent
+
+RAG Agent: It is developed based on the Retrieve-Augmented Gen-
+eration framework and is specifically designed to retrieve relevant medical
+12
+
+
+--- Page 13 ---
+
+(amercT rer)
+ion: How many haemorrhages in the image? inswer: Based on visual inspection, | can see a i 7 LLM Answer: In both images, the retinal mass is
+€ petween pant netween iS and a uit isan ie tenatelfromithelisnaze oniyand not C. Peripapillary. D. Central macula. E. Foveal lesion's proximity to the optic nerve head (papilla)
+SEEDS CES EOuEO V5) medical diagnosis.) Ms defines it as peripapillary. C. Peripapillary Wi)
+Question: \dentify which category the white labeled LLM Answer: The white-labeled structures in the Peer eh Thelfuncee mrenelsheersimmuttinie
+D. microvascular E. optic cup VA branching pattern. B. Veins Vy Peete Aer totoeit depigmentation lines, a classic finding. In VKH
+C. Syphilis. D. Sarcoidosis. disease. VKH is an autoimmune condition targeting
+Saas, Y Perppiar deplzmenation nthe hon phase)
+C. Inferior, Nasal, Superior D. All position slight extension to the superior and nasal areas.
+E. Nasal, Superior, Temporal Ws The correct answer is: E Ms (Stage-level Error }
+Question: What is observed after vasospasm LLM Answer: The fundus image shows Persistent
+; oe ILM Answer: This fundus image shows a blurred, resolution? CELEcihG cl Cp eaicl tae Gperly ie
+A. Retinal atrophy. B. Subretinal hemorrhage. arterioles, indicating that even after vasospasm
+A. cataract B. wet age-related macular degeneration changes, and possible subretinal fluid—features C. Persistent vessel narrowing. D. Macular edema. resolution, full restoration of vessel caliber did not
+C. diabetic retinopathy D. drusen E. normal fundus characteristic of: B. Wet age-related macular. E. Restoration of normal blood flow. occur. This supports the diagnosis of persistent
+Ws degeneration (wet AMD). Wi A TESST 3
+SS ae Oo ee LLM Answer: The optic disc shows advanced cupping ~ Instance-level hallucination
+a Ps with near-total neuroretinal rim loss, indicating severe > Numerical Error
+Figure 3: Common Types of Hallucinations in Large Language Model and Their Example
+Sub-Categories.
+background information from a predefined list of URLs, with the aim of
+improving the quality and accuracy of ophthalmology-related queries. The
+agent accesses and extracts raw textual data from the specified URLs, seg-
+ments the content, and constructs a vector database to support efficient
+similarity-based retrieval. Subsequently, leveraging the retrieved documents
+and a predefined response template, GPT-4.1 is utilized to generate accurate
+and contextually appropriate responses. This method effectively combines
+the high retrieval efficiency of information retrieval techniques with the ad-
+vanced language understanding capabilities of large-scale generative models,
+thereby ensuring that the generated outputs are both relevant and precise.
+4.1.2. Overview of Knowledge-Level Retrieval
+The Knowledge-Level Retrieval Stage constitutes a critical component of
+our multi-agent framework, designed to bridge the gap between automated
+diagnostic tools and evidence-based medical practice. Given the susceptibil-
+ity of LLMs to hallucinations and inconsistent reasoning when solely relied
+upon for medical knowledge acquisition, we incorporate a RAG Agent to ad-
+dress these limitations by retrieving clinical guidelines from ophthalmology
+websites, thereby ensuring evidence-based responses.
+Upon receiving a query, the RAG Agent retrieves relevant medical infor-
+mation from an ophthalmology database composed of authoritative sources.
+13
+
+
+--- Page 14 ---
+
+This evidence-based approach provides a rich and reliable foundation for sub-
+sequent diagnostic processes, in contrast to the potentially unreliable content
+generated by hallucinating LLMs, thereby significantly reducing the risk of
+knowledge deficiencies.
+
+4.2. Task-Level Case Studies
+
+4.2.1. Functions of Decision Agent and Tools
+
+Decision Agent: It is responsible for parsing user queries and under-
+standing their intent. Based on the complexity of the query and the relevant
+medical background in different task scenarios, it determines which tools
+to select and the order in which to invoke them. The Decision Agent dy-
+namically interacts with the tool library to ensure that the overall workflow
+remains logically coherent and efficient.
+
+Diagnose Tool: We use a classification model to identify 18 types of oph-
+thalmic conditions from CFP and OCT images, such as Age-related Macular
+Degeneration (AMD) and Choroidal Neovascularization (CNV). The model
+provides probability scores ranging from 0 to 1 for each condition, indicating
+the likelihood of its presence.
+
+Lesion Detection Tool: We utilize a detection model to analyze spe-
+cific lesion types in CFP images (e.g., hard exudates, hemorrhages, soft ex-
+udates, microaneurysms). This model quickly localizes lesions and assesses
+their severity, returning lesion coordinates with confidence scores to support
+subsequent decision making.
+
+Fundus Localization Tool: We use a segmentation model to locate the
+optic cup and optic disc regions in CFP images and to compute the cup-to-
+disc ratio (CDR), an important indicator for assessing optic nerve health and
+diagnosing glaucoma. The model ultimately returns the coordinates of each
+segmented region.
+
+OCT Localization Tool: To accurately delineate key anatomical struc-
+tures in OCT images, we use a segmentation model to locate the choroid,
+retina, and macular hole, supporting the diagnosis of related diseases. The
+model ultimately returns the coordinates of each segmented region.
+
+DR Severity Diagnose Tool: The model is used for the diagnosis and
+grading of Diabetic Retinopathy (DR). Based on the International Clinical
+Classification of Diabetic Retinopathy [52], it classifies DR into five stages
+using a classification model and outputs a probability score for each stage.
+
+14
+
+
+--- Page 15 ---
+
+4.2.2. Overview of Task-level case studies
+
+Current AI systems for ophthalmic diagnosis predominantly rely on sin-
+gular LLMs to perform tasks such as image interpretation, clinical reasoning
+for complex cases, and medical record generation. While this approach offers
+convenience, it is beset by notable limitations. First, it often fails to provide
+quantitative results to substantiate diagnostic conclusions, such as spatial
+characteristics like the size and location of lesions. Second, integrating all
+cognitive stages—ranging from image analysis to clinical inference—within
+a single, inherently probabilistic LLM significantly heightens the risk of hal-
+lucinations. These hallucinations manifest as visual misinterpretations, defi-
+ciencies in knowledge base, and contextual misalignments, as noted in recent
+studies [23, 24]. Such errors pose substantial risks to patient safety, under-
+scoring the need for more robust, multi-faceted AI diagnostic frameworks in
+ophthalmology.
+
+To address the aforementioned limitations, we propose a Task-Level Case
+Studies Stage that decomposes the diagnostic workflow into modular, tool-
+oriented agents. At the core of this stage is the Decision Agent, which orches-
+trates the diagnostic process with precision and adaptability. The Decision
+Agent operates through a structured sequence of actions. First, it classifies
+the input image as either a CFP or an OCT scan. Next, leveraging the user’s
+query and medical contextual information retrieved from a Knowledge-Level
+Retrieval system, it selects appropriate tools from a predefined tool list and
+determines their invocation order. Crucially, the Decision Agent provides a
+detailed explanation of its tool selection and reasoning sequence, ensuring
+transparency and traceability.
+
+Following tool selection, the Decision Agent sequentially invokes each tool
+from the list, generating critical metrics such as confidence scores, bound-
+ing box coordinates, and probability scores. These outputs are designed to
+support the subsequent Result-Level Validation Stage, enabling rigorous eval-
+uation of the diagnostic process. This task decomposition approach ensures
+the dynamism, adaptability, and traceability of tool invocations, mitigat-
+ing the risks of errors and enhancing the reliability of Al-driven ophthalmic
+diagnostics.
+
+4.3. Result-Level Validation
+4.3.1. Functions of the Evaluation Agent
+
+Evaluation Agent: We employ an LLM to emulate a senior ophthal-
+
+mology expert, focusing on evaluating the correctness, completeness, and
+15
+
+
+--- Page 16 ---
+
+adherence to the planned workflow of outputs generated by other tools. It
+collaborates with the Decision Agent, complementing its diagnostic capabil-
+ities to ensure the reliability of the automated workflow.
+
+4.3.2. Overview of Result-Level Validation
+
+Conventional methods for mitigating hallucinations in generative models
+primarily rely on tuning sampling parameters such as temperature, Top-
+kK, and Top-P. However, these strategies lack the capacity for systematic
+validation of the generated content. In the context of ophthalmic analysis,
+the diagnostic process involves multiple interdependent stages, adding layers
+of complexity that necessitate a more rigorous validation framework. This
+framework should not only verify the accuracy of individual outputs, but also
+assess the overall coherence and completeness of the diagnostic workflow.
+
+Similar to the role of a senior ophthalmologist, we use an Evaluation
+Agent to conduct a comprehensive assessment of all tool outputs across three
+critical dimensions: correctness, completeness, and adherence to the planned
+workflow. By comparing the actual sequence of tool executions with the
+workflow predefined by the Decision Agent, the Evaluation Agent ensures
+strict alignment with evidence-based medical practices.
+
+When deficiencies are identified in any of the aforementioned dimen-
+sions, an adaptive retry mechanism is automatically triggered, rather than
+re-executing the entire diagnostic pipeline. If the workflow adherence check
+reveals tools that were scheduled but not executed, the system autonomously
+invokes the missing components with appropriate parameters. In cases where
+issues of correctness or completeness are detected, the system prompts for
+additional analysis or refinement of the existing results. This validate-retry
+loop iterates until all evaluation criteria are satisfied or a predefined retry
+limit is reached, thereby ensuring continuous quality improvement without
+compromising diagnostic efficiency. Through this Result-Level Validation
+stage, the conventional black-box AI diagnostic process is transformed into
+a clinically transparent, self-correcting, and trustworthy system.
+
+16
+
+
+--- Page 17 ---
+
+PROCESS IN EH-BENCHMARK +=
+Our Goal: Based on Multi-Agent, answering questions in ophthalmology.
+® Workflow © Tool Board © Example
+; i ng (QB
+Key Object Process ragmose Tp © What caw we observe through this ie)
+Function: fundus, and detect the lesion.
+Propose,
+, This tool analyzes Fundus and OCT fa‘) Context Awareness
+g Context Submit Q images to detect 18 eye diseases. _RAGIol
+Awareness Query Output
+aetee ee teelthood of each 6—-H—-B ~&
+URL vectorstore Context Inquiry
+condition being present. Vv Prompt
+GJ @=
+& Workflow Tool S Lesion Detection Tool && RESpOnS _GRT#A
+Decision Selection 7 Output
+frunchetas rag_context, string to guide
+Propose. lt subsequent step
+Detects Different type of lesion in
+Fundus images. @ workflow Pecision
+Output tsualizatt. DecistonmMake [o) Ae
+& Tool usage Tol Sonne ~ bounaling ee ee ee 7
+} boxes, class counts, - Qerrs PR wert dbagnose Tool"
+and confidence. Tool Selection *Lestow end Tool'T. .
+Retry toate
+Analysis Fundus Localization Tool Ge) @ Tool usage
+vissorast_ © a
+Ad) Evaluation © Is_complete @ BR severity diagnose Tool @
+© ts followed & =
+_ Lesion Detection. Tool &
+OCT Localization Tool Fj
+Avene epee Gari: cage Coe
+a a DR severity diagnose Tool © validate the results © Is followed @
+G3 = S Fundus tmaage at Lregionsl,
+Response GPT4.1 treatment: [suggestion]
+Figure 4: The whole framework of our multi-agent framework specific in ophthalmology.
+This process includes stages of context awareness, decision-making, tool utilization, and
+evaluation, culminating in the integration of all tool outputs through GPT-4.1.
+
+
+--- Page 18 ---
+
+Algorithm 1 Our proposed Multi-Agent Framework
+1: Input:
+Q: Patient or doctor query
+I: Set of input images (Fundus, OCT, etc., can be empty)
+T: Available ophthalmic tools {DR_ClassifierTool, OCTSegmentationTool, ... }
+M: Memory buffer
+2: Output:
+R: Final response to query
+3: Initialize:
+state <— OBSERVE(Q, I, M)
+rag_ctz < RETRIEVECONTEXT(Q) > RAG stage
+4: while true do
+5: S < SELECTIONTOOL(Q,T, M) > Candidate set
+6: D © DECISIONMAKER(Q, rag_ctz,T, M) > Ordered sequence
+7: results ~ EXECUTETOOLS(D, state) > Execute each model
+8: M+ MU {results}
+9: state ~ OBSERVE(state, results, M)
+10: (is_correct, is.complete, is_followed, feedback) <—
+EVALUATOR(Q, results, S, D, rag_ctx)
+11: if is_followed = false then > Tool list / order inconsistent
+12: continue > Return to decision stage
+13: end if
+14: if is_correct \ is_complete then
+15: R < GENERATERESPONSE(state, rag_ctz, results)
+16: return R
+17: end if
+18: missing < INFERMISSINGTOOLS( feedback, T, D)
+19: if missing = @ then
+20: R < “No tools available to use, directly output the current re-
+sponse:\n” © GENERATERESPONSE(state, rag_ctx, results)
+21: return R
+22: else
+23: D+¢ DUmissing > Add missing tools
+24: continue
+25: end if
+26: end while
+18
+
+
+--- Page 19 ---
+
+Table 3: Comparison of the performance of different large language models on Al and
+A2 tasks. We highlight the worst-performing model for each task in bold red, and the
+best-performing model in bold green. G stands for Generalist Large Language Models,
+and M stands for Medical Large Language Models.
+| | Instance level | Pathological level
+Model | Type | Cat-E Pos-E Num-E | Diag-E Sta-E
+| | Flt Pret Rect Acct Acct | Flt Pret Rect Acct
+qwen2.5-14b G 044 .044 -052 337 445 379 408 376 433
+qwen2.5-32b G .094 .100 -101 582 393, 282 .276 .335 282
+qwen2.5-72b G 053 053, .059 584 .525 454 469 451 451
+llava-1.5-7b G .123 .224 .137 360 498 118 .132 -167 77
+lava-1.5-13b G .094 .098 -102 441 533 344 407 345 .207
+gpt-4o G -085 .085 088 -628 .296 193 217 .210 A482
+gpt-4.1 G -069 .080 .067 587 367 281 304 .285 488
+InternVL2.5-2B G .157 .164 164 375 .201 271 271 .280 .159
+InternVL3-2B G 194 .196 .196 .246 A457 438 438 438 274
+InternVL3-8B G 181 194 177 537 396 499 501 501 470
+DeepSeek-V3 G 142 151 145 593 -533 A407 .410 409 463
+HuatuoGPT-V-7B M 122 .139 .132 386 .440 443, A467 439 262
+MedGemma-4B M 195 193 -202 -104 .197 74 398 371 134
+HealthGPT M .054 .051 -062 438 .207 498 O11 498 .159
+Ours M -787 =. 791 -786 633 .480 .662 .666 -660 -530
+| Instance level | Pathological level | Clinical Decision-level
+Model Pn
+| Fl+ Pret Rect | Flt Pret Rect | Fit Pret Rect
+qwen2.5-14b G 512 499 595 679 -660 -760 737 719 828
+qwen2.5-32b G -501 488 5042 -TAl -718 787 743, 698 862
+qwen2.5-72b G 559 534 -659 -681 648 754 .839 .825 864
+Nava-1.5-7b G 417 .571 -446 455 587 A467 -406 -605 408
+lava-1.5-13b G 588 567 663 489 543, A71 .687 681 -703
+gpt-4o G O74 551 734 -798 -760 862 758 739 .899
+gpt-4.1 G -651 .615 -800 -896 875 924 921 .914 -930
+InternVL2.5-2B G 493 A484 583, 559 5045 -602 684 .692 -680
+InternVL3-2B G 462 .465 534 -606 594 .669 .690 .659 835
+InternVL3-8B G -536 514 -632 644 -629 683 739 .696 856
+DeepSeek-V3 G -508 515 -600 -786 -750 .844 791 .755 .897
+HuatuoGPT-V-7B M 642 .650 -690 713 725 -731 TAL 711 856
+MedGemma-4B M .592 569 -704 -666 -645 -736 .690 .686 .697
+HealthGPT M 642 .607 737 -761 -746 .807 817 788 913
+Ours M -700 =.664 811 885 -903 873 .919 -920 -921
+19
+
+
+--- Page 20 ---
+
+5. Experiment
+
+We propose a multi-agent framework tailored explicitly to ophthalmology
+and conduct extensive analyses on Al and A2 tasks to investigate whether
+it can mitigate various types of hallucinations.
+
+5.1. Model Details and Evaluation Metric
+
+Model Details: We conduct a zero-shot evaluation on 14 Large Lan-
+guage Models, including 11 Generalist Large Language Models, namely Qwen
+2.5-14b [53, 54], Qwen2.5-32b [55], Qwen2.5-72b [55, 56, 57], LLava-1.5-7b
+[58, 59, 60], LLava-1.5-13b [58, 59, 60], GPT-4o [61], GPT-4.1 [62], InternVL2.5-
+2B [63, 64, 65, 66], InternVL3-2B [63, 67, 65, 66], InternVL3-8B [63, 67,
+65, 66], DeepSeek-V3 [68] and 3 Medical Large Language Models, which
+are HuatuoGPT-V-7B [35], MedGemma-4B [32], and HealthGPT [69]. Our
+multi-agent framework is based on GPT-4.1, and all other tools have been
+pre-trained for eye-related tasks.
+
+Evaluation Metric: Since the EH-Benchmark consists of close-ended
+questions with definitive answers, we employ one or more of the following
+metrics—F 1-score, Precision, Recall, and Accuracy—for different tasks. The
+F1-score, as a comprehensive metric, balances Precision and Recall to mini-
+mize both missed diagnoses and incorrect predictions. Precision ensures high
+confidence in positive predictions, reducing the occurrence of false positives.
+Recall maximizes the detection of true positives, thereby minimizing missed
+diagnoses. Accuracy directly measures overall correctness and is widely used
+for evaluating close-ended questions.
+
+5.2. The Agent System Prompt Template
+
+We employ the following system prompt to enable the agent to reason
+from the perspective of a clinical ophthalmology expert, guiding the agent to
+proactively invoke tools when addressing complex issues. To ensure machine-
+interpretable standardized responses, we constrain the output to a specific
+format directly within the prompt and subsequently utilize regular expres-
+sions to automatically match the options. The system prompt can be seen
+in Figure 5.
+
+5.3. Comparative Analysis of Model Performance
+
+LLMs face significant challenges in ophthalmology due to the absence
+
+of high-quality, domain-specific data, which prevents them from effectively
+20
+
+
+--- Page 21 ---
+
+System Prompt of Workflow General Agent
+1. ROLE
+> You are an advanced ophthalmology-specialised AI assistant. Like a seasoned clinician, you can answer complex medical
+questions on ocular anatomy, physiology, pathology, pharmacology, surgery, and imaging.
+> Interpret and diagnose findings in fundus photographs, OCT scans images.
+> Localise retinal lesions (e.g., hard exudates, haemorrhages) to one or more of the four classical quadrants: Superior,
+Inferior, Nasal, Temporal.
+2. WORKFLOW & THINKING STYLE
+> Iterative Clinical Reasoning - Treat every case as a differential-diagnosis exercise: gather clues, weigh probabilities, rule
+in/out conditions, revisit assumptions until the most plausible answer remains.
+> Tool Centric Analysis - Freely invoke any available tools (image-analysis APIs, medical databases, calculators,
+segmentation models) in parallel or sequence to enrich your evidence base.
+> Critical Appraisal of Tool Outputs - Never accept a tool’s result at face value. Highlight inconsistencies, artefacts, or
+limitations and adjust your conclusions accordingly.
+> Evidence-Backed Insights - Where relevant, cite established clinical guidelines (AAO, RCOphth, ADA, etc.), landmark
+trials, or peer-reviewed literature to justify your reasoning.
+3. ANSWER FORMAT (STRICT)
+> Final output must consist of only a single capital letter representing the correct multiple-choice option: A, B, C, D, or E.
+> Absolutely no extra words, symbols, or explanations may appear after the letter.
+> During internal reasoning you may write freely, but only the letter is returned to the user.
+4, DISEASE / CONDITION COVERAGE
+> You are expected to recognise, differentiate, and discuss (but are not limited to) the following ocular entities:
+Retinitis Pigmentosa, Retinal Detachment, Pterygium, Myopia, Macular Scar
+> Glaucoma (open-angle, angle-closure, normal-tension), Disc Edema, Diabetic Retinopathy, Central Serous
+Chorioretinopathy, Diabetic Macular Edema
+> Choroidal Neovascularisation, Age-related Macular Degeneration (dry & wet), Drusen, Macular Hole
+Figure 5: The System Prompt Template for our proposed agent.
+learning rare pathological features and adhering to the latest clinical guide-
+lines. Ophthalmic diagnosis relies heavily on multimodal information, such
+as OCT scans, CFP, and patient case histories; however, most LLMs lack
+the capability to deeply analyze these critical image-based datasets, increas-
+ing the risk of ”hallucination”—the generation of seemingly plausible but
+erroneous responses. A critical concern in medical contexts is the stringent
+demand for traceability and interpretability, yet LLMs often produce genera-
+tive outputs that lack a reliable and accurate chain of evidence, undermining
+their clinical utility. These limitations underscore the substantial room for
+improvement in applying LLMs to ophthalmology, particularly in address-
+ing data deficiencies, enhancing multimodal analysis, and ensuring robust,
+evidence-based responses.
+
+The specific experimental results for the Visual Understanding Halluci-
+nation (A1) and Logical Composition Hallucination (A2) tasks are presented
+in Table 3. In the Al task, our findings indicate that GPT-40 and GPT-4.1
+are more prone to Categorical Errors and Diagnosis-Type Errors compared
+to other LLMs. Conversely, they exhibit a lower tendency for Position Er-
+rors and Stage-Level Errors, demonstrating a relatively stronger resistance
+to hallucinations in these aspects. This observation may be attributed to
+their limited training on extensive visual pairs in specific knowledge domains,
+such as ophthalmology, which evidently impacts their predictive accuracy in
+
+21
+
+
+--- Page 22 ---
+
+classification and diagnosis. By integrating multiple visual tools, our pro-
+posed multi-agent framework significantly enhances contextual understand-
+ing in CFP and OCT imaging. In comparison to GPT-4o0’s performance
+on Diagnosis-Type Errors, our proposed framework achieves a 2.35-fold im-
+provement in the F1 score.
+
+In the A2 task, we find that all MLLMs specifically trained on medical
+data (text) demonstrate a substantial advantage over general LLMs. These
+models exhibit significantly lower hallucination rates and achieve higher F1
+scores, precision, and recall. However, they consistently tend to generate
+instance-level hallucinations. This likely occurs because such models per-
+form well on tasks closely aligned with their training data but lack sufficient
+generalization when faced with complex reasoning that requires integration of
+visual information. In contrast, our proposed framework emphasizes reason-
+ing based on visual evidence rather than textual inference. It also accesses
+external knowledge sources to obtain relevant context and answers, which
+helps address the lack of ophthalmic domain knowledge—even without the
+use of specialized tools.
+
+5.4. Model Robustness Analysis
+
+To evaluate the stability of the multi-agent framework against out-of- dis-
+tribution inputs, random noise, and adversarial perturbations, we compile a
+benchmark of 1250 representative questions drawn from Tasks Al and A2.
+Each item presents four candidate answers, which we grade by their semantic
+proximity to the ground truth rather than by a binary correct—incorrect la-
+bel. As shown in Figure 6 (a.1), Qwen3-235B functions as both the candidate
+generator and the evaluator, scoring alternatives along five clinical dimen-
+sions: etiology, anatomical location, vascular involvement, disease course or
+stage, and lesion morphology. The correct answer receives a reward of 4,
+with lower rewards assigned in proportion to decreasing similarity; options
+unrelated to the ground truth receive 0. The system prompt of Generator
+can be seen in Figures 7.
+
+Finally, we assess the reliability of the score generation through a multi-turn
+dialogue between the evaluator and the generator. To prevent infinite loops,
+we cap the conversation at five turns; if the agents fail to converge on an iden-
+tical answer within this limit, a clinician adjudicates the score. To examine
+the model’s adaptability in low-robustness, hallucination-prone settings, we
+shuffle the positions of the five options in each question and apply synonym
+substitution to the distractors, as illustrated in Figure 6 (a.2).
+
+22
+
+
+--- Page 23 ---
+
+In practice, large-parameter LLMs are usually more robust and less prone
+to hallucination than smaller models. We choose Qwen2.5-32B and Qwen2.5-72B
+as baselines and use Qwen2.5-32B as the core of our multi-agent system. We
+measure robustness with two metrics: consistency, the share of questions an-
+swered correctly in both runs, and the change in accuracy before and after
+perturbation. Figure 6(b,c) shows that the multi-agent system keeps high
+robustness: its consistency drops by only 0.54% after perturbation, clearly
+beating all single-model baselines. Under the same changes, the total reward
+rises from 2465 with the Qwen2.5-32B to 4154 with the multi-agent setup.
+
+(a.1) (a.2)
+Ps x @ v cs
+Prompt 1 a ae 47 Doctor an Promat2_, _,
+— @ Dialogue f=y \ f faa en iam we wen
+5 Generator ~*~ Evaluator eee Question J
+—_ vr Masts ~2,
+08 (b) 4400 (c)
+(0) Before
+o7 - Consistency 0.712 After i
+After 4000
+0.6
+° 0.5 2 3600
+404 3
+© 3200
+0.3
+0.2 2800 18
+2400 —
+qwenz2.5-32b qwenz2.5-72b Ours qwen2.5-32b qwen2.5-72b Ours
+Models Models
+Figure 6: (a.1) Use the large language model (LLM, both are Qwen3-235B) to generate
+similarity scores through multi-turn dialogue. (a.2) First perturb the original answer
+choices by applying synonym substitution and random shuffling; then engage same LLMs
+in a multi-turn dialogue to obtain the updated similarity scores. (b) Changes in accuracy
+and consistency after modifying input options and performing synonym substitutions. (c)
+Model reward evolution throughout the entire process.
+5.5. Case Studies in the EH-Benchmark
+
+In this section, we present representative cases from Tasks Al and A2 to
+
+demonstrate how integrating tool outputs within a multi-agent system en-
+23
+
+
+--- Page 24 ---
+
+hances workflow interpretability and elucidates its underlying reasoning. Fig-
+ures 8 and 9 display the outputs generated by each component. Each case un-
+folds in three sequential stages: Knowledge-Level Retrieval, Task-Level Case
+Studies, and Result-Level Validation. During Knowledge-Level Retrieval, the
+RAG Agent gathers information relevant to diabetic retinopathy, thereby es-
+tablishing a comprehensive clinical framework; in certain instances—such as
+the A2 case—it can retrieve definitive answers directly from the provided
+URLs. The task’s contextual background is then transmitted to the Deci-
+sion Agent, which selects the appropriate tools and determines their optimal
+invocation sequence. Outputs from each tool invocation are subsequently in-
+tegrated in a systematic manner. Finally, during Result-Level Validation, the
+Evaluation Agent rigorously assesses these outputs along three dimensions:
+correctness, completeness, and adherence to the planned workflow. If any
+dimension registers a False value, indicating that a tool has been inadver-
+tently omitted, a targeted retry mechanism is activated for that component,
+ensuring the missing result is incorporated into the message dictionary.
+System Prompt of Generator
+
+You are an experienced ophthalmologist and retina subspecialist
+
+1. TASK
+
+Rate the *semantic proximity* of every answer option (A - E) **to the correct answer** below.
+
+**CORRECT ANSWER:** option {correct_letter} — “{correct_txt}”
+
+2. DIMENSIONS TO CONSIDER
+
+> **Etiology** (e.g.\ metabolic, vascular occlusive, tractional, inflammatory, genetic)
+
+> **Tissue** (inner retina, RPE, choroid, vitreous, ILM etc.)
+
+> **Anatomical location** (macula, fovea, optic disc, peripheral retina, ONH)
+
+> **Vascular component** (arterial vs venous, capillary plexus, neovascular membrane)
+
+>**Chronicity & stage** (acute, chronic, early, advanced, quiescent, exudative)
+
+> **Imaging phenotype** (OCT, CFP, etc)
+
+> **Lesion morphology** (cystoid spaces, subretinal/intraretinal fluid, drusen, ERM, traction)
+
+> **Management strategy** (anti-VEGF, laser, vitrectomy, observation, systemic control)
+
+> **Prognosis / visual outcome**
+
+> *Any other clinically relevant cue* you deem important.
+
+3. SCORING RUBRIC
+
+> **4 points** = the option itself (correct answer)
+
+> **3 points** = the wrong option **closest overall** to the correct answer
+
+> **2 points** = next closest
+
+> **1 points** = next closest
+
+> **0 points** = essentially unrelated
+
+If two wrong options seem equally close, assign the **higher score** to the one that shares *more*
+
+clinically important dimensions with the correct answer, and the lower score to the other (no duplicate
+
+scores except 0 are allowed).
+
+4. RESPONSE FORMAT
+
+Return **exactly one line** containing **only** a JSON object with keys “A”, “B”, “C”, “D”, “E” and
+
+their integer scores. No additional text, no markdown, no line breaks, no explanations.
+
+Example of a valid response (single line): {{"A":4,"B":2,"C":3,"D":1,"E":0}}
+
+5. OPTIONS TO EVALUATE
+
+A. {opts['A']} B. {opts['B']} C. {opts['C']} D. {opts['D']} E. {opts['E']}
+
+Figure 7: System prompt for Generator
+24
+
+
+--- Page 25 ---
+
+Case A for Al Task
+Input
+What is the diabetic retinopathy grade of the image? __. we
+A. DRO B. DR1 C. DR2 D. DR3 E. DR4 images/9990_right jpg
+Knowledge-Level Retrieval Stage
+e [RAGTool] https://.../eye-conditions-and-diseases: retrieved 4 docs
+> Yes, Diabetic Retinopathy is listed as one of the common eye conditions.
+e [RAGTool] https://.../fundus/: retrieved 6 docs
+e [RAGTool] https://.../injuries/: retrieved 6 docs
+e [RAGTool] https://.../angleclosure-glaucoma-19: retrieved 6 docs
+e https://.../eye-conditions-and-diseases
+> Yes, Diabetic Retinopathy is listed as one of the common eye conditions.
+e https://.../common-eye-disorders
+> No relevant data found
+e https://.../eye-structure/fundus/
+>Yes. Diabetic retinopathy is a type of retinopathy that can occur in those
+who have had uncontrolled diabetes for a long period of time. Signs during a
+fundus exam include microaneurysms, hemorrhages, and capillary changes.
+Symptoms include floaters, blurry vision, and partial vision loss. Diabetic
+retinopathy is the leading cause of vision loss in adults in the Western
+population.
+Task-Level Case Studies Stage
+e [Tools Choose]
+> DR_ClassifierTool
+e [Reasoning]
+>To determine the diabetic retinopathy grade of the image, the most
+appropriate tool is the \'DR_ClassifierTool\'. It is specifically designed to
+classify images of the retina for signs of diabetic retinopathy and determine
+the grade based on the severity of the condition. Other tools such as
+FundusYOLODetectionTool or FundusSegmentationTool would be more
+appropriate for object detection or segmentation tasks rather than
+classification of diabetic retinopathy severity.
+e [Tool Output]
+> “Stage 0: No apparent retinopathy": 2.800716856654617e-06, "Stage 1: Mild
+non-proliferative DR": 2.3162441721069627e-05, "Stage 2: Moderate non-
+proliferative DR": 0.0028261286206543446, "Stage 3: Severe non-
+proliferative DR": 0.9767482280731201, "Stage 4: Proliferative DR":
+0.020399609580636024
+Result-Level Validation Stage
+e [Is_correct] e [Is_Follewed]
+> True > The prediction is correct. The tool's output indicates a
+high probability (0.976) for Stage 3: Severe Non-
+e [Is_Complete] Proliferative Diabetic Retinopathy, which matches the
+> True answer provided (D). All necessary information for
+verification is complete and accurate."
+Figure 8: A case study for Al Task demonstrates the whole EH-Benchmark process we
+propose. Note that we merely aggregate the outputs generated by each agent, without
+any manual intervention.
+25
+
+
+--- Page 26 ---
+
+Case B for A2 Task
+Input
+Which of the following is a key feature of pre-proliferative
+diabetic retinopathy? images/91/1.png.
+A. Neovascularization. B. IRMA. C. Macular hole.
+D. Retinal detachment. E. Optic disc edema.
+Knowledge-Level Retrieval Stage
+e [RAGTool] https://.../eye-conditions-and-diseases: retrieved 4 docs
+> B. Venous beading and intraretinal microvascular abnormalities (IRMA).\n\
+nReason: According to the context, pre-proliferative diabetic retinopathy is
+characterized by features such as venous beading and _intraretinal
+microvascular abnormalities (IRMA), which occur before the development of
+neovascularization (a hallmark of proliferative diabetic retinopathy). The
+other options are not key features of pre-proliferative diabetic retinopathy.
+e [RAGTool] https://.../fundus/: retrieved 6 docs
+e [RAGTool] https://.../injuries/: retrieved 6 docs
+e [RAGTool] https://.../angleclosure-glaucoma-19: retrieved 6 docs
+e https://.../Category:Articles:
+> No relevant data found
+Task-Level Case Studies Stage
+e [Tools Choose]
+> DR_ClassifierTool
+e [Reasoning]
+> The query is about identifying a key feature of pre-proliferative diabetic
+retinopathy from a given image. The 'DR_ClassifierTool' is specifically
+designed to classify and identify features related to diabetic retinopathy
+stages in retinal images. Using this tool will help in determining whether the
+image exhibits characteristics of pre-proliferative diabetic retinopathy, such
+as venous beading and IRMA, which is option B. Therefore, this tool is
+appropriate for addressing the query.
+e [Tool Output]
+> NO Execution
+Result-Level Validation Stage
+e [Is_correct] e [Is_Follewed]
+> True > The answer correctly identifies the key features of
+pre-proliferative diabetic retinopathy. Venous
+e [Is_Complete] beading and intraretinal microvascular abnormalities
+> True (IRMA) are characteristic of this stage, distinguishing
+it from proliferative diabetic retinopathy, which is
+characterized by neovascularization.
+Figure 9: A case study for A2 Task demonstrates the whole EH-Benchmark process we
+propose. Note that we merely aggregate the outputs generated by each agent, without
+any manual intervention.
+26
+
+
+--- Page 27 ---
+
+Table 4: Results of the ablation study on the A2 task. We evaluate how incremental
+activation of the agent and tool modules influences prediction performance. Red subscripts
+indicate the percentage increase or decrease relative to the baseline model (GPT-4o).
+Module Instance level Pathological level Clinical Decision
+Baseline RAG Tool Evaluation Decision Fit Pret Fit Pret Fit Pret
+V V 605 596 807 838 746 778
++5.40% 48.17% 41.13% +10.26% -1.58%  +5.28%
+V V 630 611 .753 748 761 795
++9.76% +10.89% -5.64% -1.58% +0.40% +7.58%
+V Yoo V 684 653 835 .860 844 838
++19.16% +4+18.51% +4.64% 413.16% +411.35% +13.40%
+V Yoo V V .700 664 885 903 919 920
+4+21.95% +4+20.51% +10.90% +418.82% 421.24% 424.49%
+Table 5: The function of RAG Agent on the Al task. We use accuracy metrics to evaluate
+the performance of Large language Models
+Model | Instance level | Pathological level
+| Cat-E Pos-E Num-E | Diag-E  Sta-E
+GPT-4o 094 628 296 207 482
+GPT-40+RAG | .123 627 291 254 A76
+GPT-4.1 067 587 A51 281 488
+GPT-4.1+RAG | 142 575 395 336 482
+Our | .784 633 430 | 661 530
+5.6. Ablation Study
+To thoroughly assess the contribution and impact of each component on
+overall performance, we incrementally incorporate new agents and tools into
+the baseline model. The detailed experimental results are presented in Ta-
+ble 4. Our observations indicate that the RAG Agent effectively bridges
+queries with external data sources, delivering extensive background informa-
+tion and occasionally retrieving correct answers directly from URLs. While
+the integration of tools significantly enhances the model’s predictive capa-
+bilities, it also introduces a tendency toward visual hallucinations, which
+may negatively influence subsequent reasoning processes. A robust multi-
+agent framework requires high-quality reasoning chains and interpretability,
+27
+
+
+--- Page 28 ---
+
+as black-box solutions lacking explanatory transparency are frequently met
+with skepticism or rejection by experts. The Evaluation agent performs an
+initial evaluation of tool outputs, iteratively engaging agents and tools to
+progressively establish consensus among ” experts.” Consequently, the result-
+ing model achieves a performance improvement of at least 20% across most
+tasks, with the peak enhancement reaching 24.49%.
+
+To evaluate the role of external data in enhancing model reasoning, we
+use GPT-4o and GPT-4.1 as baselines. Results in Table 5 show that incor-
+porating external sources reduces categorical and diagnosis-type errors, with
+GPT-4.1 showing notable gains. The RAG Agent also allows clinical ex-
+perts to verify information, which supports evidence-based decision-making
+and improves interpretability. Overall, it establishes a clear link between
+ophthalmic queries, clinical context, and grounded responses.
+
+6. Conclusion
+
+Hallucination Evaluation. This paper introduces EH-Benchmark, a
+novel evaluation suite designed to systematically assess hallucination phe-
+nomena exhibited by LLMs in the domain of ophthalmology. EH-Benchmark
+comprises two core components: a task-specific benchmark for evaluating
+ophthalmic hallucinations, and a structured multi-agent framework for hal-
+lucination mitigation. Based on specific task requirements and error typolo-
+gies, ophthalmic hallucinations are categorized into two distinct types: Visual
+Understanding and Logical Composition.
+
+Hallucination Mitigation. Experimental results reveal that LLMs per-
+form particularly poorly on visual understanding tasks, suggesting a potential
+over-reliance on language priors and a deficiency in visual reasoning capabili-
+ties. To address the multifaceted hallucination issues observed in ophthalmic
+diagnostics, we propose a three-stage multi-agent framework consisting of
+three stages: (1) Knowledge-Level Retrieval, (2) Task-Level Case Studies,
+and (3) Result-Level Validation. In the Knowledge-Level Retrieval stage,
+clinical knowledge in the field of ophthalmology is retrieved by contextual-
+izing queries with relevant case backgrounds, thereby enriching the factual
+grounding of subsequent diagnostic reasoning. During the Task-level case
+studies stage, diagnostic workflows are composed through the intelligent se-
+lection and sequencing of specialized tool agents to ensure high efficiency and
+logical consistency. Finally, the Result-Level Validation stage assesses tool
+outputs across three critical dimensions—correctness, completeness, and ad-
+
+28
+
+
+--- Page 29 ---
+
+herence to the predefined workflow. When deficiencies are detected, the sys-
+tem selectively retries specific tool agents, enabling an iterative self-correction
+loop. This process transforms the diagnostic system from a black-box model
+into a clinically transparent, self-correcting, and trustworthy AI assistant.
+
+Limitations. The scarcity of high-quality, domain-specific ophthalmol-
+ogy data limits the current work’s ability to address multimodal questions
+adequately, including those involving common ophthalmological modalities
+such as Lens Photographs, Scanning Laser Ophthalmoscopy, and Fundus
+Fluorescein Angiography. This deficiency compromises diagnostic capabili-
+ties when tackling complex cases. Additionally, the multi-agent framework
+does not integrate clinician feedback into its workflow, preventing the model
+from adapting based on real-time expert input.
+
+Future Work. We plan to further refine EH-Benchmark by incorporat-
+ing a broader range of multimodal question types, with particular attention to
+cross-modal diagnostic scenarios. For example, we will consider using brain
+CT and CFP as combined inputs for complex ophthalmic disease diagnosis.
+Additionally, we aim to integrate expert-in-the-loop mechanisms. Clinician
+feedback will be incorporated into the model’s learning process to improve
+clinical accuracy, interpretability, and overall trustworthiness in real-world
+medical practice.
+
+CRediT authorship contribution statement
+
+Xiaoyu Pan: Conceptualization, Methodology, Validation, Writing —
+Original Draft, Writing — Review & Editing, Visualization. Yang Bai: Con-
+ceptualization, Writing — Original Draft, Writing — Review & Editing, Vi-
+sualization, Supervision, Resources. Ke Zou: Writing — Original Draft,
+Visualization, Software. Yang Zhou: Investigation, Resources, Methodol-
+ogy. Jun Zhou: Writing — Review & Editing, Visualization, Supervision,
+Resources. Huazhu Fu: Conceptualization, Methodology, Validation. Yih-
+Chung Tham: Conceptualization, Validation, Writing — Review & Editing,
+Supervision, Resources. Yong Liu: Conceptualization, Writing — Review &
+Editing, Supervision, Resources.
+
+Declaration of competing interest
+
+We declare that we have no commercial, financial, or personal relation-
+
+ships that could be construed as a potential conflict of interest.
+29
+
+
+--- Page 30 ---
+
+Acknowledgments
+
+This work was supported by the National Research Foundation, Sin-
+gapore under its AI Singapore Programme (AISG Award No: AISG2-TC-
+2021-003), Agency for Science, Technology and Research (ASTAR) through
+its AME Programmatic Funding Scheme under Project A20H4b0141, AS-
+TAR Central Research Fund “A Secure and Privacy Preserving AI Plat-
+form for Digital Health”, and Agency for Science, Technology and Research
+(A*STAR) through its RIE2020 Health and Biomedical Sciences (HBMS) In-
+dustry Alignment Fund Pre-Positioning (IAF-PP) (grant no. H20C6a0032).
+Data availability
+
+The benchmark can be found here, Al task: https://drive.google.
+com/file/d/1S4-RyfSjgZUodghn70c7TqXNI4WDeUJG/view?usp=sharing. A2
+task: https: //drive.google.com/file/d/1HNkkPoYmIRRrPRombB___SdMEH3Auzpr/
+view?usp=sharing.
+References
+
+[1] B. Foot, C. MacEwen, Surveillance of sight loss due to delay in oph-
+thalmic treatment or review: frequency, cause and outcome, Eye 31 (5)
+(2017) 771-775.
+
+(2) R. AlSaad, A. Abd-Alrazaq, S. Boughorbel, A. Ahmed, M.-A. Renault,
+R. Damseh, J. Sheikh, Multimodal large language models in health care:
+applications, challenges, and future outlook, Journal of medical Internet
+research 26 (2024) e59505.
+
+[3] A. J. Thirunavukarasu, D. S. J. Ting, K. Elangovan, L. Gutierrez, T. F.
+Tan, D.S. W. Ting, Large language models in medicine, Nature medicine
+29 (8) (2023) 1930-1940.
+
+[4] Q. Lin, T. Zhao, K. He, Z. Peng, F. Xu, L. Huang, J. Ma,
+M. Feng, Self-supervised quantized representation for seamlessly inte-
+grating knowledge graphs with large language models, arXiv preprint
+arXiv:2501.18119 (2025).
+
+30
+
+
+--- Page 31 ---
+
+[5] H. Luo, Z. Tang, S. Peng, Y. Guo, W. Zhang, C. Ma, G. Dong, M. Song,
+W. Lin, Y. Zhu, et al., Chatkbqa: A generate-then-retrieve framework
+for knowledge base question answering with fine-tuned large language
+models, arXiv preprint arXiv:2310.08975 (2023).
+
+[6] Z. Wang, Y. Sun, Z. Li, X. Yang, F. Chen, H. Liao, Llm-rg4: Flexible
+and factual radiology report generation across diverse input contexts, in:
+Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 39,
+2025, pp. 8250-8258.
+
+[7] C.-Y. Li, K.-J. Chang, C.-F. Yang, H.-Y. Wu, W. Chen, H. Bansal,
+L. Chen, Y.-P. Yang, Y.-C. Chen, S.-P. Chen, et al., Towards a holistic
+framework for multimodal Ilm in 3d brain ct radiology report generation,
+Nature Communications 16 (1) (2025) 2258.
+
+[8] B. A. Galitsky, Llm-based personalized recommendations in health,
+Preprints (2024).
+
+[9] M. Benary, X. D. Wang, M. Schmidt, D. Soll, G. Hilfenhaus, M. Nas-
+sir, C. Sigler, M. Knoédler, U. Keller, D. Beule, et al., Leveraging large
+language models for decision support in personalized oncology, JAMA
+Network Open 6 (11) (2023) e2343689-e2343689.
+
+[10] D. Xu, Y. Chen, Z. Chai, Y. Xiao, Y. Yan, W. Ding, H. Wang, Z. Jin,
+W. Jiao, W. Yue, et al., Knowledge fusion in deep learning-based medical
+vision-language models: A review, Information Fusion (2025) 103455.
+
+[11] Z. Da Soh, Y. Bai, K. Yu, Y. Zhou, X. Lei, §. Thakur, Z. Lee, L. C. L.
+Phang, Q. Peng, C. C. Xue, et al., An integrated language-vision foun-
+dation model for conversational diagnostics and triaging in primary eye
+care, arXiv preprint arXiv:2505.08414 (2025).
+
+[12] S. Li, T. Lin, L. Lin, W. Zhang, J. Liu, X. Yang, J. Li, Y. He, X. Song,
+J. Xiao, et al., Eyecaregpt: Boosting comprehensive ophthalmology un-
+derstanding with tailored dataset, benchmark and model, arXiv preprint
+arXiv:2504.13650 (2025).
+
+[13] Z. Xi, W. Chen, X. Guo, W. He, Y. Ding, B. Hong, M. Zhang, J. Wang,
+S. Jin, E. Zhou, et al., The rise and potential of large language model
+based agents: A survey, Science China Information Sciences 68 (2)
+(2025) 121101.
+
+31
+
+
+--- Page 32 ---
+
+[14] Y. Talebirad, A. Nadiri, Multi-agent collaboration: Harnessing the
+power of intelligent Ilm agents, arXiv preprint arXiv:2306.03314 (2023).
+
+[15] Z. Liu, Y. Zhang, P. Li, Y. Liu, D. Yang, A dynamic llm-powered agent
+network for task-oriented agent collaboration, in: First Conference on
+Language Modeling, 2024.
+
+[16] X. Guo, K. Huang, J. Liu, W. Fan, N. Vélez, Q. Wu, H. Wang, T. L.
+Griffiths, M. Wang, Embodied llm agents learn to cooperate in organized
+teams, arXiv preprint arXiv:2403.12482 (2024).
+
+[17] G. Woélflein, D. Ferber, D. Truhn, O. Arandjelovic, J. N. Kather, Llm
+agents making agent tools, arXiv preprint arXiv:2502.11705 (2025).
+
+[18] X. Wang, Y. Chen, L. Yuan, Y. Zhang, Y. Li, H. Peng, H. Ji, Executable
+code actions elicit better llm agents, in: Forty-first International Con-
+ference on Machine Learning, 2024.
+
+[19] X. Yue, Y. Ni, K. Zhang, T. Zheng, R. Liu, G. Zhang, S. Stevens,
+D. Jiang, W. Ren, Y. Sun, et al., Mmmu: A massive multi-discipline
+multimodal understanding and reasoning benchmark for expert agi, in:
+Proceedings of the IEEE/CVF Conference on Computer Vision and Pat-
+tern Recognition, 2024, pp. 9556-9567.
+
+[20] P. Lu, H. Bansal, T. Xia, J. Liu, C. Li, H. Hajishirzi, H. Cheng,
+K.-W. Chang, M. Galley, J. Gao, Mathvista: Evaluating mathemati-
+cal reasoning of foundation models in visual contexts, arXiv preprint
+arXiv:2310.02255 (2023).
+
+[21] Y. Guo, F. Jiao, Z. Shen, L. Nie, M. Kankanhalli, Unk-vqa: A dataset
+and a probe into the abstention ability of multi-modal large models,
+IEEE Transactions on Pattern Analysis and Machine Intelligence (2024).
+
+[22| M. Zhang, Y. Shen, Z. Li, H. Sha, B. Hu, Y. Wang, C. Huang,
+S. Liu, J. Tong, C. Jiang, et al., Llmeval-med: A real-world clinical
+benchmark for medical Ilms with physician validation, arXiv preprint
+arXiv:2506.04078 (2025).
+
+[23] A. Chang, L. Huang, P. Bhatia, T. Kass-Hout, F. Ma, C. Xiao, Medhe-
+val: Benchmarking hallucinations and mitigation strategies in medical
+large vision-language models, arXiv preprint arXiv:2503.02157 (2025).
+
+32
+
+
+--- Page 33 ---
+
+[24] D. Nguyen, M. Khoi Ho, H. Ta, T. Tam Nguyen, Q. Chen, K. Rav,
+Q. Duong Dang, 8. Ramchandre, S. L. Phung, Z. Liao, et al., Localizing
+before answering: A hallucination evaluation benchmark for grounded
+medical multimodal Ilms, arXiv e-prints (2025) arXiv—2505.
+
+[25] Q. Wei, K. Qian, X. Li, Funbench: Benchmarking fundus reading skills
+of mllms, arXiv preprint arXiv:2503.00901 (2025).
+
+[26] Z. Qin, Y. Yin, D. Campbell, X. Wu, K. Zou, Y.-C. Tham, N. Liu,
+X. Zhang, Q. Chen, Lmod: A large multimodal ophthalmology
+dataset and benchmark for large vision-language models, arXiv preprint
+arXiv:2410.01620 (2024).
+
+[27| K. He, R. Mao, Q. Lin, Y. Ruan, X. Lan, M. Feng, E. Cambria, A
+survey of large language models for healthcare: from data, technology,
+and applications to accountability and ethics, Information Fusion (2025)
+102963.
+
+[28] Q. Lin, Y. Zhu, X. Mei, L. Huang, J. Ma, K. He, Z. Peng, E. Cambria,
+M. Feng, Has multimodal learning delivered universal intelligence in
+healthcare? a comprehensive survey, Information Fusion (2024) 102795.
+
+[29] G. Deng, K. Zou, K. Ren, M. Wang, X. Yuan, S. Ying, H. Fu, Sam-u:
+Multi-box prompts triggered uncertainty estimation for reliable sam in
+medical image, in: International Conference on Medical Image Comput-
+ing and Computer-Assisted Intervention, Springer, 2023, pp. 368-377.
+
+[30] N. Zhou, K. Zou, K. Ren, M. Luo, L. He, M. Wang, Y. Chen, Y. Zhang,
+H. Chen, H. Fu, Medsam-u: Uncertainty-guided auto multi-prompt
+adaptation for reliable medsam, arXiv preprint arXiv:2409.00924 (2024).
+
+[31] K. Zhang, R. Zhou, E. Adhikarla, Z. Yan, Y. Liu, J. Yu, Z. Liu, X. Chen,
+B. D. Davison, H. Ren, et al., A generalist vision—language foundation
+model for diverse biomedical tasks, Nature Medicine (2024) 1-13.
+
+[32] Google, Medgemma hugging face, https:
+//huggingface.co/collections/google/
+medgemma-release-680aade845f90bec6a3f£60c4, accessed: [Insert
+Date Accessed, e.g., 2025-05-20] (2025).
+
+33
+
+
+--- Page 34 ---
+
+[33] C. Li, C. Wong, S. Zhang, N. Usuyama, H. Liu, J. Yang, T. Naumann,
+H. Poon, J. Gao, Llava-med: Training a large language-and-vision as-
+sistant for biomedicine in one day, Advances in Neural Information Pro-
+cessing Systems 36 (2023) 28541-28564.
+
+[34] Q. Lin, K. He, Y. Zhu, F. Xu, E. Cambria, M. Feng, Cross-modal knowl-
+edge diffusion-based generation for difference-aware medical vqa, IEEE
+Transactions on Image Processing (2025).
+
+[35] J. Chen, R. Ouyang, A. Gao, S. Chen, G. H. Chen, X. Wang, R. Zhang,
+Z. Cai, K. Ji, G. Yu, X. Wan, B. Wang, Huatuogpt-vision, towards
+injecting medical visual knowledge into multimodal Ilms at scale (2024).
+arXiv: 2406.19280.
+
+URL https://arxiv.org/abs/2406. 19280
+
+[36] B. Yan, J. Zhang, Z. Yuan, S. Shan, X. Chen, Evaluating the qual-
+ity of hallucination benchmarks for large vision-language models, arXiv
+preprint arXiv:2406.17115 (2024).
+
+[37] Z. Gu, C. Yin, F. Liu, P. Zhang, Medvh: Towards systematic evaluation
+of hallucination for large vision language models in the medical context,
+arXiv preprint arXiv:2407.02730 (2024).
+
+[38] J. Chen, D. Yang, T. Wu, Y. Jiang, X. Hou, M. Li, S. Wang, D. Xiao,
+K. Li, L. Zhang, Detecting and evaluating medical hallucinations in large
+vision language models, arXiv preprint arXiv:2406.10185 (2024).
+
+[39] K. Zuo, Y. Jiang, Medhallbench: A new benchmark for assess-
+ing hallucination in medical large language models, arXiv preprint
+arXiv:2412.18947 (2024).
+
+[40] Q. Wei, X. Li, W. Yu, X. Zhang, Y. Zhang, B. Hu, B. Mo, D. Gong,
+N. Chen, D. Ding, et al., Learn to segment retinal lesions and beyond,
+in: 2020 25th International conference on pattern recognition (ICPR),
+IEEE, 2021, pp. 7403-7410.
+
+[41] T. Li, Y. Gao, K. Wang, S. Guo, H. Liu, H. Kang, Diagnostic assessment
+of deep learning algorithms for diabetic retinopathy screening, Informa-
+tion Sciences 501 (2019) 511-522.
+
+34
+
+
+--- Page 35 ---
+
+[42] P. Porwal, S. Pachade, R. Kamble, M. Kokare, G. Deshmukh, V. Sa-
+hasrabuddhe, F. Meriaudeau, Indian diabetic retinopathy image dataset
+(idrid): a database for diabetic retinopathy screening research, Data
+3 (3) (2018) 25.
+
+[43] X. Ye, S. He, X. Zhong, J. Yu, S. Yang, Y. Shen, Y. Chen, Y. Wang,
+X. Huang, L. Shen, Oimhs: An optical coherence tomography image
+dataset based on macular hole manual segmentation, Scientific Data
+10 (1) (2023) 769.
+
+[44] M. Arikan, J. Willoughby, S. Ongun, F. Sallo, A. Montesel, H. Ahmed,
+A. Hagag, M. Book, H. Faatz, M. V. Cicinelli, et al., Oct5k: A dataset of
+multi-disease and multi-graded annotations for retinal layers, Scientific
+Data 12 (1) (2025) 267.
+
+[45] M. N. Bajwa, G. A. P. Singh, W. Neumeier, M. I. Malik, A. Den-
+gel, S. Ahmed, G1020: A benchmark retinal fundus image dataset for
+computer-aided glaucoma detection, in: 2020 International Joint Con-
+ference on Neural Networks (IJCNN), IEEE, 2020, pp. 1-7.
+
+[46] J. I. Orlando, J. Barbosa Breda, K. Van Keer, M. B. Blaschko, P. J.
+Blanco, C. A. Bulant, Towards a glaucoma risk index based on simu-
+lated hemodynamics from fundus images, in: Medical Image Computing
+and Computer Assisted Intervention—MICCAI 2018: 21st International
+Conference, Granada, Spain, September 16-20, 2018, Proceedings, Part
+II 11, Springer, 2018, pp. 65-73.
+
+[47] Y. Zhou, B. Wang, L. Huang, S. Cui, L. Shao, A benchmark for studying
+diabetic retinopathy: segmentation, grading, and transferability, IEEE
+transactions on medical imaging 40 (3) (2020) 818-828.
+
+[48] ODIR-5K Dataset, Odir-5k - grand challenge, accessed: 2025-05-31
+(2019).
+
+URL https://odir2019.grand-challenge.org/dataset/
+
+[49] M. Kulyabin, A. Zhdanov, A. Nikiforova, A. Stepichev, A. Kuznetsova,
+M. Ronkin, V. Borisov, A. Bogachev, S. Korotkich, P. A. Constable,
+et al., Octdl: Optical coherence tomography dataset for image-based
+deep learning methods, Scientific data 11 (1) (2024) 365.
+
+35
+
+
+--- Page 36 ---
+
+[50] X. Huang, X. Kong, Z. Shen, J. Ouyang, Y. Li, K. Jin, J. Ye, Grape:
+A multi-modal dataset of longitudinal follow-up visual field and fundus
+images for glaucoma management, Scientific Data 10 (1) (2023) 520.
+
+[51] O. Kovalyk, J. Morales-Sanchez, R. Verdti-Monedero, I. Sellés-Navarro,
+A. Palazon-Cabanes, J.-L. Sancho-Gémez, Papila: Dataset with fundus
+images and clinical data of both eyes of the same patient for glaucoma
+assessment, Scientific Data 9 (1) (2022) 291.
+
+[52] L. Wu, P. Fernandez-Loaiza, J. Sauma, E. Hernandez-Bogantes, M. Ma-
+sis, Classification of diabetic retinopathy and diabetic macular edema,
+World journal of diabetes 4 (6) (2013) 290.
+
+[53] Q. Team, Qwen2.5: A party of foundation models (September 2024).
+URL https://qwenlm. github. io/blog/qwen2.5/
+
+[54] A. Yang, B. Yang, B. Hui, B. Zheng, B. Yu, C. Zhou, C. Li, C. Li, D. Liu,
+F. Huang, G. Dong, H. Wei, H. Lin, J. Tang, J. Wang, J. Yang, J. Tu,
+J. Zhang, J. Ma, J. Xu, J. Zhou, J. Bai, J. He, J. Lin, K. Dang, K. Lu,
+K. Chen, K. Yang, M. Li, M. Xue, N. Ni, P. Zhang, P. Wang, R. Peng,
+R. Men, R. Gao, R. Lin, $8. Wang, S. Bai, S. Tan, T. Zhu, T. Li, T. Liu,
+W. Ge, X. Deng, X. Zhou, X. Ren, X. Zhang, X. Wei, X. Ren, Y. Fan,
+Y. Yao, Y. Zhang, Y. Wan, Y. Chu, Y. Liu, Z. Cui, Z. Zhang, Z. Fan,
+Qwen2 technical report, arXiv preprint arXiv:2407.10671 (2024).
+
+[55| S. Bai, K. Chen, X. Liu, J. Wang, W. Ge, S. Song, K. Dang, P. Wang,
+S. Wang, J. Tang, H. Zhong, Y. Zhu, M. Yang, Z. Li, J. Wan, P. Wang,
+W. Ding, Z. Fu, Y. Xu, J. Ye, X. Zhang, T. Xie, Z. Cheng, H. Zhang,
+Z. Yang, H. Xu, J. Lin, Qwen2.5-vl technical report, arXiv preprint
+arXiv:2502.13923 (2025).
+
+[56] P. Wang, S. Bai, S. Tan, S. Wang, Z. Fan, J. Bai, K. Chen, X. Liu,
+J. Wang, W. Ge, Y. Fan, K. Dang, M. Du, X. Ren, R. Men,
+D. Liu, C. Zhou, J. Zhou, J. Lin, Qwen2-vl: Enhancing vision-language
+model’s perception of the world at any resolution, arXiv preprint
+arXiv:2409.12191 (2024).
+
+[57| J. Bai, S. Bai, S. Yang, S. Wang, S. Tan, P. Wang, J. Lin, C. Zhou,
+J. Zhou, Qwen-vl: A versatile vision-language model for understanding,
+
+36
+
+
+--- Page 37 ---
+
+localization, text reading, and beyond, arXiv preprint arXiv:2308.12966
+(2023).
+
+[58] H. Liu, C. Li, Y. Li, B. Li, Y. Zhang, S. Shen, Y. J. Lee, Llava-next:
+Improved reasoning, ocr, and world knowledge (January 2024).
+
+URL https://llava-vl.github.io/blog/2024-01-30-llava-next/
+
+[59] H. Liu, C. Li, Y. Li, Y. J. Lee, Improved baselines with visual instruction
+tuning (2023).
+
+[60] H. Liu, C. Li, Q. Wu, Y. J. Lee, Visual instruction tuning (2023).
+
+[61] J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya, F. L. Aleman,
+D. Almeida, J. Altenschmidt, S. Altman, S. Anadkat, et al., Gpt-4 tech-
+nical report, arXiv preprint arXiv:2303.08774 (2023).
+
+[62] OpenAI, Introducing gpt-4.1 in the api (2025).
+
+URL https://openai.com/index/gpt-4-1/
+
+[63] Z. Chen, W. Wang, Y. Cao, Y. Liu, Z. Gao, E. Cui, J. Zhu, S. Ye,
+H. Tian, Z. Liu, et al., Expanding performance boundaries of open-
+source multimodal models with model, data, and test-time scaling, arXiv
+preprint arXiv:2412.05271 (2024).
+
+[64] Z. Gao, Z. Chen, E. Cui, Y. Ren, W. Wang, J. Zhu, H. Tian, S. Ye,
+J. He, X. Zhu, et al., Mini-internvl: A flexible-transfer pocket multi-
+modal model with 5% parameters and 90% performance, arXiv preprint
+arXiv:2410.16261 (2024).
+
+[65] Z. Chen, W. Wang, H. Tian, S. Ye, Z. Gao, E. Cui, W. Tong, K. Hu,
+J. Luo, Z. Ma, et al., How far are we to gpt-4v? closing the gap to
+commercial multimodal models with open-source suites, arXiv preprint
+arXiv:2404.16821 (2024).
+
+[66] Z. Chen, J. Wu, W. Wang, W. Su, G. Chen, S. Xing, M. Zhong,
+Q. Zhang, X. Zhu, L. Lu, et al., Internvl: Scaling up vision foundation
+models and aligning for generic visual-linguistic tasks, in: Proceedings
+of the IEEE/CVF Conference on Computer Vision and Pattern Recog-
+nition, 2024, pp. 24185-24198.
+
+37
+
+
+--- Page 38 ---
+
+[67| W. Wang, Z. Chen, W. Wang, Y. Cao, Y. Liu, Z. Gao, J. Zhu, X. Zhu,
+L. Lu, Y. Qiao, J. Dai, Enhancing the reasoning ability of multimodal
+large language models via mixed preference optimization, arXiv preprint
+arXiv:2411.10442 (2024).
+
+[68] DeepSeek-AI, Deepseek-v3 technical report (2024). arXiv:2412. 19437.
+URL https://arxiv.org/abs/2412.19437
+
+[69] T. Lin, W. Zhang, S. Li, Y. Yuan, B. Yu, H. Li, W. He, H. Jiang,
+M. Li, X. Song, S. Tang, J. Xiao, H. Lin, Y. Zhuang, B. C. Ooi,
+Healthgpt: A medical large vision-language model for unifying compre-
+hension and generation via heterogeneous knowledge adaptation (2025).
+arXiv: 2502.09838.
+
+URL https://arxiv.org/abs/2502 .09838
+38

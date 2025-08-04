@@ -1,0 +1,565 @@
+
+
+--- Page 1 ---
+
+Math Natural Language Inference:
+this should be easy!
+Valeria de Paiva, Qiyue Gao, Hai Hu,
+Pavel Kovalev, Yikang Liu, Lawrence S. Moss, Zhiheng Qian
+Abstract However, there are complications with mathe-
+matical text from the start. The vocabulary may
+Vay We ask whether contemporary LLMs are able be unfamiliar to a generic audience: mathematical
+N to perform natural language inference (NLI) parlance can use daily words with new, unfamiliar
+=< tasks on mathematical texts. We call this the meanings, e.g. ‘ring’, ‘field’, or even ‘folklore’. On
+— Math NLI problem. We construct a corpus of top of this, the use of visual elements such as sym-
+5 Math NLI pairs whose premises are from ex- bols, equations, and diagrams, al tch th
+= tant mathematical text and whose hypotheses , , 8 ° mos c anges ©
+Oo and gold labels were provided by people with very language of the text from plain text to a richer,
+oa) experience in both research-level mathematics multimodal language. The field lacks open-source
+— and also in the NLI field. We also investigate resources such as dictionaries and glossaries for
+_) the quality of corpora using the same premises mathematical concepts. It is much harder to find
+Ss but whose hypotheses are provided by LLMs a “person on the street” annotator of mathematics
+f themselves. We not only investigate the per- than of more common forms of text
+3 formance but also the inter-group consistency
+4 of the diverse group of LLMs. We have both
+_ Positive and negative findings. Among our posi- When confronted with the incredible solutions
+> tive findings: in some settings, using a majority to mathematical-like problems that deep learning
+on) vote of LLMs is approximately equivalent to systems can offer nowadays (e.g., AlphaGeome-
+\O using human-labeled data in the Math NLI area. . Soe are .
+=) On the negative side: LLMs still struggle with try (Trinh et al., 2024)), it is difficult to believe
+cn mathematical language. They occasionally fail that these systems cannot understand the basics
+N at even basic inferences. Current models are of causality or of propositional reasoning used
+(~ not as prone to hypothesis-only “inference” in throughout mathematics. Nonetheless, when tested
+- our data the way the previous generation had on these basics, the LLMs-based systems still make
+N been. In addition to our findings, we also pro- very surprising (to humans) mistakes. Further,
+SS vier NLL. as data to support future work the fact that LLMs do not have a notion of self-
+wy , consistency has been documented in many recent
+2 . papers (Sedova et al., 2024; Kiciman et al., 2024;
+S 1 Introduction Xu et al., 2024). But mathematics, as usually prac-
+We study natural language inference (NLI) tasks in ticed, needs self-consistency. In a sense, It seems
+. . that sometimes the deep learning systems deserve
+the area of research-level mathematics. One might . . .
+think that LLMs would do extremely well on this an At in advanced problem solving but a B in the
+; basics.
+task. After all, what counts as an entailment or
+contradiction in everyday-language texts is often
+taken as a complicated version of what happens For all of these reasons, we could conclude, per-
+with mathematics. So we might expect purported — haps surprisingly, that the NLI task is not much
+mathematical inferences to be easier to evaluate easier when using LLMs to deal with mathematical
+than those in everyday language. And unlike lan- text after all. In this paper, we shall see how pre-
+guage in the wild, the domain of mathematics is cisely correct math NLI using LLMs can be. We
+fairly well-defined. Facts, definitions, and logical decided to experiment and build a corpus of NLI
+reasoning play a large role in mathematical writing. inference pairs, comparing the output of several
+Sentences ought to be precise and unambiguous. LLMs on mathematical text.
+1
+
+
+--- Page 2 ---
+
+P (Premise) H (Hypothesis) Label
+A notion of central importance in categorical topology Topological functor is a notion of categorical topology. E
+is that of topological functor.
+The problem of relating a factorization system to a The problem of relating a factorization system toa C
+pointed endofunctor is considered. pointed endofunctor is not discussed.
+A notion of central importance in categorical topology There are many notions of central importance in categor- N
+is that of topological functor. ical topology.
+Table 1: Examples in human-created seed Math NLI corpus.
+1.1 Research questions the “gold labels” by construction. But as we found
+Our big question: Can LLMs be reliable construc- repeatedly, getting consistent data from humans
+tors and annotators of math NLI corpora? We ad- #8 difficult, even about mathematical texts.) The
+dress this by asking and answering some secondary team members were told to produce grammatical
+questions: (a) How well do LLMs perform on a sentences that did not depend on factual knowledge
+math NLI corpus annotated by mathematicians? about the mathematics in the original TAC sentence
+(b) Are there common features to the errors which and that tried to introduce as few new facts as pos-
+they make? (c) How good is a math NLI corpus sible. It is impossible to do this perfectly, but the
+annotated entirely by LLMs? (d) Are LLMs more team members strove to do so. As a result we had
+unanimous on human-written corpora or on corpora 3 X 3 X 31 = 279 pairs, equally divided with £,
+generated by LLMs themselves? C, and N labels.
+We aimed to fulfill the following conditions as
+1.2 Goal, plan and structure of the paper much as possible:
+The “deliverables” of this paper are two corpora for .
+. Pap P 1. Inferences should be uncontroversial. We
+Math NLI: one written by humans and the other by . . ws
+. want inferences which most mathematicians
+GPT. These are not benchmarks. But we believe ccs a
+. . . would take to be “immediate.
+that they will help others who work on this topic.
+
+Equally important, this paper details what we 2. We treat mathematical concepts as black
+have learned about Math NLI from several years of boxes. (Inference should depend as little
+work, including work that did not turn out as well as possible on the background mathematical
+as we had hoped. Overall, our goal is to make some knowledge of the assessor.)
+points about Math NLI which we believe have not
+been made elsewhere, based on data and examples 3. We avoid “dangling references", pronouns (it,
+which we have collected. The plan of the paper is they) or demonstratives (this, that, here, there)
+to tell the story of this work. without clear antecedents. In general, we tried
+
+to avoid all of the problematic issues in natural
+2 Math NLI seed corpus language semantics.
+2.1 Creation of a seed set of pairs Table 1 shows some examples of human-created
+Our first experiment used a corpus of abstracts of ar- _ hypotheses and their labels.
+ticles in the journal Theory and Applications of Cat- Having constructed our seed set of 279 pairs we
+egories (TAC) developed in (Collard et al., 2022)". used a collection of LLMs to evaluate it, as shown
+This corpus has some 3K sentences, but 432 were _ in Table 2. This led to the realization that not only
+singled out as ‘Goldilocks-like sentences’: not too —_ did human creators disagree with each other, also
+short, not too long, and with little or no IATEX the rate of unanimity between machines was not
+markup. Then we chose about 30 of these sen- very stable. In particular, we discovered some 20
+tences, and for each sentence S in this set, three of pairs with contradictory evaluations between ma-
+our team members were asked to write asentence —_ chines and humans. We called these the red pairs,
+entailed by S, a sentence contradicting S, anda as they deserved further attention. We explain our
+sentence neutral with respect to S. (So we had _ process of evaluation, the LLMs used, and our set
+
+‘Available at https: //github.com/ToposInstitute/ up in the next section, but we discuss briefly the
+tac-corpus. red pairs now.
+
+2
+
+
+--- Page 3 ---
+
+Abbr. Model ¢ P: The axioms resemble those for monoidal
+“GPT4 GPT2 ©.” Abelian categories.
+L2 Llama-2 H: The axioms are the ones of monoidal
+C3 ame Abelian categories.
+a Note that the ambiguity which we call “lexical”
+Q2 Qwen?2-72B-Instruct here might also be called “pragmatic” because the
+Mixtral = Mixtral-8x22B-Instruct-v0.1 issue is whether the use of “resemble” here carries
+DS deepseek-IIm-67b-chat . . . : :
+Ge2 gemma-2-27b-it the Gricean implicature that if an object A resem-
+bles an object B, then A is not, strictly speaking,
+Table 2: LLMs used in Exp. 1. Top: Group I: five initial —_B at all.
+LLMs; Bottom: Group 2: five later LLMs.
+Naming of math entities. There is a problem
+with naming mathematical entities, e.g. “group B"
+2.2 Red Pairs vs. “group C" if this is only used as a generic name,
+Our three mathematically-trained group memebers _as an a-variant, then the difference between B and
+tried to analyze the kinds of mistakes LLMs were __C doesn’t matter. But many times we are talking
+making in these pairs. We discovered a few patterns about different groups.
+of problematic or flawed reasoning: Unknown math concepts. Sometimes one really
+Ignored context. Sometimes a specific context | must know the concepts involved. For example, for
+was mentioned, for instance the pair
+¢ P: In the nilpotent case, this nerve is known * P: This paper proposes a recursive definition
+to be a Kan complex. of V-n-categories and their morphisms.
+H: This nerve is not known to be a Kan com- H: This paper proposes a definition of V-
+plex. categories.
+but the LLMs discarded the specific context (the if we know that "V-n-categories’ are “V-categories’,
+nilpotent case) and compared the matrix sentences then we can decide on entailment. But how do
+— in the example above this leads to a contradiction know that? The mathematician is at liberty to
+— instead of a neutral label. This is similar to the create concepts and name them in strange ways.
+problems with modal and counterfactual reasoning For instance a “skew monoidal category” is not a
+discussed in (Holliday et al., 2024). “monoidal category”, only an ‘almost’ monoidal
+category.
+Vague quantifiers. We also have problems with
+vague predicates like numerous, few, many, where .
+ie could also disagree amongst themselves: 3 Evaluating LLMs on the seed corpus
+one example from the ‘red pairs’ set is In our first experiment, we harness LLMs to evalu-
+ate the seed corpus.
+¢ P: We worked through numerous examples to
+demonstrate the power of these notions. 3.1 Method
+H: We worked through two examples to The seed corpus was originally judged by five
+demonstrate the power of these notions. LLMs, the top ones in Table 2. We used the prompt
+The mathematicians agreed that numerous exam- shown mm Appendix C. When 4 or 5 LLMs dis-
+ples should entail two examples, but LLMs did not. agreed with the human annotation, we discussed
+the pair again, throwing it out if it was considered
+Lexical ambiguity. There is lexical ambiguity, “controversial” by the mathematicians in our group.
+for example, with the verb “resemble” which might We use API services from together.ai to
+mean “is almost equal" (for some humans) or “it query the LLMs, using a script to extract E/C/N
+looks similar to something else, but it is not the | judgments from each model’s explanation. The al-
+same as" — a reason why we might have humans _ gorithm used is simple: it counts the occurrences
+saying both contradiction or entailment in the ex- of a few keywords in the first sentence without se-
+ample: mantical analysis. (It works well if the model gives
+3
+
+
+--- Page 4 ---
+
+the answer directly.) However, this algorithm can but mathematicians tend to think that generaliz-
+fail. For example, when the model does not follow ing and specializing are antonyms. So whatever
+the instructions strictly we may end up witha pair "both of them" are, if they are a generalization of
+that is neither E nor C nor N, and as usual in NLI the concept of algebra of a monad (as claimed by
+we take N as a catch-all for “not E and not C.” the premise) then "algebra of a monad”" will more
+specialized than them.
+3.2 Results Concerning the Group 1 models: out of 279
+Performance of 10 LLMs on the seed MathNLI samples, there is at least one model that agrees
+corpus is shown in Table 3, with their confusion — with the human annotator in 271 samples. Hence,
+matrices shown in Table 4. there are 8 pairs where none of the 5 initial models
+Table 3 presents the precision, recall, fl-score | agrees with the human label. These eight pairs are
+and accuracy for 10 LLMs. The overall accuracy __ recalled in Appendix A. The examples are telling
+is medium to high, ranging from 71% to 91%, sug- _as they point out patterns of reasoning that might
+gesting that in general, the LLMs we tested can __ be difficult for humans as well. For instance:
+perform category-theory-related mathematical in-
+ference to a certain degree. We note that the first * P: Using these ideas, we also prove that
+group of LLMs (to the left of the table) are not magnetic monopoles form an abelian group.
+particularly better than the second group (on the H: Using these ideas, we also prove that
+right). This might reflect the fact that the first group .
+; monopoles form an abelian group.
+were closed-source, while Group 2’s models were
+open-source. The first group has two closed source
+models: Claude 3 and GPT4; the others are open Clearly a mathematician would gather that “mag-
+source. In particular, Claude 3 seems to still be bet- _ netic poles’ form an abelian group, but nothing has
+ter than the open-source LLMs, but perhaps more __ been said about non-magnetic poles. So neutral is
+runs are necessary to confirm this. much more reasonable than ‘entailment’. (More on
+A main message from Table 4 is that most mod- __ this is in the appendix A).
+els struggle with neutral pairs, mistakenly catego- Table 5 discusses unanimity between LLMs. As
+rizing them either as entailment pairs or contradic- before we consider two groups of models. Our
+tory pairs. For instance, Llama-3 is particularly initial LLMs are unanimous in 163 of the pairs
+bad in that it labels as many as 35% of neutral (58.4%). Of these 163, in 155 of the cases, the
+pairs as contradictions; only 48% of the neutral models’ agreed-upon label matches the human an-
+pairs are correctly classified. Claude3 is the best notations. And in 271 of the 290 pairs (including
+in labeling N pairs, with an accuracy of 84.9% for | ones where the models were not unanimous), at
+them. On the contrary, most models perform very least one model agreed with the human label. This
+well on C and E pairs. GPT4, Llama3 and Qwen2 __ explains the upper row of the table, and the lower
+correctly labeled more than 90% of the C and E _rowis similar.
+pairs. In fact, C pairs are the easiest for all mod- Notice that for the more recent LLMs, unanimity
+els, except Llama2, with most models achieving _ goes up from 58.4% to 68.1%. We do not have a
+accuracy greater than 90%. Furthermore, models —_ good explanation of this.
+seldom confuse C and E pairs. For eight out of the
+ten LLMs, C pairs are never categorized as E pairs.
+Only one pair in one model (Gemma2) is classi-
+fied as C by the machines and E by humans: 4 Using LLMs to generate a MathNLI
+corpus
+¢ P: Both of them generalise the concept of al-
+gebra on a monad T. 4.1 Generation using GPT4
+H: The concept of algebra on a monad T is
+more special than both of them. Our second experiment asked GPT-4 to generate
+Entailment, Contradiction, and Neutral hypotheses
+Note that this pair does not satisfy our criteria of | from the Goldilocks sentences in the TAC corpus,
+explicit references only. The pair is fairly contro- resulting in 1157 pairs. The prompt we used is
+versial, as well. All LLMs label it as contradictory, shown below:
+4
+
+
+--- Page 5 ---
+
+GPT4 L2 L3 #£C3 = Mistral L3.1 Q2 Mixtral DS  Ge2
+p 829 90.5 70.9 91.8 79.8 88.8 87.3 75.4 92.7 85.1
+C r 989 61.3 96.8 95.7 97.8 93.5 95.7 98.9 81.7 92.5
+fl 90.2 73.1 81.8 93.7 87.9 91.1 91.3 85.6 86.9 88.7
+p 90.1 73.9 85.4 93.5 89.8 83.8 80.8 86.3 82.0 82.8
+E r 97.8 88.2 946 92.5 84.9 89.2 90.3 88.2 78.5 82.8
+fl 93.8 80.4 89.8 93.0 87.3 86.5 85.3 87.2 80.2 82.8
+p 95.5 56.2 91.8 87.8 81.8 81.7 84.7 85.5 67.6 75.3
+N r_ 68.8 63.4 484 84.9 67.7 72.0 65.6 57.0 78.5 68.8
+fl 800 59.6 634 863 74.1 76.6 73.9 68.4 72.6 71.9
+acc 88.5 71.0 79.9 91.0 83.5 84.9 83.9 81.4 79.6 81.4
+p 895 73.5 82.7 91.0 83.8 84.8 84.2 82.4 80.8 81.1
+avg r 885 71.0 79.9 91.0 83.5 84.9 83.9 81.4 79.6 81.4
+fl 88.0 71.0 78.3 91.0 83.1 84.7 83.5 80.4 79.9 81.1
+Table 3: Results of 10 LLMs on the seed MathNLI corpus. On the left we list the initial models, and starting with
+L3.1 the recent ones.
+(a) GPT4 (b) Llama2 (c) Llama3 (d) Claude3 (e) Mistral
+Gold|. Cc E N C E N Cc E N C E N C E N
+C 98.9 0 1.1 61.3 1.1 376 96.8 0 3.2. 95.7 0 4.3 97.8 0 2.2
+E 0 97.8 2.2 O 88.2 11.8 4.3 94.6 1.1 0 92.5 75 2.2 84.9 12.9
+N 20.4 10.8 68.8 65 30.1 634 35.5 16.1 48.4 8.6 6.5 849 22.6 9.7 67.7
+(f) Llama3 (g) Qwen2 (h) Mixtral (i) DeepSeek (Gj) Gemma2
+Cc E N C E N C E N C E N C E N
+C 93.5 0 6.5 95.7 0 4.3 98.9 0 1.1 81.7 0 18.3 92.5 1.1 6.5
+E 1.1 89.2 9.7 2.2 90.3 75 3.2 88.2 8.6 2.2 78.5 19.4 1.1 828 16.1
+N 108 17.2 72.0 12.0 21.7 663 29.0 14.0 57.0 4.3, 17.2 78.5 15.1 16.1 68.8
+Table 4: Confusion Matrices Comparison for 10 LLMs on the seed MathNLI corpus.
+Generate “Entailment“. “Contradiction“ created/human evaluated pairs. These 89 pairs were
+“Neutral hypothesis of a given sentence. also evaluated using GPT4, Llama2, Llama3 and
+Here are some examples: [example_script] Claude3, in the first instance. Our mathematicians
+Sentence: [context] agree with each other in 80 of the 89 pairs. They
+agree with 74 (83%) of the GPT-generated labels.
+GPT-4 was a good generator of pairs, as we shall .
+see below. But it was not consistent with itself. If 5 Evaluating LLMs on GPT-generated
+it created a pair nominally to be E it could later MathNLI corpus
+judge it N .A in Table 6, 41.4
+Jueee . °r oven C. As we see in Table 6, % Next, we had the 4 models in Group 1 and 5 models
+of the pairs which GPT-4 created to be neutral it. .
+. . in Group 2 label the 89 pairs. The results are shown
+later claims as entailments. ; ; ;
+in Table 6. The models in group 1 show unanimous
+4.2 Checking of a subset, using both humans agreement in 57 of the pairs (64%), while the mod-
+and LLMs els in group 2 do so in 65 (73%). In group 1, for
+50 of these 65 pairs (87%), their unanimous label
+We chose 89 pairs to conduct manual evaluation agrees with human labels; while the agreement for
+and distributed these among the mathematicians — group 2 is 57 pairs (88%). Here is our conclusion
+of the group. This gave us a set of 89 GPT4- from this experiment: If we take the unanimous
+5
+
+
+--- Page 6 ---
+
+unanimous some agree w/human agrees w/a human
+models in group 1 163 (=58.4%) 271 (=97.1%) 155 (=55.6%)
+models in group2 190 (=68.1%) 266 (=95.3%) 178 (=63.8%)
+Table 5: Agreement by LLMs on the seed corpus.
+labels from the group 2 models to simply be the make proficiently. Taking a cue from propositional
+gold label, then this label is the same as the human _ logic, this would be that every proposition A en-
+label 88% of the time. tails itself, A + A. To see how much noise LLMs
+The evaluation results on the GPT-generated cor- could introduce, we ask them whether every one
+pus using the GPT-generated label as the true label —_ of a set of mathematical assertions entailed itself.
+are shown in Table 8, with the confusion matri- _It was not very surprising to discover that for one
+ces presented in Table 7. The overall accuracy of | of 180 such pairs, one LLM missed this assertion
+LLMs varies between 59.6% and 86.5%, which A- A.
+is relatively lower than the accuracy on the seed
+corpus. ¢ P: We do not include any guiding examples.
+Our analysis reveals that while the E and C pairs H: We do not include any guiding examples.
+generated by GPT show a certain level of consis-
+tency relative to our seed pairs, N pairs are fre- This pair was judged N instead of E. But the expla-
+quently misclassified as E. (This finding echoes nation for the reasoning of the LLM is fascinating:
+what we saw in our previous experiment, but there
+the pairs were human-generated.) Surprisingly, Explanation: In this case, the premise
+Llama? classifies 75.9% of N pairs as E. Among and the hypothesis are identical state-
+all evaluated models, Mixtral showed the least sus- ments. Since they both convey the
+ceptibility to this issue, maintaining the highest ac- same information, there is no logical in-
+curacy of 76.0%. Although its performance on the ference or contradiction between them.
+seed corpus was not outstanding, Mixtral achieved The hypothesis is neither entailed by
+the highest overall accuracy of 86.5% on the GPT- the premise nor does it contradict the
+generated corpus. premise. Therefore, the hypothesis is
+Furthermore, it was observed that LLMs tend to neutral to the premise.
+identify C pairs within the GPT-generated corpus . . .
+more accurately than they do within the seed cor- The first sentence is correct, but immediately
+pus; 8 out of 9 models achieved an F1 score of over following that the model blunders. ;
+90%. Notably, Gemma? successfully detected all The exp eriment was Tep eated with many more
+the C samples in the GPT-generated corpus. pairs, and only 3 in 2312 pairs had the same prob-
+lem. This is a very small number of errors, but this
+6 Sanity checks is arguably the easiest inference one can ever make.
+It is odd that a system which can make deep, com-
+For previous NLI datasets such as SNLI (Bowman _ plicated mathematical inferences, can get a simple
+et al., 2015) and MNLI (Williams et al., 2018), inference like ‘A implies A’ wrong.
+studies have shown that some of the systems which Previous work such as Xu et al. (2024) tries to
+detect “entailment” were working on artifacts of catalog the kinds of mistakes that LLMs are known
+the datasets, instead of doing any logical reason- _ to make. They suggest that “to uncover the logical
+ing (e.g., Poliak et al., 2018). In this section we _ flaws of LLMs, problematic cases will be attributed
+provide some sanity checks on our corpus. to five error types from two dimensions, i.e., ev-
+. _ idence selection process and reasoning process."
+6.1 Does every assertion entail itself? The example above seems clearly a reasoning pro-
+We are trying to make reasoning as clear as possible — cess kind of error, as the LLM is very clear that
+for humans and systems, and in some sense as sim- _ both the hypothesis and the premise are ‘identical
+ple as possible. We thus propose the easiest logical statements’. But from that it concludes that the
+deduction that we expect LLMs (and humans) to _ hypothesis is not entailed by the premise.
+6
+
+
+--- Page 7 ---
+
+unanimous agree w/ atleast 1 human agree w/ all human
+human annotator / / 80 (= 89.9%)
+GPT generator / 74 (= 83.1%) 65 (= 73.0%)
+models in group 1 57 (= 64.0%) 50 (= 56.2%) 43 (= 48.3 %)
+models in group 2 65 (= 73.0%) 57 (= 64.0%) 50 (= 56.2%)
+Table 6: Experiment 3 Result: total 89 pairs generated by GPT4
+(a) GPT4 (b) Llama2 (c) Llama3 (d) Claude3
+Gold|. Cc E N C E N C E N Cc E N
+C 96.7 0 3.3 53.3 0 46.7 96.7 0 3.3 93.3 3.3 3.3
+E 0 96.7 3.3 Ae) 100.0 0 0 100.0 0 0 93.3 6.7
+N 0 41.4 58.6 Ae) 75.9 24.1 0 51.7. 48.3 3.4 34.5 62.1
+(e) Llama3.1 (f) Qwen2 (g) Mixtral (h) Deepseek (i) Gemma2
+C E N C E N C E N C E N C E N
+93.3 0 6.7 93.3 0 6.7 96.7 0 3.3 83.3 0 16.7 100.0 0 0
+0 100.0 0 .0 100.0 Ae) 0 96.7 3.3 0 90.0 10.0 0 90.0 10.0
+3.4 55.2. 41.4 3.4 345 62.1 3.4 31.0 65.5 0 31.0 69.0 0 34.5 65.5
+Table 7: Confusion Matrices on GPT-generated Corpus
+6.2 Contradictions must be symmetric which is correct.
+Most humans would agree that if a sentence A is :
+; 7 Final remarks
+contradictory with a sentence B, then sentence B
+is contradictory with A. That is, being contradic- We find it useful to discuss our work by seeing how
+tory is a symmetric property. Work in (Kalouli it aligns with the perceptive conclusions drawn by
+et al., 2017) showed that the humans annotating (Madaan et al., 2024).* We agree that evaluating
+the corpus SICK did not realize when they had models on NLI tasks is still relevant. For Math
+non-symmetric contradictions. We hence checked —=NLI, we do not find models to be saturated. This
+whether LLMs evaluated contradictions symmet- _ contrasts with ordinary language NLI (ONLI). We
+rically. This small experiment showed that out of also confirm their finding that “while the similarity
+495 pairs (5 times 93 contradiction pairs), 49 con- —_ of model distributions with human label distribu-
+tradictions were not symmetric. This is not as bad _ tions increases with scale, it is still much higher
+as humans did in the paper above, but it still shows _ than the similarity between two populations of hu-
+a lack of consistency. mans, making it a potentially interesting statistic
+. . . to consider.’ We have found that models show
+6.3 Entailment requires premises and less of a distribution of labels than humans. Fi-
+hypothesis nally, they note a certain “subjectivity”: “examples
+The premise-only work in NLI points to the fact —_ with ‘incorrect’ predictions are rarely in fact in-
+that the labels E, C, and N could be accurately —_ correct; most concern questions on which humans
+determined without any premise, simply using the — may disagree as well.” And just as they point out,
+hypothesis. To make sure that our corpus does “The ground truth labels for NLP benchmarks are
+not have the same problem, we run an experiment —_ often decided according to the majority label by
+using a dummy true premise, say, “Right adjoints human annotators. This simplifies the data annota-
+preserve limits". tion process while also making the evaluation eas-
+We substitute this sentence for the premise in ier. However, several previous studies have noted
+all 279 pairs, and evaluate the new pairs using the _ that human disagreements in annotations for NLP
+Group 2 Models. These models do not suffer from = — ;————_ ;
+
+. . ‘We would compare with other sources, but (Madaan et al.,
+the same problems that earlier ones did; all four 2024) seems to be the most relevant contemporary paper on
+essentially classified all of the hypotheses as N, this topic.
+
+7
+
+
+--- Page 8 ---
+
+GPT4 L2 L3 C3) —COL3.1— Q2 Mixtral DS Ge2
+precision 100.0 100.0 100.0 966 966 966 96.7 100.0 100.0
+C recall 96.7 53.3 96.7 93.3 93.3 93.3 96.7 83.3 100.0
+fl-score 98.3 696 983 949 949 949 96.7 90.9 100.0
+precision 70.7 57.7 66.7 71.8 65.2 75.0 76.3 75.0 73.0
+E recall 96.7 100.0 100.0 93.3 100.0 100.0 96.7 90.0 90.0
+fl-score 81.7) 73.2 80.0 81.2 78.9 85.7 85.3 81.8 80.6
+precision 895 33.3 93.3. 85.7 85.7 90.0 90.5 714 86.4
+N _ recall 58.6 24.1 483 62.1 414 62.1 65.5 69.0 65.5
+fl-score 70.8 28.0 63.6 72.0 55.8 73.5 76.0 70.2 74.5
+acc 84.3 59.6 82.0 83.1 78.7 85.4 86.5 80.9 85.4
+precision 86.7 640 866 84.7 825 87.2 87.8 82.3 86.4
+avg recall 84.3 596 82.0 83.1 78.7 85.4 86.5 80.9 85.4
+fl-score 83.8 57.2 80.8 828 768 848 86.1 81.1 85.2
+Table 8: Results of LLMs on GPT-generated Corpus.
+Model E N Cc in complex mathematical-like problem-solving,
+TT LLMs surprisingly struggle with basic logical rea-
+13.1 039 961 0 soning and NLI tasks in mathematics. We have
+Q2 004.992 .004 documented issues with self-consistency, which
+Mixtral .0 1.00 .0 is crucial in mathematics. A sanity check testing
+Ge2 004 996.004 whether LLMs correctly identify that a statement
+entails itself (A — A) revealed a very small num-
+Table 9: Result of Hypothesis only Baseline ber of errors, but the explanations for these errors
+showed a fundamental reasoning flaw.
+datasets reflect the lack of a single ground truth Post-GPT LLMs avoid some issues that plagued
+label, rather than noise in the annotation process.” _ earlier systems. For example, we expected lexical
+Even in mathematical texts, there is room for dis- ambiguity involving math words to cause LLMs to
+agreements between experts. stumble, as in mixing up “stack” (a mathematical
+concept) with ordinary “stack” (pile). They did not
+7.1 Conclusion and future directions do so.
+This paper investigates the performance of Large We provide two corpora‘ intended to support
+Language Models (LLMs) on Natural Language In- further research in the Math NLI area. One had hy-
+ference (NLI) tasks within the domain of research- .
+
+; - potheses which we wrote ourselves, and the other
+level mathematics. We explore the complexities had LLMs write the hypotheses. We believe that
+of mathematical language compared to everyday these corpora will help newcomers to this attrac-
+language and evaluate LLMs’ ability to handle ti mp pa .
+
+ee ; -_ ive area. And our results give some idea of what
+mathematical inferences, noting some surprising . .
+is reasonable to expect from this area in the next
+strengths and weaknesses. years.
+Contrary to what we initially assumed Math NLI
+is not much easier than ONLI for LLMs. Chal- Further work directions include combining our
+lenges include unfamiliar vocabulary (e.g., ‘ring’, work with theorem provers or other symbolic meth-
+‘field’, ‘comonad’), multimodal elements like sym- ods, tests of similarity as opposed to inference, and
+bols and equations, lack of open-source mathemat- interactions of our work with running systems in
+ical resources, and the difficulty of finding expert the Math NLI area.
+human annotators.
+LLMs show paradoxical performance on math ~ *They, along with all of our data, may be found at https:
+tasks: despite exhibiting impressive capabilities — //anonymous. 4open. science/r/NLIMath- 3FE2.
+8
+
+
+--- Page 9 ---
+
+Limitations Proceedings of the Conference of the North Ameri-
+can Chapter of the Association for Computational
+We did not fine-tune to mathematical text the LLMs Linguistics: Human Language Technologies.
+we use. We also only ran things once. All of ; Co ;
+our mathematical work was centered on category Fangzhi Xu, Qika Lin, Jiawei Han, Tianzhe Zhao, Jun
+h . h h f . Liu, and Erik Cambria. 2024. Are large language
+t cory: » Since that was the source ° our premise models really good logical reasoners? a comprehen-
+pairs. We do not expect significant differences sive evaluation and beyond.
+when we pivot to other branches of mathematics.
+A On the LLMs used in this work
+References See Table 2. We used Qwen2-72B-Instruct, which
+Samuel R Bowman, Gabor Angeli, Christopher Potts, was released m June 2024. According to the Qwen2
+and Christopher D Manning. 2015. A large annotated Technical Report, this model outperformed Llama3-
+corpus for learning natural language inference. In| 70B-Instruct on most benchmarks, including math-
+Proceedings of EMNLP. ematical benchmarks such as GSM8K and MATH.
+Jacob Collard, Valeria de Paiva, Brendan Fong, and .
+Eswaran Subrahmanian. 2022. Extracting mathemat- B_ Disagreements between models and
+ical concepts from text. humans in the seed corpus
+gao E. Zhang. 2024. Conditional and modal reason- magnetic monopoles form an abelian group.
+ing in large language models. . .
+H: Using these ideas, we also prove that
+Aikaterini-Lida Kalouli, Valeria de Paiva, and Livy Real. monopoles form an abelian group.
+2017. Correcting contradictions. In Proceedings of . .
+the Computing Natural Language Inference Work- Humans say the label is N, as it’s only for
+shop. magnetic monopoles that we have the abelian
+. group. Machines say entailment E, but no
+Emre Kiciman, Robert Ness, Amit Sharma, and Chen- th tici ld state th ak It
+hao Tan. 2024. Causal reasoning and large language ma emaucian wou s ate the weaker result,
+models: Opening a new frontier for causality. if they could prove it without the extra hypoth-
+esis.
+Lovish Madaan, David Esiobu, Pontus Stenetorp, Bar-
+bara Plank, and Dieuwke Hupkes. 2024. Lost in 2. P: The problem of relating a factorization sys-
+inference: Rediscovering the role of natural language . . .
+inference for large language models. arXiv preprint tem to a pointed endofunctor is considered.
+arXiv:2411.14103. H: A pointed endofunctor cannot be related to
+: . a factorization system.
+Adam Poliak, Jason Naradowsky, Aparajita Haldar,
+Rachel Rudinger, and Benjamin Van Durme. 2018. Humans disagree: some say contradiction C,
+Hypothesis only baselines in natural language infer- others say N
+ence. In Proceedings of the Seventh Joint Confer-
+ence on Lexical and Computational Semantics, pages 7: . .
+180-191, New Orleans, Louisiana. Association for 3. P: This paper introduces the notions of vector
+Computational Linguistics. field and flow on a general differentiable stack.
+H: This paper generalizes the notions of vector
+Anastasiia Sedova, Robert Litschko, Diego Frassinelli, field and flow on a stack.
+Benjamin Roth, and Barbara Plank. 2024. To know
+or not to know? analyzing self-consistency of large . .
+language models under ambiguity. In Findings of the 4. P: We define eventually cy clic Boolean flows
+Association for Computational Linguistics: EMNLP and the eventually cyclic spectrum of a
+2024, pages 17203-17217, Miami, Florida, USA. Boolean flow. H: The definition of the even-
+Association for Computational Linguistics. tually cyclic spectrum of a Boolean flow uses
+Trieu H. Trinh, Yuhuai Wu, Quoc V. Le, He He, and the definition of eventually cyclic Boolean
+Thang Luong. 2024. Solving olympiad geometry flows.
+without human demonstrations. Nature, 625:476 —
+482. 5. P: The axioms resemble those for monoidal
+Adina Williams, Nikita Nangia, and Samuel R Bow- Abelian categories with the addition of an in-
+man. 2018. A Broad-Coverage Challenge Corpus volutive functor. H: The axioms are the ones
+for Sentence Understanding through Inference. In of monoidal Abelian categories.
+9
+
+
+--- Page 10 ---
+
+6. P: The category of Set-valued presheaves on a
+small category B is a topos. H: The category
+of Set-valued presheaves on a small category
+C is a topos.
+
+7. P: The category of Set-valued presheaves on
+a small category B is a topos. H: There exists
+a small category C such that the category of
+Set-valued presheaves on C is not a topos.
+
+8. P: Various concerns suggest looking for in-
+ternal co-categories in categories with strong
+logical structure. H: We suggest looking for
+internal co-categories.
+
+C_ Seed corpus prompt
+Here is the prompt which we used on the seed
+corpus:
+
+[Begin prompt head]
+Suppose you are a logician. Your job is to
+determine the inference relation between the
+premise and the hypothesis. There could be
+three answers: (1) the hypothesis is entailed
+by the premise; (2) the hypothesis is neutral to
+the premise; (3) the hypothesis contradicts the
+premise. Please first tell me your answer and
+explain why this is your answer.
+
+[End prompt head]
+
+Premise: [Premise]
+
+Hypothesis: LHypothesis]
+
+Valeria de Paiva, Topos Institute,
+valeria@topos.institute
+Qiyue Gao, University of California, San Diego,
+q3gao@ucsd. edu
+Hai Hu, Shanghai Jiao Tong University,
+hu. hai@outlook.com
+Pavel Kovalev, Carnegie Mellon University,
+pkovalev@andrew. cmu. edu
+Yikang Liu, Shanghai Jiao Tong University,
+yikangliu@sjtu.edu.cn
+Lawrence S. Moss, Indiana University,
+lmoss@iu. edu
+Zhiheng Qian, Shanghai Jiao Tong University,
+nivnhil@sjtu.edu.cn
+
+10

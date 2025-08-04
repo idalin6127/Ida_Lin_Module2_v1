@@ -1,0 +1,950 @@
+
+
+--- Page 1 ---
+
+User Feedback in Human-LLM Dialogues:
+A Lens to Understand Users But Noisy as a Learning Signal
+Yuhan Liu!, Michael J.Q. Zhang!, Eunsol Choi!
+"New York University
+{y113579, michaelzhang, eunsol}@nyu. edu
+Abstract prompts LLMs to identify implicit user feedback
+Once language models (LMs) are deployed in the LMSYS dataset (Zheng et al., 2023a) and uses
+Vay . . : , such feedback to improve LLMs. Specifically, they
+QI they can interact with users long-term, ideally classify feedback into two broad cat ; 7
+a) evolving continuously based on their feedback. ; y tee ac into wo toad categories (posi
+QI Asking for direct user feedback can be dis- tive and negative) and train models to promote re-
+— ruptive; thus, we study harvesting user feed- sponses that elicited positive feedback and suppress
+= back from user-LM interaction logs. We study responses that elicited negative feedback. While
+—_ implicit user feedback in two user-LM inter- simple and intuitive, our study finds that this ap-
+on action datasets (WildChat and LMSYS). First, proach can lead to model degradation.
+we analyze user feedback in the user-LLM We first provide a comprehensive study on
+a conversation trajectory, providing insights into . _ P P . y
+_) when and why such feedback occurs. Sec- implicit user feedback (Section 3 and Sec-
+O ond, we study harvesting learning signals from tion 4), on two real-world datasets, LMSYS and
+Hh such implicit user feedback. We find that the WildChat (Zhao et al., 2024). Compared to previ-
+2, contents of user feedback (e.g., user wanted ous study which provided annotations at some turns
+clarification), not just the polarity (e.g., users in the conversation, we newly provide dense anno-
+= were unhappy with the previous model re- tations on 109 conversations, annotating each user
+> sponse), can improve model performance in turn after the initial prompt whether it contains user
+oe) short human-designed questions (MTBench) .
+Vay but not on longer and more complex questions feedback or not. Our analysis shows that feedback
+— : . va i f t in longer multi-turn conversations
+cr (WildBench). We also find that the usefulness Is very” Tequen § ’
+CN of user feedback is largely tied to the quality consisting more than half of user utterances at later
+~ of the user’s initial prompt. Together, we pro- turns. We further study what are the characteris-
+-_) vide an in-depth study of implicit user feedback, tics of user prompt that elicits positive or negative
+Via) showing its potential and limitations. feedback. We find that prompts that elicit positive
+N 1 Introduction feedback can be lower quality and more toxic than
+. = randomly sampled prompts, suggesting potential
+< User queries are often ambiguous and underspeci- _issue with simply promoting responses that elicited
+=| fied (Liu et al., 2023; Zhang and Choi, 2023; Cole _ positive feedback.!
+et al., 2023; Zhang et al., 2024b,a), making it chal- In the later sections (Section 6 and Section 7),
+lenging for LLMs to generate a satisfactory re- we study leveraging implicit user feedback to im-
+sponse in a single attempt. Users therefore often prove LLM. Having identified negative prompt
+engage in multi-turn interactions with language as- quality is correlated with the prompts that elicit
+sistants, providing feedback for previous model re- _ positive feedback, we focus on leveraging implicit
+sponses like “Could you label y-axis in this plot?”, | negative feedback. Can it help us identify where
+implying that the LLMs initial response did not the model is failing, allowing us to provide tar-
+fully satisfy their intended request. Such implicit | geted updates? Figure | visualizes this intuition.
+feedback is natural and very common in human-___ We study a distillation setting, where we assume
+LLM interactions (Zheng et al., 2023a; Zhao et al., a stronger LLM, distinct from the LLM used in
+2024). user interaction logs.* Our key hypothesis is that
+Our work aims to explore how human feedback =————_——_ .
+. . Figure 5 presents an example of positive user feedback
+can be used to improve model responses. We build ——_ypon model’s jailbreaking responses.
+upon recent work (Don- Yehiya et al., 2024) which >This choice is mainly motivated by the lack of available
+1
+
+
+--- Page 2 ---
+
+User-LLM Chat Logs
+ui — Initial User Utterance (ui, mi, F) Day 1: Iconic New York
+eS —-| ¢ Breakfast: Ellen's Stardust Diner (1650
+m Initial Model Response — Eres)
+Day 1: Iconic New York — @& Does not address user feedback
+e Morning: Start your day at the iconic Times Square, = aba feribars
+where you can grab breakfast at ...
+e 9:00 AM: Head to the Empire State Building... im. Pu Day 1:....
+¢ 1:00 PM: Grab lunch at a classic New York diner ... (uismi, Lies) Breakfast: Start at Ellen's Stardust Diner (1650
+¢ 2:30 PM: Take a stroll through Central Park.. \ __, | Broadway)
+- 7 Transportation: Take the subway to Times
+uix1 — User Followup Utterance Square-42nd Street (N, Q, R,.....
+Negative Feedback Addresses Negative Feedback
+Figure 1: Approaches to improve model responses that elicited user negative feedback. New model response
+generated incorporating such feedback content (mf°™, bottom right) can align better with the user’s intended output
+than the new model response generated with the initial user input alone (im, top right).
+leveraging not only the feedback polarity but the —_ user responses, and five of these categories could
+contents of feedback (what aspects of the initial | be mapped back to the five feedback types from
+model response was unsatisfactory) should be help- | Don-Yehiya et al. (2024). For example, “Refor-
+ful for improving model responses. We report mulations” could be mapped to our “Rephrasing”
+mixed results, painting the complexity of learn- category. The remaining two categories that could
+ing from noisy real-world user data. Our dataset not be mapped to feedbacks are “Next Turns” and
+and code is shared publicly.* “Follow-ups”’.
+2 Background 2.1 Formulation
+; ; oo, We assume a multi-turn conversation between users
+pon veniye et al. (2024) classifies mp eee and LLMs, c = {uz,m1,--- ,Un, mn}, where
+ack into two categories: (1) positive ece)ac uj; and m, are the i-th user and model responses,
+en P na the moore db eh (ee cee respectively. Each 7-th user turn after their initial
+th ") ep (2) negative eeamack waren hte s request may contain feedback for the prior model
+the model’s previous response was not satis actory. response, mj_1. We assign each user turn u; for
+a mer divide the negative feedback into the 2 < i < nwith one label from a label set L.
+OM owing our categories: , We define three label sets £, differing in the
+* Rephrasing where the user rephrased their prior granularity of the labels. The binary classifica-
+request to try and elicit a better LLM Tesponse. tion label set distinguishes between any feedback
+° Make Aware without Correction where the (merging positive and all types of negative classes)
+user s response simply indicates that the model’s fom no feedback. The three-way classification
+prior response was wrong. . , label set consists of {positive feedback, all types
+* Make Aware with Correction where the user's of negative feedback, no feedback}. Lastly, the
+response additionally provides instruction on fine-grained label set consists of six labels, posi-
+how to correct the model S prior response. tive feedback, the four types of negative feedback
+¢ Ask for Clarification where the user asks the qeccribed above, and no feedback.
+LLM to provide additional information that was A classification model f takes the conversation
+missing from Mts prior response. c and produces an n — 1 dimensional vector y.
+We follow their ontology of feedback types in
+this work. Other relevant works present alternative f(c) > y
+ontologies for user responses, such as one focusin,
+e . P ; & where y € L”~! and yj-1 represent the label as-
+on grounding acts (Shaikh et al., 2025) and others . .
+. . signed to the 2-th user turn.
+focusing on human-AI collaboration (Lee et al.,
+2022; Chang et al., 2025). Relevant to this work, 3 Identifying Implicit User Feedback
+Shaikh et al. (2025) introduces seven categories of
+ee 3.1 Datasets
+interaction logs for newer models. The difficulty of gathering . .
+user data poses a challenge in this line of research. We examine two sources of user-LLM interac-
+$https://github.com/lyh6560new/implicit-user-feedback tions, the LMS YS-chat-1M and WildChat datasets.
+2
+
+
+--- Page 3 ---
+
+While both capture natural user interactions, the Inter-Annotator Agreement The authors of this
+purpose of their interactions differs substantially. paper provided this annotation after reading the
+guidelines from Don-Yehiya et al. (2024). Two
+LMSYS-chat-1M (Zheng et al., 2023a) is col- authors cross-annotated about 54 conversations for
+lected from Chatbot Arena,* where users interact measuring inter-annotator agreement. We report
+with LLMs to evaluate them. Once a question is substantial agreement measured by Cohen’s kappa:
+asked, the user is presented with two answers from —_).70 for binary classification, 0.74 for three-way
+different anonymous LLMs and provide aranking _ classification and 0.60 for fine-grained classifica-
+between the two answers. We will refer to this tion.
+dataset as LMSYS.
+WildChat (Zh 1. 2024 lected ; Handling Multiple Labels Per Utterance 5 out
+
+1 ; at im opr rene i bee cchane of 443 annotated user turns (in 109 conversations)
+ver sations through a ; oste Tee OF charge contain user utterances falling into more than one
+im es ine saree ‘ona cy ees penween feedback category (e.g. "Good answer could you
+users all mo ets per orming a y tasks. itis please continue from 17 step", there former is pos-
+referred to as WildChat in later sections. itive feedback and the latter part is negative). We
+
+LMSYS is used mainly for model evaluation, assign a single label following a heuristic order of
+while WildChat more closely reflects real user —_Jahels (described in Appendix B).
+needs. The former is shorter, containing more
+edge cases and ill-defined tasks, while the latter 33 Aytomatic Feedback Identification
+has longer interactions and contains more complex
+task instructions. As manually annotating feedback is taxing, we
+
+explore automatically identifying feedback by
+3.2 Manually Annotated Feedback Dataset prompting LLMs. LLMs have shown promising
+; a performances in various classification tasks (Brown
+We start our study with examining the manually la- . .
+. . et al., 2020), and prior work (Don-Yehiya et al.,
+beled feedback data provided by Don-Yehiya et al. .
+2024; Shaikh et al., 2025) has also explored prompt-
+(2024) on LMSYS. They annotated 101 user turns. . .. .
+. . . ing LLMs (specifically GPT-40-mini) to classify
+over 77 unique conversations, only labeling user . . . .
+; _. . user feedback in multi-turn user-LLM interactions.
+turns with positive or negative feedback. We refer ; ; _
+. . . . Without fine-tuning, we prompt GPT-40-mini
+to this as the Sparse annotation set, as it consists ; ;
+. . model with our new prompt template which con-
+of three turn {uj, mj, uj+1} partial conversations, ——-
+. ws tains in-context examples. The exact prompt can
+where the label for uj+4 is either positive or one of : ; : :
+
+. be found in the appendix C.2. Given the entire con-
+the four negative feedback types. We present the ion. LM d de feedback
+distribution of human-annotated labels in Figure 6 versation, s are prompted to provide teedbac
+. . labels for each user turn after the first one.
+in the Appendix.
+
+These existing annotations are not comprehen- We compare the classification P erformance of
+Sive (i.e., not every turn in the conversation is red prompt ene P "L> t wee m er original
+labeled). To explore the dynamics of feedback study (Don- Yehiya et a -» 2024). We eva uate over
+throughout the entire conversation, we select a to- both feedback annotation sets: the easier (Sp ar se)
+tal of 109 conversations® (75 sampled from LMSYS setting and ne ner (Dense) setting cpscribed
+and 34 from WildChat) and annotate them com- Section 3. - For the sparse setting, the Input
+prehensively. We refer to these annotated sets as conversation 1s imuncalee only consisting of three
+Dense. Table 1 compares the feedback data statis- ™™S (uj, my, ui+1): and the last user turn (ui+)
+tics from the Sparse and Dense annotated sets. is always ap ositive or negative feedback. In the
+
+harder setting (Dense), we task the model with
+
+“https://Imarena.ai/ labeling all turns in the entire conversation.
+
+>Upon examining our labels for 75 conversations from Table 2 reports the feedback identification re-
+LMSYS, we find one conversation has incorrect annotation (e.g. 1 ll ith i
+feedback labeled in the first user turn) and removed this con- sults. Overall, our new prompt, with in-context ex-
+versation. amples, improves the classification accuracy than
+
+®For LMSYS, we use the same set of conversations as their the previous prompt. We see larger gains in the
+released annotations; For WildChat, we randomly sample 34 d : : han doubl
+conversations so that we have roughly 200 feedback instances ense annotation setting (more than double accu-
+for both datasets. racy for fine-grained classification task).
+
+3
+
+
+--- Page 4 ---
+
+. # annotated # annotated | N (# turns with fb / # turns annotated)
+Annotation Source
+convs turns 2 3 4 >5
+
+Sparse (Don-Yehiya et al., 2024) | LMSYS 75 107 44/44 20/20 10/10 21/21
+
+Dense (Ours) LMSYS 14 227 43/74 26/32 13/17 24/25
+
+Dense (Ours) WildChat 34 206 30/34 24/30 26/29 85/86
+Table 1: Statistics of annotated feedback data. N= i represents the number of feedback at i*” turn of conversations.
+# conv is the total number of conversations annotated, and # turns means the total number of user messages in the
+conversation from this data split. Overall, WildChat has denser feedback ratios along all conversation turns.
+
+Eval Accuracy % 100% LMSYS
+
+‘ Prompt ——————————_ P% R&
+
+Setting P Bin. Three. Fine. ° ° 80% = NEG?
+OT 60% Mmm NEG 3
+Sparse Prior 41.4 45.3 43.2 84.2 44.9 mm NEG_4
+P Ours 81.1 60.2 47.4 100.0 69.2 40% Neu
+D Prior 31.5 30.07) 22.3 76.0 27.0 20%
+mse Ours 41.6 «55.4 49.0 61.1 35.9 ;
+————— eee ee eee 0% 2 3 4 5+
+turn
+Table 2: Automatic feedback identification results with 100% ;
+
+: 1s : WildChat
+prompting GPT-40-mini. Prior refers to the prompt 0% mm NEG1
+from prior work (Don- Yehiya et al., 2024). In the last = Nees
+two columns, we report Precison (P) and Recall (R) for 60% lm NEG 4
+binary classification. 40% Neu
+
+20%
+
+° oe 0%
+4 Analysis of Implicit Human Feedback 2 5 un 4 s+
+With our automatic feedback detection method, we Figure 2: Turn-level distribution over feedback cate-
+now launch a larger-scale analysis of implicit feed- —_ gories from our new densly annotated dataset. We find
+back patterns in both datasets. We first characterize | feedback is commonly found in later turns.
+when feedback typically happens. We then set out
+to rule out possible causes of negative feedback 0.25 LMsys 0.25 WildChat
+other than unsatisfying model output: the imperfec- 4 2:20 0.20
+tion of user prompts and model refusals. 0.15 0.15
+
+& 0.10 _[. 0.10
+Trends of Feedback across Conversation Turns * 0.05 me 0.05 = —
+Figure 2 shows per-turn fine-grained distribution “n° negative random positive “n° negative random positive
+of feedback in our newly annotated dense feedback .
+data. We use our manual annotation for this analy- Figure 3: Tomparson of what ty level eee random
+_ . . . t ts that t t t
+
+sis instead of automatic detection, as the detection user Prompts ane’ Promp!s Mal MISEeT postiveineganve
+
+. feedback labels. We find th. feedback. In both datasets, the toxicity is slightly higher
+accuracy varles per teecdack fa © Ss. We ; né that for responses that elicit positive feedback.
+later user turns frequently contain negative feed-
+back, and positive feedback is rare. We also find
+that WildChat has feedback signals that are more —_ domly sampled user utterances, and user utterance
+uniformly spread across user turns. InLMSYS, more _ that elicited positive feedback. We sample 1K ut-
+feedback exists in later turns, whereas in WildChat terances using each of these three methods for both
+feedback spreads more evenly. the LMSYS and WildChat datasets dataset, labeling
+
+. . a total of 6k user utterances.
+
+User’s Toxic Prompts We study the influence ; ; _
+
+. us Figure 3 shows trends in the toxicity score. In
+of toxic user messages on the presence and distri- both dataset find that ut that elicit
+bution of user feedback. To do this, we use the . fo ‘by etc i . ‘i “hth we te 1c i. OS-
+Perspective API’ to compute the toxicity scores BIVE BECEDACK TENE NO DE SIBEALY More TOC taan
+
+. _ _ the other two sets. Upon manual inspection, we
+over three different sets of sampled user utterances: :
+. . find that users tend to praise model output when
+user utterance that elicited negative feedback, ran- : _
+it does not refuse to provide answers to user’s in-
+Thttps://perspectiveapi.com/ adequate requests. In LMSYS user prompts in in-
+4
+
+
+--- Page 5 ---
+
+LMSYS wildChat tive responses show the highest average quality, po-
+6 é tentially reflecting users praising the model’s good
+a 4 response to concrete, challenging initial prompts.
+33 ES =| . ; | = However, such prompts from LMSYS show the low-
+0 0 est quality. Upon manual inspection, we find
+negative random positive negative random positive that many of these prompts have the goal of “jail-
+Figure 4: Comparison of the quality of randomly sam- breaking” the LLM, where users provide positive
+pled user prompts and the quality of prompts that in- | feedback to encourage models to perform harmful
+curred positive/negative feedback (N=1000). In LMSYS, tasks. We provide a further breakdown of prompt
+prompts that incur negative or positive feedback are quality scores across seven fine-grained aspects of
+slightly worse than randomly sampled prompts. prompt quality in Table 12 in the Appendix.
+teractions rendering negative feedback are slightly 5 Resnonses Feedback to Improve Model
+more toxic. In WildChat dataset, we do not see a
+significant difference between user uttrerances that | We now explore methods for leveraging implicit
+invokes negative feedback vs. randomly sampled __ user feedback to improve LLMs. Prior work has
+utterances. studied training models by guiding them towards
+responses that elicited positive feedback and away
+Impact of Model Refusals One potential rea- from responses that elicited negative feedback
+son for negative feedback is the model’s refusal to (Ethayarajh et al., 2024).
+fulfill the user’s request. To investigate this, we In this work, we explore methods that further
+look at how frequently negative feedback stems _ytiJize the contents of the user’s feedback to im-
+from refusal behaviors by models. We examine prove the LLM, rather than just the polarity of the
+how frequently model refuses to fulfill user’s re- feedback. For prompts that have elicited negative
+quest, and whether such refusal leads to negative feedback, we use the content of the negative feed-
+feedback. We sampled 1K conversation turns from pack messages to generate model responses that
+six groups (negative, random, postive) and (LMSYS, address the negative feedback. For example, if user
+WildChat). We then cluster the text embedding of asks for a more detailed response after observing
+model responses to identify cluster that exhibits yj. odel’s initial response, we aim to train the model
+refusal behavior. to generate a more detailed response for user’s prior
+We find that model refusals are not common  tyrp.
+across all settings, always consisting less than 3%
+of responses. In LMSYS, around 2.5% responses are Definitions For a conversation {ui,mj,---},
+refusals, while in WildChat there are fewer than We define a sub-conversation sj as a partial con-
+1%. The refusal rate did not meaningfully vary be- _ VerSation sequence {uj, mj, Uj+1, Mj41} involv-
+tween feedback types in the same dataset. Broadly _ ing two user utterances and two model responses
+speaking, we find that users tend to give feedback _ Starting from 7-th user turn. We examine the second
+in response to unsatisfactory model generations _user turn in the sequence u;+1 to see whether it con-
+rather than model refusals to provide an answer. tains negative feedback for the model’s response
+m, to the prior user message Uj.
+Analysis on Prompt Quality Li et al. (2024) pro- We define a set D?°® = {s; : f(c); = NEG}.
+vides a detailed rubric and scoring function for user _ For control, we also collect a set D‘®"¢, a randomly
+prompts, aiming to understand and analyze user — sampled set of subconversations without such re-
+prompts in user-LLM interactions. We leverage striction. We collect a total of four such datasets,
+their setting to evaluate the user prompts in LMSYS — two D”"°9 and two D"@”4, each consisting of 1K
+and WildChat datasets. We report the prompt qual- _—_ sub-conversations from 1K unique conversations
+ity in Figure 4. In general, WildChat has ahigher for both LMSYS and WildChat.
+user prompt quality than LMSYS. In LMSYS, the nega-
+tive conversations receive lower quality scores than 5-1 Response Regeneration Methods
+the randomly selected ones, while in WildChat we Our proposed method, Regeneration w/ Seman-
+do not observe such a trend. tics, utilizes negative feedback in a user-LLM con-
+User prompts from WildChat that elicited posi- _ versation to generate improved model responses
+5
+
+
+--- Page 6 ---
+
+Data Response A ResponseB Eval Setting Pairwise Evaluations To compare two response
+Split )odel Method Model Method w/fb w/o fb regeneration methods, we use a reward model RM®
+pren¢ Better m,e"* Weak mm, __ 88% to generate a score s for each method $ responses.
+_TJWH——————————__ We then use these scores to track the pairwise win
+Better mj°"* Weak mj; 81% 86% f h hod. W . ith
+Better. m;,°e" Weak m; 80% 61% rate for each method. We experiment with two set-
+D's Better m;°°" Better mj°°"* 48% 19% tings for generating scores from the reward model:
+cae mi wea Mi+1 : : - - (1) Eval w/ fb incorporates the user’s feedback into
+ea. m; eal mi lo lo
+ES. sthe prompt s = RM({uj, uj41,a}) and (2) Eval
+Table 3: Winrate scored by RM between the answers w/o fb scores responses based only on the initial
+from Response A versus Response B, evaluated both request s = RM({uj,a}). ais the regenerated
+with and without feedback (fb) on LMSys dataset. We — answer. Conceptually, the first evaluation will pro-
+compare responses from Better in two settings (gen- _ vide the reward model’s score when taking into
+eration from scratch mj*", and generation with user —_ consideration a more specified user intent (from
+feedback m;°™). For Weak LLMs, where originial two yer utterances)
+conversation derived, we compare the initial model re-
+sponse Sax ae po heen ae Mer Teed ack Regenerating Responses with Different LLMs
+ML OE A ENS APPEND LOE SIEAETESS To explore the influence of the LLM’s strength
+on the WildChat dataset. :
+on our response regeneration methods, we exper-
+iment with using a stronger model, ¢ = Better,
+. . and a weaker model, = Weak, for regenerat-
+that can be used for SFT training. For each mini- e gener
+. ne ing responses. For Better, we use GPT-40-mini
+mal feedback instance s; € D"°9, we use an LLM ;
+sem . . to regenerate model responses. For Weak, we di-
+¢ to generate m;°*”, an improved version of m,; . .
+: , ; sem rectly take the interaction logs from the LMSYS and
+that incorporates the user’s feedback: m,; = ; :
+(Uy, m4, U1) WildChat datasets: for each example f;, we simply
+tah td ; take the original model responses, m,°"* = m,;
+In our experiments below, we regenerate re- ang m;°°" = mj41. For LMSYS, the assistant
+sponses UsIng LLMs @ that are stronger than the —_ turns are mostly (54% of conversations) generated
+original LLMs used in the conversations in LMSYS vith Vicuna-13B model (Chiang et al., 2023); For
+and WildChat. Therefore, we expect regenerated — wijdchat, assistant turns are generated with the
+responses to improve both from incorporating the —_ 9993 version of GPT.
+user’s feedback and from the stronger LLM. To ac-
+count for this, we introduce the following baseline. 6,1 Results
+In Table 3, we report the results from comparing
+Baseline: Regenerating from Scratch We com- regenerated responses on pD"°s and prand on LMSYS
+pare our above method for generating improved _ dataset. The results on WildChat dataset exhibit
+model responses with regenerating responses from _ similar trends and can be found in Table 13 in the
+scratch, without conditioning on the model’s orig- Appendix.
+inal response or the user’s feedback: mj°"" =
+o(uj). Better LLMs can help weak models improve
+Because regenerating responses from scratch their response We consistently observe a high
+does not make use of conversation history, wecom- 7" ate of Better answer's Over Weak model's gen-
+pare against regenerating responses that elicited erations, regardless of using semantics or not. This
+negative feedback from D"°9 as well as random‘! reflected in the first three rows in the table.
+rand
+model responses from ID . Adding feedback semantics doesn’t help. Now
+we examine compare whether adding feedback se-
+6 Experiments: Comparing Regenerated — antics help over the baseline of regenerating from
+Responses scratch. m,°°” shows slightly higher win rate
+(89%) against the original response compared to
+_scra :
+We first compare response regeneration methods by mi (81%), but this pattern was not observed
+performing pairwise comparisons over regenerated 8We use sfairXC/FsfairX-LLaMA3RM-v0.1 (Dong et al.,
+responses. 2023; Xiong et al., 2024).
+6
+
+
+--- Page 7 ---
+
+in WildChat dataset. Moreover, when compar- 7.2 Evaluation
+ing two new answers directly (4th row), we find Base Models For each data generation method,
+that answers generated with the feedback content . ‘th trainine two different LLMs:
+m,°"” does not win over the answer generated we experiment wit s .
+from scratch m,°"", even in Eval w/ fb setting mistral-7b (Jiang et al. 2023) following (Don-
+. ; Yehiya et al., 2024) and vicuna-7b (Zheng et al.,
+(48%) , and substantially lower in Eval w/o fb set- 2023b), a representative 7B model in LMSYS (Zheng
+ting (19%). ; ; et al., 2023a,b). To test our setting on more recent
+When we look at rows involving mj**” gen- models, we also run the experiments with one rep-
+erated from better LLM (3rd-5th), we find resentative, Qwen1.5-4b (Team, 2024), and present
+RM({ui,miP"F) << RM({ui, wiz, mi°""}). the result in Table 14 in the Appendix.
+This suggests that the regenerated answer with feed-
+back incorporates information from the feedback Datasets We evaluate our distilled models on MT-
+to draft the new answer. Bench (Zheng et al., 2023b) and WildBench (Lin
+et al., 2024), two benchmark datasets. MTBench
+Weak LLMs could fail to address human feed- contains 80 2-turn questions that were manually
+back. In the last row, we compare the weak constructed by human annotators to cover common
+model’s refined fesponse Mi+1 with Its initial re- questions types observed in LMSYS. WildBench con-
+sponse mj. The win rate is 587, showing that self- tains 1024 questions manually selected from the
+refinement is challenging. The number is higher came source of WildChat.2 Both benchmarks use
+for WildChat at 74%, as it used GPT models. LLMs to rate the scores of model responses.!° For
+.. . each setting, we report the average and variance
+7 Training LLMs with Regenerated performance over 5 randomly initialized training
+Responses runs.
+In the previous section, we compared the regener- We briefly compare these two benchmarks in
+ated model responses with reward model. In this Table IS m the Appendix, reporting data statistics
+section, we fine-tune models with the regenerated like question amount, aver age number of turns in
+model responses, using standard SFT training with each question, average question length (tokens) and
+next-token prediction loss. We use A100 GPUs for ©°™P lexity score (Wang et al., 2024) . WildBench
+fine-tuning with a learning rate of 5e-6, where each overall represents more challenging examples, with
+run takes about 2 hours on one GPU. longer and more complex questions.
+7.1 Compared Settings Metrics For both benchmarks, we use GPT-4
+as our LLM-Judge, and use the judge prompt re-
+Similar to our experiments from Section 6 above, leased in MTBench. We discuss the differences
+we experiment with training LLMs on the revised — of using MTBench Judge and WildBench Judge
+responses from both our regenerating from scratch in Appendix H. We first evaluate Vicuna models
+and regenerating with semantics methods, over on with both Judges and find MTBench Judge pro-
+both D"°9 and D’¢"4. For both methods, we ex- vides more comparable scores while relative model
+clusively use ¢ = Better (GPT-40-mini) for gener- rankings stay unchanged.
+ating revised responses with templates described
+in Section 5. For each setting, we sample 20K 7.3 Results
+conversations and their corresponding regenerated We present the results from each setting in Table 4
+resp OnSes. and discuss the results below. Unsurprisingly, we
+We additionally compare against KTO (Etha- find that training LLMs with the outputs from a bet-
+yarajh et al., 2024) as a baseline, following prior ter model (GPT-40-mini) yields strong gains across
+work (Don-Yehiya et al., 2024). KTO (Ethayarajh both base models and evaluation benchmarks. On
+et al., 2024) is a method that directly optimizes over the other hand, we find that training with our KTO
+non-paired preference data, which is naturally suit-
+able for learning from raw human feedback from °These are from the same sources, but there are no over-
+interactions. To train models with KTO, we also Napping instincts ane evee eee ht
+derived a set ID?°* with positive feedback instances, ona random subset of 500 randomly sampled questions for
+DPS = {s; : f(c); = Pos}. WildBench.
+7
+
+
+--- Page 8 ---
+
+MT-BENCH SCORE + WILDBENCH SCORE t
+Train Data Split Method ee
+Vicuna-7b Mistral-7B  Vicuna-7b = Mistral-7B
+Base checkpoint 6.09 3.09 26.0 -19.01
+pD"°’s, pes ~KTO 6.09 3.88 21.33 -18.81
+LMSYS prand SFT on m;°" 6.37+0.06 6.02+0.03 28.90+3.38 49.02+3.39
+pe SFT on m;°" =6.5340.09 5.87+0.07 28.6541.9 48.97+1.70
+pe SFT on m;°°"" 6.68+0.03  5.86+40.02 24.4741.25 41.47+41.31
+ps, pP°s KTO 6.15 5.08 24.29 11.72
+WildChat prend SFT on m;** 6.19+0.02 5.96+0.44 28.7441.16 56.1641.26
+pps SFT on mj*"" —6.3840.07  5.77+0.04 = .27.9741.36 51.66+1.30
+ps SFT on m;°°"” 6.86+0.02 6.32+0.03 23.3841.94 31.80+0.62
+Table 4: Results from training on response regenerations from Better LLM. We observe different result trends on
+two datasets (MT-Bench and WildBench). We provide the statistical significance test in Appendix I.
+baseline (D°°S, DP°S w/ KTO), which simply en- __ with language assistants, where ambiguous user
+courages responses that yielded positive feedback queries are usually given at first followed by a se-
+and discourages ones that yielded negative feed- _ ries of clarifying actions. (Chang et al., 2025; La-
+back, showed mixed results. ban et al., 2025) shows that LLM performance on
+Can distilling model on conversations that were —_ multi-turn tasks is worse than on single-turn tasks.
+regenerated from responses that received negative This is due to the outcome of a multi-turn interac-
+feedback (D"°®) provide targeted supervision for tion can be upper bounded by both human and AI
+model failures? If so, expect that SFT training on _ participants (Chang et al., 2025). Similarly, (Wang
+m,*"* may perform better with D®°® than with — et al.) proposes a benchmark to evaluate LLM’s
+Dr. Our results, however, demonstrate that this | performance with GPT-simulated human feedback,
+is only partially true for our MTBench evaluations claiming that most LLMs benefit from such sig-
+(3 out of 4 experimental settings), and that SFT __ nal. In this paper, we look into a large collection
+training on m;°°"? with D'*"¢ outperforms training of human-LLM interactions from the real world
+with D"°S on all WildBench evaluations. and explore how human feedback can be applied
+One hypothesis explaining these unintuitive re- to model training at scale.
+sults is that distilling on the more targeted data from
+[D®¢S improves performance on the easier tasks in Refining LLM’s Answers Our work studies
+MT-Bench, but not on the much harder tasks in LLM’s initial answer deemed inadequate by users
+WildBench. Another potential explanation is that by Tegenerating answers based on the user feed-
+WildBench contains more well-specified user re- back. Bai et al. (2022) explores fine-tuning mod-
+quests and with clear, unambiguous instructions, ©!S on LLM revising its own answers. Madaan
+and training models to incorporate negative user _©t al. (2024) proposes to refine model generation
+feedback (inferring unspoken intent) can discour- based on its feedback iteratively. Similarly, Qu
+age such close prompt adherence. On WildBench, et al. (2024) introduces self-refinement techniques
+we also find that directly distilling from stronger to optimize for multi-turn interactions. While these
+models (random) demonstrates consistent gains in So refine model answers, they do not involve user
+performance. This echoes our findings in the previ- feedback to achieve the goal.
+1 1 sem
+ous section (Section 6), where we found that mi Harvesting Feedback from Interactions after De-
+is not consistently better than m};° according to ; ; ;
+pairwise comparisons with a reward model. ployment Prior work also studied understanding
+user’s satisfaction level and using it as feedback.
+8 Related Work Hancock et al. (2019) uses feedback responses as-
+sociated with the conversation partner’s attitude
+Evaluating Multi-turn Human-LLM Collabora- in chatbot applications. Pang et al. (2023) uses
+tion Rather than single-pass instruction follow- heuristics, such as user response length to measure
+ing, prior works (Lee et al., 2022; Chang et al., _ user satisfaction for the dialogue agents. Chen et al.
+2025; Laban et al., 2025) have demonstrated the (2024) captures implicit feedback signals for model
+"interactiveness" of how general users collaborate —_ actions by inferring from the user’s following in-
+8
+
+
+--- Page 9 ---
+
+teraction. Gao et al. (2024) derives feedback from __ erences (e.g., some may favor detailed explanations
+user edits on the model outputs. Most of these over short answers, and vice versa). We leave it
+approaches are limited in their task application do- _ to future work to discuss whose preferences we
+main. shall align with. We also make an assumption
+Borges et al. (2023) analyzes natural language that feedback in all positions of conversation is
+feedback from the pedagogy angle and provides a — of equal importance. However, feedback in differ-
+framework covering various feedback aspects. The _ ent stages of the interactions should play different
+concepts from learning sciences can be limited to _ roles (e.g., revising answers, confirming the final
+fully explain user feedback from the real-world — goal is reached) and thus should be emphasized
+LLM-human setting, as only half of the partici- differently. Finally, we treat the feedback to be for
+pants (humans) can be characterized. And random __ the most recent model responses, while there could
+users interacting with LLMs differ significantly be other cases when the user wants to revise earlier
+from professional educators, limiting the quality | model answers.
+and complexity of the feedback provided.
+Most closely relevant to our work, Don-Yehiya Impact Statement
+et al. (2024) also studied naturally occurs: WM" Our work explores how naturally occurring feed-
+plicit feedback in large-scale human-LLM interac- . . . .
+. . back signals can help improve LLMs. While this
+tions datasets. Another concurrent work (Shaikh
+_ . could help models better capture human preference,
+et al., 2025) frames this interaction as a natural _ .
+; there are some concerns on the training data side,
+language grounding task, where both human and . . .
+on ; . : such as privacy leakage of training on human di-
+LLM initiate grounding acts in a multi-turn na- : . .
+. ss.»  alogues and bias amplification. We request that
+ture. Instead of framing user feedback as “positive
+« ow ; our proposed method be used for research purposes
+and “negative” feedback, they provide a more fine- onl
+grained ontology of multi-turn user responses (e.g., ¥
+“acknowledgement ). In this work, we study using Acknowledgements
+the semantics from implicit user negative feedback,
+showing how it can direct LLMs to improve the We want to thank Wenting Zhao, Xi Ye, Anuj Di-
+less-preferred response. wan, Fangyuan Xu, Gao Ge, Vishakh Padmakumar,
+Weizhe Yuan and Hunting Chen for their valuable
+9 Conclusion suggestions. The project is partially funded by
+. . . ift from Apple. Thi k ted i t
+In this paper, we systematically study the existence em mom “Pps. vas wv or Was Suppose par
+. . through the NYU IT High Performance Computing
+of user feedback in conversations. We first pro- . .
+. resources, services, and staff expertise. The work
+pose strong feedback detection methods to detect. .
+. . . is partially supported by NSF RI-2521091.
+multiple feedback instances given long conversa-
+tions. We then study when negative feedback oc-
+curs and the potential causes. We show that most References
+negative feedback results from the model’s unsatis- ; ;
+fying answer. Motivated by this, we then explore _Yuntao Bai, Saurav Kadavath, Sandipan Kundu,
+h fl hi ful traini conals. We Amanda Askell, Jackson Kernion, Andy Jones, Anna
+ow to leverage this as usetu training signals. We Chen, Anna Goldie, Azalia Mirhoseini, Cameron
+find that strong LLMs can help improve on weak McKinnon, and 1 others. 2022. Constitutional ai:
+model’s feedback, but this rewriting is not necessar- Harmlessness from ai feedback. arXiv preprint
+ily better than regeneration from the strong LLM arXiv:2212.08073.
+alone. Training on such feedback signals shows Beatriz, Borges, Niket Tandon, Tanja Kiser, and An-
+performance gains on MTBench but no gains on toine Bosselut. 2023. Let me teach you: Pedagogical
+the harder benchmark. Our results and discussions foundations of feedback for language models. arXiv
+reveal the complexity of harvesting training signal preprint arXiv:2307.00279.
+from noisy user data. Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie
+. ee ue Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind
+Limitations Neelakantan, Pranav Shyam, Girish Sastry, Amanda
+. . . Askell, Sandhini Agarwal, Ariel Herbert-Voss,
+While the general goal of feedback is to align mod- Gretchen Krueger, Tom Henighan, Rewon Child,
+els better, different people may have different pref- Aditya Ramesh, Daniel M. Ziegler, Jeffrey Wu,
+9
+
+
+--- Page 10 ---
+
+Clemens Winter, and 12 others. 2020. Lan- _—_‘ Tianle Li, Wei-Lin Chiang, Evan Frick, Lisa Dunlap,
+guage models are few-shot learners. Preprint, Tianhao Wu, Banghua Zhu, Joseph E Gonzalez, and
+arXiv:2005.14165. Ion Stoica. 2024. From crowdsourced data to high-
+
+quality benchmarks: Arena-hard and benchbuilder
+
+Serina Chang, Ashton Anderson, and Jake M Hofman. pipeline. arXiv preprint arXiv:2406.11939.
+
+2025. Chatbench: From static benchmarks to human-
+. , Brahman, Abhilasha Ravichander, Valentina Pyatkin,
+
+Zizhao Chen, Mustafa Omer Gul, Yiwei Chen, Glo- = Nouha Dziri, Ronan Le Bras, and Yejin Choi. 2024.
+ria Geng, Anne Wu, and Yoav Artzi. 2024. Retro- Wildbench: Benchmarking Ilms with challenging
+spective learning from interactions. arXiv preprint tasks from real users in the wild. arXiv preprint
+arXiv:2410.13852. arXiv:2406.04770.
+
+wean . mane: iv huofan a tn, mg Saens. Alisa Liu, Zhaofeng Wu, Julian Michael, Alane Suhr,
+
+angnag Wu, fae Afang, tannin aleng, sty van Peter West, Alexander Koller, Swabha Swayamdipta,
+Zhuang, Yonghao Zhuang, Joseph E. Gonzalez, Ion Noah A Smith, and Yejin Choi. 2023. We're afraid
+Stoica, and Bre P. Xing. an aan Of ano sot language models aren’t modeling ambiguity. arXiv
+: P &§ &P on ents preprint arXiv:2304. 14399.
+quality.
+
+Jeremy R Cole, Michael JQ Zhang, Daniel Gillick, Ju. ™an Madaan, Niket Tandon, Prakhar Gupta, Skyler
+lian Martin Eisenschlos, Bhuwan Dhingra, and Jacob Hallinan, Luyu Gao, Sarah Wiegreffe, Uni Alon,
+Eisenstein. 2023. Selectively answering ambiguous Nouha Dziri, Shrimai Prabhumoye, Yiming Yang,
+questions. arXiv preprint arXiv:2305.14613. and 1 others. 2024. Self-refine: Iterative refinement
+
+with self-feedback. Advances in Neural Information
+
+Shachar Don-Yehiya, Leshem Choshen, and Omri Processing Systems, 36.
+
+Abend. 2024. Naturally occurring feedback is com-
+mon, extractable and useful. Richard Yuanzhe Pang, Stephen Roller, Kyunghyun
+Cho, He He, and Jason Weston. 2023. Leveraging
+
+Hanze Dong, Wei Xiong, Deepanshu Goyal, Rui Pan, implicit feedback from deployment data in dialogue.
+
+Shizhe Diao, Jipeng Zhang, Kashun Shum, and arXiv preprint arXiv:2307.14117.
+
+Tong Zhang. 2023. Raft: Reward ranked finetuning
+
+for generative foundation model alignment. arXiv —_ Yuxiao Qu, Tianjun Zhang, Naman Garg, and Aviral
+
+preprint arXiv:2304.06767. Kumar. 2024. Recursive introspection: Teaching
+language model agents how to self-improve. arXiv
+
+Kawin Ethayarajh, Winnie Xu, Niklas Muennighoff, preprint arXiv:2407.18219.
+
+Dan Jurafsky, and Douwe Kiela. 2024. Kto: Model
+
+alignment as prospect theoretic optimization. arXiv Omar Shaikh, Hussein Mozannar, Gagan Bansal, Adam
+
+preprint arXiv:2402.01306. Fourney, and Eric Horvitz. 2025. Navigating rifts in
+. human-Ilm grounding: Study and benchmark. arXiv
+
+Ge Gao, Alexey Taymanov, Eduardo Salinas, Paul preprint arXiv:2503.13975.
+
+Mineiro, and Dipendra Misra. 2024. Aligning Ilm
+
+agents by learning latent preference from user ed- Qwen Team. 2024. Introducing qwen1.5.
+
+its. In Conference on Neural Information Processing
+
+Systems. X Wang, Z Wang, J Liu, Y Chen, L Yuan, H Peng, and
+
+Braden Hancock, Antoine Bordes, Pierre-Emmanuel Be Mane: Byaluating tims eed tian
+Mazare, and Jason Weston. 2019. Learning from https://arxiv. or bs /2309 1069] > ,
+dialogue after deployment: Feed yourself, chatbot! ps: O18 : .
+arXiv preprint arXiv:1901.05415. Zhilin Wang, Yi Dong, Olivier Delalleau, Jiaqi
+
+Albert Q Jiang, Alexandre Sablayrolles, Arthur Men- Zeng, Gerald Shen, Daniel Egert, Jimmy J Zhang,
+sch, Chris Bamford, Devendra Singh Chaplot, Diego Makesh Narsimhan Sreedhar, and Oleksii Kuchaiev.
+de las Casas, Florian Bressand, Gianna Lengyel, Guil- 2024, Help steer2: Open-source dataset for train-
+laume Lample, Lucile Saulnier, and 1 others. 2023. ing top-performing reward models. arXiv preprint
+Mistral 7b. arXiv preprint arXiv:2310.06825. arXiv:2406.08673.
+
+Philippe Laban, Hiroaki Hayashi, Yingbo Zhou, and Wei Xiong, Hanze Dong, Chenlu Ye, Zigi Wang,
+Jennifer Neville. 2025. Lims get lost in multi-turn Han Zhong, Heng Ji, Nan Jiang, and Tong Zhang.
+conversation. arXiv preprint arXiv:2505.06120. 2024. Iterative preference learning from human feed-
+
+back: Bridging theory and practice for rlhf under
+
+Mina Lee, Megha Srivastava, Amelia Hardy, John Thick- kl-constraint. Preprint, arXiv:2312.11456.
+stun, Esin Durmus, Ashwin Paranjape, Ines Gerard-
+
+Ursin, Xiang Lisa Li, Faisal Ladhak, Frieda Rong, Michael JQ Zhang and Eunsol Choi. 2023. Clarify when
+and | others. 2022. Evaluating human-language necessary: Resolving ambiguity through interaction
+model interaction. arXiv preprint arXiv:2212.09746. with Ims. arXiv preprint arXiv:2311.09469.
+
+10
+
+
+--- Page 11 ---
+
+Michael JQ Zhang, W Bradley Knox, and Eunsol Choi.
+2024a. Modeling future conversation turns to teach
+Ilms to ask clarifying questions. arXiv preprint
+arXiv:2410.13788.
+
+Michael JQ Zhang, Zhilin Wang, Jena D Hwang,
+Yi Dong, Olivier Delalleau, Yejin Choi, Eunsol Choi,
+Xiang Ren, and Valentina Pyatkin. 2024b. Diverging
+preferences: When do annotators disagree and do
+models know? arXiv preprint arXiv:2410. 14632.
+
+Wenting Zhao, Xiang Ren, Jack Hessel, Claire Cardie,
+Yejin Choi, and Yuntian Deng. 2024. Wildchat: 1m
+chatGPT interaction logs in the wild. In The Twelfth
+International Conference on Learning Representa-
+tions.
+
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Tianle
+Li, Siyuan Zhuang, Zhanghao Wu, Yonghao Zhuang,
+Zhuohan Li, Zi Lin, Eric P Xing, and 1 others. 2023a.
+Lmsys-chat-Im: A large-scale real-world Ilm conver-
+sation dataset. arXiv preprint arXiv:2309.11998.
+
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan
+Zhuang, Zhanghao Wu, Yonghao Zhuang, Zi Lin,
+Zhuohan Li, Dacheng Li, Eric Xing, and 1 others.
+2023b. Judging llm-as-a-judge with mt-bench and
+chatbot arena. Advances in Neural Information Pro-
+cessing Systems, 36:46595—46623.
+
+11
+
+
+--- Page 12 ---
+
+A A User Case with Positive Feedback Encouraging toxic model behavior
+In Figure 5, we showcase how positive user feedback helps amplify harmful model behavior.
+6 EE:
+step-by-step instructions.
+The simplest i f kin
+2
+nitrate,... (lama-13B
+Is "positive" feedback really positive ?
+a
+instructions on what | need to do?
+H re the various st
+&
+container and put 25 grams ... Wama-138
+Figure 5: A real user case from existing interaction logs, where the user provides positive feedback upon model’s
+jailbreaking responses.
+B_ Addressing Dual labels in Feedback Dataset Annotation
+When a user utterance can be paired with more than one feedback category, the annotators using the
+follow logic to decide the final label:
+* Positive and negative labels will never overlap.
+¢ When feedback types in the four fine-grained negative categories overlap, a priority order is followed to
+maximize the feedback information: Make Aware with Correction, Make Aware without Correction,
+Ask for Clarification, Rephrasing.
+C_ Feedback Detection
+C.1_ Feedback Distribution
+120 120
+100 100
+y 80 80
+3 60 60
+%
+40 40
+20 20
+0 NEG_1 NEG_2 NEG_3 NEG 4 POS NEU 0 NEG_1 NEG_2 NEG_3 NEG_4 POS NEU
+LMSYS WildChat
+Figure 6: Distribution of dense human annotated labels.
+We present the distribution of our annotated feedback categories in Fig 6.
+12
+
+
+--- Page 13 ---
+
+C.2. Prompts
+# Context
+You will be given a multi-turn conversation between a User and an Assistant. You should act as
+a human annotator to identify User feedback for the Assistant. Please read the conversation and
+complete the task below.
+# Task
+Your task is to identify all feedback instances for Assistant in the User responses that satisfy the
+following feedback patterns:
+## Repeat or Rephrase (NEG_1)
+Does the user repeat or rephrase their concern?
+Examples for “‘yes”’:
+¢ By house, I mean apartments, not condo
+¢ Actually, I wanted
+Examples for “‘no’’:
+¢ Thank you
+# Format
+You should output annotations per User turn except for the first query. You should both output the
+content of the User turn where feedback exists as well as the feedback pattern category using a json
+format:
+{
+“User Response Pattern”: [Insert User Response Pattern],
+“User Response Text”: [Insert User Response Text]
+}
+If there’s no feedback, please output: {
+“User Response Pattern”: “NEU”,
+“User Response Text”: [Insert User Response Text]
+}
+Here are four examples of an input and your expected output.
+Now you try:
+Input:
+Table 5: Prompt for feedback detection.
+C.3 Feedback Detection Performance
+We present the detailed scores of feedback detection performance across Sparse and Dense Eval sets in
+Table 6,7,8,9,10, 11.
+D_ Analysis of Prompts Quality from Different Interaction Logs
+We report the prompt measured by BenchBuilder in (Li et al., 2024) in Table 12.
+E_ Winrate of LLM-Regenerated Response on WildChat
+We present the winrate of different answer regeneration methods for the WildChat dataset in Table 13.
+F_ Training LLM (Qwen-4B) with Regenerated Responses
+We present the MT-Bench scores for Qwen-4B model in Table 14.
+13
+
+
+--- Page 14 ---
+
+Metric Theirs (%) Ours (%)
+False positives 7.76 0.00
+False negatives 50.86 18.86
+True positives 41.38 42.29
+True negatives 0.00 38.86
+Accuracy 41.38 81.14
+Recall 44.86 69.16
+Precision 84.21 100.00
+Table 6: Binary Detection performance on Sparse eval set.
+Metric Theirs Ours
+# predicted feedback Ll 011
+/ conversation
+False positives (%) TAT = 15.32
+False negatives (%) 61.36 43.07
+True positives (%) 22.71 24.09
+True negatives (%) 8.77 17.52
+Accuracy (%) 31.47 41.61
+Recall (%) 27.01 35.87
+Precision (%) 76.00 61.11
+Table 7: Binary Detection performance on Dense eval set.
+Class P(%) R(%) FI1(%)
+POS 66.67 50.00 57.14
+NEG 80.43 37.37 51.03
+NEU 24.71 70.00 36.52
+Accuracy 45.26 45.26 45.26
+Macro avg 57.27 52.46 48.23
+Weightedavg 67.43 45.26 48.21
+Table 8: Three-way classification (theirs) on Sparse eval. “P”, “R”, and “F1” stand for precision, recall and F1-score
+respectively.
+Class Precision (%) Recall(%) F1-Score (%)
+NEG 68.82 55.65 61.54
+NEU 52.73 66.67 58.88
+POS 62.50 55.56 58.82
+Accuracy 60.19 60.19 60.19
+Macro avg 61.35 59.29 59.75
+Weighted avg 61.91 60.19 60.33
+Table 9: Three-way classification (ours) on Sparse eval.
+14
+
+
+--- Page 15 ---
+
+Class Precision (%) Recall(%) F1-Score (%)
+NEG 18.70 70.49 29.55
+NEU 69.64 17.11 27.46
+POS 70.00 100.00 82.35
+Accuracy 30.07 30.07 30.07
+Macro avg 52.78 62.53 46.46
+Weighted avg 59.15 30.07 29.19
+Table 10: Three-way classification (theirs) on Dense eval.
+Class Precision (%) Recall(%) F1-Score (%)
+NEG 29.92 58.22 39.53
+NEU 79.55 54.65 64.79
+POS 25.81 32.00 28.57
+Accuracy 55.35 55.35 55.35
+Macro avg 45.09 48.29 44.30
+Weighted avg 66.97 55.35 58.32
+Table 11: Three-way classification (ours) on Dense eval.
+to: D i : Probl _ Technical Real
+Data Subset Specificity Knowledge Complexity Solving Creativity Accuracy Wodl d Mean
+prend 0.312 0.346 0.052 0.178 0.210 0.190 0.888 0.311
+LMSYS pps 0.222 0.236 0.036 0.130 0.166 0.122 0.708 0.231
+pes 0.124 0.178 0.010 0.078 0.210 0.056 0.610 0.181
+prend 0.242 0.388 0.076 0.190 0.236 0.220 0.844 0.314
+WildChat D”°s 0.240 0.376 0.056 0.206 0.254 0.216 0.870 0.317
+pP°* 0.168 0.284 0.142 0.168 0.546 0.128 0.880 0.331
+LIMA - 0.173 0.368 0.035 0.165 0.397 0.148 0.929 0.316
+Table 12: Average prompt quality in real human-LLM interactions (LMSYS and WildChat) and prompt quality in
+instruction-tuning dataset (LIMA). For LMSYS and WildChat, we report prompt quality in three subsets: prompts
+that elicited positive feedback in the next turn (D?°*), prompts that elicinted negative feedback in the next turn
+(D"°S), and randomly sampled prompts (D"*"“), We find that in LMSYS, negative and positive feedback can be seen
+as a response to less specific prompt.
+G Comparison between MTBench and WildBench Prompts
+For MTBench and WildBench, we compare the differences of prompt length, complexity and more in
+Table 15.To measure complexity score, we follow (Wang et al., 2024) to prompt GPT-40-mini with
+questions and rubrics to get a score between 1 and 5, where high scores mean harder prompts.
+H Comparison between MTBench Judge and WildBench Judge
+We compare the scores from Judges released in MTBench and WildBench in Table 16.
+I Statistical Significance Test
+We perform t-tests over the SFT on D'"¢ and two other baselines on D'S. As shown in Table 17, our
+significance test results show that our main take-aways are statistically significant. Specifically:
+1. On MTBench, all the comparisons are statistically significant, confirming that providing targeted
+fixes with feedback semantics can help models improve on MTBench.
+15
+
+
+--- Page 16 ---
+
+Setting A Setting B WildChat
+Data Split_|_§_
+Model Method Model Method Eval w/fb Eval w/o fb
+prand Better mj°"* Weak mj; — 88%
+Better mj°"* Weak mj; 89% 90%
+Better m,°” Weak mm, 84% 46%
+pg Better m;°" Weak miy44 710% 71%
+Better m,*” Better m,°* 44% 9%
+Weak = mi+4 Weak mj 74% 29%
+Table 13: Winrate scored by RM between the answers, comparing answers from Setting A to Setting B. We compare
+responses from Better in two settings (generation from scratch m#*"*, and generation with feedback from user
+(mF°™). For Weak LLMs, where the original conversation is derived, we compare the initial model response m;
+and the model response after user feedback mj, 1. We empirically show: 1. Weak models could fail to address user
+feedback. 2. User-written instructions are imperfect. 3. Human feedback may not always help improve the model’s
+response and the quality can vary across subsets and datasets.
+Train Data Split Method Qwen-4B
+Base checkpoint 4.96
+D"4 SFT on m;°°"? —-5.54-40.05
+LMSYS D's SFT onm;*"* 5.46+0.02
+D's SFT onm,°°”  5.52+0.05
+D'"¢ SFT onm;*"* —5.57+0.05
+WildChat D”"°® SFT onm,°°* 5.58+0.11
+D's SFT onm;**”  6.31+0.07
+Table 14: MT-Bench scores for Qwen-4B.
+2. WildBench results are more mixed, as we discuss in the main paper:
+
+(a) Finetuning on D"©9 does not consistently outperform D"?”4,
+
+(b) Finetuning on D*°* significantly underperforms D”°9, which aligns with our hypothesis and
+reward model analysis that regenerating with targeted feedback semantics is not always more
+effective than regenerating from scratch.
+
+Data # prompts Avg#tokens complkx.
+MTBench 80 91.55 3.85
+WildBench 1024 499.25 4.31
+Table 15: Wildbench contains longer and more complex questions compared to MTBench.
+16
+
+
+--- Page 17 ---
+
+Train Data Split Method MT-JUDGE SCORE t WILD-JUDGE SCORE ft
+pD"¢ SFT on m3*"* 30.51 + 2.43 4.62 + 0.95
+WildChat D"°> SFT on mf*"* 31.08 + 2.37 4.80 + 1.69
+p*°s SFT on m;°™ 27.08 + 1.29 0.1+1.17
+Table 16: Comparison of Vicuna evaluation results by MT-Judge (LLM Judge from MT-Bench) and Wild-Judge
+(LLM Judge from WildBench).
+MT-BENCH P-VALUES WILDBENCH P-VALUES
+Train Data Split Method oo _ =O,
+Vicuna-7b Mistral-7B Vicuna-7b  Mistral-7B
+Dr=¢ SFT on m$°"* (reference) (reference)
+LMSYS Des SFT onmj* 0.00543 0.000889 0.445797 0.488326
+bp" SFTonm;°*”  <.00001 <.00001 0.012582 0.000834
+D4 SFT on m3"? (reference) (reference)
+WildChat D"°S SFTonmj;® 0.000279 0.000027 (0.184309 0.000264
+Dp" SFTonm;*”  <.00001 <.00001 0.000369 <.00001
+Table 17: Statistical significance test results (p-values) from paired t-tests comparing each method against SFT on
+m$°r? with D'"4 split.
+17

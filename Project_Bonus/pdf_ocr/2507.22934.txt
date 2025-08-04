@@ -1,0 +1,1870 @@
+
+
+--- Page 1 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey
+JINGWE]I ZHAO’, Beijing University of Posts and Telecommunications, China
+YUHUA WEN’, Beijing University of Posts and Telecommunications, China
+QIFEI LI, Beijing University of Posts and Telecommunications, China
+MINCHI HU, Beijing University of Posts and Telecommunications, China
+YINGYING ZHOU, Beijing University of Posts and Telecommunications, China
+JINGYAO XUE, Beijing University of Posts and Telecommunications, China
+JUNYANG WU, Beijing University of Posts and Telecommunications, China
+a)
+N YINGMING GAO, Beijing University of Posts and Telecommunications, China
+o ZHENGQI WEN, Tsinghua University, China
+—_ JIANHUA TAO, Tsinghua University, China
+= YA LI t Beijing University of Posts and Telecommunications, China
+I Intent recognition aims to identify users’ underlying intentions, traditionally focusing on text in natural language processing. With
+growing demands for natural human-computer interaction, the field has evolved through deep learning and multimodal approaches,
+ee“ incorporating data from audio, vision, and physiological signals. Recently, the introduction of Transformer-based models has led to
+— notable breakthroughs in this domain. This article surveys deep learning methods for intent recognition, covering the shift from
+UO unimodal to multimodal techniques, relevant datasets, methodologies, applications, and current challenges. It provides researchers
+N with insights into the latest developments in multimodal intent recognition (MIR) and directions for future research.
+oO
+Led CCS Concepts: « Computing methodologies — Artificial intelligence; Machine learning; - Human-centered computing —
+Human computer interaction (HCI).
+> Additional Key Words and Phrases: Multimodal intent recognition, text intent recognition, multimodal learning, deep learning
+28) .
+on 1 Introduction
+“ Intent recognition is a computational process that aims to infer a user’s underlying goal or objective from their textual,
+~ spoken, or other interaction data [3]. With the rapid development of AI technology, especially the emergence of deep
+>) learning and large-scale corpora, intent recognition has rapidly developed and shown great potential and value in
+WY many application areas, such as human-computer interaction [51, 143], dialog systems [81, 110], healthcare [138, 157],
+ee *Both authors contributed equally to this research.
+> + Corresponding author.
+om
+< This work is supported by the National Key R&D Program of China under Grant No.2024YFB2808802.
+Sam Authors’ Contact Information: Jingwei Zhao, Beijing University of Posts and Telecommunications, Beijing, China, zhaojingwei@bupt.edu.cn; Yuhua Wen,
+ge) Beijing University of Posts and Telecommunications, Beijing, China, yuhuawen@bupt.edu.cn; Qifei Li, Beijing University of Posts and Telecommunications,
+Beijing, China, liqifei@bupt.edu.cn; Minchi Hu, Beijing University of Posts and Telecommunications, Beijing, China, minchihu@bupt.edu.cn; Yingying
+Zhou, Beijing University of Posts and Telecommunications, Beijing, China, yingyingzhou@bupt.edu.cn; Jingyao Xue, Beijing University of Posts
+and Telecommunications, Beijing, China, wuwuxjy@bupt.edu.cn; Junyang Wu, Beijing University of Posts and Telecommunications, Beijing, China,
+wujunyang128@gmail.com; Yingming Gao, Beijing University of Posts and Telecommunications, Beijing, China, yingming.gao@bupt.edu.cn; Zhengqi
+Wen, Tsinghua University, Beijing, China, zqwen@tsinghua.edu.cn; Jianhua Tao, Tsinghua University, Beijing, China, jhtao@tsinghua.edu.cn; Ya Li,
+Beijing University of Posts and Telecommunications, Beijing, China, yli01@bupt.edu.cn.
+1
+
+
+--- Page 2 ---
+
+2 J. Zhao et al.
+and recommendation systems [13, 52, 65]. In conversational AI, such as virtual assistants like Siri or Alexa, accurate
+intent recognition enables personalized and context-aware responses, significantly enhancing the user experience. In
+smart homes, it helps customize automation based on user preferences [106]. Similarly, in automotive systems, intent
+recognition supports safer, more intuitive driver-assistance interactions [6]. The transformative potential of intent
+recognition lies in its ability to bridge the gap between human intent and machine behavior, driving innovation and
+improving efficiency across these domains. As society becomes increasingly reliant on intelligent systems, the demand
+for powerful, accurate, and adaptable intent recognition technologies continues to grow, prompting researchers to
+explore new methods to address these challenges.
+
+In the early stages of intent recognition research, researchers focused on unimodal intent recognition represented by
+text modality [2], which relies solely on information from a single modality to understand user intent. Early research
+relied on rule matching and manual feature engineering, such as template-based text parsing or keyword extraction
+after speech-to-text conversion [42], but these methods have insufficient generalization ability in the face of complex
+semantics and diverse expressions. With the development of deep learning technology, unimodal intent recognition
+has also made significant progress. Pre-trained models such as BERT have substantially enhanced the representation
+and understanding of semantic content in user inputs [11, 141], boosting performance across numerous tasks [48, 101].
+LLM-based methods can effectively address intent recognition challenges in zero-shot and few-shot learning. Despite
+significant advancements in intent recognition technology, current mainstream unimodal intent recognition methods
+still face numerous challenges. Single-modal data, such as independent audio, text, or visual information, often fails to
+provide sufficient information for accurately and robustly identifying complex user intentions. For example, in the
+audio modality, factors such as background noise, accent differences, and variations in speaking speed can severely
+impair audio intent recognition accuracy. In the text modality, synonyms, polysemous words, and ambiguity caused
+by missing context often make it difficult for systems to understand users’ true intentions. In the visual modality,
+issues such as partial occlusion, lighting changes, and perspective limitations may also result in insufficient visual
+information, thereby affecting the reliability of intent recognition. These inherent limitations mean that single-modality
+intent recognition suffers significantly in terms of accuracy and robustness when faced with complex, uncertain, or
+information-deficient scenarios, making it difficult to meet the demands of practical applications.
+
+To overcome the limitations of single-modal intent recognition, multimodal intent recognition has emerged, aiming to
+fuse information from different modalities to enhance the performance of intent recognition. Modalities of multimodal
+intent recognition typically involve, but are not limited to, audio, text, visual data (e.g., gestures, facial expressions, or
+eye gaze), and physiological signals [118, 172]. In recent years, the widespread adoption of sensor technology and data
+collection devices, such as smartphones, cameras, and wearable devices, has made multimodal data collection more
+convenient, resulting in a significant increase in the volume and diversity of data, which provides a solid foundation
+for research. Researchers have advanced the development of multimodal intent recognition research by leveraging
+the complementary advantages of multimodal data, significantly improving the accuracy of human intent recognition
+in real-world scenarios. Through the use of deep learning techniques such as modality alignment and cross-modal
+fusion [174], models have enhanced their ability to integrate and understand multimodal information, providing new
+technical pathways for the evolution of human-computer interaction toward more natural and intelligent directions.
+However, multimodal intent recognition presents new challenges. How to effectively fuse data from different modalities
+to achieve complementary advantages between modalities; how to handle the heterogeneity, asynchrony, and conflicting
+information across modalities; how to construct models that can capture the complex associations and intrinsic logic
+of multimodal data while addressing missing or incomplete modalities—these are the key issues that the field of
+
+
+--- Page 3 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 3
+multimodal intent recognition urgently needs to address. These challenges provide a broad research landscape and
+abundant exploration directions for this field.
+Visual persuasion £2F-SLU Joint BERT G-CRAM  Multiwoz | 'Intentonomy |
+(oo etal) (Chen et al.) (Chen et al.) (Zhang etal.) (Budzianowski et al.) | (Jia etal) 3
+(aris; [ mrieec | {snips} |! cuinciso ? | {BaNKiNc77 | | {  suurp | | BERE-CTC
+(Hemphill etal.) | (Chen etal.) } i(Coucke etal); | { (Larsonetal) } | {Casanueva etal); |  \(Bastianelti et al); | (Higuchi et al)
+© ©
+2019 2022
+TCL-MAP LLM-SynCID CAGC LARA  IntentQa | PIP-Net
+(Zhou et al.) (Liang et al.) (Sun et al.) (Liu et al.) 1 (Lietal.) } (Wang et al.)
+PerBCI { MIntRec2.0 SDIF-DA LabCR ' MindGaze CPAD { MintRee }
+(Li et al.) (Zhang et al.): (Huang et al.) (Shi et al.) ‘(Sharma et al.) 5 (Ye et al.) ‘(Zhang et al.) 3
+©
+2024
+LVAMoE InMu-Net IntentGPT MuProCL GRPO with RCS (MINE |
+(Liet al.) (Zhu et al.) (Rodriguez et al.) (Dong et al.) (Feng et al.) (Yang et al.) }
+/ ‘MC-EIU ; { CMSLIU ; DuoDN MIntOOD MVCL-DAF A-MESS
+\ (Liu et al.) ; _(ietal.) | (Chen et al.) (Zhang et al.) (Hu et al.) (Shen et al.)
+g
+2025
+P| Dataset —————— _ Text ———— Vision ———— Audio —— EEG ——Multimodal
+Fig. 1. Representative Methods and Datasets for Intent Recognition.
+
+The primary goal of this paper is to provide a comprehensive summary and in-depth analysis of the evolution of intent
+recognition techniques from unimodal to multimodal, aiming to systematically sort out the technological development,
+application scenarios, and challenges in this field. The article first combs through the widely used intent recognition
+datasets, covering unimodal and multimodal. It then reviews common unimodal intent recognition methods, including
+text, vision, audio, and EEG modalities. For example, textual intent recognition relies on natural language processing
+techniques, audio intent recognition employs speech signal processing, while visual and EEG intent recognition utilize
+image processing and neural signal analysis to capture user intent. Then, focusing on the rapid rise of multimodal
+intent recognition in recent years, the article analyzes and discusses the approaches of multimodal modeling strategies.
+In Figure 1, we present representative works for intent recognition. Meanwhile, the paper summarizes the evaluation
+metrics in the field of multimodal intent recognition, which provides a standardized reference framework for researchers.
+In terms of applications, multimodal intent recognition has shown many prospects in human-computer interaction,
+education, automotive systems, and healthcare [142]. In addition, multiple challenges still facing current research and
+new research trends are also included to provide useful references for researchers and developers. The organizational
+structure of this survey is shown in Figure 2.
+
+The significant contributions of this survey are outlined as follows:
+
+
+--- Page 4 ---
+
+4 J. Zhao et al.
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey
+htgedhestten Resources of Deep Learning Performance
+oaucnto Intent Recognition Approaches for Intent Evaluation
+Recognition Metrics Applications,
+Challenges and
+Dataset >———_| Future Directions
+Other Resources Unimodal Intent Mutimodal limits
+Recognition Recognition Conclusion
+Traditional Neural
+Network Text Intent
+Recognition . Alignment & Knowledge-Augmented
+Fusion Meth
+LLM-Based usion Methods Disentanglement Methods Methods
+Methods
+Vision intent Multi-Task Coordination
+Recognition Methods
+Feature-Level LLM-Based
+Audio Intent Approaches
+Recognition Decision-Level
+Retrieval-Based
+Hybrid Approaches
+EEG Intent
+Recognition
+Fig. 2. Organizational Structure of the Survey.
+
+e We present the first systematic review that traces the development of intent recognition from early unimodal
+approaches to modern multimodal techniques, offering a structured and comparative perspective on the evolution
+of this field.
+
+e We collate and analyze benchmark datasets and evaluation metrics, covering both unimodal and multimodal
+settings, to offer researchers a standardized foundation for experimentation and comparison.
+
+e We summarize the application scenarios (e.g., HCI, healthcare, automotive systems) and highlight key challenges
+such as modality heterogeneity, synchronization, and robustness to missing data. Based on these, we discuss
+emerging trends and future research directions.
+
+2 Resources of Intent Recognition Research
+
+2.1 Dataset
+
+Datasets in the field of intent recognition provide rich samples and annotated resources for research. They serve as
+fundamental assets for advancing model training, algorithm validation, theoretical verification, and pattern discovery,
+playing a pivotal role in driving progress within the domain of intent understanding. They provide annotated resources
+for diverse scenarios, but their intent categories often lack unified standards. Inspired by the classification approach
+of the MIntRec dataset[163] and the distribution patterns of intentions across domains, we categorize coarse-grained
+labels into three primary classes: Emotion and Attitude, Goal Achievement, and Information and Declaration. This
+
+
+--- Page 5 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 5
+synthesized taxonomy, illustrated in Table 1, abstracts away domain-specific variations to reveal foundational intent
+types.
+
+Table 1. Summary of Common Coarse-Grained and Fine-Grained Intent Categories.
+
+Coarse-Grained Intent Definition Fine-Grained Intent
+
+Emotion and Attitude Express emotional states, subjective feel- Complain, Praise, Thank, Agree, Oppose,
+ings or attitudes towards things. Doubt, Refuse, Warn, Antipathy, etc. [77,
+
+84, 162, 163]
+
+Goal achievement Clearly express the hope to achieve acer- Ask for help, Advise, Suggest, Invite,
+tain goal, request the other party to per- Plan, Arrange, Inform, Request, Select,
+form an operation or provide a service. Prevent, BookRestaurant, PlayMusic, Ad-
+
+dToPlaylist, Query, Directive, etc. [8, 21,
+77, 84, 162, 163]
+
+Information and Declaration State facts or describe situations objec- Virtues, Family, Health, Power, Openness
+tively. to experience, etc. [53]
+
+Table 2 systematically compares these datasets across key dimensions: sample size, number of intent classes, and
+
+modality. This quantitative overview reveals disparities in data scale and diversity.
+
+(1) Text datasets: As one of the earliest widely explored modalities in intent recognition research, text modality,
+relying on the rich semantic information carried in natural language, provides an important foundation for
+modeling and classifying users’ intent. Several high-quality text datasets have been widely used for this task.
+The ATIS [40] dataset is comprised of 5,871 English texts concerning flight-related queries, which are subdivided
+into 17 distinct categories of intent. The dataset is primarily utilized for the evaluation of intent recognition
+capabilities within closed domains. The SNIPS [21] is a crowdsourced dataset containing 14,484 user queries
+categorized into 7 intents with varying complexity levels. The CLINC150 [63] dataset collects 23,700 query
+statements, of which 22,500 cover 150 valid intent categories and are categorized into 10 generic domains,
+and 1,200 cross-domain samples, which are suitable for evaluating open-domain intent recognition systems.
+MultiWOZ [8] is a multi-domain, multi-round dialogue corpus containing 10,438 samples (8,438 conversations)
+with an average of 14 turns per conversation, covering seven service domains including restaurants and hotels.
+Its evolution includes MultiWOZ 2.1 [28] for annotation corrections and MultiWOZ 2.2 [155] fixing 17.3% of
+dialogue state annotations while standardizing slot representations. The BANKING77 [9] dataset focuses on the
+banking service domain and contains 13,083 customer service requests, which are subdivided into 77 types of
+intentions, emphasizing the fine-grained intent recognition under a single domain.
+
+(2) SLURP [5]: SLURP(Spoken Language Understanding Resource Package) is a comprehensive dataset for Spo-
+ken Language Understanding (SLU) that contains approximately 72,277 audio recordings of single-turn user
+interactions with a home assistant. Each audio recording is annotated with three levels of semantics: Scenario,
+Action, and Entities. The dataset spans 18 different scenarios, with 46 defined actions and 55 distinct entity types.
+The dataset is divided into 50,628 training audio files, 8,690 development audio files, and 13,078 test audio files.
+SLURP is designed to be substantially larger and more linguistically diverse than existing SLU datasets, making
+it a challenging benchmark for developing and evaluating SLU systems.
+
+(3) Intentonomy [53]: Jia et al. proposed a dataset called Intentonomy, which contains 14,455 high-quality images,
+each of which is annotated with one or more of 28 human-perceived intentions. These intent labels are based
+
+
+--- Page 6 ---
+
+6 J. Zhao et al.
+Table 2. Summary of Commonly Used Intent Recognition Dataset
+
+Dataset Year Samples NumsInt. Modal Language Avail. URL
+
+ATIS[40] 1990 5,871 17 T EN Public —_ https://datasets.
+activeloop.ai/docs/
+ml/datasets/atis-dataset/
+
+Snips[21] 2018 14,484 7 T EN Public —_ https://github.com/sonos/
+nlu- benchmark
+
+CLINC150[63] 2019 =. 23,700 150 T EN Public — https://github.com/clinc/
+
+oos-eval
+
+MultiWOZ[8] 2020 10,438 13 T EN Public —_ https://github.com/
+
+budzianowski/multiwoz
+BANKING77[9] 2020 13,083 77 T EN Public —_ https://github.com/
+PolyAI-LDN/task-
+specific-datasets7
+SLURP[5] 2020 = 72,277 46 A EN Public —_ https://github.com/
+pswietojanski/slurp
+Intentonomy[53] 2021 14,455 28 Vv EN Public — https://github.com/kmnp/
+intentonomy
+
+MiIntRec[163] 2022 2,224 20 VAT EN Public —_ https://github.com/
+
+thuiar/MIntRec
+
+IntentQA[66] 2023 16,297 / VT EN Public —_ https://github.com/
+
+JoseponLee/IntentQA
+MindGaze[111] 2023 3,600 2 EEG, EM / Limited https://zenodo.org/
+records/8239062
+MiIntRec2.0[162] 2024 15,040 30 VAT EN Public —_ https://github.com/
+thuiar/MIntRec2.0
+MC-EIU[84] 2024 56,012 9 VAT EN, ZH Public —_ https://huggingface.co/
+datasets/YulangZhuo/
+MC-EIU
+CMSLIU[76] 2024 5,520 6 AT, EEG ZH Limited https://drive.google.
+com/drive/folders/
+1w76HxNj4zWK3snpdjlr9-
+aDNRddOIr1D
+MINE[149] 2025 = 20,168 20 VAT EN Public —_ https://github.com/
+yan9qu/CVPR25- MINE
+EN: English, ZH: Chinese, T: Text, V: Vision, A: Audio, EM: Eye Movement
+on a systematic social psychology taxonomy proposed by psychology experts, covering 9 supercategories such
+as "virtue", "self-actualization", "openness to experience", etc. The dataset contains 12,740 training images, 498
+validation images, and 1217 test images.
+
+(4) MIntRec [163]: MIntRec is a new dataset created for multimodal intent recognition tasks, containing 2,224 high-
+quality samples, each of which includes text, video, and audio modalities, and has multimodal annotations for 20
+intent categories. The dataset is built based on data collected from the TV series Superstore, and coarse-grained
+and fine-grained intent taxonomies are designed. The coarse-grained taxonomy includes "expressing emotions
+or attitudes" and "achieving goals". The MIntRec dataset randomly shuffles the video clips and divides them
+
+
+--- Page 7 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 7
+into training set, validation set and test set in a ratio of 3:1:1. The training set contains 1,334 samples, and the
+validation set and test set contain 445 samples respectively.
+
+(5) IntentQA [66]: IntentQA is a large-scale VideoQA dataset specifically designed for intent reasoning tasks. It is
+constructed based on the NExT-QA dataset, focusing on inference-oriented QA types such as Causal Why, Causal
+How, Temporal Previous, and Temporal Next. The dataset contains 4,303 videos and 16,297 question-answer
+pairs, covering a diverse range of daily social activities. The key feature of IntentQA is its emphasis on contextual
+reasoning, where the same action may imply different intent depending on the situational context. The dataset is
+carefully annotated to ensure high quality, with each sample validated by multiple annotators.
+
+(6) MindGaze [111]: MindGaze is the first multimodal dataset for navigation intent (free viewing) and information
+intent (goal-directed search) prediction, combining EEG to measure brain activity and eye-tracking to record
+gaze patterns. It features 120 diverse industrial scenes (e.g., assembly units, labs, garages) with five target tools,
+designed to simulate realistic visual search tasks.
+
+(7) MIntRec2.0 [162]: MIntRec2.0 is a large-scale, multimodal, multi-party dialogue intent recognition benchmark
+dataset, containing 1,450 high-quality dialogues with a total of 15,040 samples. Each sample is labeled with
+30 fine-grained intent categories, covering text, video, and audio modalities. In addition to over 9,300 samples
+within the range, it also includes over 5,700 out-of-range samples that appear in multi-round dialogue scenarios.
+These samples naturally appear in the open scenarios of the real world, enhancing their practical applicability.
+Furthermore, it also provides comprehensive information about the speaker in each discourse, enriching its
+utility in multi-party dialogue research. The dataset is partitioned into training, validation, and testing sets,
+maintaining an approximate ratio of 7:1:2 for both dialogues and utterances.
+
+(8) MC-EIU [84]: MC-EIU is a dataset for multimodal dialogue emotion and intention joint understanding tasks.
+It contains two languages, English and Mandarin, and covers three modalities of information: text, audio, and
+video. It contains seven emotion categories and nine intent categories with a total of 56,012 utterances from
+three English TV series and four Mandarin TV series. The MC-EIU dataset is divided into the training set, the
+validation set, and the test set in a ratio of 7:1:2.
+
+(9) CMSLIU [76]: The CMSLIU dataset is a multimodal dataset specifically designed for Chinese intent recognition.
+It combines physiological signals (EEG) and non-physiological signals (audio and text) to study how humans
+use the same text to express different intentions in conversations. The dataset contains 184 sentences of text
+and a total of 15 video clips. Each clip is followed by a varying number of text reading tasks. This dataset can
+be used to study the influence of emotions on intent recognition and the role of electroencephalogram (EEG)
+information in intent recognition.
+
+(10) MINE [149]: MINE (Multimodal Intention and Emotion Understanding in the Wild) is a large-scale dataset
+focused on multimodal intention and emotion understanding in social media contexts. Collected from real-world
+social media platform Twitter, it comprises over 20,000 social media posts encompassing text, images, videos, and
+audio, annotated with 20 intention categories and 11 emotion labels. The dataset uniquely captures real-world
+modality incompleteness (e.g., posts containing only text and images) and implicit intention-emotion correlations
+(e.g., the "Comfort" intention often co-occurs with "Sad" emotion). MINE provides the first real-world benchmark
+for studying multimodal fusion, missing modality handling, and joint emotion-intention modeling.
+
+
+--- Page 8 ---
+
+8 J. Zhao et al.
+2.2 Other Resources
+
+In the field of intent recognition, academia and industry have developed multiple powerful open-source tools and
+platforms that provide researchers with comprehensive support ranging from theoretical verification to practical
+application. These systems not only cover traditional closed intent recognition tasks but also offer innovative solutions
+to the problem of discovering unknown intent in open-world scenarios.
+
+(1) TEXTOIR [161] is an integrated visualization platform for textual open intent recognition. Its main functions
+include open intent detection and open intent discovery. The system supports a variety of advanced algorithms
+and benchmark datasets, and builds a unified pipeline framework, thereby enabling fully automatic processing
+from known intent recognition to unknown intent clustering. The platform provides standardized interfaces and
+visualization tools to facilitate model training, evaluation, and result analysis. This significantly enhances the
+implementation and research of open intent recognition tasks in real-world dialogue systems. More detailed
+information can be found on https://github.com/thuiar/TEXTOIR.
+
+(2) Rhino, developed by Picovoice, is an open-source speech-to-intent engine leveraging deep learning to infer
+user intents and slots from voice commands in real time on-device, eliminating the need for cloud connectivity.
+Tailored for domain-specific voice interactions, it is ideal for applications in IoT, smart homes, and embedded
+systems. Utilizing context files to define commands, Rhino supports multiple languages and cross-platform
+deployment (e.g., Linux, Android, iOS, Web). Its lightweight design ensures efficient processing with minimal
+resource demands, prioritizing user privacy. Integrated with the Picovoice Console for customizable context
+modeling, Rhino is a robust tool for intent recognition in voice-driven, resource-constrained environments
+(https://github.com/Picovoice/rhino).
+
+3 Unimodal Intent Recognition
+
+The core challenge of unimodal intent recognition lies in extracting intent-related features from heterogeneous
+data. Text modality relies on language models to parse semantic structures, while visual modality requires modeling
+spatial and temporal relationships. Audio modality captures paralinguistic information through acoustic analysis, and
+EEG necessitates decoding spatiotemporal patterns in neural signals. The distinct data characteristics and technical
+requirements of each modality form the foundation for diverse intent recognition approaches. This section systematically
+investigates intent recognition methodologies across four distinct modalities: textual, visual, auditory, and EEG. A
+summary of the representative approaches of unimodal intent recognition is shown in Table 3.
+
+3.1 Text Intent Recognition
+
+Intent recognition constitutes a fundamental component of Natural Language Understanding (NLU), which identifies
+the expressed intent categories inherent within user utterances. In existing research, text modality is the main input
+form and focus of research in the field of intent recognition due to its clear structure and high information density. This
+section will follow the development of technology, illustrating the technical evolution of text intent recognition from
+traditional machine learning methods to deep learning methods.
+
+Early intent recognition relied on logic-based methods, which inferred intent through abductive reasoning using
+predefined causal rules. While interpretable, these methods lacked generalization due to their reliance on manually
+crafted rules. This limitation spurred the adoption of data-driven machine learning approaches, which model intent
+recognition as a classification problem. As illustrated in Figure 3, machine learning methods leverage behavioral
+
+
+--- Page 9 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 9
+Table 3. Summary of Representative Approaches of Unimodal Intent Recognition
+References Dataset Modality Method Performance
+Xu et al. [144] Comm. T CNN-based joint intent detection and slot 93.6% Accuracy
+filling.
+Hakkani et al. [37] Comm. T Multi-domain sequence tagging for intent 95.4% Accuracy
+detection and slot filling.
+Yao et al. [151] ATIS T RNN language understanding with future 96.6% F1-score
+words and named entities.
+Goo et al. [36] Snips T Slot-gated attention for joint slot filling 97.0% Accuracy
+and intent detection.
+Chen et al. [11] Snips T BERT-based joint intent classification and 98.6% Accuracy
+slot filling.
+Rodriguez et al. [108] |. BANKING T Training-free intent discovery using 77.21% Accuracy
+LLMs.
+Liang et al. [78] BANKING T LLM-SLM synergy via contrastive space 86.80% Accuracy
+alignment.
+Park et al. [98] BANKING T Dynamic intent tag refinement with LLM 87.30% Accuracy
+semantic optimization.
+Feng et al. [31] MultiWOZ T RL-based intent detection with GRPO and 93.25% Accuracy
+chain of thought.
+Jia et al. [54] Intentonomy Vv Object-centric image decomposition with 28.88% Ave F1
+hashtag incorporation.
+Wang et al. [132] Intentonomy Vv Visual intent recognition via prototype 41.85% Ave F1
+learning.
+Shi et al. [115] Intentonomy Vv Hierarchical transformer for intent cate- 35.93% mAP
+gory relationships.
+Chen et al. [14] Customer A End-to-end speech-to-intent mapping. 98.07% Accuracy
+care dataset
+Wang et al. [137] SLURP A Audio encoder fine-tuning beyond ASR 89.38% Accuracy
+tasks.
+Ray et al. [107] SLU and ASR A RNN-T system with audio-to-intent em- 87.70% Accuracy
+beddings.
+Higuchi et al. [41] SLURP A BERT adaptation for connectionist tempo- 87.80% Accuracy
+ral classification.
+features to automatically infer intent, bypassing manual rule design. Supervised machine learning methods, including
+Naive Bayes, logistic regression, support vector machines, and decision trees, improved intent recognition by learning
+mappings from textual features to intent, with advancements in efficiency, generalization, and robustness [7, 17, 20,
+33, 35, 89, 92]. To address challenges like limited labeled data, unsupervised and semi-supervised methods, such as
+clustering and graph-based learning, identified intent patterns and enabled practical applications in scenarios with
+sparse annotations [32, 73, 97, 133].
+
+The approaches of shallow machine learning techniques usually require extensive manual feature engineering and
+have limited performance when dealing with semantic transformations or contextual understanding. The advent of
+deep learning has prompted researchers to explore the application of neural network models in the domain of text
+intent recognition. This development has led to substantial advancements in the expressive capacity and generalization
+
+
+--- Page 10 ---
+
+10 J. Zhao et al.
+Feature Extraction
+N ae
+Text —»- Learning ———>>
+> Classifier Lois)
+Fig. 3. Machine Learning for Text Intent Recognition.
+performance of these models. This section discusses the intent recognition methods based on CNN, RNN, transformer,
+and LLM-based network structures.
+
+Traditional Neural Network Methods. Convolutional neural networks (CNNs) can effectively extract local n-gram
+features in sentences and exhibit excellent performance in textual intent recognition. Figure 4 shows the CNN/RNN-
+based model for text intent recognition. Xu et al. [144] (2013) introduced CNNs into a joint model, proposing a Triangular
+Conditional Random Field (Tri-CRF) model based on convolutional neural networks for simultaneous intent detection
+and slot filling tasks. Subsequently, Kim et al. [61] (2014) proposed a simple CNN architecture for sentence classification,
+utilizing word embeddings as input and employing convolution and pooling operations to extract features for intent
+classification. This demonstrated the effectiveness of CNN-based feature learning in short-text intent recognition,
+inspiring extensive subsequent research into adopting CNN as a foundational module for intent classification.
+
+CNN
+bo
+& 5
+5 5 5 -
+£ > = _ s
+(7) S ° (S) a
+JS E 8 * ” é
+3 fe)
+3
+NN
+xt
+£ = an i c s
+2| |2/ |2] |3] |é
+g Er = = S
+Fig. 4. The CNN/RNN-Based Model for Text Intent Recognition.
+
+Recurrent neural networks (RNNs) have attracted significant attention in the field of intent recognition due
+to their ability to capture sequential information. Yao et al. [151] (2013) were the first to apply RNNs to language
+understanding tasks, processing word sequences in user utterances sequentially for intent classification. In the same
+year, Mesnil et al. [90] (2013) explored various RNN architectures, including bidirectional Jordan-type RNNs, for spoken
+language understanding, further confirming the advantages of recurrent networks in sequence modeling. However,
+simple RNNs suffer from limitations such as gradient vanishing. To address the issue of long-term dependencies,
+Hakkani-Tir et al. [37] (2016) designed a bidirectional LSTM network for multi-domain joint intent and slot-filling
+models, enabling end-to-end semantic parsing on virtual assistant datasets and achieving notable performance gains
+
+
+--- Page 11 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 11
+over single-task models. Additionally, Liu and Lane[79] (2016) used an attention-based encoder-decoder framework, in
+which the encoder uses a bidirectional RNN (BiRNN) to generate hidden states, and jointly models the intent detection
+and slot filling tasks by sharing the bidirectional hidden states of the encoder. Subsequently, Goo et al. [36] (2018)
+introduced an attention-based slot-gated mechanism to incorporate intent context into slot recognition, proposing a
+slot-gated bidirectional RNN model. This model improved sentence-level semantic frame accuracy by 4.2% and 1.9% on
+the ATIS and Snips benchmark datasets, respectively, setting new state-of-the-art results at the time.
+
+Transformer model was introduced by Vaswani et al. [130] in 2017, leverages a self-attention-based encoder-decoder
+architecture to model long-distance dependencies in parallel, demonstrating exceptional performance in sequence
+modeling tasks. Since 2018, numerous Transformer-based pre-trained language models have been applied to intent
+recognition. A notable example is the BERT model proposed by Devlin et al. [23], which employs a bidirectional Trans-
+former encoder pre-trained on massive corpora and fine-tuned for downstream tasks. BERT has achieved unprecedented
+high performance across a wide range of tasks, including intent classification. Figure 5 shows the framework of BERT
+for text intent recognition. Chen et al. [11] proposed a Joint BERT model, which integrates BERT into a joint intent
+detection model, thereby improving intent classification accuracy to over 97% on public datasets such as ATIS and 98.6%
+on Snips, significantly surpassing the performance of traditional RNN-attention and slot-gated models. Comi et al. [18]
+proposed Zero-Shot-BERT-Adapters based on the Transformer architecture fine-tuned with Adapters. This method
+demonstrates significant advantages in zero-shot learning scenarios, effectively improving the model’s performance
+in classifying unknown intent across multiple languages. The success of Transformer-based models highlights that
+pre-trained deep self-attention representations can effectively capture intent semantics, substantially enhancing the
+generalization capability of dialogue intent recognition.
+
+- a a acer my am
+Fig. 5. The BERT Model for Text Intent Recognition.
+
+LLM-Based Methods. In recent years, large language models have brought breakthroughs to the field of text intent
+recognition with their outstanding context understanding and generation capabilities. Through innovative prompt
+engineering and in-context learning technologies, LLMs can significantly improve intent recognition performance in
+multi-turn dialogue scenarios while effectively addressing intent recognition challenges in zero-shot and few-shot
+learning. Figure 6 shows the comparison of three text intent recognition architectures based on LLM. These LLM-based
+approaches not only significantly enhance the model’s semantic understanding depth but also markedly improve its
+generalization capabilities across domains and languages, providing a more flexible and efficient solution for intent
+recognition tasks.
+
+Traditional methods are constrained by predefined static intent label systems, making it difficult to distinguish
+between semantically similar intentions. Park et al. [98] proposed a dynamic label refinement approach that retrieves
+semantically similar dialogue examples and leverages LLMs to dynamically generate more descriptive and discriminative
+
+
+--- Page 12 ---
+
+12 J. Zhao et al.
+
+ae Frozen Parameters Y Trainable Parameters
+
+Intent Intent Intent
+
+ee LLM ae LLM Updated LLM
+
+: — : : : : IN Prompt :
+
+intendons fy [promot]: ium fy Leromet JP | wun
+
+i ot : : RL :
+
+: IN Pt IN : : :
+
+: RAG : : wsim |! : :
+
+(a) LLM with RAG (b) LLM with SLM (c) LLM with RL
+
+Fig. 6. The LLM-Based Models for Text Intent Recognition. (a) Leverages RAG (Retrieval-Augmented Generation) to concatenate
+retrieved examples with multi-turn dialogue context, constructing prompts that are fed into a frozen LLM to produce final intent
+classification. (b) The SLM and LLM jointly refine semantics and prompts, which are subsequently used by the frozen LLM for final
+classification. (c) Optimizes the intent detection capability of an LLM (as base model) through RL, yielding an updated LLM.
+intent labels. This dynamic semantic decoupling strategy effectively reduces confusion among similar intentions. Liu et
+al. [80] further developed the LARA framework by generating candidate intentions and then using semantic retrieval to
+construct a dynamic context, effectively solving the intention-context coupling problem in dialogue systems.
+
+For small-sample learning scenarios, the IntentGPT[108] framework innovatively combines few-example and context-
+prompt generation techniques, providing semantically relevant reference labels to significantly improve the model’s
+accuracy in recognizing unknown intent. Liang et al. [78] proposed the LLM-SynCID framework for conversational
+intent discovery, which leverages the deep semantic understanding capabilities of large language models and the
+operational agility of small language models (SLMs) to address the issue of SLMs being unable to label newly
+discovered intent.
+
+Recently, the combination of reinforcement learning (RL) and LLM has been shown to increase the generalizability
+of text intent recognition. Feng et al. [31] proposed an approach combining Reinforcement Learning with LLMs for
+intent detection, integrating Group Relative Policy Optimization (GRPO) with Reward-based Curriculum Sampling
+(RCS) while utilizing Chain-of-Thought (COT) reasoning to enhance comprehension of complex intent. This method
+achieved 93.25% accuracy on the MultiWOZ dataset. For multi-turn dialogue scenarios, Liu et al. [82] proposed a novel
+mechanism combining Hidden Markov Models (HMM) and LLM to generate context-aware, intent-driven dialogues
+through self-play. By introducing an auxiliary answer ranking task, the model learns more robust representations,
+thereby improving the accuracy of multi-turn intent classification.
+
+Discussion: As a core technology of dialog systems, text intent recognition aims to accurately understand user
+intent through semantic analysis. From the perspective of technology development, the existing methods mainly evolve
+along two technical routes: machine learning and deep learning. Machine learning methods extract text features through
+
+
+--- Page 13 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 13
+feature engineering and construct classification models with the help of supervised learning, and at the same time
+combine with semi-supervised or unsupervised learning strategies to alleviate the pressure of data annotation. Although
+these methods perform well in specific domains, they are still limited by the complexity of feature engineering and the
+lack of cross-domain adaptability. Deep learning methods achieve technological breakthroughs through end-to-end
+representation learning, where convolutional neural networks effectively capture phrase-level semantic features through
+a local-awareness mechanism, recurrent neural networks and their variants excel at modeling temporal dependencies
+in conversations, and a pre-trained model based on the Transformer achieves, through the mechanism of self-attention,
+a deep contextual understanding, which significantly improves the performance of intent recognition in multi-round
+dialog scenarios. In recent years, LLM-based approaches have further advanced the field of intent recognition. These
+models acquire generalized language understanding capabilities through large-scale pre-training on massive datasets
+and enable zero-shot or few-shot intent recognition via prompt engineering and in-context learning.
+
+3.2 Vision Intent Recognition
+
+Visual intent recognition fundamentally differs from traditional image classification, as it requires extracting abstract
+semantic concepts rather than identifying concrete visual entities. Unlike object-centric taxonomies based on physical
+attributes or scene layouts, intent recognition operates on a higher cognitive level with weak associations to low-level
+visual cues, posing unique challenges for modeling latent semantics.
+
+Early efforts in visual intent recognition focused primarily on the analysis of persuasive or motivational cues in
+human-centric images. The Visual Persuasion dataset proposed by Joo et al. [58] identifies nine types of persuasive
+intentions, with visual cues grouped into facial expressions, body gestures, and background scenes. Building on this,
+subsequent studies further explored the discriminative power of facial features [59] and scene-level attributes [47],
+showing that different visual regions contribute complementary information for intent inference.
+
+In a related direction, the task of action motivation aims to uncover the reasons behind human actions depicted in
+images. Pirsiavash et al. [103] was among the first to introduce this problem, emphasizing the importance of prior
+knowledge in understanding human behavior. To address this, Vondrick et al. [131] leveraged large-scale language
+models to extract commonsense priors from textual corpora, bridging the gap between visual input and abstract
+motivation. Furthermore, Synakowski et al. [122] pioneered the integration of action intentionality into 3D vision tasks,
+devising an unsupervised algorithm that harnesses commonsense knowledge, including self-propelled motion (SPM),
+Newtonian motion, and their causal relationships, to infer whether an agent’s behavior is intentional or unintentional
+from its 3D kinematic trajectories.
+
+While the aforementioned works center on human intent, recent research has expanded to include broader semantic
+categories beyond people, such as animals, objects, and scenes. A major milestone in this direction is the development of
+the Intentonomy benchmark by Jia et al. [54], which introduces a taxonomy grounded in social psychology, comprising
+28 fine-grained intent categories. This dataset redefined the problem by anchoring intent labels in psychologically
+meaningful constructs. To effectively utilize such structured intent categories, Wang et al. [132] proposed PIP-Net, a
+prototype-based learning framework that constructs representative prototypes for each intent class. As illustrated in
+Figure 7, this approach differs from the traditional classification paradigm by explicitly modeling class representations.
+During training, boundary samples are filtered, and class prototypes are dynamically updated using clustering techniques.
+The model performs intent prediction by measuring similarity to these prototypes while enforcing inter-class separability
+through contrastive objectives, alleviating the label ambiguity problem prevalent in intent tasks. Building on this
+foundation, Shi et al. [115] introduced a learnable hierarchical label embedding approach. Their method employs a
+
+
+--- Page 14 ---
+
+14 J. Zhao et al.
+ies is
+i I
+Cm Com
+Feature Feature
+compare i@eee@:
+Intention Intention
+(a) Classification paradigm (b) Prototype-based paradigm
+Fig. 7. The Classification Paradigm and Prototype-Based Paradigm for Vision Intent Recognition.
+multi-level Transformer to simulate the hierarchical taxonomy of intent, capturing features at coarse, intermediate, and
+fine levels. By leveraging coarse-grained predictions to supervise fine-grained label learning, this framework enhances
+discriminability and robustness in intent classification. Further refining this line of work, Shi et al. [114] proposed the
+LabCR method, which disentangles multiple intentions for precise distribution calibration and employs inter-sample
+correlations to align instance pairs, effectively addressing label shifts and enhancing intent consistency. To cope with
+the large visual diversity within intent categories, Tang et al. [124] introduced the MCCL framework, which leverages
+multi-grained visual clues to systematically compose intent representations, achieving state-of-the-art performance on
+the Intentonomy and MDID [62] datasets.
+
+In summary, these efforts collectively illustrate the continuous evolution of visual intent recognition. The research
+trajectory has moved from early explorations focusing on human-centric scenarios, such as persuasive intent and action
+motivation, toward more comprehensive semantic understanding across diverse image contexts.
+
+3.3 Audio Intent Recognition
+
+Audio intent recognition (Audio-to-Intent, AIR) is typically formulated within the broader framework of Spoken
+Language Understanding, which aims to directly infer user intent from raw audio signals. Traditional SLU systems
+often employ a pipeline architecture consisting of an Automatic Speech Recognition (ASR) module followed by a NLU
+module. In this setup, the ASR transcribes speech into text, and the NLU module subsequently extracts intent and slot
+information. However, such modular systems suffer from potential mismatches in training objectives and cumulative
+error propagation across stages. To overcome these limitations, recent research has increasingly focused on end-to-end
+SLU (E2E-SLU), which aims to directly map audio input to semantic representations. This direction is particularly
+motivated by audio’s ability to convey both linguistic content and rich paralinguistic cues. Unlike text, audio can capture
+prosody, emotion, and speaker attitude, which is crucial in cases involving semantic ambiguity, emotional fluctuation,
+or unclear contextual boundaries.
+
+Early efforts toward E2E-SLU include the work of Chen et al. [14], who proposed a model that bypasses both ASR
+and textual representations by directly mapping raw audio waveforms to intent classes. Their experiments show that
+both training-from-scratch and fine-tuning strategies outperform conventional pipeline-based methods, validating
+
+
+--- Page 15 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 15
+the effectiveness of direct modeling and the reduction of error propagation. Nevertheless, E2E models often rely on
+large-scale labeled data, which is costly to acquire. To address this challenge, Tian and Gorinski [125] adopted the
+Reptile meta-learning algorithm to enhance generalization in low-resource settings. Their approach achieved consistent
+gains across four diverse datasets, demonstrating the potential of meta-learning to improve AIR under data-scarce
+conditions. A key resource that has supported the advancement of AIR is the SLURP dataset, introduced by Bastianelli et
+al. [5]. SLURP offers rich semantic annotations across three hierarchical levels—scenarios, actions, and entities—enabling
+fine-grained intent understanding and facilitating the development of more comprehensive SLU models. With the
+advent of self-supervised pre-trained models, the focus has also shifted toward leveraging powerful representations.
+Wang et al. [137] systematically evaluated the performance of fine-tuning Wav2vec 2.0 [4] and HuBERT [43] for
+downstream SLU tasks. This method achieved 89.38% accuracy on the SLURP dataset. Their results indicate significant
+gains through fine-tuning, but also reveal performance degradation when models are further adapted for ASR-specific
+tasks, suggesting a trade-off between recognition accuracy and semantic preservation.
+
+To mitigate the limitations of audio-only inputs, several studies have proposed integrating semantic information
+directly into AIR systems. For example, Jiang et al. [56] presented a multi-level Transformer teacher-—student distillation
+framework that transfers knowledge from a BERT language teacher to a speech-only Transformer student, enabling
+robust end-to-end intent recognition without ASR. Likewise, Higuchi et al. [41] proposed BERT-CTC, utilizing BERT’s
+contextual embeddings as input to a CTC-based model to inject semantic context into ASR decoding. These methods
+demonstrate that enriching acoustic models with high-level semantics can improve both recognition and understanding
+performance.
+
+Moving beyond token-level semantics, Dighe et al. [24] proposed a hybrid acoustic-textual model at the subword
+level. Their approach fuses CTC-generated subword posterior probabilities with CBOW-based semantic embeddings,
+striking a balance between semantic granularity and model compactness. This design enhances robustness and intent
+recognition accuracy, particularly in noisy environments. Another important challenge in AIR is zero-shot intent
+classification. To this end, Elluru et al. [27] introduced a multimodal teacher-student framework that synthesizes audio
+embeddings from a few example textual utterances using a neural audio generator. Combined with a pre-trained audio
+encoder, their model significantly improves zero-shot performance on both public and proprietary datasets. Finally,
+Dong et al. [25] tackled the issue of modality bias in multimodal AIR systems, where models tend to over-rely on
+text while underutilizing audio. They proposed MuProCL, a prototype-based contrastive learning framework that
+enhances audio representation via cross-audio context augmentation and semantic alignment. Experiments on SLURP
+and MintRec demonstrate that MuProCL not only outperforms state-of-the-art methods but also reduces modality
+imbalance, yielding a more interpretable and robust intent recognition model.
+
+In conclusion, audio intent recognition has evolved from traditional pipeline-based SLU systems to end-to-end
+architectures that leverage both acoustic and semantic features, as depicted in Figure 8. This progression addresses
+critical issues such as error propagation and semantic loss. Advances in pre-training, meta-learning, and semantic
+integration have significantly improved performance, especially under low-resource and noisy conditions. Additionally,
+emerging solutions targeting zero-shot generalization and modality imbalance underscore the importance of aligning
+audio representations with semantic intent. These developments collectively contribute to more accurate, robust, and
+efficient audio-based intent understanding.
+
+
+--- Page 16 ---
+
+16 J. Zhao et al.
+
+yasr
+
+Text
+
+Ss
+| Feature Feature | Feature |
+Feature
+Intention Intention Intention
+(a) Traditional Pipeline-based AIR (b) End-to-end AIR (c) Pretrained-based AIR with Semantic Information
+Fig. 8. The Three Frameworks for Audio Intent Recognition (AIR).
+
+3.4 EEG Intent Recognition
+Electroencephalogram (EEG) technology has garnered significant attention in recent years as a non-invasive, high-
+temporal-resolution technique for capturing neural activity. It has proven particularly effective in identifying a person’s
+active intent, paving the way for various applications in brain-computer interface (BCI) and human-computer interaction
+(HCI) systems.
+
+Most intent recognition studies leveraging EEG signals have primarily focused on motor (motion) intent recognition.
+This area has become a core challenge in EEG-based BCI systems, given its critical role in rehabilitation, prosthetics, and
+assistive robotics. However, motor imagery EEG (MI-EEG) signals are often noisy, exhibit high inter-subject variability,
+and possess complex spatial-temporal dependencies. Chen et al. [12] introduced MTLEEG, a multi-task deep recurrent
+neural network that concurrently processes multiple EEG frequency bands, capturing richer frequency-dependent
+features and significantly enhancing multi-class intent recognition. To better extract underlying spatiotemporal patterns,
+Zhang et al. [159] proposed a convolutional-recurrent neural network architecture that directly processes raw EEG
+signals, yielding improved cross-subject generalization and practical utility in real-world BCI applications. Further
+improving generalization capabilities, Zhang et al. [158] developed G-CRAM, a graph-based attention network that
+integrates spatial, temporal, and contextual attention mechanisms. Their model consistently outperformed state-of-the-
+art methods on several public motor intent recognition datasets, demonstrating strong robustness to subject variability.
+To tackle computational inefficiencies and channel redundancy, Li et al. [74] incorporated Grad-CAM into a hybrid
+recurrent-convolutional architecture to perform attention-based EEG channel selection, striking a balance between
+classification performance and computational resource usage. To better exploit EEG spectral information, Idowu et
+al. [49] proposed a stacked model that combines LSTM and autoencoders with t-SNE [128] for feature compression,
+proving particularly effective in prosthetic control tasks requiring precise temporal dynamics. More recently, to develop
+cost-effective and deployable BCI systems, Li et al. [72] proposed a BiLSTM-based PerBCI architecture compatible with
+low-cost EEG acquisition devices. Their system demonstrated reliable real-time performance in daily home service
+scenarios, especially for elderly users. To enhance modeling of the temporal-spatial-spectral structure of EEG signals,
+Yan et al. [147] introduced TSE-DA-AWS, a dual-branch architecture that performs dynamic aggregation and adaptive
+
+
+--- Page 17 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 17
+frequency weighting, consistently outperforming baselines on multiple public datasets and validating its effectiveness
+in complex motor intent recognition tasks.
+
+Beyond motor (motion) intent recognition, some works have explored using EEG signals for other types of intent
+recognition. For instance, Kang et al. [60] investigated implicit intent recognition by identifying transitions in cognitive
+states using phase synchrony metrics like Phase Locking Value (PLV). This work demonstrated the feasibility of distin-
+guishing between different user goals, such as navigational versus informational intent. In the domain of engineering
+design, Li et al. [69] applied a vision transformer (ViT) [26] model, leveraging spatial-frequency EEG representations to
+decode design intentions, showing high versatility and accuracy in complex multitask environments.
+
+In summary, EEG-based intent recognition has evolved from early signal-driven approaches to advanced deep
+learning frameworks that effectively capture the rich spatiotemporal and spectral patterns in neural activity. While
+unimodal approaches have laid the groundwork by establishing the feasibility of EEG for intent recognition, domain-
+specific models have significantly improved generalizability, robustness, and real-time applicability. Collectively, these
+advancements underscore the potential of EEG as a powerful modality for intent inference across both cognitive and
+motor domains, enabling more intelligent and responsive BCI systems.
+
+4 Multimodal Intent Recognition
+
+With the increasing complexity of human-computer interaction scenarios, unimodal intent recognition can no longer
+meet the needs of real-world scenarios. Multimodal intent recognition can capture the explicit and implicit intent
+of the user more comprehensively by fusing multiple sources of information, such as text, audio, vision, and even
+physiological signals, which significantly improves the understanding accuracy and robustness. To systematically
+categorize research in multimodal intent recognition, we introduce a three-stage processing pipeline comprising Feature
+Extraction, Multimodal Representation Learning, and Intent Classification. Among these, representation learning serves
+as the core of multimodal modeling, where different modalities are aligned, fused, and jointly encoded to form a unified
+representation. Within this stage, we further classify existing approaches into four key methodological paradigms: Fusion
+Methods, Alignment & Disentanglement Methods, Knowledge-Augmented Methods, and Multi-Task Coordination
+Methods. This taxonomy captures the fundamental design philosophies behind current MIR systems and reflects how
+they address challenges such as modality interaction, semantic alignment, external knowledge incorporation, and
+auxiliary task coordination. The overall pipeline is illustrated in Figure 9, and in the following subsections, we provide
+an in-depth overview of each category, highlighting representative methods and their key contributions.
+
+4.1 Fusion Methods
+
+The core challenge of multimodal intent recognition lies in effectively integrating complementary information from
+heterogeneous modalities, where the choice of fusion strategy directly determines the system’s capability to infer users’
+latent intent. Based on the abstraction level of modal interactions, this paper categorizes existing fusion approaches
+into three classes: Feature-level fusion that combines raw modal features at input or intermediate layers, preserving
+fine-grained interactions but requiring strict alignment; Decision-level fusion that processes modalities independently
+before aggregating predictions; and Hybrid fusion that hierarchically combines their advantages, such as synergistic
+architectures integrating early feature fusion with late decision optimization. Figure 10 shows these three basic modal
+fusion categories.
+
+
+--- Page 18 ---
+
+18 J. Zhao et al.
+Data Acquisition Feature Extraction Multimodal Representation Learning
+Eh man, then|! § BERT Triplet Contrastive Learning (CL) we
+won! t get to hear © MacBERT / § Intent Classification
+Jonah lecture us. leet . semanticLevelcL -«ss«#&,_Sttured Knowledge
+Text 5 bos Extraction Based on LLMs
+Wav2vec 2.0 £ i o<
+2 r= Token-Level CL gg Inform
+' | | | ' Ss COVAREP pa 4 3 Dynamic Memory Request
+Ss WavLM as Feature-Level CL iE Mechanisms:
+Audio oe H g Retrieval Libraries -
+= %ei 5 Swin Transformer Pyramid Alignment if Select
+Pe S Faster CNN OE
+5 i Feature-Level Fusion ia . . a
+Video ResNet c 3 Multi-Task Joint Optimization
+cecceeeeeeenenentennnerenanenneeneeneneee Ro} Decision-Level i oF Framework
+NG SEMD Fs 3
+uw he Hybrid Fusion = Eo
+EEG Ww MDSCNN i
+Fig. 9. A Deep Learning Pipeline for Multimodal Intent Recognition.
+© Modality 1 ©) Modality 2 (-) Modality 3 Features Intent
+Intent Intent
+(Giese intent | cutanball |
+(Ceeececcees) (Fusion Rue
+Feature Fusion Methods [eoccccece)
+(S600) (Se00) (S500)
+ce
+Q000) [OOO] [GOGO [FSSS)[GE55)} (E000) (GOGO —_ [eoce)
+(a) Feature-level Fusion (b) Decision-level Fusion (c) Hybrid Fusion
+Fig. 10. The Basic Modal Fusion Methods of MIR.
+4.1.1 Feature-Level Fusion. Multi-modal feature fusion methods based on attention mechanisms have demonstrated
+significant advantages in intent recognition tasks, effectively capturing cross-modal semantic associations, and have
+become a hot topic of current research. Maharana et al. [88] introduced a cross-modal attention mechanism to in-
+teract between text feature and video feature, extracting richer feature representations for MIR. MMSAIR [116] and
+MBCENet [77] used a multi-head attention mechanism for feature fusion, which can automatically learn the importance
+weights of different feature dimensions. E?FNet [55] adopted a cross-attention mechanism and multiscale separable
+convolution to fuse EEG and EMG modalities and construct a MIR network. Hu et al. [44] proposed a dynamic attention
+allocation fusion (MVCL-DAF) method that dynamically allocates attention between single and multiple modalities
+through sample-adaptive weight allocation to adjust the integration of multimodal information. Additionally, Wang [134]
+used an adaptive mechanism-enhanced gate feature fusion module to dynamically adjust the fusion weight of each
+
+
+--- Page 19 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 19
+modal feature. SDIF-DA [46], CaVIR [66], IntCLIP [150], and El’ network [84] also adopted an attention mechanism for
+feature fusion.
+
+Some MIR methods integrate features of different modalities through various fusion strategies. Early works [99, 118]
+combined EEG and eye movement features as input to a classifier for intention prediction. Zhang et al. [167] proposed a
+feature fusion strategy based on graph neural networks to identify marketing intentions combined with images and text.
+In addition, [71] effectively integrated EEG and sEMG features through TFDP and different fusion coefficients. Drawing
+inspiration from information bottleneck and multi-sensory processing, Zhu et al. [177] designed InMu-Net, a multimodal
+intent detection framework to mitigate modal noise, redundancy, and long-tailed intent label distribution issues. The
+method achieved 76.05% accuracy on the MIntRec dataset. In addition, by introducing a dynamically weighted fusion
+network and a multi-granular learning approach, MIntOOD [164] effectively combines text, video, and audio features,
+substantially advancing intent recognition and OOD detection capabilities.
+
+4.1.2 Decision-Level Fusion. In decision-level fusion, opinion pooling is a core method for improving the robustness
+of final decisions by integrating the predicted probabilities or confidence levels of multiple classifiers or modalities.
+After obtaining the probability of each modality, [126] and [172] used the opinion pool method to obtain the final
+identification. Additionally, the GIRSDF framework proposed by Yang et al. [148] extracts features using the Gaze-YOLO
+network and uses a sequence model for decision fusion to ultimately identify the intent of grabbing.
+
+4.1.3 Hybrid Fusion. The hybrid fusion method improves the overall performance of multimodal intent recognition
+by integrating feature-level and decision-level fusion in a layered manner. Trick et al. [127] employed a hybrid fusion
+method to fuse visual and audio modalities. They trained unimodal classifiers for each body pose and speech and
+multimodal classifiers, either using feature fusion or decision fusion of the unimodal classifiers’ outputs with the fusion
+method IOP.
+
+4.2 Alignment & Disentanglement Methods
+
+In multimodal intent recognition, modal alignment addresses the coordination of cross-modal data in temporal, spatial,
+and semantic dimensions, establishing a unified representation for subsequent fusion. Meanwhile, modal decoupling
+disentangles shared and private information from the aligned features, mitigating inter-modal interference and enhancing
+model interpretability. Together, these mechanisms synergistically improve the accuracy and robustness of intent
+recognition.
+
+Contrastive learning, whose core idea is to bring semantically similar instances closer together in a shared embedding
+space while pushing unrelated samples apart [45], has become the mainstream method for aligning heterogeneous
+modalities [25, 34, 44, 66, 113, 121, 134, 174]. In multimodal intent recognition, most methods adopt contrastive learning
+to reduce the semantic gap between modalities by encouraging intra-modal features to cluster tightly while ensuring
+inter-modal features remain distinguishable. CaVIR [66] aligns key node features in the contextual context with positive
+and negative samples through contrastive learning. CAGC [121] utilizes global fusion context features to guide the
+process of contrastive learning. TCL-MAP [174] applies token-level contrastive learning between normal and augmented
+token pairs, pulling together tokens from the same pair while pushing away those from different pairs. Subsequently,
+A-MESS [113] synchronizes multimodal representations with label description information through triplet contrastive
+learning, thereby learning more effective representations. The method achieved 62.39% accuracy on the MIntRec2.0
+dataset. MuProCL [25] further develops a prototype-based contrastive feature learning strategy to better enhance the
+
+
+--- Page 20 ---
+
+20 J. Zhao et al.
+alignment of the fused regional and global features. MGC [134] achieves dynamic alignment of multimodal data through
+modal mapping coupling modules.
+
+Cross-modal attention mechanism also plays a significant role in multimodal alignment, where attention weights
+dynamically model semantic relationships across modalities, enabling explicit fine-grained interaction modeling
+[46, 84, 152]. SDIF-DA [46] resolves the issue of multimodal feature heterogeneity by employing cross-modal attention
+mechanisms in its shallow interaction module to respectively align video and audio features with corresponding text
+features. Additionally, cross-modal pyramid alignment employs a hierarchical attention mechanism to progressively
+align features at multiple granularities, achieving finer-grained semantic consistency across modalities. CPAD [152]
+aligns features from different modalities at the same level through cross-modal pyramid alignment, taking into account
+all corresponding features at all levels, thereby enhancing the understanding of visual intent.
+
+To address the issues of entangled multimodal semantics with modality structures and insufficient learning of
+causal effects of semantic and modality-specific information, Chen et al. [15] proposed a Dual-oriented Disentangled
+Network (DuoDN) for MIR, which employs a dual-oriented encoder to separate representations into semantics- and
+modality-oriented components. LVAMoE [70] uses a dense encoder to map different modalities onto a shared subspace,
+achieving explicit modal alignment. Through a sparse MoE module, LVAMoE learns features unique to each modality
+and uses orthogonal constraints to ensure their independence from invariant representations, thereby achieving modal
+decoupling.
+
+4.3 Knowledge-Augmented Methods
+
+Multimodal intent recognition faces dual challenges of semantic ambiguity and data sparsity. Knowledge-enhanced
+methods address these by integrating large language models for structured knowledge extraction and retrieval libraries
+as dynamic memory mechanisms, significantly improving contextual reasoning and few-shot generalization capabilities.
+
+LLM-Based Approaches. CaVIR [66] uses the large language model GPT during the testing phase to enhance the
+model’s common sense reasoning capabilities, thereby more accurately understanding the intent in the video. A-
+MESS [113] leverages the powerful language generation capabilities of LLM to generate three different interpretations or
+descriptions for each label. It then uses the label descriptions generated by LLM as positive samples and the descriptions
+of other labels as negative samples to construct a triplet contrast learning model, thereby enhancing the model’s
+semantic understanding capabilities. Zhang et al. [170] used LLM to solve ambiguity issues in image intent perception
+tasks by generating visual prompts to guide LLMs to better understand the intent information in images. [34], [120],
+and [75] also use multimodal LLMs to deeply integrate text and visual information and accurately identify user intent.
+In addition, KDSL [10] effectively solves the problem of inter-task performance constraints in few-shot multimodal
+intent recognition tasks by using smaller LLMs to convert knowledge into interpretable rules and combining them with
+larger LLMs for collaborative prediction.
+
+Retrieval-Based Approaches. Within the Knowledge-Augmented Methods category, retrieval-augmented approaches
+in large language models enhance intent understanding by retrieving relevant textual knowledge, while retrieval-based
+multimodal intent recognition methods leverage similar mechanisms to fetch contextual information from modalities
+like video and audio, thereby enriching feature representations for improved performance. The Cross-video Bank in
+CAGC [121] is mainly used to store scenes that are highly similar to the current video and provide more accurate
+cross-video contextual information, thereby enhancing intent understanding. MuProCL [25] utilized external context
+
+
+--- Page 21 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 21
+information (Top-k samples) from the training set to improve model performance. By introducing context information
+from similar audio samples, we enhanced the representational power of audio features.
+4.4 Multi-Task Coordination Methods
+Multi-Task Coordination Methods advance multimodal intent recognition by jointly optimizing multiple related
+tasks within a unified framework, enabling the model to capture shared representations across tasks such as intent
+classification and emotion recognition. By coordinating these objectives, these methods address the limitations of
+single-task learning, enhancing generalization and robustness in multimodal settings. The integration of audio, text, and
+other modalities in a multi-task framework allows for a more comprehensive understanding of user intent, leveraging
+complementary information to improve overall performance. The common learning paradigms in MIR are illustrated in
+Figure 11.
+(Modality 1 () Modality 2 Features
+Extractor Extractor Extractor Extractor Extractor Extractor
+@QOOO) |[OCOOO) |WOOD) |OCOCO Q@COO) [OOOO
+(a) Single-Task Learning (b) Multi-Task Learning
+
+Fig. 11. Single-Task Learning and Multi-Task Learning in MIR.
+
+EI? network [84] jointly models sentiment and intent recognition through a multi-task learning framework. The
+model utilizes multimodal inputs (text, audio, video) and dialogue history information, capturing the deep connections
+between sentiment and intent through task-specific encoders and interactive attention mechanisms. In addition, the
+publicly available MC-EIU dataset fills the data gap in multimodal, multilingual sentiment-intent joint understanding,
+providing an important resource for related research. MMSAIR [116] also employs a multi-task learning framework to
+jointly model sentiment analysis and intent recognition. It leverages multimodal inputs with shared feature encoding,
+followed by fusion via multi-head attention mechanisms to generate sentiment and intent representations. The model
+uses a weighted loss function for joint optimization, enabling mutual reinforcement between tasks. In addition,
+MBCENet [77] used a multi-task learning framework to jointly optimize emotion recognition as an auxiliary task with
+intent recognition, utilizing multimodal data from EEG, audio, and text to significantly improve the accuracy of intent
+recognition. Experiments demonstrated that the introduction of emotional information and EEG signals can effectively
+
+
+--- Page 22 ---
+
+22 J. Zhao et al.
+solve the problem of intent ambiguity in the same text in different contexts, providing new ideas for multimodal
+human-computer interaction.
+Table 4. Summary of Representative Approaches of Multimodal Intent Recognition
+References Dataset Modality Method Performance
+Ye et al. [152] Intentonomy* VT Hierarchical cross-modal alignment 36.50%Ave F1
+pyramid with label texts.
+Yang et al. [150]  Intentonomy* VT CLIP-based LLM filtering for label text 42.66%mAP
+representations.
+Li et al. [66] IntentQA VT Context-aware Video Intent Reasoning 57.64% Accuracy
+(CaVIR) model.
+Zhou et al. [174] MIntRec VAT Token-level contrastive learning with 73.62% Accuracy
+modality-aware prompting.
+Sun et al. [121] MIntRec VAT Global contextual information integra- 73.39% Accuracy
+tion across videos.
+Li et al. [70] MIntRec VAT One-tower architecture addressing 73.13% Accuracy
+cross-modal heterogeneity.
+Shen et al. [113] MlIntRec, VAT Anchor-based embedding with seman- 74.12% Accuracy,
+MIntRec2.0 tic synchronization. 62.39% Accuracy
+Zhu et al. [177] MIntRec VAT Information bottleneck for modality re- 76.05% Accuracy
+dundancy, multi-sensory processing.
+Huang et al. [46] | MIntRec VAT Shallow-to-deep interaction with data 73.71% Accuracy
+augmentation.
+Hu et al. [44] MIntRec, VAT Dynamic adaptation to diverse multi- 74.72% Accuracy,
+MIntRec2.0 modal samples. 57.80% Accuracy
+Chen et al. [15] MIntRec, VAT Dual-oriented disentangled network 75.28% Accuracy,
+MIntRec2.0 with counterfactual intervention. 57.76% Accuracy
+Wang et al. [135] MlIntRec VAT Modal mapping coupled to cross-modal 73.93% Accuracy
+attention, dynamic alignment with
+gated fusion weighting.
+Zhao et al. [172] Kitchen ro- V, Gaze,Gestures Bayesian multimodal fusion with batch 72.0% Accuracy
+bot confidence learning.
+Li et al. [76] CMSLIU ATE Brain-computer fusion for identical-text 69.4% Accuracy
+intention disambiguation.
+* Intentonomy is originally a visual-only (V) dataset; text modality was constructed in each work respectively.
+4.5 Discussion
+Multimodal intent recognition has seen significant advancements, driven by large-scale datasets and deep learning
+architectures, with various approaches summarized in Table 4. Despite these developments, key challenges persist. While
+fusion methods effectively combine text, audio, and visual signals, temporal asynchrony and inter-modal heterogeneity
+complicate alignment, particularly in multi-round conversations where deep audio-visual-text fusion proves difficult.
+The field also grapples with open-world challenges, including out-of-scope detection and semantic ambiguities in intent
+mapping, which are further exacerbated by the scarcity of labeled data. Although knowledge-augmented and LLM-based
+approaches show promise in addressing these issues, limitations in scalability and fine-tuning persist. Future progress
+
+
+--- Page 23 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 23
+hinges on developing adaptive fusion techniques that overcome modality disparities while improving generalization
+across diverse, real-world scenarios.
+
+5 Performance Evaluation Metrics
+
+Given the evaluation requirements of intent recognition tasks, researchers typically use four core metrics to evaluate
+systems: Accuracy (ACC), Precision (P), Recall (R), and F1 score (F1). Accuracy is defined as the proportion of
+correct predictions made by the model in its entirety. This metric is particularly well-suited to scenarios where the
+distribution of categories is balanced. Precision, on the other hand, is the proportion of samples predicted to be positive
+that are in fact positive, thereby reflecting the model’s prediction accuracy. Recall, meanwhile, is the proportion of
+samples that are in fact positive and are correctly identified, thus emphasising the model’s coverage. Finally, the F1
+score is the harmonic average of Precision and Recall, making it suitable for tasks with an imbalanced distribution of
+categories. This metric can be used to evaluate the accuracy of the model. The distribution imbalance tasks facilitate a
+more balanced evaluation of the model’s overall performance. Zhang et al. [171] utilized accuracy as the evaluation
+metric to validate the effectiveness of their proposed method. Wong et al. [139] employed precision, recall, and F1-score
+to evaluate the intent recognition performance of their model. Likewise, Nguyen et al. [94] adopted accuracy, F1-score,
+precision, and recall as systematic evaluation metrics, effectively assessing their model’s performance.
+
+In addition, intent recognition tasks also use specialized evaluation measures like Weighted F1-score (WF1),
+Weighted Precision (WP), Pearson Correlation (Corr), In-scope Classes F1-score (F1-IS), Out-of-scope Class
+F1-score (F1-OOS), and equal error rate (EER). These metrics help gauge how well a model identifies and classifies
+user intentions, ensuring both accuracy and robustness in real-world applications. In the study on multimodal intent
+recognition, Zhang et al. [162] employed a comprehensive set of evaluation metrics for in-scope intent classification,
+including F1-score, P, R, ACC, Weighted F1-score (WF1), and Weighted Precision (WP), to thoroughly assess the model’s
+performance on known intent categories. For out-of-scope intent detection, they adopted metrics commonly used in
+open intent recognition, such as Accuracy, Macro F1-score across all classes, F1-IS, and F1-OOS, to effectively evaluate
+the model’s robustness and accuracy in identifying unknown intent. The definitions for them are as follows:
+
+MacroFi =~ Yv 2FS, wer = Ym (| (1)
+IC| “4 Pi +R “4 Pi +R
+where |C| is the total number of classes, P; and R; are the precision and recall for class i, w; is the weight for class i.
+FI-IS = —— » 2+ Fis Ris py ogg = 2 Poos “Roos (2)
+ICisl £0, Pis + Ris Poos + Roos
+where |Cys| is the total number of in-scope classes, P denotes Precision and R represents Recall.
+
+Pinhanez et al. [102] utilized EER to evaluate out-of-scope intent detection and it measures the model’s ability to
+distinguish between known and unknown intent. The EER is a metric used to quantify the classification error rate
+when the False Acceptance Rate (FAR) and the False Rejection Rate (FRR) are equal or closest. The FAR is defined as the
+proportion of out-of-scope intent incorrectly classified as in-scope, while the FRR is the proportion of in-scope intent
+incorrectly classified as out-of-scope. These two metrics are defined as:
+
+FAR = ogg, FRR= 5 (3)
+
+
+--- Page 24 ---
+
+24 J. Zhao et al.
+where NOS and Nie, denote the number of OOS samples incorrectly accepted and IS samples incorrectly rejected,
+respectively, and NO°S and N' are the total number of OOS and IS samples.
+6 Applications
+Intent recognition technology has become pervasive in a variety of practical scenarios, ranging from the conventional
+interpretation of user intent in natural language processing to the sophisticated reasoning that integrates multiple
+sources of information, such as speech, image, and behaviour, in multimodal interaction systems. Divergent application
+scenarios give rise to marked discrepancies in terms of the requirements and methodologies employed for intent
+recognition. To illustrate this point, we may consider the case of educational scenarios, wherein the emphasis is placed
+on the comprehension of learning motivation and the intent behind questioning. In contrast, the medical field accords
+greater significance to the recognition of patients’ needs and the identification of rehabilitation behavioural intent. This
+section explores various applications of intent recognition, as illustrated in Table 5.
+Table 5. Summary of Intent Recognition Applications
+Domain Typical Applications
+Human-computer interaction Gesture/speech control, collaborative task intent, natural interaction
+Education Motivation identification, questioning/confusing intentions, individualized tutoring
+Healthcare Disease expression intent, rehabilitation action intent, mental state recognition
+Smart home Appliance control intent, voice command recognition, behavioral trigger intent
+Automotive systems Driver intent prediction, pedestrian/non-motorized behavior recognition
+Marketing and advertising Purchase intent recognition, interest prediction, ad personalized recommendation
+Sports Action intent prediction, tactical intent recognition, postural understanding
+
+(1) Human-computer interaction: In human-computer interaction (HCI) scenarios [39, 50, 64, 87, 100], intent
+recognition is primarily employed to decipher the control commands or interaction requirements articulated
+by human users through voice, gestures, and movements. For instance, the study [50] proposed a recursive
+method based on Bayesian filtering to recognize the user’s intention and reach the purpose of collaborative task
+completion between robots and humans. The intent of the collaborative task is perceived through gestures or
+body postures, thereby enhancing the robot’s capacity to discern and respond to human intent, thus facilitating
+natural and efficient collaborative operations.
+
+(2) Education: In the domain of education, intent recognition has become a prevalent technique in intelligent
+tutoring systems and personalized learning platforms [93, 96, 101, 101, 117, 154]. This method is employed to
+identify students’ learning objectives, questioning intentions, confusion states, and learning motivations. The
+study [101] categorizes the questions posed by students into predefined intent categories. The model then selects
+the corresponding text content as the context to answer the questions based on the recognized intent categories.
+
+(3) Healthcare: Intent recognition in healthcare scenarios encompasses a multitude of dimensions [86, 95, 142, 145,
+160, 168], including patient disease representation, rehabilitation movement control, and psychological state
+recognition. In the study of [160], the researchers analyzed the usefulness of different data sources, such as EMG
+signals and prosthetic kinematic parameters. By selecting the most effective combination of these data sources,
+they achieved real-time recognition of an amputee’s movement intention, enabling autonomous prosthetic limb
+control.
+
+
+--- Page 25 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 25
+(4) Smart home: The application of intent recognition technology in the smart home [22, 106, 123] allows the
+system to recognize the user’s control needs or habitual behaviors in the current environment and automatically
+adjust the state of the device, thus realizing a smarter and more convenient seamless interaction experience. The
+study [22] applies end-to-end (E2E) audio intent recognition technology to smart home scenarios, which can
+solve the limitations of traditional control methods, improve interaction convenience and user experience, and
+
+make the smart home more intelligent and humanized.
+
+(5) Automotive systems: In the domain of automotive systems, the concept of intent recognition finds application
+in the analysis of potential behaviors and the discernment of decision-making intentions among various road
+users such as drivers, pedestrians, cyclists, and vehicles[6, 29, 68, 85, 105, 112, 129]. The implementation of intent
+recognition technologies contributes to the development of intelligent automotive systems that are designed to
+enhance safety and efficiency. Intent recognition is applied in advanced driver assistance systems (ADAS) in this
+study [6], aiming to understand driver behavior earlier and more accurately, thereby enhancing safety outcomes.
+The study [112] improves traffic safety and reduces the risk of traffic accidents by predicting pedestrians’ intention
+to cross the road.
+
+(6) Marketing and advertising: In the domain of marketing and advertising [91, 109, 119, 140, 165, 166], intent
+recognition is employed to predict a user’s purchase intention, points of interest, or clicking behaviors. This, in
+turn, enables the recommendation of personalized content and precise placement. This study [165] presented
+a multimodal marketing intent analysis system called MMIA that can identify and parse marketing intent by
+analyzing multimodal content (text and images) on social media platforms. Another study [119] analyzed features
+such as facial expressions, eye movements, queries, and implicit user interactions of users with different search
+intentions to automatically identify users’ search intent in the early stages of an image search session.
+
+(7) Sports: In the context of sports training and competition, the recognition of intent is employed to facilitate
+comprehension of a player’s tactical behaviors, technical movement, or synergistic intent [38, 67, 136]. By
+analyzing a player’s facial expression and eye movements, the system proposed in study [38] can determine
+whether a player has foreseen and planned to act by touching the ball. This can be used to determine whether a
+handball incident in a soccer match is an intentional act or not.
+
+7 Challenges and Future Directions
+
+Despite substantial progress in intent recognition, several critical challenges remain unresolved. The inherently diverse,
+ambiguous, and dynamic nature of human intent, along with the complexity of multi-intent utterances and the evolving
+intent throughout dialogues, continues to pose significant obstacles. These challenges underscore the need for the
+development of more advanced intent recognition systems and the continuous refinement of existing approaches. The
+key challenges and potential future research directions are summarized as follows:
+
+(1) Intent ambiguity and semantic vagueness: User utterances are often context-dependent, ambiguous, or
+semantically underspecified, which makes accurate intent inference particularly difficult. For instance, a statement
+such as “It’s cold in here” could imply a request to adjust the temperature, a complaint, or merely an observation,
+depending on factors such as user intent history, prosody, and environmental context. Addressing such ambiguity
+necessitates integrating contextual reasoning, pragmatic inference, and affective state modeling into intent
+recognition frameworks.
+
+
+--- Page 26 ---
+
+26 J. Zhao et al.
+(2) Multi-intent and compositional intent recognition: Natural language allows users to express multiple or
+compositional intent within a single utterance. For example, the sentence “Book a table for two and remind me to
+call mom” conveys two distinct intentions: making a reservation and setting a reminder. Moreover, hierarchical
+or conditional intent structures further challenge traditional single-label classification paradigms. Addressing this
+requires support for multi-label classification, intent segmentation, and compositional reasoning [16, 104, 141].
+For instance, Qin et al. [104] proposed a Divide-Solve-Combine Prompting (DSCP) strategy for multi-intent
+detection using large language models. Cheng et al. [16] utilized hierarchical attention to divide the scopes of
+
+each intent and applied optimal transport to achieve the mutual guidance between slot and intent.
+
+(3) Intent evolution in multi-turn dialogues: In real-world interactions, user intentions are often dynamic
+and evolve across multiple dialogue turns. An initial intent such as “search for flights” may evolve into “book
+the cheapest option” or even “cancel everything” depending on updated constraints or emotional changes.
+Capturing such temporal evolution requires advanced mechanisms such as context-aware dialogue state tracking,
+memory-augmented models, and intent revision detection. Recent studies have begun exploring these challenges
+using the capabilities of large language models [1, 80, 83].
+
+(4) Modal heterogeneity and asynchrony: Multimodal intent recognition involves heterogeneous input signals
+suchas speech, facial expressions, gestures, text, or physiological data, each with distinct temporal resolutions and
+semantic representations. For instance, gaze or gesture cues may temporally precede or follow verbal expressions,
+while EEG signals operate on a millisecond scale. These temporal and representational disparities pose significant
+challenges to synchronous fusion. Addressing this requires sophisticated temporal alignment, modality-specific
+encoders, and attention-based fusion strategies that preserve the semantic integrity of each modality.
+
+(5) Out-of-domain intent detection: In open-world scenarios, users frequently express intent outside the pre-
+defined set observed during training. Relying solely on closed-set assumptions can lead to erroneous or inap-
+propriate system responses. Robust out-of-domain (OOD) detection is essential to maintain system reliability
+and user trust. Recent efforts have explored open-set recognition [57, 173] and hybrid supervised—unsupervised
+approaches [156, 175] to distinguish unseen intent and appropriately defer, reject, or redirect such cases.
+
+(6) Long-tail intent distribution: Many intent categories, particularly user-specific or domain-specific ones, are
+severely underrepresented in available training data. For instance, intentions like “book appointment” may
+have abundant instances, while rarer ones such as “report vaccine side effect” may be sparsely labeled. This
+long-tail distribution hinders model generalization. Recent work leverages few-shot learning, transfer learning,
+and synthetic data generation to address these challenges [169, 176].
+
+(7) Cross-lingual and cross-cultural generalization: The majority of intent recognition systems are trained on
+English-centric datasets, limiting their applicability in multilingual and multicultural settings. For instance, the
+intent behind the phrase “Can you recommend something spicy?” might vary across cultures. Cross-lingual
+transfer learning using multilingual models (e.g., XLM-R [19], mT5 [146]) and the development of culturally-aware
+benchmarks and modeling techniques are crucial to enhance inclusiveness and global applicability [30, 153].
+
+(8) Continuous intent reasoning for dynamic environments Traditional intent recognition methods typically
+rely on static environment assumptions, making them inadequate for real-time changing interaction scenarios.
+When physical states or task requirements alter, systems must continuously update intent reasoning, placing
+higher demands on models’ perceptual fusion and temporal processing capabilities. This challenge is particularly
+prominent in Embodied AI applications. For instance, service robots need to adjust operational intent based on
+moving objects, and autonomous driving systems require real-time updates to navigation strategies in response
+
+
+--- Page 27 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 27
+to sudden road conditions. Addressing these issues necessitates the development of dynamic intent reasoning
+mechanisms with environmental awareness and adaptive capabilities.
+
+8 Conclusion
+
+This article systematically elucidates the evolution of intent recognition from single-modality to multimodal approaches,
+
+thoroughly examining high-performance methods based on deep learning. It covers both single-modality techniques
+
+(text, audio, visual, EEG) and advanced multimodal approaches, including feature fusion, alignment &disentanglement,
+
+knowledge augmentation, and multi-task coordination. The article comprehensively reviews public datasets and
+
+standardized evaluation metrics in the field of multimodal intent recognition, providing researchers with a robust
+benchmark framework and reference standard. Intent recognition has been demonstrated to have broad application
+potential across diverse domains, including human-computer interaction, automotive systems, education, and healthcare.
+
+Looking ahead, with the continuous advancement of multi-source data acquisition technologies, research into key
+
+issues such as data heterogeneity, modal synchronization, and cross-domain intent detection will accelerate. These
+
+breakthroughs will significantly enhance the accuracy, robustness, and universality of multi-modal intent recognition,
+driving intelligent interaction systems toward smarter and more human-centric directions.
+
+References
+
+[1] Waheed Ahmed Abro, Guilin Qi, Huan Gao, Muhammad Asif Khan, and Zafar Ali. 2019. Multi-turn intent determination for goal-oriented dialogue
+systems. In International Joint Conference on Neural Networks (IJCNN). IEEE, 1-8.
+
+[2] James F. Allen and C.Raymond Perrault. 1980. Analyzing intention in utterances. Artificial Intelligence 15, 3 (1980), 143-178.
+
+[3] Jesse Atuhurra, Hidetaka Kamigaito, Taro Watanabe, and Eric Nichols. 2024. Domain Adaptation in Intent Classification Systems: A Review. arXiv
+preprint arXiv:2404. 14415 (2024).
+
+[4] Alexei Baevski, Yuhao Zhou, Abdelrahman Mohamed, and Michael Auli. 2020. wav2vec 2.0: A framework for self-supervised learning of speech
+representations. Advances in Neural Information Processing Systems 33 (2020), 12449-12460.
+
+[5] Emanuele Bastianelli, Andrea Vanzo, Pawel Swietojanski, and Verena Rieser. 2020. SLURP: A spoken language understanding resource package. In
+2020 Conference on Empirical Methods in Natural Language Processing. 7252-7262.
+
+[6] Holger Berndt, Jorg Emmert, and Klaus Dietmayer. 2008. Continuous driver intention recognition with hidden markov models. In 2008 11th
+International IEEE Conference on Intelligent Transportation Systems. 1189-1194.
+
+[7] Leo Breiman. 2001. Random forests. Machine Learning 45 (2001), 5-32.
+
+[8] Pawel Budzianowski, Tsung-Hsien Wen, Bo-Hsiang Tseng, Ifigo Casanueva, Stefan Ultes, Osman Ramadan, and Milica Gaié. 2018. MultiWOZ - A
+Large-Scale Multi-Domain Wizard-of-Oz Dataset for Task-Oriented Dialogue Modelling. In Proceedings of the 2018 Conference on Empirical Methods
+in Natural Language Processing. 5016-5026. doi:10.18653/v1/D18- 1547
+
+[9] Ifigo Casanueva, Tadas Teméinas, Daniela Gerz, Matthew Henderson, and Ivan Vulié. 2020. Efficient intent detection with dual sentence encoders.
+arXiv preprint arXiv:2003.04807 (2020).
+
+[10] Bin Chen, Yu Zhang, Hongfei Ye, Yizi Huang, and Hongyang Chen. 2025. Knowledge-Decoupled Synergetic Learning: An MLLM based Collaborative
+Approach to Few-shot Multimodal Dialogue Intention Recognition. In Companion Proceedings of the ACM on Web Conference 2025. 3044-3048.
+
+[11] Qian Chen, Zhu Zhuo, and Wen Wang. 2019. Bert for joint intent classification and slot filling. arXiv preprint arXiv:1902.10909 (2019).
+
+[12] Weitong Chen, Sen Wang, Xiang Zhang, Lina Yao, Lin Yue, Buyue Qian, and Xue Li. 2018. EEG-based motion intention recognition via multi-task
+RNNs. In Proceedings of the 2018 SIAM International Conference on Data Mining. SIAM, 279-287.
+
+[13] Yongjun Chen, Zhiwei Liu, Jia Li, Julian McAuley, and Caiming Xiong. 2022. Intent contrastive learning for sequential recommendation. In
+Proceedings of the ACM Web Conference 2022. 2172-2182.
+
+[14] Yuan-Ping Chen, Ryan Price, and Srinivas Bangalore. 2018. Spoken language understanding without speech recognition. In 2018 IEEE International
+Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 6189-6193.
+
+[15] Zhanpeng Chen, Zhihong Zhu, Xianwei Zhuang, Zhiqi Huang, and Yuexian Zou. 2024. Dual-oriented Disentangled Network with Counterfactual
+Intervention for Multimodal Intent Detection. In Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing. 17554-
+17567.
+
+[16] Xuxin Cheng, Zhihong Zhu, Hongxiang Li, Yaowei Li, Xianwei Zhuang, and Yuexian Zou. 2024. Towards multi-intent spoken language understanding
+via hierarchical attention and optimal transport. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 38. 17844-17852.
+
+[17] Fabrice Colas and Pavel Brazdil. 2006. Comparison of SVM and some older classification algorithms in text classification tasks. In IFIP International
+Conference on Artificial Intelligence in Theory and Practice. 169-178.
+
+
+--- Page 28 ---
+
+28 J. Zhao et al.
+[18] Daniele Comi, Dimitrios Christofidellis, Pier Piazza, and Matteo Manica. 2023. Zero-Shot-BERT-adapters: A Zero-Shot Pipeline for Unknown
+Intent Detection. In Findings of the Association for Computational Linguistics: EMNLP 2023. 650-663. doi:10.18653/v1/2023.findings-emnlp.47
+[19] Alexis Conneau, Kartikay Khandelwal, Naman Goyal, Vishrav Chaudhary, Guillaume Wenzek, Francisco Guzman, Edouard Grave, Myle Ott, Luke
+Zettlemoyer, and Veselin Stoyanov. 2020. Unsupervised Cross-lingual Representation Learning at Scale. In Proceedings of the 58th Annual Meeting
+
+of the Association for Computational Linguistics. 8440-8451.
+
+[20] Corinna Cortes and Vladimir Vapnik. 1995. Support-vector networks. Machine Learning 20 (1995), 273-297.
+
+[21] Alice Coucke, Alaa Saade, Adrien Ball, Théodore Bluche, Alexandre Caulier, David Leroy, Clément Doumouro, Thibault Gisselbrecht, Francesco
+Caltagirone, Thibaut Lavril, et al. 2018. Snips voice platform: an embedded spoken language understanding system for private-by-design voice
+interfaces. arXiv preprint arXiv:1805.10190 (2018).
+
+[22] Thierry Desot, Francois Portet, and Michel Vacher. 2019. Towards end-to-end spoken intent recognition in smart home. In 2019 International
+Conference on Speech Technology and Human-Computer Dialogue (SpeD). IEEE, 1-8.
+
+[23] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. BERT: Pre-training of Deep Bidirectional Transformers for Language
+Understanding. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human
+Language Technologies, Volume 1 (Long and Short Papers). 4171-4186. doi:10.18653/v1/N19- 1423
+
+[24] Pranay Dighe, Prateeth Nayak, Oggi Rudovic, Erik Marchi, Xiaochuan Niu, and Ahmed Tewfik. 2023. Audio-to-intent using acoustic-textual
+subword representations from end-to-end asr. In ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP).
+IEEE, 1-5.
+
+[25] Qian Dong, Yuezhou Dong, Ke Qin, Guiduo Duan, and Tao He. 2025. Unbiased Multimodal Audio-to-Intent Recognition. In ICASSP 2025-2025 IEEE
+International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE, 1-5.
+
+[26] Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias
+Minderer, G Heigold, S Gelly, et al. 2021. An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale. In International Conference
+on Learning Representations.
+
+[27] Veera Raghavendra Elluru, Devang Kulshreshtha, Rohit Paturi, Sravan Bodapati, and Srikanth Ronanki. 2023. Generalized zero-shot audio-to-intent
+classification. In 2023 IEEE Automatic Speech Recognition and Understanding Workshop (ASRU). IEEE, 1-8.
+
+[28] Mihail Eric, Rahul Goel, Shachi Paul, Abhishek Sethi, Sanchit Agarwal, Shuyang Gao, Adarsh Kumar, Anuj Goyal, Peter Ku, and Dilek Hakkani-Tur.
+2020. MultiWOZ 2.1: A Consolidated Multi-Domain Dialogue Dataset with State Corrections and State Tracking Baselines. In Proceedings of the
+Twelfth Language Resources and Evaluation Conference. 422-428. https://aclanthology.org/2020.lrec- 1.53/
+
+[29] Jianwu Fang, Fan Wang, Jianru Xue, and Tat-Seng Chua. 2024. Behavioral Intention Prediction in Driving Scenes: A Survey. IEEE Transactions on
+Intelligent Transportation Systems 25, 8 (2024), 8334-8355.
+
+[30] Fatema Tuj Johora Faria, Mukaffi Bin Moin, Md Mahfuzur Rahman, Md Morshed Alam Shanto, Asif Iftekher Fahim, and Md Moinul Hoque. 2025.
+Uddessho: An extensive benchmark dataset for multimodal author intent classification in low-resource bangla language. In International Conference
+on Information Technology and Applications. 383-393.
+
+[31] Zihao Feng, Xiaoxue Wang, Ziwei Bai, Donghang Su, Bowen Wu, Qun Yu, and Baoxun Wang. 2025. Improving Generalization in Intent Detection:
+GRPO with Reward-Based Curriculum Sampling. arXiv preprint arXiv:2504.13592 (2025).
+
+[32] George Forman, Hila Nachlieli, and Renato Keshet. 2015. Clustering by Intent: A Semi-Supervised Method to Discover Relevant Clusters
+Incrementally. In Machine Learning and Knowledge Discovery in Databases. 20-36.
+
+[33] Yoav Freund, Robert E Schapire, et al. 1996. Experiments with a new boosting algorithm. In icml, Vol. 96. 148-156.
+
+[34] Tianhong Gao, Genhang Shen, Yuxuan Wu, Zunlei Feng, Jinshan Zhang, and Sheng Zhou. 2025. EcomMIR: Towards Intelligent Multimodal Intent
+Recognition in E-Commerce Dialogue Systems. In Companion Proceedings of the ACM on Web Conference 2025. 3049-3052.
+
+[35] Alexander Genkin, David D Lewis, and David Madigan. 2007. Large-scale Bayesian logistic regression for text categorization. Technometrics 49, 3
+(2007), 291-304.
+
+[36] Chih-Wen Goo, Guang Gao, Yun-Kai Hsu, Chih-Li Huo, Tsung-Chieh Chen, Keng-Wei Hsu, and Yun-Nung Chen. 2018. Slot-Gated Modeling for
+Joint Slot Filling and Intent Prediction. In Proceedings of the 2018 Conference of the North American Chapter of the Association for Computational
+Linguistics: Human Language Technologies, Volume 2 (Short Papers). 753-757. doi:10.18653/v1/N18-2118
+
+[37] Dilek Hakkani-Tiir, Gékhan Tir, Asli Celikyilmaz, Yun-Nung Chen, Jianfeng Gao, Li Deng, and Ye-Yi Wang. 2016. Multi-domain joint semantic
+frame parsing using bi-directional rnn-lstm.. In Interspeech. 715-719.
+
+[38] Mohammad Mehedi Hassan, Stephen Karungaru, and Kenji Terada. 2024. Robotics Perception: Intention Recognition to Determine the Handball
+Occurrence during a Football or Soccer Match. AI 5, 2 (2024), 602-617.
+
+[39] Gaole He, Nilay Aishwarya, and Ujwal Gadiraju. 2025. Is Conversational XAI All You Need? Human-Al Decision Making with a Conversational
+XAI Assistant. In Proceedings of the 30th International Conference on Intelligent User Interfaces (IUI ’25). New York, NY, USA, 907-924. doi:10.1145/
+3708359.3712133
+
+[40] Charles T Hemphill, John J Godfrey, and George R Doddington. 1990. The ATIS spoken language systems pilot corpus. In Speech and Natural
+Language: Proceedings of a Workshop Held at Hidden Valley, Pennsylvania, June 24-27, 1990.
+
+[41] Yosuke Higuchi, Brian Yan, Siddhant Arora, Tetsuji Ogawa, Tetsunori Kobayashi, and Shinji Watanabe. 2022. BERT Meets CTC: New Formulation
+of End-to-End Speech Recognition with Pre-trained Masked Language Model. In Findings of the Association for Computational Linguistics: EMNLP
+2022. 5486-5503. doi:10.18653/v1/2022.findings-emnlp.402
+
+
+--- Page 29 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 29
+[42] Thomas Holtgraves. 2008. Automatic intention recognition in conversation processing. Journal of Memory and Language 58, 3 (2008), 627-645.
+[43] Wei-Ning Hsu, Benjamin Bolte, Yao-Hung Hubert Tsai, Kushal Lakhotia, Ruslan Salakhutdinov, and Abdelrahman Mohamed. 2021. Hubert:
+
+Self-supervised speech representation learning by masked prediction of hidden units. IEEE/ACM Transactions on Audio, Speech, and Language
+Processing 29 (2021), 3451-3460.
+
+[44] Bo Hu, Kai Zhang, Yanghai Zhang, and Yuyang Ye. 2025. Adaptive Multimodal Fusion: Dynamic Attention Allocation for Intent Recognition. In
+Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 39. 17267-17275.
+
+[45] Haigen Hu, Xiaoyuan Wang, Yan Zhang, Qi Chen, and Qiu Guan. 2024. A comprehensive survey on contrastive learning. Neurocomputing 610
+(2024), 128645.
+
+[46] Shijue Huang, Libo Qin, Bingbing Wang, Geng Tu, and Ruifeng Xu. 2024. Sdif-da: A shallow-to-deep interaction framework with data augmentation
+for multi-modal intent detection. In ICASSP 2024-2024 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP). IEEE,
+10206-10210.
+
+[47] Xinyue Huang and Adriana Kovashka. 2016. Inferring visual persuasion via body language, setting, and deep features. In Proceedings of the IEEE
+Conference on Computer Vision and Pattern Recognition Workshops. 73-79.
+
+[48] Matthew Huggins, Sharifa Alghowinem, Sooyeon Jeong, Pedro Colon-Hernandez, Cynthia Breazeal, and Hae Won Park. 2021. Practical guidelines
+for intent recognition: Bert with minimal training data evaluated in real-world hri application. In Proceedings of the 2021 ACM/IEEE International
+Conference on Human-Robot Interaction. 341-350.
+
+[49] Oluwagbenga Paul Idowu, Ademola Enitan Ilesanmi, Xiangxin Li, Oluwarotimi Williams Samuel, Peng Fang, and Guanglin Li. 2021. An integrated
+deep learning model for motor intention recognition of multi-class EEG Signals in upper limb amputees. Computer Methods and Programs in
+Biomedicine 206 (2021), 106121. doi:10.1016/j.cmpb.2021.106121
+
+[50] Siddarth Jain and Brenna Argall. 2018. Recursive bayesian human intent recognition in shared-control robotics. In 2018 IEEE/RSJ International
+Conference on Intelligent Robots and Systems (IROS). IEEE, 3905-3912.
+
+[51] Siddarth Jain and Brenna Argall. 2019. Probabilistic human intent recognition for shared autonomy in assistive robotics. ACM Transactions on
+Human-Robot Interaction (THRI) 9, 1 (2019), 1-23.
+
+[52] Dietmar Jannach and Markus Zanker. 2024. A survey on intent-aware recommender systems. ACM Transactions on Recommender Systems 3, 2
+(2024), 1-32.
+
+[53] Menglin Jia, Zuxuan Wu, Austin Reiter, Claire Cardie, Serge Belongie, and Ser-Nam Lim. 2021. Intentonomy: a dataset and study towards human
+intent understanding. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 12986-12996.
+
+[54] Menglin Jia, Zuxuan Wu, Austin Reiter, Claire Cardie, Serge Belongie, and Ser-Nam Lim. 2021. Intentonomy: a dataset and study towards human
+intent understanding. In Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 12986-12996.
+
+[55] Guogian Jiang, Kunyu Wang, Qun He, and Ping Xie. 2024. E2FNet: An EEG- and EMG-Based Fusion Network for Hand Motion Intention
+Recognition. IEEE Sensors Journal 24, 22 (2024), 38417-38428. doi:10.1109/JSEN.2024.3471894
+
+[56] Yidi Jiang, Bidisha Sharma, Maulik Madhavi, and Haizhou Li. 2021. Knowledge distillation from bert transformer to speech transformer for intent
+classification. In Proc. Interspeech 2021 (2021), 4713-4717.
+
+[57] DiJin, Shuyang Gao, Seokhwan Kim, Yang Liu, and Dilek Hakkani-Tiir. 2022. Towards textual out-of-domain detection without in-domain labels.
+IEEE/ACM Transactions on Audio, Speech, and Language Processing 30 (2022), 1386-1395.
+
+[58] Jungseock Joo, Weixin Li, Francis F Steen, and Song-Chun Zhu. 2014. Visual persuasion: Inferring communicative intents of images. In Proceedings
+of the IEEE Conference on Computer Vision and Pattern Recognition. 216-223.
+
+[59] Jungseock Joo, Francis F Steen, and Song-Chun Zhu. 2015. Automated facial trait judgment and election outcome prediction: Social dimensions of
+face. In Proceedings of the IEEE International Conference on Computer Vision. 3712-3720.
+
+[60] Jun-Su Kang, Ukeob Park, V. Gonuguntla, K.C. Veluvolu, and Minho Lee. 2015. Human implicit intent recognition based on the phase synchrony of
+EEG signals. Pattern Recognition Letters 66 (2015), 144-152. doi:10.1016/j.patrec.2015.06.013
+
+[61] Yoon Kim. 2014. Convolutional Neural Networks for Sentence Classification. In Proceedings of the 2014 Conference on Empirical Methods in Natural
+Language Processing (EMNLP). 1746-1751. doi:10.3115/v1/D14-1181
+
+[62] Julia Kruk, Jonah Lubin, Karan Sikka, Xiao Lin, Dan Jurafsky, and Ajay Divakaran. 2019. Integrating Text and Image: Determining Multimodal
+Document Intent in Instagram Posts. In Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing and the 9th
+International Joint Conference on Natural Language Processing (EMNLP-IJCNLP). 4622-4632.
+
+[63] Stefan Larson, Anish Mahendran, Joseph J. Peper, Christopher Clarke, Andrew Lee, Parker Hill, Jonathan K. Kummerfeld, Kevin Leach, Michael A.
+Laurenzano, Lingjia Tang, and Jason Mars. 2019. An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction. In Proceedings of the
+2019 Conference on Empirical Methods in Natural Language Processing and the 9th International Joint Conference on Natural Language Processing
+(EMNLP-IJCNLP). 1311-1316. doi:10.18653/v1/D19-1131
+
+[64] Gregory Lemasurier, Gal Bejerano, Victoria Albanese, Jenna Parrillo, Holly A Yanco, Nicholas Amerson, Rebecca Hetrick, and Elizabeth Phillips.
+2021. Methods for expressing robot intent for human-robot collaboration in shared workspaces. ACM Transactions on Human-Robot Interaction
+(THRI) 10, 4 (2021), 1-27.
+
+[65] Haoyang Li, Xin Wang, Ziwei Zhang, Jianxin Ma, Peng Cui, and Wenwu Zhu. 2021. Intention-aware sequential recommendation with structured
+intent transition. IEEE Transactions on Knowledge and Data Engineering 34, 11 (2021), 5403-5414.
+
+
+--- Page 30 ---
+
+30 J. Zhao et al.
+
+[66] Jiapeng Li, Ping Wei, Wenjuan Han, and Lifeng Fan. 2023. Intentqa: Context-aware video intent reasoning. In Proceedings of the IEEE/CVF
+International Conference on Computer Vision. 11963-11974.
+
+[67] Jiahao Nick Li, Yan Xu, Tovi Grossman, Stephanie Santosa, and Michelle Li. 2024. Omniactions: Predicting digital actions in response to real-world
+multimodal sensory inputs with Ilms. In Proceedings of the 2024 CHI Conference on Human Factors in Computing Systems. 1-22.
+
+[68] Leyan Li, Rennong Yang, Maolong Lv, Ao Wu, and Zilong Zhao. 2024. From Behavior to Natural Language: Generative Approach for Unmanned
+Aerial Vehicle Intent Recognition. IEEE Transactions on Artificial Intelligence 5, 12 (2024), 6196-6209. doi:10.1109/TAI.2024.3376510
+
+[69] Mingrui Li, Zuoxu Wang, Fan Li, and Jihong Liu. 2025. A multi-task engineering design intention recognition approach based on Vision Transformer
+and EEG data. Advanced Engineering Informatics 65 (2025), 103353. doi:10.1016/j.aei.2025.103353
+
+[70] Tingyu Li, Junpeng Bao, Jiaqi Qin, Yuping Liang, Ruijiang Zhang, and Jason Wang. 2024. Multi-modal intent detection with lvamoe: the
+language-visual-audio mixture of experts. In 2024 IEEE International Conference on Multimedia and Expo (ICME). IEEE, 1-6.
+
+[71] Wenju Li, Yue Ma, Keyong Shao, Zhengkun Yi, Wujing Cao, Meng Yin, Tiantian Xu, and Xinyu Wu. 2024. The Human-Machine Interface Design
+Based on sEMG and Motor Imagery EEG for Lower Limb Exoskeleton Assistance System. IEEE Transactions on Instrumentation and Measurement
+73 (2024), 1-14. doi:10.1109/TIM.2024.3375980
+
+[72] Xinglin Li, Hanhui Deng, Jinhui Ouyang, Huayan Wan, Weiren Yu, and Di Wu. 2024. Act as What You Think: Towards Personalized EEG Interaction
+Through Attentional and Embedded LSTM Learning. IEEE Transactions on Mobile Computing 23, 5 (2024), 3741-3753. doi:10.1109/TMC.2023.3283022
+
+[73] Yanen Li, Bo-June Paul Hsu, and ChengXiang Zhai. 2013. Unsupervised identification of synonymous query intent templates for attribute intents.
+In Proceedings of the 22nd ACM International Conference on Information & Knowledge Management. 2029-2038.
+
+[74] Yurong Li, Hao Yang, Jixiang Li, Dongyi Chen, and Min Du. 2020. EEG-based intention recognition with deep recurrent-convolution neural
+network: Performance and channel selection by Grad-CAM. Neurocomputing 415 (2020), 225-233. doi:10.1016/j.neucom.2020.07.072
+
+[75] Zhipeng Li, Binglin Wu, Yingyi Zhang, Xianneng Li, Kai Li, and Weizhi Chen. 2025. CuSMer: Multimodal Intent Recognition in Customer Service
+via Data Augment and LLM Merge. In Companion Proceedings of the ACM on Web Conference 2025. 3058-3062.
+
+[76] Zhongjie Li, Gaoyan Zhang, Shogo Okada, Longbiao Wang, Bin Zhao, and Jianwu Dang. 2024. MBCFNet: A multimodal brain—-computer fusion
+network for human intention recognition. Knowledge-Based Systems 296 (2024), 111826.
+
+[77] Zhongjie Li, Gaoyan Zhang, Shogo Okada, Longbiao Wang, Bin Zhao, and Jianwu Dang. 2024. MBCFNet: A Multimodal Brain—Computer Fusion
+Network for human intention recognition. Knowledge-Based Systems 296 (2024), 111826. doi:10.1016/j.knosys.2024.111826
+
+[78] Jinggui Liang, Lizi Liao, Hao Fei, and Jing Jiang. 2024. Synergizing Large Language Models and Pre-Trained Smaller Models for Conversational
+Intent Discovery. In Findings of the Association for Computational Linguistics: ACL 2024. 14133-14147. doi:10.18653/v1/2024.findings-acl.840
+
+[79] Bing Liu and Ian Lane. 2016. Attention-Based Recurrent Neural Network Models for Joint Intent Detection and Slot Filling. In Proc. Interspeech.
+685-689.
+
+[80] Junhua Liu, Tan Keat, Bin Fu, and Kwan Hui Lim. 2024. LARA: Linguistic-Adaptive Retrieval-Augmentation for Multi-Turn Intent Classification. In
+Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing: Industry Track. 1096-1106.
+
+[81] Jiao Liu, Yanling Li, and Min Lin. 2019. Review of Intent Detection Methods in the Human-Machine Dialogue System. Journal of Physics: Conference
+Series 1267, 1 (2019), 012059. doi:10.1088/1742-6596/1267/1/012059
+
+[82] Junhua Liu, Yong Keat Tan, Bin Fu, and Kwan Hui Lim. 2024. Intent-Aware Dialogue Generation and Multi-Task Contrastive Learning for Multi-Turn
+Intent Classification. arXiv preprint arXiv:2411.14252 (2024).
+
+[83] Junhua Liu, Yong Keat Tan, Bin Fu, and Kwan Hui Lim. 2024. Intent-Aware Dialogue Generation and Multi-Task Contrastive Learning for Multi-Turn
+Intent Classification. arXiv preprint arXiv:2411.14252 (2024).
+
+[84] Rui Liu, Haolin Zuo, Zheng Lian, Xiaofen Xing, Bjérn W Schuller, and Haizhou Li. 2024. Emotion and intent joint understanding in multimodal
+conversation: A benchmarking dataset. arXiv preprint arXiv:2407.02751 (2024).
+
+[85] Yingxin Liu, Xinbin Liang, Yang Yu, Jianxiang Sun, Jiayao Hu, Yadong Liu, Ling-Li Zeng, Zongtan Zhou, and Dewen Hu. 2025. Recognizing drivers’
+turning intentions with EEG and eye movement. Biomedical Signal Processing and Control 101 (2025), 107218. doi:10.1016/j.bspce.2024.107218
+
+[86] Zuojun Liu, Wei Lin, Yanli Geng, and Peng Yang. 2017. Intent Pattern Recognition of Lower-Limb Motion Based on Mechanical Sensors. IEEE/CAA
+Journal of Automatica Sinica 4, 4 (2017), 651-660. doi:10.1109/JAS.2017.7510619
+
+[87] Dylan P Losey, Craig G McDonald, Edoardo Battaglia, and Marcia K O’Malley. 2018. A review of intent detection, arbitration, and communication
+aspects of shared control for physical human-robot interaction. Applied Mechanics Reviews 70, 1 (2018), 010804.
+
+[88] Adyasha Maharana, Quan Tran, Franck Dernoncourt, Seunghyun Yoon, Trung Bui, Walter Chang, and Mohit Bansal. 2022. Multimodal Intent
+Discovery from Livestream Videos. In Findings of the Association for Computational Linguistics: NAACL 2022. 476-489.
+
+[89] Andrew McCallum, Kamal Nigam, et al. 1998. A comparison of event models for naive bayes text classification. In AAAI-98 Workshop on Learning
+for Text Categorization, Vol. 752. 41-48.
+
+[90] Grégoire Mesnil, Xiaodong He, Li Deng, and Yoshua Bengio. 2013. Investigation of recurrent-neural-network architectures and learning methods
+for spoken language understanding. In Interspeech. 3771-3775.
+
+[91] Trisha Mittal, Sanjoy Chowdhury, Pooja Guhan, Snikitha Chelluri, and Dinesh Manocha. 2024. Towards Determining Perceived Audience Intent
+for Multimodal Social Media Posts Using the Theory of Reasoned Action. Scientific Reports 14, 1 (2024), 10606. doi:10.1038/s41598-024-60299-w
+
+[92] Andrew Ng and Michael Jordan. 2001. On discriminative vs. generative classifiers: A comparison of logistic regression and naive bayes. Advances
+in Neural Information Processing Systems 14 (2001).
+
+
+--- Page 31 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 31
+
+[93] Phuong Ngoc-Duy Nguyen and Huan Hong Nguyen. 2024. Unveiling the link between digital entrepreneurship education and intention among
+university students in an emerging economy. Technological Forecasting and Social Change 203 (2024), 123330.
+
+[94] Quynh-Mai Thi Nguyen, Lan-Nhi Thi Nguyen, and Cam-Van Thi Nguyen. 2024. TECO: Improving Multimodal Intent Recognition with Text
+Enhancement through Commonsense Knowledge Extraction. (2024), 533-541.
+
+[95] Kawsar Noor, Katherine Smith, Jade O’Connell, Niamh Ingram, Baptiste Briot Ribyere, Tom Searle, Wai Keong Wong, and Richard J Dobson. 2024.
+Detecting Clinical Intent in Electronic Healthcare Records in a UK National Healthcare Hospital. In 2024 IEEE 12th International Conference on
+Healthcare Informatics (ICHI). IEEE, 484-489.
+
+[96] Innocent Otache, James Edomwonyi Edopkolor, Idris Ahmed Sani, and Kadiri Umar. 2024. Entrepreneurship education and entrepreneurial
+intentions: Do entrepreneurial self-efficacy, alertness and opportunity recognition matter? The International Journal of Management Education 22, 1
+(2024), 100917.
+
+[97] Srinivas Bangalore Padmasundari and Srinivas Bangalore. 2018. Intent discovery through unsupervised semantic text clustering. In Proc. Interspeech,
+Vol. 2018. 606-610.
+
+[98] Gyutae Park, Ingeol Baek, ByeongJeong Kim, Joongbo Shin, and Hwanhee Lee. 2024. Dynamic Label Name Refinement for Few-Shot Dialogue
+Intent Classification. arXiv preprint arXiv:2412.15603 (2024).
+
+[99] Ukeob Park, Rammohan Mallipeddi, and Minho Lee. 2014. Human Implicit Intent Discrimination Using EEG and Eye Movement. In Neural
+Information Processing. Cham, 11-18.
+
+[100] Max Pascher, Uwe Gruenefeld, Stefan Schneegass, and Jens Gerken. 2023. How to communicate robot motion intent: A scoping review. In
+Proceedings of the 2023 CHI Conference on Human Factors in Computing Systems. 1-17.
+
+[101] Kate Pearce, Sharifa Alghowinem, and Cynthia Breazeal. 2023. Build-a-bot: teaching conversational ai using a transformer-based intent recognition
+and question answering architecture. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 37. 16025-16032.
+
+[102] Claudio Pinhanez, Paulo Cavalin, Victor Henrique Alves Ribeiro, Ana Appel, Heloisa Candello, Julio Nogima, Mauro Pichiliani, Melina Guerra,
+Maira de Bayser, Gabriel Malfatti, et al. 2021. Using meta-knowledge mined from identifiers to improve intent recognition in conversational
+systems. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on
+Natural Language Processing (Volume 1: Long Papers). 7014-7027.
+
+[103] Hamed Pirsiavash, Carl Vondrick, and Antonio Torralba. 2014. Inferring the why in images. arXiv preprint arXiv:1406.5472 2 (2014).
+
+[104] Libo Qin, Qiguang Chen, Jingxuan Zhou, Jin Wang, Hao Fei, Wanxiang Che, and Min Li. 2025. Divide-Solve-Combine: An Interpretable and
+Accurate Prompting Framework for Zero-shot Multi-Intent Detection. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 39.
+25038-25046.
+
+[105] R. Quintero, I. Parra, J. Lorenzo, D. Fernandez-Llorca, and M. A. Sotelo. 2017. Pedestrian Intention Recognition by Means of a Hidden Markov Model
+and Body Language. In 2017 IEEE 20th International Conference on Intelligent Transportation Systems (ITSC). 1-7. doi:10.1109/ITSC.2017.8317766
+
+[106] Joseph Rafferty, Chris D. Nugent, Jun Liu, and Liming Chen. 2017. From Activity Recognition to Intention Recognition for Assisted Living within
+Smart Homes. IEEE Transactions on Human-Machine Systems 47, 3 (2017), 368-379. doi:10.1109/THMS.2016.2641388
+
+[107] Swayambhu Nath Ray, Minhua Wu, Anirudh Raju, Pegah Ghahremani, Raghavendra Bilgi, Milind Rao, Harish Arsikere, Ariya Rastrow, Andreas
+Stolcke, and Jasha Droppo. 2021. Listen with intent: Improving speech recognition with audio-to-intent front-end. arXiv preprint arXiv:2105.07071
+(2021).
+
+[108] Juan A Rodriguez, Nicholas Botzer, David Vazquez, Christopher Pal, Marco Pedersoli, and Issam Laradji. 2024. IntentGPT: Few-shot Intent Discovery
+with Large Language Models. arXiv preprint arXiv:2411.10670 (2024).
+
+[109] Carsten D. Schultz and Saskia Kaiser. 2025. Consumer Value Dimensions in Conversational and Mobile Commerce. Journal of Marketing Analytics
+(2025), 1-19. doi:10.1057/s41270-025-00383-w
+
+[110] Jetze Schuurmans and Flavius Frasincar. 2019. Intent classification for dialogue utterances. IEEE Intelligent Systems 35, 1 (2019), 82-88.
+
+[111] Mansi Sharma, Shuang Chen, Philipp Miller, Maurice Rekrut, and Antonio Kriiger. 2023. Implicit Search Intent Recognition using EEG and Eye
+Tracking: Novel Dataset and Cross-User Prediction. In Proceedings of the 25th International Conference on Multimodal Interaction. 345-354.
+
+[112] Neha Sharma, Chhavi Dhiman, and Sreedevi Indu. 2025. Predicting pedestrian intentions with multimodal IntentFormer: A Co-learning approach.
+Pattern Recognition 161 (2025), 111205.
+
+[113] Yaomin Shen, Xiaojian Lin, and Wei Fan. 2025. A-MESS: Anchor based Multimodal Embedding with Semantic Synchronization for Multimodal
+Intent Recognition. arXiv preprint arXiv:2503. 19474 (2025).
+
+[114] QingHongYa Shi, Mang Ye, Wenke Huang, Weijian Ruan, and Bo Du. 2024. Label-Aware Calibration and Relation-Preserving in Visual Intention
+Understanding. IEEE Transactions on Image Processing 33 (2024), 2627-2638.
+
+[115] QingHongYa Shi, Mang Ye, Ziyi Zhang, and Bo Du. 2023. Learnable hierarchical label embedding and grouping for visual intention understanding.
+IEEE Transactions on Affective Computing 14, 4 (2023), 3218-3230.
+
+[116] Yuanchen Shi, Biao Ma, and Fang Kong. 2024. Impact of Stickers on Multimodal Chat Sentiment Analysis and Intent Recognition: A New Task,
+Dataset and Baseline. arXiv preprint arXiv:2405.08427 (2024).
+
+[117] Jorge Sinval, Pedro Oliveira, Filipa Novais, Carla Maria Almeida, and Diogo Telles-Correia. 2024. Correlates of burnout and dropout intentions in
+medical students: A cross-sectional study. Journal of Affective Disorders 364 (2024), 221-230.
+
+[118] Gino Slanzi, Jorge A. Balazs, and Juan D. Velasquez. 2017. Combining eye tracking, pupil dilation and EEG analysis for predicting web users click
+intention. Information Fusion 35 (2017), 51-57. doi:10.1016/j.inffus.2016.09.003
+
+
+--- Page 32 ---
+
+32 J. Zhao et al.
+
+[119] Mohammad Soleymani, Michael Riegler, and Pal Halvorsen. 2017. Multimodal analysis of image search intent: Intent recognition in image search
+from user behavior and visual content. In Proceedings of the 2017 ACM on International Conference on Multimedia Retrieval. 251-259.
+
+[120] Jinwang Song, Zhongtian Hua, Hongying Zan, Yingjie Han, and Min Peng. 2025. Optimizing Discriminative Vision-Language Models for Efficient
+Multimodal Intent Recognition. In Companion Proceedings of the ACM on Web Conference 2025. 3063-3067.
+
+[121] Kaili Sun, Zhiwen Xie, Mang Ye, and Huyin Zhang. 2024. Contextual augmented global contrast for multimodal intent recognition. In Proceedings
+of the IEEE/CVF Conference on Computer Vision and Pattern Recognition. 26963-26973.
+
+[122] Stuart Synakowski, Qianli Feng, and Aleix Martinez. 2021. Adding knowledge to unsupervised algorithms for the recognition of intent. International
+journal of computer vision 129, 4 (2021), 942-959.
+
+[123] Xianlun Tang, Tianzhu Wang, Xingchen Li, Wenbin Zhu, Xinyi Hong, and Xinbo Gao. 2024. Temporal Fusion Dynamically Separable Graph
+Convolutional Network for EEG Motion Intention Decoding Based on Source Information Extraction. IEEE Transactions on Instrumentation and
+Measurement 73 (2024), 1-13.
+
+[124] Yin Tang, Jiankai Li, Hongyu Yang, Xuan Dong, Lifeng Fan, and Weixin Li. 2025. Multi-Grained Compositional Visual Clue Learning for Image
+Intent Recognition. arXiv preprint arXiv:2504. 18201 (2025).
+
+[125] Yusheng Tian and Philip John Gorinski. 2020. Improving End-to-End Speech-to-Intent Classification with Reptile. In Proc. Interspeech 2020. 891-895.
+
+[126] Susanne Trick, Dorothea Koert, Jan Peters, and Constantin A Rothkopf. 2019. Multimodal uncertainty reduction for intention recognition in
+human-robot interaction. In 2019 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). IEEE, 7009-7016.
+
+[127] Susanne Trick, Vilja Lott, Lisa Scherf, Constantin A Rothkopf, and Dorothea Koert. 2023. What can i help you with: Towards task-independent
+detection of intentions for interaction in a human-robot environment. In 2023 32nd IEEE International Conference on Robot and Human Interactive
+Communication (RO-MAN). IEEE, 592-599.
+
+[128] Laurens Van der Maaten and Geoffrey Hinton. 2008. Visualizing data using t-SNE. Journal of Machine Learning Research 9, 86 (2008), 2579-2605.
+
+[129] Dimitrios Varytimidis, Fernando Alonso-Fernandez, Boris Duran, and Cristofer Englund. 2018. Action and Intention Recognition of Pedestrians in
+Urban Traffic. In 2018 14th International Conference on Signal-Image Technology & Internet-Based Systems (SITIS). 676-682. doi:10.1109/SITIS.2018.
+00109
+
+[130] Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N Gomez, Lukasz Kaiser, and Illia Polosukhin. 2017. Attention is
+all you need. Advances in Neural Information Processing Systems 30 (2017).
+
+[131] Carl Vondrick, Deniz Oktay, Hamed Pirsiavash, and Antonio Torralba. 2016. Predicting motivations of actions by leveraging text. In Proceedings of
+the IEEE Conference on Computer Vision and Pattern Recognition. 2997-3005.
+
+[132] Binglu Wang, Kang Yang, Yongqiang Zhao, Teng Long, and Xuelong Li. 2023. Prototype-based intent perception. IEEE Transactions on Multimedia
+25 (2023), 8308-8319.
+
+[133] Jinpeng Wang, Gao Cong, Xin Zhao, and Xiaoming Li. 2015. Mining user intents in twitter: A semi-supervised approach to inferring intent
+categories for tweets. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 29.
+
+[134] Mengsheng Wang, Lun Xie, Chiqin Li, Xinheng Wang, Minglong Sun, and Ziyang Liu. 2025. MGC: A modal mapping coupling and gate-driven
+contrastive learning approach for multimodal intent recognition. Expert Systems with Applications 281 (2025), 127631.
+
+[135] Mengsheng Wang, Lun Xie, Chiqin Li, Xinheng Wang, Minglong Sun, and Ziyang Liu. 2025. MGC: A Modal Mapping Coupling and Gate-Driven
+Contrastive Learning Approach for Multimodal Intent Recognition. Expert Systems with Applications 281 (2025), 127631. doi:10.1016/j.eswa.2025.
+127631
+
+[136] Shijie Wang, Zhiqiang Pu, Yi Pan, Boyin Liu, Hao Ma, and Jianqiang Yi. 2024. Long-Term and Short-Term Opponent Intention Inference for Football
+Multiplayer Policy Learning. IEEE Transactions on Cognitive and Developmental Systems 16, 6 (2024), 2055-2069.
+
+[137] Yingzhi Wang, Abdelmoumene Boumadane, and Abdelwahab Heba. 2021. A fine-tuned wav2vec 2.0/hubert benchmark for speech emotion
+recognition, speaker verification and spoken language understanding. arXiv preprint arXiv:2111.02735 (2021).
+
+[138] Yaqing Wang, Song Wang, Yanyan Li, and Dejing Dou. 2022. Recognizing Medical Search Query Intent by Few-shot Learning. In Proceedings of the
+45th International ACM SIGIR Conference on Research and Development in Information Retrieval. 502-512. doi:10.1145/3477495.3531789
+
+[139] Christopher Yee Wong, Lucas Vergez, and Wael Suleiman. 2024. Vision- and Tactile-Based Continuous Multimodal Intention and Attention
+Recognition for Safer Physical Human-Robot Interaction. IEEE Transactions on Automation Science and Engineering 21, 3 (2024), 3205-3215.
+
+[140] Jiaying Wu, Fanxiao Li, Min-Yen Kan, and Bryan Hooi. 2025. Seeing Through Deception: Uncovering Misleading Creator Intent in Multimodal
+News with Vision-Language Models. arXiv preprint arXiv:2505.15489 (2025).
+
+[141] Ting-Wei Wu, Ruolin Su, and Biing Juang. 2021. A label-aware BERT attention network for zero-shot multi-intent detection in spoken language
+understanding. In Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing. 4884-4896.
+
+[142] Dongfang Xu and Qining Wang. 2021. Noninvasive human-prosthesis interfaces for locomotion intent recognition: A review. Cyborg and Bionic
+Systems (2021).
+
+[143] Hua Xu, Hanlei Zhang, and Ting-En Lin. 2023. Intent Recognition for Human-Machine Interactions. Springer.
+
+[144] Puyang Xu and Ruhi Sarikaya. 2013. Convolutional neural network based triangular crf for joint intent detection and slot filling. In 2013 Ieee
+Workshop on Automatic Speech Recognition and Understanding. IEEE, 78-83.
+
+[145] Yijing Xu, Shifan Yu, Lei Liu, Wansheng Lin, Zhicheng Cao, Yu Hu, Jiming Duan, Zijian Huang, Chao Wei, Ziquan Guo, Tingzhu Wu, Zhong Chen,
+Qingliang Liao, Yuanjin Zheng, and Xinqin Liao. 2024. In-Sensor Touch Analysis for Intent Recognition. Advanced Functional Materials 34, 52
+(2024), 2411331. doi:10.1002/adfm.202411331
+
+
+--- Page 33 ---
+
+Deep Learning Approaches for Multimodal Intent Recognition: A Survey 33
+
+[146] Linting Xue, Noah Constant, Adam Roberts, Mihir Kale, Rami Al-Rfou, Aditya Siddhant, Aditya Barua, and Colin Raffel. 2021. mT5: A Massively
+Multilingual Pre-trained Text-to-Text Transformer. In Proceedings of the 2021 Conference of the North American Chapter of the Association for
+Computational Linguistics: Human Language Technologies. 483-498.
+
+[147] Weidong Yan, Jingyu Liu, Jie Luo, Wenkang Liu, Yulan Ma, and Qinge Zhang. 2025. A Temporal-Spatial Embedding and Dynamic Aggregation
+Network With Adaptive Weighting Spectrum for EEG Motion Intention Recognition. IEEE Transactions on Instrumentation and Measurement 74
+(2025), 1-11.
+
+[148] Bo Yang, Xinxing Chen, Xiling Xiao, Pei Yan, Yasuhisa Hasegawa, and Jian Huang. 2023. Gaze and Environmental Context-Guided Deep Neural
+Network and Sequential Decision Fusion for Grasp Intention Recognition. IEEE Transactions on Neural Systems and Rehabilitation Engineering 31
+(2023), 3687-3698. doi:10.1109/TNSRE.2023.3314503
+
+[149] Qu Yang, Qinghongya Shi, Tongxin Wang, and Mang Ye. 2025. Uncertain multimodal intention and emotion understanding in the wild. In
+Proceedings of the Computer Vision and Pattern Recognition Conference. 24700-24709.
+
+[150] Qu Yang, Mang Ye, and Dacheng Tao. 2024. Synergy of sight and semantics: visual intention understanding with clip. In European Conference on
+Computer Vision. Springer, 144-160.
+
+[151] Kaisheng Yao, Geoffrey Zweig, Mei-Yuh Hwang, Yangyang Shi, and Dong Yu. 2013. Recurrent neural networks for language understanding.. In
+Interspeech. 2524-2528.
+
+[152] Mang Ye, Qinghongya Shi, Kehua Su, and Bo Du. 2023. Cross-modality pyramid alignment for visual intention understanding. IEEE Transactions on
+Image Processing 32 (2023), 2190-2201.
+
+[153] Hao Yu, Jesujoba O Alabi, Andiswa Bukula, Jian Yun Zhuang, En-Shiun Annie Lee, Tadesse Kebede Guge, Israel Abebe Azime, Happy Buzaaba,
+Blessing Kudzaishe Sibanda, Godson K Kalipe, et al. 2025. INJONGO: A Multicultural Intent Detection and Slot-filling Dataset for 16 African
+Languages. arXiv preprint arXiv:2502.09814 (2025).
+
+[154] Habeeb Yusuf, Arthur Money, and Damon Daylamani-Zad. 2025. Pedagogical AI Conversational Agents in Higher Education: A Conceptual
+Framework and Survey of the State of the Art. Educational Technology Research and Development 73, 2 (2025), 815-874. doi:10.1007/s11423-025-
+10447-4
+
+[155] Xiaoxue Zang, Abhinav Rastogi, Srinivas Sunkara, Raghav Gupta, Jianguo Zhang, and Jindong Chen. 2020. MultiWOZ 2.2 : A Dialogue Dataset
+with Additional Annotation Corrections and State Tracking Baselines. In Proceedings of the 2nd Workshop on Natural Language Processing for
+Conversational AI. 109-117. doi:10.18653/v1/2020.nlp4convai- 1.13
+
+[156] Li-Ming Zhan, Haowen Liang, Bo Liu, Lu Fan, Xiao-Ming Wu, and Albert YS Lam. 2021. Out-of-Scope Intent Detection with Self-Supervision and
+Discriminative Training. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint
+Conference on Natural Language Processing (Volume 1: Long Papers). 3521-3532.
+
+[157] Bolin Zhang, Zhiying Tu, Shaoshi Hang, Dianhui Chu, and Xiaofei Xu. 2023. Conco-ernie: Complex user intent detect model for smart healthcare
+cognitive bot. ACM Transactions on Internet Technology 23, 1 (2023), 1-24.
+
+[158] D. Zhang, K. Chen, D. Jian, L. Yao, S. Wang, and P. Li. 2019. Learning Attentional Temporal Cues of Brainwaves with Spatial Embedding for Motion
+Intent Detection. In 2019 IEEE International Conference on Data Mining (ICDM). IEEE, 1450-1455. doi:10.1109/ICDM.2019.00189
+
+[159] Dalin Zhang, Lina Yao, Xiang Zhang, Sen Wang, Weitong Chen, Robert Boots, and Boualem Benatallah. 2018. Cascade and Parallel Convolutional
+Recurrent Neural Networks on EEG-based Intention Recognition for Brain Computer Interface. Proceedings of the AAAI Conference on Artificial
+Intelligence 32, 1 (2018), 1703-1710. doi:10.1609/aaai.v32i1.11496
+
+[160] Fan Zhang and He Huang. 2013. Source Selection for Real-Time User Intent Recognition toward Volitional Control of Artificial Legs. IEEE Journal
+of Biomedical and Health Informatics 17, 5 (2013), 907-914. doi:10.1109/JBHI.2012.2236563
+
+[161] Hanlei Zhang, Xiaoteng Li, Hua Xu, Panpan Zhang, Kang Zhao, and Kai Gao. 2021. TEXTOIR: An Integrated and Visualized Platform for Text
+Open Intent Recognition. In Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint
+Conference on Natural Language Processing: System Demonstrations. 167-174. doi:10.18653/v1/2021.acl-demo.20
+
+[162] Hanlei Zhang, Xin Wang, Hua Xu, Qianrui Zhou, Kai Gao, Jianhua Su, jinyue Zhao, Wenrui Li, and Yanting Chen. 2024. MIntRec2.0: A Large-scale
+Benchmark Dataset for Multimodal Intent Recognition and Out-of-scope Detection in Conversations. In The Twelfth International Conference on
+Learning Representations. https://openreview.net/forum?id=nY9nITZQjc
+
+[163] Hanlei Zhang, Hua Xu, Xin Wang, Qianrui Zhou, Shaojie Zhao, and Jiayan Teng. 2022. Mintrec: A new dataset for multimodal intent recognition.
+In Proceedings of the 30th ACM international conference on multimedia. 1688-1697.
+
+[164] Hanlei Zhang, Qianrui Zhou, Hua Xu, Jianhua Su, Roberto Evans, and Kai Gao. 2024. Multimodal Classification and Out-of-distribution Detection
+for Multimodal Intent Understanding. arXiv preprint arXiv:2412.12453 (2024).
+
+[165] Lu Zhang, Jialie Shen, Jian Zhang, Jingsong Xu, Zhibin Li, Yazhou Yao, and Litao Yu. 2021. Multimodal marketing intent analysis for effective
+targeted advertising. IEEE Transactions on Multimedia 24 (2021), 1830-1843.
+
+[166] Lu Zhang, Jialie Shen, Jian Zhang, Jingsong Xu, Zhibin Li, Yazhou Yao, and Litao Yu. 2022. Multimodal Marketing Intent Analysis for Effective
+Targeted Advertising. IEEE Transactions on Multimedia 24 (2022), 1830-1843. doi:10.1109/TMM.2021.3073267
+
+[167] Lu Zhang, Jian Zhang, Zhibin Li, and Jingsong Xu. 2020. Towards better graph representation: Two-branch collaborative graph neural networks
+for multimodal marketing intention detection. In 2020 IEEE International Conference on Multimedia and Expo (ICME). IEEE, 1-6.
+
+[168] Rongzheng Zhang, Wanghongjie Qiu, Jianuo Qiu, Yuqin Guo, Chengxiao Dong, Tuo Zhang, Juan Yi, Chaoyang Song, Harry Asada, and Fang
+Wan. 2025. MultiModal Intention Recognition Combining Head Motion and Throat Vibration for Underwater Superlimbs. IEEE Transactions on
+
+
+--- Page 34 ---
+
+34 J. Zhao et al.
+Automation Science and Engineering (2025), 1-1.
+
+[169] Shun Zhang, Yan Chaoran, Jian Yang, Jiaheng Liu, Ying Mo, Jiaqi Bai, Tongliang Li, and Zhoujun Li. 2024. Towards Real-world Scenario: Imbalanced
+New Intent Discovery. In Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). 3949-3963.
+
+[170] Wenxin Zhang, Hao Qi, Shutong Wang, Ziqi Lin, and Binglu Wang. 2024. Content and Relation Fuzzy Mitigation Framework for Intent Perception.
+IEEE Transactions on Fuzzy Systems (2024), 1-14. doi:10.1109/TFUZZ.2024.3476948
+
+[171] Xin Zhang, Fei Cai, Xuejun Hu, Jianming Zheng, and Honghui Chen. 2022. A contrastive learning-based task adaptation model for few-shot intent
+recognition. Information Processing & Management 59, 3 (2022), 102863.
+
+[172] Xiyuan Zhao, Huijun Li, Tianyuan Miao, Xianyi Zhu, Zhikai Wei, Lifen Tan, and Aiguo Song. 2024. Learning Multimodal Confidence for Intention
+Recognition in Human-Robot Interaction. IEEE Robotics and Automation Letters 9, 9 (2024), 7819-7826. doi:10.1109/LRA.2024.3432352
+
+[173] Yinhe Zheng, Guanyi Chen, and Minlie Huang. 2020. Out-of-domain detection for natural language understanding in dialog systems. IEEE/ACM
+Transactions on Audio, Speech, and Language Processing 28 (2020), 1198-1209.
+
+[174] Qianrui Zhou, Hua Xu, Hao Li, Hanlei Zhang, Xiaohan Zhang, Yifan Wang, and Kai Gao. 2024. Token-level contrastive learning with modality-aware
+prompting for multimodal intent recognition. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 38. 17114-17122.
+
+[175] Yunhua Zhou, Peiju Liu, and Xipeng Qiu. 2022. KNN-contrastive learning for out-of-domain intent classification. In Proceedings of the 60th Annual
+Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). 5129-5141.
+
+[176] Yuxi Zhou, Xiujie Wang, Jianhua Zhang, Jiajia Wang, Jie Yu, Hao Zhou, Yi Gao, and Shengyong Chen. 2024. Intentional evolutionary learning for
+untrimmed videos with long tail distribution. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 38. 7713-7721.
+
+[177] Zhihong Zhu, Xuxin Cheng, Zhaorun Chen, Yuyan Chen, Yunyan Zhang, Xian Wu, Yefeng Zheng, and Bowen Xing. 2024. InMu-Net: advancing
+multi-modal intent detection via information bottleneck and multi-sensory processing. In Proceedings of the 32nd ACM International Conference on
+Multimedia. 515-524.

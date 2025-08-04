@@ -1,0 +1,392 @@
+
+
+--- Page 1 ---
+
+LENS: LEARNING ENSEMBLE CONFIDENCE FROM
+NEURAL STATES FOR MULTI-LLM ANSWER INTE-
+GRATION
+Jizhou Guo
+Zhiyuan College
+Shanghai Jiao Tong University
+sjtul8640985163@sjtu.edu.cn
+q ABSTRACT
+—_)
+N Large Language Models (LLMs) have demonstrated impressive performance
+— across various tasks, with different models excelling in distinct domains and spe-
+= cific abilities. Effectively combining the predictions of multiple LLMs is crucial
+for enhancing system robustness and performance. However, existing ensemble
+— methods often rely on simple techniques like voting or logits ensembling, which
+oe) overlook the varying confidence and reliability of models in different contexts.
+—= In this work, we propose LENS (Learning ENsemble confidence from Neural
+—] States), a novel approach that learns to estimate model confidence by analyzing
+O internal representations. For each LLM, we train a lightweight linear confidence
+f predictor that leverages layer-wise hidden states and normalized probabilities as
+Nn inputs. This allows for more nuanced weighting of model predictions based on
+2, their context-dependent reliability. Our method does not require modifying the
+model parameters and requires negligible additional computation. Experimental
+sel results on multiple-choice and boolean question-answering tasks demonstrate that
+> LENS outperforms traditional ensemble methods by a substantial margin. Our
+ti findings suggest that internal representations provide valuable signals for deter-
+© mining model confidence and can be effectively leveraged for ensemble learning.
+oa)
+N
+tC 1 INTRODUCTION
+i)
+q Large Language Models (LLMs) have revolutionized the field of Natural Language Processing
+ee (NLP), demonstrating exceptional performance across a wide range of tasks, from text generation
+. = to question answering. These models, including Gemini and GPT-4 [Achiam]|
+Sd , have shown remarkable flexibility and adaptability, excelling in tasks with little to
+. no task-specific tuning. However, the deployment of a single LLM in real-world scenarios is of-
+fe) ten insufficient to meet the varying demands of complex tasks. Different models exhibit different
+strengths depending on their training data, architecture, and fine-tuning, resulting in varying degrees
+of accuracy and reliability in different contexts.
+To enhance the performance and robustness of LLMs, ensemble methods, which combine predic-
+tions from multiple models, have become an increasingly popular approach. Simple techniques such
+as majority voting {Chen et al.|(2024) or logits ensembling are commonly used to aggregate predic-
+tions. These methods, however, are limited in that they fail to account for the varying levels of
+confidence and expertise exhibited by different models across diverse contexts. This is particularly
+problematic when models may perform well in certain domains but poorly in others, or when they
+produce predictions with differing levels of certainty.
+In this paper, we propose a novel ensemble method, LENS (Learning ENsemble confidence from
+Neural States), which addresses these challenges by learning model confidence based on inter-
+nal representations rather than relying solely on final predictions. Specifically, we introduce a
+lightweight linear confidence predictor that analyzes the hidden states of each model at various
+layers and combines them with the normalized probabilities to estimate a model’s confidence in its
+1
+
+
+--- Page 2 ---
+
+prediction. This enables more informed weighting of model predictions, where models with higher
+confidence in specific tasks or domains are given more influence in the final decision.
+Unlike traditional ensemble techniques, LENS does not require retraining or modification of the
+individual models, nor does it introduce significant computational overhead. Instead, it leverages
+existing model architectures to improve prediction reliability, making it both a practical and scalable
+solution for enhancing ensemble performance. Additionally, the approach is highly flexible and can
+be applied to any set of pre-trained models, making it widely applicable across different tasks.
+We evaluate LENS on two widely used tasks in NLP: multiple-choice question answering and
+boolean question answering. Experimental results demonstrate that LENS outperforms traditional
+ensemble methods by a significant margin, offering substantial improvements in accuracy and
+robustness. Our findings suggest that internal representations—typically discarded after predic-
+tion—contain valuable signals that can be effectively utilized to gauge model confidence and im-
+prove ensemble learning. This paper contributes to the growing body of research in model ensemble
+learning and provides a new methodology for incorporating confidence estimates into ensemble pre-
+dictions.
+2 RELATED WORKS
+Ensemble Learning The concept of combining multiple classifiers to enhance prediction accu-
+racy has a rich history in various contexts, dating back to the 18th century |de Caritat Mis et al.|
+(1785). Recent studies have demonstrated the effectiveness of ensemble methods in modern deep
+learning contexts [Kazmaier & Van Vuuren]|(2022). In the era of Large Language Models (LLMs),
+ensemble techniques have gained renewed attention as a means to leverage complementary strengths
+of different models (2024); (2024); (2023). While traditional
+ensemble methods often rely on majority voting or probability averaging, they may fail to capture
+the nuanced reliability patterns of individual LLMs. Our work advances this field by introducing a
+novel confidence-based weighting mechanism that leverages models’ internal representations.
+Internal Representations of LLMs Recent work has revealed that different layers of LLMs cap-
+ture distinct aspects of linguistic and semantic information [Burns et al.] (2022); [Zou et al.| (2023),
+suggesting that internal representations could provide valuable signals about model confidence and
+reliability. Our approach builds upon the “logit lens” technique (2020), which ex-
+amines the output distributions at different layers of transformer models. While previous works
+primarily used internal representations for model interpretation, we demonstrate their utility in de-
+termining model confidence for ensemble decisions. This aligns with broader efforts to develop
+more robust and trustworthy LLM-based systems through better understanding and utilization of
+their internal mechanisms.
+3 APPROACH
+Our method, LENS (Learning ENsemble confidence from neural States), aims to effectively com-
+bine predictions from multiple LLMs by learning to estimate each model’s confidence through their
+internal representations. The approach consists of two main phases: (1) confidence predictor train-
+ing and (2) ensemble prediction. Figure[]]illustrates the overall architecture of our method.
+3.1 PROBLEM FORMULATION
+Given a set of N LLMs {Mj,..., My} and a classification task with K classes (e.g., True/False
+for boolean questions or A/B/C/D/E for multiple-choice questions), our goal is to make optimal
+ensemble decisions by learning each model’s reliability patterns. For each input query zx, each
+model M; produces both a prediction y; € {1,..., A} and a set of internal representations from its
+transformer layers.
+
+2
+
+
+--- Page 3 ---
+
+Input Query
+Multiple LLMs
+Internal Rep-
+resentations
+Confidence
+Predictors
+Ensemble Decision
+Figure 1: Overview of LENS architecture. The system takes an input query and processes it through
+multiple LLMs. Internal representations from each model are extracted and fed into corresponding
+confidence predictors. The final decision is made by combining model predictions based on their
+predicted confidences.
+3.2 INTERNAL REPRESENTATION EXTRACTION
+For each LLM ;, we extract internal representations using the logit lens technique
+(2020). Specifically, for the last token’s hidden state at each layer J, we apply:
+hi = LayerNorm(H. Wim (1)
+where H} is the hidden state at layer 1, and Wim is the model’s language modeling head. We then
+compute normalized probabilities over the possible choices:
+p\ = softmax(h!) (2)
+This process yields a feature vector f; that concatenates probabilities across all layers:
+fi = (isp? 57] (3)
+where L is the number of layers in model M;.
+3.3. CONFIDENCE PREDICTOR TRAINING
+For each model M;, we train a lightweight confidence predictor P; that maps the extracted features
+to a confidence score:
+c= Pi(fi) =o(Wifi) (4)
+where c is the sigmoid function, and W; are learnable parameters, which contain only O(L) param-
+eters, where L is the number of layers in the LLM. We train P; on a held-out development set Daey
+using binary cross-entropy loss:
+Li=-— YS > [Iy=ylog(ci) + (1 — 1y,=y) log(1 — %)] (5)
+(x,y) €Daev
+where y is the ground truth label and 1,,,—,, indicates whether model M;’s prediction is correct.
+3
+
+
+--- Page 4 ---
+
+3.4 ENSEMBLE DECISION MAKING
+During inference, we propose the following strategy for combining model predictions:
+Max Confidence Select the prediction from the model with the highest confidence:
+g = Varg max, ci (6)
+4 EXPERIMENTS
+We conduct extensive experiments to evaluate the effectiveness of our proposed ensemble method
+across diverse question-answering tasks. This section details our experimental setup and presents
+comparative results against strong baseline methods.
+4.1 MODEL SETUP
+For our ensemble system, we leverage five state-of-the-art large language models, each with compa-
+rable model sizes but different architectures and pre-training objectives:
+¢ LLaMA-2-7B 2023): A newer generation open-source LLM known for its
+strong general-purpose performance and improved instruction-following capabilities.
+* Mistral-7B (Jiang et al.||2023): A recent model that achieves strong performance across
+various tasks while maintaining computational efficiency through grouped-query attention.
+* BLOOM-7B1 (Le Scao et al.||2023): A multilingual model trained on 46 natural languages
+and 13 programming languages, offering diverse linguistic and cultural perspectives.
+* GPT-J-6B (Wang & Komatsuzaki} |2021): An autoregressive language model trained on
+the Pile dataset, known for its robust performance on English language tasks.
+* Pythia-6.9B (Biderman et al.|2023): A model series designed to facilitate interpretability
+research, providing comprehensive access to intermediate training checkpoints.
+All models are used in their base form without task-specific fine-tuning. Each model contributes
+its predictions and internal representations to our ensemble system, with model outputs being nor-
+malized to ensure fair comparison across different architectures. This diverse set of models, each
+with its unique training methodology and architectural choices, provides a robust foundation for our
+ensemble approach.
+4.2 DATASETS
+We evaluate our approach on six diverse question-answering datasets:
+* CoinFlip 2022): A logical reasoning dataset requiring models to predict coin
+flip outcomes based on given conditions.
+* BoolQ (Clark et al.||2019): A binary question answering dataset containing yes/no ques-
+tions from various domains.
+* PrOntoQA (Saparov & He} |2022): A challenging dataset focusing on pronoun resolution
+and contextual understanding.
+* ProofWriter (Tafjord et al.||2020): A dataset testing models’ capabilities in logical rea-
+soning and proof generation.
+* SWAG (Zellers et al.}/2018): A multiple-choice dataset for commonsense inference about
+grounded situations.
+¢ MathQA 2019): A mathematics question answering dataset covering various
+mathematical concepts.
+4.3 BASELINE METHODS
+We compare our approach against two strong baseline ensemble methods:
+4
+
+
+--- Page 5 ---
+
+Method CoinFlip BoolQ PrOntoQA _ ProofWriter SWAG MathQA
+Majority Vote 58.0 78.2 46.7 75.3 56.0 24.7
+Probability Max 58.0 80.9 45.3 68.7 57.3 22.7
+Max Confidence 58.8 84.1 47.6 75.2 58.8 25.2
+Table 1: Performance comparison of different ensemble methods across datasets (accuracy in %).
+Bold: best result; Underlined: second best result.
+Majority Vote This method makes decisions based on the most common prediction among all
+models, representing a simple yet robust ensemble approach.
+Probability Max This baseline selects the prediction from the model with the highest raw proba-
+bility output for its chosen class, without considering the model’s overall reliability patterns.
+4.4. IMPLEMENTATION DETAILS
+Training Protocol We adopt the following training configuration:
+* Optimizer: Adam with learning rate 10-3
+¢ Batch size: 32
+¢ Training epochs: 200
+¢ Model selection: Best checkpoint based on validation performance
+¢ Train-validation split: 80%-20% of the training data
+Experimental Setup For each dataset, we randomly sample 500 instances to form our experi-
+mental corpus. These instances are then randomly split into equal-sized training and test sets (250
+instances each). This setup ensures a fair comparison between our proposed ensemble method and
+the baseline approaches while maintaining computational efficiency. The test set is used exclusively
+for final performance evaluation, while the training set (further split into train and validation) is used
+for confidence predictor training.
+We adopt a few-shot (2020) direct-answer setting, where we provide the model with sev-
+eral input-output pairs as demonstrations, but without intermediate reasoning steps. Unlike chain-of-
+thought prompting [Wei et al.|(2022) that includes explicit reasoning processes, our demonstrations
+only contain the final answers.
+4.5 RESULTS AND ANALYSIS
+Table [I]presents the comparative results across all datasets. Our proposed Max Confidence method
+consistently outperforms or matches the baseline approaches across most datasets. Specifically:
+Overall Performance The Max Confidence method achieves the best performance on 5 out of 6
+datasets, demonstrating the effectiveness of learning model-specific confidence patterns.
+Key Findings The experimental results support our hypothesis that learning to predict model con-
+fidence from internal representations can lead to more effective ensemble decisions. The consistent
+improvements across diverse tasks demonstrate the robustness of our approach.
+5 CONCLUSION
+In this paper, we present a simple yet effective ensemble method for large language models that
+leverages model confidence patterns to improve performance across diverse question-answering
+tasks. Our experimental results demonstrate that our proposed max confidence method consistently
+outperforms baseline approaches, achieving strong performance on most tasks.
+Our approach has several key advantages:
+5
+
+
+--- Page 6 ---
+
+¢ Simplicity: The method is straightforward to implement and requires no additional training
+or fine-tuning of the base models.
+
+* Efficiency: By leveraging only the direct answer format in few-shot learning, we maintain
+computational efficiency while achieving strong performance.
+
+* Generalizability: The consistent performance across diverse tasks suggests that our
+method generalizes well to different types of question-answering problems.
+
+While our method shows promising results, we acknowledge several limitations. First, our current
+
+implementation is restricted to decoder-only transformer architectures, which limits its applicabil-
+
+ity to encoder-decoder models or other architectures. Second, the method requires access to in-
+termediate layer representations of the models, which may not always be available in production
+environments or with commercial API-based models.
+
+Future work could explore several promising directions:
+
+* Cross-task Transferability: Investigating whether confidence patterns learned from one
+dataset can transfer effectively to other datasets or tasks, potentially enabling zero-shot
+ensemble learning
+
+¢ Multi-Agent Systems: Extending our method to modern multi-LLM systems
+(2024) and agent collaboration scenarios, where robust confidence estimation is crucial for
+effective cooperation
+
+* Model Interpretability: Leveraging the confidence patterns and intermediate representa-
+tions to enhance our understanding of large language models’ decision-making processes
+
+We believe our findings provide valuable insights for developing more robust ensemble systems us-
+
+ing large language models, particularly in scenarios where computational efficiency and reliability
+
+are crucial. For future research aiming to extend this work, several technical enhancements could
+be explored: (1) designing more sophisticated confidence predictor architectures beyond linear lay-
+ers, (2) investigating alternative methods for integrating internal representations, and (3) conducting
+comprehensive ablation studies to analyze layer-wise contributions. Additionally, future work could
+benefit from rigorous empirical evaluations comparing model scales, detailed computational over-
+head analyses, and systematic case studies of both successful and failure cases. The integration of
+advanced prompting techniques like chain-of-thought {Wei et al.| (2022) or self-consistency [Wang]
+
+(2022), as well as alternative confidence aggregation strategies beyond maximum-based selec-
+
+tion, could further enhance the system’s capabilities. The implications of this work extend beyond
+
+simple ensemble methods, potentially contributing to the broader fields of multi-agent systems and
+model interpretability research.
+
+REFERENCES
+
+Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Florencia Leoni Ale-
+man, Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al. Gpt-4 technical
+report. arXiv preprint arXiv:2303.08774, 2023.
+
+Aakriti Agrawal, Mucong Ding, Zora Che, Chenghao Deng, Anirudh Satheesh, John Langford, and
+Furong Huang. Ensemw2s: Can an ensemble of Ilms be leveraged to obtain a stronger llm? arXiv
+preprint arXiv:2410.04571, 2024.
+
+Aida Amini, Saadia Gabriel, Peter Lin, Rik Koncel-Kedziorski, Yejin Choi, and Hannaneh Ha-
+jishirzi. Mathqa: Towards interpretable math word problem solving with operation-based for-
+malisms. arXiv preprint arXiv: 1905.13319, 2019.
+
+Stella Biderman, Hailey Schoelkopf, Quentin Gregory Anthony, Herbie Bradley, Kyle O’Brien, Eric
+Hallahan, Mohammad Aflah Khan, Shivanshu Purohit, USVSN Sai Prashanth, Edward Raff, et al.
+Pythia: A suite for analyzing large language models across training and scaling. In International
+Conference on Machine Learning, pp. 2397-2430. PMLR, 2023.
+
+Collin Burns, Haotian Ye, Dan Klein, and Jacob Steinhardt. Discovering latent knowledge in lan-
+guage models without supervision. arXiv preprint arXiv:2212.03827, 2022.
+
+6
+
+
+--- Page 7 ---
+
+Lingjiao Chen, Jared Quincy Davis, Boris Hanin, Peter Bailis, Ion Stoica, Matei Zaharia, and James
+Zou. Are more Ilm calls all you need? towards the scaling properties of compound ai systems. In
+The Thirty-eighth Annual Conference on Neural Information Processing Systems, 2024.
+
+Christopher Clark, Kenton Lee, Ming-Wei Chang, Tom Kwiatkowski, Michael Collins, and Kristina
+Toutanova. Boolq: Exploring the surprising difficulty of natural yes/no questions. arXiv preprint
+arXiv: 1905.10044, 2019.
+
+Jean Antoine Nicolas de Caritat Mis et al. Essai sur l’application de l’analyse a la probabilité des
+décisions rendues a la pluralité des voix. Imprimerie royale, 1785.
+
+Shanshan Han, Qifan Zhang, Yuhang Yao, Weizhao Jin, Zhaozhuo Xu, and Chaoyang He. Llm
+multi-agent systems: Challenges and open problems. arXiv preprint arXiv:2402.03578, 2024.
+Albert Q Jiang, Alexandre Sablayrolles, Arthur Mensch, Chris Bamford, Devendra Singh Chaplot,
+Diego de las Casas, Florian Bressand, Gianna Lengyel, Guillaume Lample, Lucile Saulnier, et al.
+
+Mistral 7b. arXiv preprint arXiv:2310.06825, 2023.
+
+Jacqueline Kazmaier and Jan H Van Vuuren. The power of ensemble learning in sentiment analysis.
+Expert Systems with Applications, 187:115819, 2022.
+
+Zhixin Lai, Xuesheng Zhang, and Suiyao Chen. Adaptive ensembles of fine-tuned transformers for
+llm-generated text detection. arXiv preprint arXiv:2403.13335, 2024.
+
+Teven Le Scao, Angela Fan, Christopher Akiki, Ellie Pavlick, Suzana Ili¢é, Daniel Hesslow, Roman
+Castagné, Alexandra Sasha Luccioni, Francois Yvon, Matthias Gallé, et al. Bloom: A 176b-
+parameter open-access multilingual language model. 2023.
+
+nostalgebraist. Interpreting GPT: The logit lens. AI Alignment Forum, 2020.
+URL https://www.alignment forum. org/posts/AcKRB8wDpdaNovéoru/
+interpreting-gpt-—the-logit-—lens
+
+Abulhair Saparov and He He. Language models are greedy reasoners: A systematic formal analysis
+of chain-of-thought. arXiv preprint arXiv:2210.01240, 2022.
+
+Oyvind Tafjord, Bhavana Dalvi Mishra, and Peter Clark. Proofwriter: Generating implications,
+proofs, and abductive statements over natural language. arXiv preprint arXiv:2012.13048, 2020.
+
+Gemini Team, Rohan Anil, Sebastian Borgeaud, Jean-Baptiste Alayrac, Jiahui Yu, Radu Soricut,
+Johan Schalkwyk, Andrew M Dai, Anja Hauth, Katie Millican, et al. Gemini: a family of highly
+capable multimodal models. arXiv preprint arXiv:2312.11805, 2023.
+
+Hugo Touvron, Louis Martin, Kevin Stone, Peter Albert, Amjad Almahairi, Yasmine Babaei, Niko-
+lay Bashlykov, Soumya Batra, Prajjwal Bhargava, Shruti Bhosale, et al. Llama 2: Open founda-
+tion and fine-tuned chat models. arXiv preprint arXiv:2307.09288, 2023.
+
+Ben Wang and Aran Komatsuzaki. Gpt-j-6b: A 6 billion parameter autoregressive language model,
+2021.
+
+Xuezhi Wang, Jason Wei, Dale Schuurmans, Quoc Le, Ed Chi, Sharan Narang, Aakanksha Chowdh-
+ery, and Denny Zhou. Self-consistency improves chain of thought reasoning in language models.
+arXiv preprint arXiv:2203.11171, 2022.
+
+Yaqing Wang, Quanming Yao, James T Kwok, and Lionel M Ni. Generalizing from a few examples:
+A survey on few-shot learning. ACM computing surveys (csur), 53(3):1-34, 2020.
+
+Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi, Quoc V Le, Denny
+Zhou, et al. Chain-of-thought prompting elicits reasoning in large language models. Advances in
+neural information processing systems, 35:24824—24837, 2022.
+
+Han Yang, Mingchen Li, Huixue Zhou, Yongkang Xiao, Qian Fang, and Rui Zhang. One Im is not
+enough: Harnessing the power of ensemble learning for medical question answering. medRxiv,
+2023.
+
+7
+
+
+--- Page 8 ---
+
+Rowan Zellers, Yonatan Bisk, Roy Schwartz, and Yejin Choi. Swag: A large-scale adversarial
+dataset for grounded commonsense inference. arXiv preprint arXiv: 1808.05326, 2018.
+
+Andy Zou, Long Phan, Sarah Chen, James Campbell, Phillip Guo, Richard Ren, Alexander Pan,
+Xuwang Yin, Mantas Mazeika, Ann-Kathrin Dombrowski, et al. Representation engineering: A
+top-down approach to ai transparency. arXiv preprint arXiv:2310.01405, 2023.
+
+8

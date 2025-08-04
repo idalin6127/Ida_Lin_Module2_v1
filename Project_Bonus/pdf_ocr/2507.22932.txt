@@ -1,0 +1,516 @@
+
+
+--- Page 1 ---
+
+FinMarBa: A Market-Informed Dataset for Financial Sentiment Classification
+B. Lefort'”, E. Benhamou'?, B. Guez', JJ. Jacques Ohana’, E. Setrouk”, A. Etienne?
+‘Ai For Alpha, ?Centrale Supélec, *Paris Dauphine PSL, {first_name.lasst_name}@aiforalpha.com
+IJCAI 2025 - FinLLM Workshop - Guangzhou, China, August 28, 2025
+Abstract et al., 2016; Malo et al., 2013]. Typically, a group of indi-
+«~ : . . . . . . viduals—often financial experts or students—is tasked with
+N Financial sentiment classification typically relies categorizing financial texts as positive, negative, or neutral
+=< on human-annotated datasets for model fine-tuning based on their subjective interpretation of economic conditions
+_ ane valuation. However tonne est ° bis Know! and the expected impact of the news on the stock market.
+= ge, existing datasets exnibit inherent biases an This approach has two main limitations. First, human anno-
+— do not directly capture market reactions. Despite tation introduces biases, as annotators may overlook relevant
+= these limitations, no alternative dataset has been market conditions when classifying financial news or, con-
+few developed specifically for financial sentiment classi- versely, cause data leakage by subconsciously incorporating
+fication based on news. In this work, we introduce future information. Second, state-of-the-art language mod-
+— FinMarBa, a dataset that reflects actual market re- els require extensive training data, yet manually annotating
+—] actions to news, eliminating human-induced biases. large datasets is both costly and time-consuming. Further-
+UO We present a fully automated labeling method that more, human performance in financial sentiment annotation is
+w enables the construction of large-scale datasets, fa- subject to variability over time, leading to inconsistencies in
+5) cilitating both fine-tuning and evaluation of large classification.
+4 pnenage models. Since prancial see eting class To address these challenges, we propose a methodology
+_ cation 1s primarily employed for predictive signa for constructing a large-scale dataset that is free from human
+> Seine tha we provide empirical evidence cemon- biases and more accurately reflects market behavior. Recent
+QI anes the qua i val hut abe vnotaon. F thon advancements in natural language processing (NLP) have en-
+cr) pared to conventiona! human annotation. Further- abled the use of large language models (LLMs) for extracting
+On more, we release a substantial subset of the dataset and processing financial information [Schultenkamper and
+N on Hugging Face, along with the associated code Baumer, 2024]. In our work, we leverage GPT-4 to automate
+N and fine-tuned models as open-source resources. the dataset creation process. GPT-4 has demonstrated strong
+~~ Keywords: Financial Sentiment Analysis, Market-Based An- performance in various NLP tasks, including text summariza-
+oO tation, Large Language Models, Dataset Construction, Fi- tion and entity recognition [Mao ¢ al., 2023]. :
+Van) noratron, arg suas . ’ Our dataset is based on Bloomberg Market Wraps, which
+N nancial NLP, Automated Labelling, Bloomberg News offers several advantages over existing datasets that primar-
+ily rely on social media sources (e.g., Twitter, Reddit) or
+. > 1 Introduction region-specific financial texts (e.g., Financial-Phrasebank).
+~< "11 August 2010 - VAIAS said today that its net loss widened Bloomberg provides reliable, high-quality financial news
+m to EUR4 .8 m in the first half of 2010 from EUR2.3 m in the closely followed by market participants. Additionally, its
+corresponding period a year earlier.". This headline extracted coverage spans global economic events and major financial
+from the Financial-Phrasebank dataset Malo et al. [2013] was ™arkets, making it a robust source for financial sentiment
+classified as negative by the human-annotators. However, on classification.
+the day following its publication, the stock price of VAIAS_ —_ Contributions This work makes several key contributions
+increased, signaling a positive market reaction. This discrep- to financial sentiment classification:
+ancy highlights a fundamental limitation of human-annotated . . .
+datasets: they often fail to capture the actual impact of finan- 1. A market-driven annotation framework. We introduce
+cial news on market behavior. a structured annotation methodology that classifies finan-
+In financial sentiment classification, the primary objective is cial text based on actual market responses rather than
+to construct predictive signals for market movements [Qasem subjective human interpretation.
+et al., 2015; Gupta and Chen, 2020; Malo et al., 2013; Lefort et 2. The FinMarBa dataset. We present FinMarBa, a large-
+al., 2024a]. To the best of our knowledge, existing datasets for scale dataset constructed using market-driven annotation.
+this task are manually annotated by human evaluators [Mozeti¢ Unlike existing human-labeled datasets, our approach
+
+
+--- Page 2 ---
+
+leverages objective financial events, enabling more accu- related to northeastern Europe. The annotation process
+rate sentiment classification. The dataset is derived from was conducted by a group of 13 individuals, including 10
+Bloomberg data, a reliable source that provides compre- master’s students and 3 researchers, who manually classi-
+hensive coverage of global markets and macroeconomic fied the sentences based on their subjective interpretation
+trends. of economic conditions.
+
+3. Empirical validation of market-driven annotation. We ¢ Social media-based datasets. Several datasets derived
+provide quantitative evidence demonstrating the advan- from social media platforms [Hussein, 2021; Thukral
+tages of market-based annotation compared to traditional et al., 2023] focus on financial discussions where users
+human-labeled approaches. Specifically, we show that express opinions about economic conditions. However,
+the key terms in this dataset align more closely with ex- these datasets present two key limitations. First, they
+pected financial market drivers and that the split between comprise a vast amount of content generated by individu-
+positive, negative and indecisive news is more in line als whose opinions may not influence financial markets,
+with the long term-term positive bias of equity markets as there is no empirical evidence that market participants
+as well as the reduction of indecisive news. Additionally, rely on such sources. Second, sentiment classification in
+we observe an improvement in backtesting results when these datasets is often performed using language mod-
+using this dataset for financial sentiment analysis with els trained on semantic features, without considering the
+a much higher Sharpe ratio. These findings confirms underlying economic implications of the expressed senti-
+the effectiveness of market-driven annotation in captur- ments.
+ing sentiment signals that are more relevant to financial To address these limitations, we introduce a new dataset
+markets. that incorporates labels reflecting the real market reactions
+
+4. Facilitating future research. To promote reproducibility to financial news, providing a more reliable and objective
+and further advancements in financial NLP, we release foundation for financial sentiment classification.
+
+a subset of our dataset! and fine-tuned models? as open-
+source resources on the Hugging Face platform. We aim 3 Dataset Construction
+to support the broader research community in developing We collected financial news data from Bloomberg Market
+and improving financial sentiment analysis models. Wraps covering the period from 2010 to 2024. These reports,
+authored by financial experts, provide a concise summary of
+2 Related Works daily financial events and are widely used in the industry. They
+Financial Sentiment Classification NLP have been widely _S¢tV¢ a8 a valuable source of information, as they comprehen-
+adopted in the field of finance [Araci, 2019; Malo et al., 2013; sively cover all major all significant news and events across
+Yang ef al., 2023]. Sentiment classification of text is one of the $/0bal markets. ; ;
+most explored task [Maia et al., 2018; Kazemian et al., 2016]. A key advantage of using Bloomberg Market Wraps is
+In addition, prior literature and available dataset for financial their broad coverage of various markets and regions. This
+sentiment classification are based on a human annotation of __#8 Particularly important for our study, as our objective is to
+the texts [Malo ef al., 2013]. Sentiment extracted from text  @M4lyze financial sentiment from a global perspective rather
+are then used for building sentiment signal that are used for ‘han being restricted to a specific geographic area or market
+building investment strategies [Lefort et al., 2024b; Li et al., Segment. These reports are disseminated through multiple
+2023]. However, the human annotation does not reflect accu- Channels, including the Bloomberg network as well as online
+rately the likely impact of the news on the market. The human financial platforms such as Yahoo Finance and Investing.com.
+may not be considering the appropriate parameters or may In total, we collected over 3,700 daily market wrap reports,
+not have enough knowledge (master’s student are annotator ach summarizing between 500 and 1,000 individual financial
+for the financial_phrasebank dataset) for classifying correctly 9€WS items, resulting in a corpus exceeding 2 million individ-
+the dataset. Also, the existing open-sourced sentiment dataset Wal news items. However, instead of analyzing individual news
+are not based on fully relevant data, such as tweets or region- _ ticles, we focus on Bloomberg's curated daily summaries.
+or market-focused data. Consequently, a human-biased free This approach leverages expert editorial selection to highlight
+dataset where the associated sentiment reflects the real impact Key financial events and trends, thereby reducing noise and en-
+on the market is needed. suring a dataset that is more representative of market-moving
+information.
+Financial Sentiment Datasets We identify two types of Additionally, we implemented a two-step methodology to
+dataset that are used for financial sentiment classification task. _ further refine the dataset, removing irrelevant content and
+¢ Financial-Phrasebank dataset. The Financial. Structuring the data to enhance its usability for financial senti-
+Phrasebank dataset [Malo et al., 2013] consists of approx- Ment analysis.
+imately 5,000 sentences, each annotated with a sentiment . .
+label. The dataset primarily focuses on financial news 3.1 Headline Generation
+After collecting the daily news, we extracted key headlines
+‘https://huggingface.co/datasets/baptle/financial_headlines_ that summarize the most significant information of each day.
+market_based This process enables a more effective condensation of finan-
+*https://huggingface.co/baptle/FinbertMBComparison cial reports by emphasizing critical insights while filtering out
+
+
+--- Page 3 ---
+
+less relevant details. By structuring the extracted headlines to events, such as shifts in the dollar value, stock market highs,
+be concise and non-redundant, we ensure clarity and coher- __ oil price changes, etc.
+
+ence in the dataset. Additionally, this approach helps reduce
+
+noise while preserving essential financial insights, making Table 1: Sample of our large Dataset and corresponding list of
+the extracted headlines particularly relevant for investment — Ticker(s)
+
+decision-making.
+
+The headlines were generated using GPT-4, following a  -_Dae_Headlme Cees
+specific prompt designed to extract informative and market- 2010-01-04 Dollar Slumps Amid Worldwide Manufacturing Improvement [UUP, ACWI]
+relevant statements. Below is the prompt used in our method- 2022-08-17 S&P 500 Rises 1% to All-Time High, Treasuries Lose Gains [GSPC, TNX]
+ology: 2024-01-31 West Texas Intermediate Crude Falls 1.3% to $76.83 a Barrel [CL=F]
+
+Table 1 shows the distribution of key tickers across the
+
+You are provided with a financial text, and your task is to dataset. Notably, the most frequent tickers are from major
+
+extract a list of headlines from it. Each headline must be equity markets, particularly the US, highlighting its dominance
+
+informative and provide relevant insights for a financial in global finance and extensive media coverage.
+
+market analyst. Ensure that each headline contains a
+
+single piece of information. Region
+
+mmm US
+1. Headline for Theme 1 “ — Asia
+meme Europe
+2. Headline for Theme 2 12 mm Enjeraing countries
+meee Crypto
+3... 10 yet
+&
+oO
+
+This two-step extraction process with first, the filtering £ 8
+of market summaries by Bloomberg’s specialized financial e 5
+journalists, followed by the extraction of key headlines using “
+
+a large language model (LLM), enhances the performance 4
+of sentiment classification models by ensuring that the input
+consists of meaningful, noise-free financial information Lefort 2
+et al. [2024a]. At this stage, we obtain a dataset of short,
+unlabeled financial texts that can be further processed for 0 ro © = x Q = S = 9 5 2 w
+sentiment analysis. * 86g 2 F OF 5 s a ©
+
+<
+
+Ticker
+
+3.2 The market-based Annotation Process
+Ticker Identification Firstly, we use GPT-4 to identify and Figure 1: Distribution of the main tickers by region. The sum of
+assign a list of tickers associated with each headline. The these tickers’ percentage is not 100% as only the most represented
+model has demonstrated efficiency in accurately determining ane consnene
+the involved entities in a text Wu ef al. [2023]. By doing so, . . .
+we identify the markets which are the most likely to react to The table predominantly features equity-related tickers,
+the news. Indeed, a headline may concern specific markets which corresponds with the sentiment analysis’s goal to evalu-
+and is unlikely to provoke a reaction on all the markets at ate feelings toward significant equity sectors. The main region
+once. This step ensures that the associated sentiment reflects is the US, which seems very consistent since the American
+the most precisely the true market conditions. In this setup, market is the largest and most influential. Moreover, the analy-
+it’s necessary to note that the headline is considered to have an sis intriguingly links the global market sentiment not only with
+equal impact on all the related tickers. This does not affect the traditional equities but also with diverse asset classes including
+labelling of the data since we want to capture the macro effect Bitcoin, bonds and gold, Showcasing a muffaceied approach
+of the headline. If the majority of the associated markets have to understanding market ynamics. Even if we onty showcase
+the same common sentiment. then the macro sentiment will in table 1 less than half of the tickers, the table underscores
+be correctly evaluated. Lefort et al. [2024a] detailed in their the complexity and interconnectedness of modern financial
+work that it exists a macro impact of the news on the markets markets, with over five thousands tickers and multiple under-
+It remains that even if it seems accurate after double-checking ving types (equities, bonds, commodities, credit, currencies
+by financial experts, we are aware that the hypothesis whereby and even crypto-currencies).
+headlines are entirely responsible for market movements can- _ Ticker’s Related Market Reaction The algorithm classifies
+not be completely dismissed. Table | provides a subset of our financial headlines based on their impact on stock prices using
+broader sixty thousands headlines, illustrating specific data a quantile approach. Historical stock performance data is
+entries and their associated financial tickers. The table aligns utilized to categorize the impact of news on the stock prices in
+dates with corresponding news headlines and the related fi- a systematic manner.
+nancial market tickers, providing a snapshot from January 4, For each stock ticker, denoted as T;,, the algorithm operates
+2010, to January 31, 2024. Entries include significant financial in the following manner:
+
+
+--- Page 4 ---
+
+1. Historical Data Retrieval: Acquire historical closing Percentage
+prices for the past five years, maintaining a rolling win- Change
+dow approach—considering the history up to the publica- .
+tion date of the relevant financial headline. Calculation
+2. Percentage Change Calculation: Compute the daily .
+percentage change in closing prices the day after the Quantile
+publication of the headline, denoted as APr, . Determination
+3. Quantile Determination: Determine the specific quan-
+tiles Qo.3,7, and Q0.6,Tr> representing the 30% and 60% AP > Qo. AP < Qo3
+thresholds, respectively, based on the rolling historical
+price data.
+4. Classification: Assign a category to the impact of the Classificati
+news—positive (+1), negative (—1), or neutral (0)—by EIS UCDO)
+comparing the calculated APr, against the quantiles.
+The classification function, C(T;,, APr, ), is defined by the
+following: otherwise
++1 if APp, > Qo.6,7;;
+C(Tr, APr,) = 4-1 if APr, < Qo.s,7,; (1)
+0 otherwise.
+The sequence of steps over time plays a crucial role, as Sentiment
+depicted in Figure 2. For a given headline published at time
+t, we examine the preceding five-year price history of the as- Figure 3: Automatic Classification of Financial Headlines. Blue
+sociated ticker, delineated in navy blue, up to the publication blocks represent data processing steps, green block represents deci-
+date. This historical percentage change is used to compare the sion points for classification and orange blocks corresponding labels.
+subsequent day’s return (from ¢ to ¢ + 1) against the historical
+distribution. This five-year span is chosen to align with our I~ biases and are slow to achieve. The given labels might not be
+tent to evaluate the immediate effects of news while capturing :
+bstantial porti the ticker 7,’ t return distributi accurate and reflect the real global market reaction because of
+4 SUDSTANT AT PORTION OF ME WEKET 1k S Past FEMME CASIEDOUNONS. the human’s sensitivity when reading. The dark blue boxes
+are the new steps that proposes an alternative to avoid human
+1 biases and automate the annotation process.
+t — 1250 tt+1 4 The FinMarBa Dataset
+After following the described process in section 3, we obtained
+Figure 2: Time ordering of the automatic labelling steps. The head- a dataset with a total of 61,252 annotated headlines. These
+line is published at time t, the historical price distribution is gathered headlines have been extracted from a daily news from 01-01-
+from t — 5 years to ¢ and the next day price return is from ¢ tot + 1. 2010 to 31-01-2024. In this section, we focus on FinMarBa’s
+; ; oo, ; ; improvements over the dataset most commonly used for this
+: This framework provides insight into news impact, using task to date (the Financial-PhraseBank dataset *). We start by
+historical volatility and performance benchmarks. The — describing the improvements from a statistical point of view.
+fi izes th d lain that tart F : ee
+gure 3 SUMMATIZES the Process ane’ explain bal We sian The Annotation Consistency The distribution of the sen-
+from an initial calculation of the percentage change of the . . :
+. . . . . timent is expected to be quite balanced between the three
+identified ticker used to determine a quantile and then convert rae . . . .
+. ye . or Dante? classes: positive, negative and indecisive. If one sentiment
+this quantile into a sentiment score that is either ’Positive’ if . : .
+“yg - 5 18 overwhelmingly dominant, we expect the market to follow
+the percentage change exceeds the 60th percentile, Negative : :
+: : ; re . that trend and not reflect any other sentiment. However, given
+if below the 30th percentile, and ’Indecisive’ otherwise. . . . ve
+that all major equity markets have a slight long-term positive
+Our approach of building an automatic annotator for senti- bias, we also expect positive headlines to be slightly more Tep-
+. . . resented. Table 2 is consistent with the expected behavior for
+ment classification is new to the financial sector and has not : . . .
+. . oy . . both on the data set, producing a fairly balanced classification.
+been explored in the academic literature. Unlike other indus- a : : :
+: a : . The main difference is that the FinMarBa dataset reflects this
+tries, the initial step involves accurately labeling each news wes . . . :
+. a . . . positive market bias, while the Financial-Phrasebank dataset
+item, which is not a simple task. To summarize our contri- does not
+bution, we provide a recap of the entire process, mn cluding Thus, the distribution of labels in the FinMarBa dataset is
+the new steps, as shown in figure 4. The dotted light-blue . : .
+. . . more consistent with actual market behavior.
+box denotes the usual steps of annotating financial news in
+the sentiment classification task. They all presents human $https://huggingface.co/datasets/takala/financial_phrasebank
+
+
+--- Page 5 ---
+
+Current
+| Approach ~~ - - ------------ 22-02 e renee enn eee e rere,
+Read Interpret Label
+Headlines Sentiment
+Dataset
+oi
+Approach
+Figure 4: Full Process of Dataset Annotation.
+Regional Coverage Comparison To construct a predictive
+“Sentiment Financial-Phrasebank (%) FinMarBar (%) _ macro signal for equity markets, headlines should predomi-
+Positive 28.13 42.11 nantly cover the U.S., the largest and most influential market,
+Negative 12.46 31.43 while maintaining balanced coverage of other regions.
+Indecisive 59.41 26.45 Figure 5 shows the most frequent words in the Financial-
+Phrasebank dataset, revealing a strong eurozone focus, with
+Table 2: Proportion of sentiment labels in Financial Phrasebank and high occurrences of "EUR," "Finland," and "Finnish," indicat-
+Market-based datasets. ing a regional bias toward northeastern Europe.
+
+In contrast, Figure 6 highlights the most frequent terms in
+the FinMarBa dataset, where U.S.-related words dominate,
+aligning with expectations. The prominence of "stocks," "dol-
+
+sales net lar," and "oil" further reflects key economic drivers shaping
+eC ; ; global markets.
+U fi n 1 S) h The FinMarBa dataset better reflects the historical positive
+finland million bias of the equity market and provides better global coverage
+@ O aa a N than the Financial-Phrasebank dataset. The next section fo-
+fi cuses on providing quantitative evidence of the quality of the
+an Nn : FinMarBa annotation compared to the Financial-Phrasebank
+S a a0 d pro fit annotation.
+Figure 5: Top 10 words in Financial-Phrasebank 5 Proof of the FinMarBa Annotation
+Contribution
+When it comes to financial sentiment classification, the main
+. objective is to create a signal derived from the model’s clas-
+d S C OC k S sification. The task of classifying sentiments should not be
+Ll Nn eC x understood on the basis of semantics, but on the basis of mar-
+am i d S p ket perception. The signal is expected to be predictive of the
+U S markets. The intuition is that if the model predicts without
+5 0 @) error on all the labels, then the signal generated will perform
+r C very well when used in the markets. To assess the quality of the
+D e C e N signal generated from the FinMarBa annotation, we compared
+ollar oil since it with the Financial-Phrasebank dataset. The methodology
+employed involved two steps:
+Figure 6: Top 10 words in FinMarBa . . . .
+1. Model Fine-Tuning We train a BERT model on the Fin-
+MarBa dataset.
+
+
+--- Page 6 ---
+
+2. Backtest on the S&P500 We backtest the S&P500 from Results Table 4 shows that FinMarBa outperforms Financial-
+2019 to 2024 to assess the signal generated by the models. | Phrasebank, with a Sharpe Ratio of 0.30 vs. -0.13. This
+. . . . highlights the stronger predictive power of market-driven
+3. Robustness To validate the quality of the classification, annotation. T-statistics, obtained by multiplying Sharpe ratios
+we carried out several experiments focusing on signal by V4.5 x 250, confirm statistical significance with p-values
+robustness. below | percent. The negative Sharpe ratio suggests that the
+The Financial-Phrasebank was used to train the well-known __ Signal is driven by noise rather than meaningful sentiment
+FinBERT model [Araci, 2019]. This model will serve as a insights.
+basis for comparison between the two datasets.
+Dataset Sharpe Ratio __T-stat (p-value)
+a, ‘ FinMarBa 0.30 10 (0)
+5.1 Model Fine-Tuning Financial-Phrasebank 0.13 4.36 (1.3 e-5)
+First, we divided the data from 2010 to 2019 into a training set
+and the data from 2019 to 2024 into a test set (representing 4.5 Table 4: Sharpe Ratios of sentiment-based signals from Fin-
+years). We chose 2019 because we wanted to ensure that no MarBa and Financial-Phrasebank. Higher values indicate stronger
+training data for FinBERT would be used in the future for Fin- risk-adjusted returns, with FinMarBa outperforming Financial-
+MarBaBERT. We selected exactly the same hyperparameters Phrasebank.
+as those detailed in the paper published on FinBERT. The re-
+sult is two models based on BERT: FinBERT is trained on the 5.3 Sional Robustness
+Financial-Phrasebank dataset and FinMarBaBERT is trained . 8
+on the FinMarBa dataset. Both models have been trained un- To validate further the consistency and reliability of our
+der the same conditions and with the same hyperparameters. | Market-based labeling method, we conducted a series of ro-
+The only difference lies in the dataset used for training. bustness tests. These experiments were designed to assess
+how the signal’s performance changes when we introduce
+5.2 Backtest Results on the S&P500 controlled perturbations to the headline data.
+. ; ; Methodolo We applied a sliding time window approach,
+The Sharpe Ratio To evaluate financial strategies, we use where daily vneadlines were randomly exchanged Mithin a
+the Sharpe Ratio (S/2), a standard metric for risk-adjusted predefined window. This process was repeated for differ-
+returns defined as: ent window sizes and exchange rates, considering both past
+(backward-looking) and future (forward-looking) time frames.
+SR= E{R] (2) If our labeling method accurately captures market sentiment,
+~  g forward-looking windows should yield higher Sharpe ratios
+than backward-looking ones, particularly at higher exchange
+where E[R] is the expected return of the strategy, while rates. Increasing exchange rates in future windows should
+o is the standard deviation of the strategy’s excess return, —_ further improve performance by incorporating more forward-
+representing risk. A higher Sharpe Ratio indicates superior _Jooking information, while past-looking windows should de-
+risk-adjusted performance, making it a key metric for assess- _ grade performance as noise increases.
+ing financial models. Experimental Setup We tested window sizes of 5, 10 and
+The Signal From the sentiment on each headline, we derive 15 days, with exchange rates ranging from 10% to 50%. Exper-
+a daily score that is detailed precisely in [Lefort et al.,2024a]. | iments were conducted in forward-looking (future) direction.
+It is computed as follows. Then we computed the difference in Sharpe ratio between
+The sentiment score S' for a day with N headlines is given _ the FinMarBa and Financial-Phrasebank dataset. A positive
+by: difference would indicate that the FinMarBa dataset has better
+labelling than the Financial-Phrasebank.
+Wika p(hns) — Di nh) ,
+S= See (3) Results Consistency The findings of our robustness tests
+Vie p(hi) + Vie1 n(hi) are summarized in Table 5, which reports the differences in
+. . . Sharpe ratios between the FinMarBa dataset and the Financial-
+Finally, we obtain two sets of data. One for FinMarBaBERT _phrasebank dataset across various window sizes and exchange
+and the other for FinBERT. rate thresholds. The results indicate that FinMarBa consis-
+tently achieves higher Sharpe ratios, suggesting improved
+Date Positive Negative Score predictive performance. Sharpe ratios calculated over 4.5
+2019-12-12 11 3 0.57 years are statistically significant at a 5 percent confidence
+2019-12-13 6 6 0.00 level, corresponding to a critical value of 1.65 from the in-
+oo verse normal distribution. A ratio is significant if it exceeds
+2023-12-01 8 3 0.45 Paneer = 0.05, confirming that all reported values are statis-
+_. . tically significant. The performance gap widens as the thresh-
+Table 3: Dataset example containing the daily score. old increases, with differences rising from 0.50 at 10% to 1.94
+at 50% for a 5-day window. A similar trend is observed for
+
+
+--- Page 7 ---
+
+10-day and 15-day windows, confirming that greater access to NLP and support the advancement of more accurate and reli-
+future labels enhances predictive performance. The sharpest able sentiment analysis methodologies.
+increase occurs in shorter windows, supporting the hypothesis
+that improved foresight amplifies dataset differentiation. Limitations
+Table 5: Difference of Sharpe Ratios between FinMarBa and While FinMarBa offers a novel approach to financial senti-
+Financial-Phrasebank ment classification by utilizing market reactions for dataset
+labeling, several limitations should be acknowledged. Firstly,
+Window Size 10% Rate 20% Rate 30% Rate 40% Rate 50% Rate the reliance on market data means that the dataset is primarily
+“Sdays—St=<~SCSst=<s~iSUCSC(<i‘C TTSOC*~‘iSS!!”!”#*~«*d~« CS reflective of publicly traded companies, potentially excluding
+10 days 0.45 0.69 0.61 1.22 0.62 sentiments related to private entities or sectors with less mar-
+1days 052 OTT OAR SB 08D ket transparency. Secondly, the automated labeling process,
+though designed to reduce human bias, may not fully capture
+the nuanced contexts of certain financial news, leading to po-
+6 Conclusion tential misclassifications. Additionally, the dataset’s focus on
+In this paper, we introduced FinMarBa, a novel market- historical market reactions ie not mee aor unpreeeden ree
+informed dataset for financial sentiment classification. Our ap- even he bil . at nod ‘ vened on hi ‘4 — il ve hile
+proach addresses the limitations of existing human-annotated orfo ore how " ty 0 vad els Wane dete t al _ “le y: ik ve
+datasets by directly reflecting market reactions to news, chor oe like * Bloo " ° » Mark Wns ity, Me iP encence
+thereby eliminating human bias and providing a more accurate he not bing eee onote a he raps ed at any ite
+representation of financial sentiment. herent biases or inaccuracies in these sources could propagate
+rar . into the FinMarBa dataset.
+The key contributions of our work include:
+1. A detailed protocol for market-based annotation of finan-
+cial texts, leveraging advanced NLP techniques and real
+market data.
+2. The creation of the FinMarBa dataset, which offers a
+comprehensive and unbiased view of financial sentiment
+across various markets and regions.
+3. Quantitative evidence demonstrating the superiority of
+our market-based annotation method over previous tradi-
+tional human-annotated datasets.
+4. Open-source release of a significant sample of our dataset
+and fine-tuned models, facilitating further research and
+improvements in the field.
+Our experimental results show that FinMarBa consistently
+outperforms the widely-used Financial-Phrasebank dataset in
+terms of sentiment distribution, global market coverage, and
+predictive power. The robustness tests further validate the
+consistency and reliability of our labeling method, particularly
+in capturing short-term market sentiments and maintaining
+performance under various perturbations.
+The implications of this work are significant for both aca-
+demic research and practical applications in finance. Fin-
+MarBa provides a more accurate foundation for developing
+and evaluating financial sentiment classification models, which
+can lead to improved predictive signals for market analysis
+and investment strategies.
+Future work could explore the application of FinMarBa to
+other financial markets and asset classes, as well as investigat-
+ing the integration of this dataset with more advanced machine
+learning techniques. Additionally, continuous updating of
+the dataset with new market data could ensure its ongoing
+relevance and effectiveness.
+In conclusion, FinMarBa represents a significant advance-
+ment in financial sentiment analysis, offering a more reliable
+and market-aligned alternative to existing datasets. We believe
+this contribution could foster new developments in financial
+
+
+--- Page 8 ---
+
+References Proceedings of the International Conference on Advances
+
+Dogu Araci. Finbert: Financial sentiment analysis with pre- in Social Networks Analysis and Mining, ASONAM °23.
+trained language models, 2019. ACM, November 2023.
+
+Rubi Gupta and Min Chen. Sentiment analysis for stock — Shijie Wu, Ozan Irsoy, Steven Lu, Vadim Dabravolski, Mark
+price prediction. In 2020 IEEE Conference on Multimedia Dredze, Sebastian Gehrmann, Prabhanjan Kambadur, David
+Information Processing and Retrieval (MIPR), pages 213- Rosenberg, and Gideon Mann. Bloomberggpt: A large
+218, 2020. language model for finance, 2023.
+
+Sherif Hussein. Twitter sentiments dataset. Mendeley Data, Yi Yang, Yixuan Tang, and Kar Yan Tam. Investlm: A large
+2021. language model for investment using financial domain in-
+
+Siavash Kazemian, Shunan Zhao, and Gerald Penn. Evaluat- struction tuning, 2023.
+ing sentiment analysis in the context of securities trading. In
+Katrin Erk and Noah A. Smith, editors, Proceedings of the
+54th Annual Meeting of the Association for Computational
+Linguistics (Volume 1: Long Papers), pages 2094-2103,
+
+Berlin, Germany, August 2016. Association for Computa-
+tional Linguistics.
+
+Baptiste Lefort, Eric Benhamou, Jean-Jacques Ohana, David
+Saltiel, Beatrice Guez, and Damien Challet. Can ChatGPT
+compute trustworthy sentiment scores from Bloomberg Mar-
+ket Wraps?, 2024.
+
+Baptiste Lefort, Eric Benhamou, Jean-Jacques Ohana, David
+Saltiel, Beatrice Guez, and Thomas Jacquot. Stress index
+strategy enhanced with financial news sentiment analysis
+for the equity markets, 2024.
+
+Wang Li, Chaozhu Hu, and Youxi Luo. A deep learning
+approach with extensive sentiment analysis for quantitative
+investment. Electronics, 12(18), 2023.
+
+Macedo Maia, André Freitas, and Siegfried Handschuh.
+
+Finsslx: A sentiment analysis model for the financial do-
+main using text simplification. In 2018 IEEE 12th Interna-
+tional Conference on Semantic Computing (ICSC), pages
+318-319, 2018.
+
+Pekka Malo, Ankur Sinha, Pyry Takala, Pekka Korhonen, and
+Jyrki Wallenius. Good debt or bad debt: Detecting semantic
+orientations in economic texts, 2013.
+
+Rui Mao, Guanyi Chen, Xulang Zhang, Frank Guerin, and Erik
+Cambria. GPTEval: A survey on assessments of ChatGPT
+and GPT-4, 2023.
+
+Igor Mozeti¢, Miha Gréar, and Jasmina Smailovic. Multilin-
+gual twitter sentiment classification: The role of human
+annotators. PloS one, 11(5):e0155036, 2016.
+
+Mohammed Qasem, Ruppa Thulasiram, and Parimala Thu-
+lasiram. Twitter sentiment classification using machine
+learning techniques for stock markets. In 2015 International
+Conference on Advances in Computing, Communications
+and Informatics (ICACCI), pages 834-840, 2015.
+
+Sergej Schultenkamper and Frederik Simon Baumer. Struc-
+tured knowledge extraction for digital twins: Leveraging
+LLMs to analyze tweets. In Frank Phillipson, Gerald Eich-
+ler, Christian Erfurth, and Giinter Fahrnberger, editors, In-
+novations for Community Services, pages 150-165, Cham,
+
+2024. Springer Nature Switzerland.
+
+Sachin Thukral, Suyash Sangwan, Vipul Chauhan, Arnab
+Chatterjee, and Lipika Dey. Generating insights about fi-
+nancial asks from Reddit posts and user interactions. In

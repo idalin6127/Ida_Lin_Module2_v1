@@ -1,0 +1,625 @@
+
+
+--- Page 1 ---
+
+What’s Taboo for You?
+An Empirical Evaluation of LLMs Behavior Toward Sensitive Content
+Alfio Ferrara’, Sergio Picascia!, Laura Pinnavaia’,
+Vojimir Ranitovic*, Elisabetta Rocchetti!, Alice Tuveri’,
+‘Universita degli Studi di Milano, Department of Computer Science, Via Celoria, 18 - 20133 Milan, Italy
+Universita degli Studi di Milano, Department of Languages, Literatures, Cultures and Mediations,
+Piazza S. Alessandro, | - 20123 Milan, Italy
+3Universita degli Studi di Milano, Department of Historical Studies, Via Festa del Perdono, 7 - 20126 Milan, Italy
+Correspondence: name.surname @unimi..it
+Abstract nAI, 2024a), there is an indication that proprietary
+Proprietary Large Language Models (LLMs) GPT-based models subtly sanitize or moderate con-
+a) have shown tendencies toward politeness, for- tent even when no explicit violation occurs.
+AN mality, and implicit content moderation. While State-of-the-art LLMs are trained using align-
+=< previous research has primarily focused on ex- ment techniques (e.g., Reinforcement Learning
+_ plicitly training models to moderate and detox- from Human Feedback, RLHF) to follow ethical
+=) ify sensitive content, there has been limited ex- guidelines and avoid harmful language (Ouyang
+= Ploration of whether LLMs implicitly sanitize et al., 2022). With that in mind, if such a model is
+— language without explicit instructions. This > an _.
+oa) study empirically analyzes the implicit modera- asked to P arap hrase text containing sensitive con-
+— tion behavior of GPT-40-mini when paraphras- tent, it might instinctively sanitize the output by,
+_) ing sensitive content and evaluates the extent of for example, removing slurs, aggressive tones, or
+O sensitivity shifts. Our experiments indicate that profanity. While this kind of transformation could
+* GPT-4o-mini systematically moderates content be highly beneficial from a content moderation
+9, toward less sensitive classes, with substantial perspective, limited research has quantified this
+reductions in derogatory and taboo language. implicit sanitization effect during paraphrasing.
+Also, we evaluate the zero-shot capabilities of . . . .
+— ; wp: ses We empirically investigate and quantify con-
+> LLMs in classifying sentence sensitivity, com- : —
+ON paring their performances against traditional tent moderation within the context of paraphras-
+—_ methods. ing. Specifically, we examine whether LLMs au-
+on Disclaimer: This paper includes examples of tonomously sanitize content during text generation
+N sensitive and very offensive language solely to il- and assess the extent ‘0 which this occurs through
+° . aor . expert human judgment. Additionally, we explore
+S lustrate the behavior of LLMs navigating sensitive how well LLMs can replicate human judgment in
+a) language. identifying problematic content. To this end, we
+N 1 Introduction set up an annotation task that classifies content into
+. = four sensitivity categories, listed here from least to
+< Recent progress in the development of large lan- most sensitive: Formal/Polite, Informal, Deroga-
+. guage models (LLMs) has substantially trans- tory, and Taboo. We compare human expert anno-
+< formed the way humans and machines commu- tations with the zero-shot classification output from
+nicate. These systems understand context and |] M¢ to evaluate how closely LLMs’ perception of
+even perceive emotional cues, making conversa- sensitivity aligns with that of humans. Furthermore,
+tions with machines feel much more natural and We trained traditional text classifiers on the expert
+human (Liu, 2024). One evident characteristic annotations and compared their performance to that
+of these models is their tendency toward polite- oF the LLMs, providing an extra baseline for eval-
+ness, formality, and content moderation (unless yating LLMs performance. This evaluation also
+prompted otherwise). Users interacting with Chat- offers the added benefit of determining whether a
+GPT often notice responses characterized by re- _jightweight local model or traditional methods can
+spectfulness and refinement, regardless of the tone reliably predict the same categories and detect sen-
+used in the user’s prompt. Besides outright re- sitivity shifts as effectively as human annotators,
+fusals, usually triggered by inputs that violate Ope- potentially serving as a cost-effective alternative for
+nAl’s community guidelines and policies’ (Ope- monitoring LLM behavior at scale (Kumar et al.,
+‘https: //openai.com/policies/usage-policies 2024a; Dementieva et al., 2024).
+1
+
+
+--- Page 2 ---
+
+In summary, our study is driven by the following their understanding of context. In particular, Var-
+research questions (RQ): gas Penagos (2024) explores whether LLMs can au-
+tomate decisions about what online content should
+(RQ1) Do proprietary LLMs perform implicit con- be removed or allowed. It emphasizes that content
+tent moderation during paraphrasing, andifso, moderation is not solely about removing illegal
+how significant are the changes in sensitivity _ posts, but also about handling “lawful but awful”
+compared to the original content? content, material that may be offensive yet legally
+protected. This poses unique challenges in balanc-
+(RQ2) How closely do LLMs’ sensitivity perceptions _ing users’ rights with the need to maintain a safe
+align with humans, and how effectively can _ public discourse.
+automated methods replicate human annota-
+tions and detect changes in sensitivity during LLMs for text detoxification and politeness
+paraphrasing? transfer. Style transfer for polite rephrasing (also
+known as text detoxification) focuses on transform-
+The paper is structured as follows: Section 2 ing text to remove or reduce offensive content while
+reviews research on LLM alignment, moderation, | P¥eserving meaning. One approach combines para-
+and their use in content moderation and text detoxi- phrasing with style control to eliminate toxicity,
+fication; Section 3 outlines our experimental design, Such as using TS (Raffel et al., 2020) for paraphras-
+including dataset construction, human annotations ing and GPT-2 (Radford et al., 2019) to replace
+and automated classification, and evaluation meth- toxic words (Dale et al., 2021). They also ex-
+ods; Section 4 presents our findings; Section 5 plore methods where BERT (Devlin et al., 2019) is
+discusses the limitations of this work; Section 6 used to substitute offensive words with neutral syn-
+offers final thoughts. onyms. Som et al. (2024) proposes an in-context
+learning approach to offensive content paraphras-
+2 Related Work ing, noting that paraphrasing can be a preferable
+alternative to the outright removal of toxic posts.
+Our work sits at the intersection of alignment, con- Niu and Bansal (2018) demonstrates that a model
+tent moderation, and text refinement in LLMs, ex- _ can generate responses using a politeness classifier
+amining how an aligned paraphrasing model navi- in a feedback loop during generation. Tag-and-
+gates sensitive language. generate approaches have been proposed to trans-
+. . form rude sentences into polite ones (Madaan et al.,
+Alignment and moderation in LLMs. As LLMs 2020). These studies typically use parallel data or
+gain pop ularity, researchers have focused on tech- carefully curated datasets to ensure that the content
+miques to reduce harmful outputs. Op enAl uses remains the same while the style changes.
+fine-tuning and reinforcement learning from hu- Our work empirically examines text sanitiza-
+p y
+man feedback (RLHF, Ouyang et al. (2022)) to tion and shifts in sensitivity without relying on
+mitigate toxicity and bias, with GPT-4 showing as . wo . er
+a explicit detoxification instructions, as seen in prior
+an 82% reduction m disallowed content comp ared research. This allows us to observe potential sensi-
+to GPT-3.5 and a significant drop in toxic output tivity changes driven by the implicit style transfer
+from 6.48% to 0.73% on the RealToxicityPrompts of LLMs. Additionally, our approach is unique
+dataset (OpenAl, 2024a; Gehman et al., 2020). In in that the parallel data is generated implicitly by
+contrast, Anthropic’s “Constitutional AD method the LLM itself, which paraphrases a selection of
+employs NLP rules for self-critiquing and revising sentences.
+responses, improving harmlessness without heavy
+human annotations (Bai et al., 2022). These ap- 3 Experimental Design
+proaches enable models to act as their own content
+moderators, either rejecting or modifying harmful this section, we present the process designed for
+outputs. studying the behavior of LLMs toward sensitive
+language, exploiting their paraphrase and zero-shot
+LLMs as content moderators. Recent research classification capabilities. Firstly, Section 3.1 dis-
+has also evaluated LLMs as content moderators cusses the collection of the original sentences and
+on user-generated text (Gilardi et al., 2023; Kumar their paraphrases generated by an LLM; then, Sec-
+et al., 2024b; Vargas Penagos, 2024), leveraging tion 3.2 examines how sentences have been anno-
+2
+
+
+--- Page 3 ---
+
+tated, according to pre-defined sensitivity classes, | concordance tool through the Sketch Engine JSON
+by both human experts and automated approaches; API, and downloaded sentences from the English
+finally, Section 3.3, we explain the metrics and Web Corpus (enTenTen21, Jakubiéek et al., 2013).
+tools employed for interpreting the outcomes. To ensure enough context was provided within the
+sentence, we controlled the retrieval process by fil-
+3.1 Dataset Creation tering for those sentences having a length between
+The first step was devoted to the construction of | 3 and 40 words. Then, for each of the 599 expres-
+the dataset. Our linguistic experts manually col- sions, we collected at most 45 sentences, resulting
+lected phrases, words, and terms (hereafter referred _in a total of 23,347 sentences. Here is an example
+to as “expressions”) spanning different sensitivity _ illustrating one of the collected sentences:
+categories and levels; then, for each expression, we (Sl) Hey, Faggot : Is there an HIV risk to
+gathered several sentences from an online corpus . . .
+: : the person getting his dick sucked?
+and had these sentences paraphrased multiple times
+by an LLM. Figure 1 depicts the whole dataset cre- Paraphrasing with an LLM. For each sentence
+ation process. collected in the previous step, (hereafter referred
+. . to as the “original sentence”), we used an LLM
+Expressions Selection. To ensure a comprehen- tg generate paraphrases (hereafter referred to as
+sive assessment of the behavior of LLMs toward the “paraphrased sentences”). Specifically, we em-
+sensitive language, we focused on identifying €X-_ hloyed GPT-40-mini-2024-07-18 (OpenAl, 2024b),
+Pressions that would sufficiently cover different accessed via API, and prompted with the following
+categories, such as race, gender identity, and sexual i. ceryction:
+orientation. Particular emphasis has been given
+to: racial slurs aimed at Black individuals, ho- Paraphrase the following sentence:
+mophobic terms directed at homosexual men and {original_sentence}.
+homosexual women, transphobic slurs targeting _. .
+we . ar No additional guidance on style or content was
+transgender individuals, and misogynistic language : : :
+
+. . provided, and we did not instruct the model to tone
+against women. The expressions were collected d It fensive | 0 1
+from several specialized dictionaries: LGBT Lexi- Own, OF alter any © ensive anguage. ur goa
+
+. 9 . . . was to observe the model’s default behavior. To
+con Library~, Forbidden American English (Spears, trod ‘abilit h d h orici
+1990), the Routledge Dictionary of Modern Amer- introduce variabl ly we P arap Tased’ each OFgt-
+. . . nal sentence three times, yielding a total of 70,041
+ican Slang and Unconventional English (Dalzell, hrased sent Notably. GPT-4o-mini. lik
+2018), and the Oxford Dictionary of Slang (Ayto, P arapnrased Sen ences. ° a ys : o-munt, we
+
+. . Pe its larger counterparts, is designed to avoid generat-
+1999). These expressions and their definitions were disallowed content (OpenAL 2024a). I
+cross-checked with additional online dictionaries, On Isa owe’ le ent (Open ? d a). In ln of
+including the Oxford Learner’s Dictionary*, Cam- where al orga sentence containe extremely ot
+. eae 4 . wae 5 fensive language, the model occasionally refused to
+bridge Dictionary”, Collins Dictionary”, and the hrase it di ith . fusal
+Oxford English Dictionary®. These sources offered Paraphrase I, resp oneing Wii a warning Or re usa :
+. . ; . . However, these instances were rare, representing
+insights into the level of impoliteness and informal- oon : .
+. . : . a minority, with only 232 direct refusals out of a
+ity of each expression, helping to guide the balance
+. . total of 70,041 paraphrases. As an example, here
+of extracted expressions based on language sensi- thr h for th t SI:
+tivity. A total of 599 expressions were collected for are maree parapirases Torte semence ©
+this study. (P1) Hello, individual: Is there an HIV
+risk to the person receiving oral sex?
+Sentences Collection. We employed Sketch En- P 6
+gine’, a popular online tool for the analysis of text (P2) Hey, individual: Is there an HIV risk
+corpora, to gather sentences containing the col- to the person getting his dick sucked?
+lected expressions. In particular, we employed the
+(P3) Hey there: Is there an HIV risk to
+“https ://lexicon.library.lgbt the person getting oral sex?
+3https://oxfordlearnersdictionaries.com
+“https: //dictionary.cambridge.org 3.2 Sentence Sensitivity Annotation
+Shttps://collinsdictionary.com . —
+Shttps: //oed.com Given the dataset of collected original sentences
+https: //sketchengine.eu and the generated paraphrased sentences, we aimed
+3
+
+
+--- Page 4 ---
+
+Expressions Selection Sentences Collection Paraphrasing with a LLM
+AIS q 6
+— - Bitch - :
+a Gay does not equal FLAMING "
+Ee, the person getting oral sex?
+Figure 1: The Data Creation process: expressions are selected from specialized sources; sentences containing the
+selected expressions are collected from Sketch Engine; three paraphrases of each sentence are generated with an
+LLM.
+to evaluate how paraphrasing affected the sensitiv- and examples corresponding to the four sensitivity
+ity of the text. To measure the sensitivity levels, we categories of our classification schema. Addition-
+designed a classification schema with four sensi- ally, we allowed them to opt for a Difficult to say
+tivity categories, ranging from less sensitive (For- option in case a given sentence lacked sufficient
+mal/Polite and Informal) to more sensitive (Deroga- _ context for a clear classification.
+tory and Taboo). This schema was partially guided We sampled 1250 original sentences, uniformly
+by insights from the online dictionaries referenced _ distributed with respect to expressions. For each
+earlier. The categories are defined as follows: original sentence, we randomly selected one of its
++ Formal/Polite: sentences that contain very three paraphrases, resulting in a total of 2500 sen-
+respectful or refined language (e.g., honorifics, tences. Each annotator was assigned a batch of
+courteous language). 500 sentences: within each batch, both the orig-
+inal sentence and its corresponding paraphrased
+* Informal: casual or colloquial sentences that _ version appeared. To ensure consistency, each sen-
+are not offensive, but very conversetional or tence pair was also repeated in the batch of another
+relaxed (e.g., slang, dialect grammar). randomly selected annotator. As a result, each sen-
+D . oe, . tence, whether original or paraphrased, received
+¢ Derogatory: sentences containing insulting .
+or demeaning language (e.g., slurs, name- two indep endent annotations.
+calling, provocative language) and targeting To avoid any influence, the experts were unaware
+individuals or groups. of whether a given sentence was original or para-
+phrased, and no explicit indication was provided
+* Taboo: sentences using a profane or obscene _ regarding the sentence’s pair. In total, we collected
+language, making use of forbidden terminol- _ annotations for 2269 sentences. These annotations
+ogy, that is generally considered highly offen- serve both as indicators of how paraphrasing af-
+sive or vulgar. fected the sentence sensitivity, as well as ground
+This classification schema was applied by ex- truth for evaluating automated approaches.
+pert annotators and automated approaches toassign 4 wnotations by Automated Approaches To
+a sensitivity category to both original and para- , we .
+evaluate how closely LLMs’ sensitivity perceptions
+phrased sentences. align with humans (RQ2), we tested the capabili-
+Annotations by Human Experts. To obtain a __ ties of automatic classifiers in assigning sensitivity
+reliable estimate of the effect of paraphrasing on categories to the set of 2269 annotated sentences.
+sentence sensitivity (RQ1), we had human experts We evaluate the performances of these classifiers
+annotate a subset of the collected dataset. We re- against the ground truth elaborated by the annota-
+cruited 10 native English speakers with research tors in the previous step. In particular, we consider
+or teaching experience in the field of linguistics. | two classes of automated classifiers: open-source
+Annotators were provided with detailed guidelines, | LLMs and traditional text classifiers.
+which illustrated the scope of the annotation pro- Prior research indicated that open-source LLMs
+cess, and informed them about the usage of sensi- can achieve competitive results on text classifi-
+tive language. They also had access to definitions cation, even when prompted in a zero-shot man-
+4
+
+
+--- Page 5 ---
+
+ner (Alizadeh et al., 2025). For this reason, we —and columns representing the categories of para-
+employed some of the most recent and capable _ phrased sentences. Thus, each cell (i, 7) in the
+small-sized open-source models. We intentionally — matrix counts how many original sentences in cate-
+avoided the involvement of a proprietary model _—_ gory 7 were labeled as category 7 after paraphrasing.
+to ensure that our approach could be reproduced If GPT-40-mini perfectly preserved the sensitivity
+without requiring access to proprietary systems, level of sentences, we would expect most counts
+but also to avoid potential confirmation bias led by __ to fall on the diagonal, i.e. no change in sensitiv-
+re-using the same model employed for paraphras- _ity. Deviations from the diagonal indicate shifts or
+ing, i.e. GPT-40-mini. For the experiments, we | movements in sensitivity classification due to para-
+used Llama 3.1 8B (Llama Team, 2024),Gemma___ phrasing. To statistically test the presence of sensi-
+2 9B (Gemma Team, 2024), Phi 3.5 Mini (Mi- _ tivity shifts, we employed Bowker’s test (Bowker,
+crosoft, 2024), Ministral 8B (Mistral AI Team, 1948), whose null hypothesis tests that the contin-
+2024), OLMo 2 13B (Team OLMo, 2025), and gency table is symmetric around the main diagonal.
+Qwen 2.5 14B (Qwen Team, 2025). All the LLMs Measuring Sensitivity Shift. To assess how para-
+were prompted in the following manner: . . ae
+phrasing affects the perceived sensitivity of a sen-
+t 5 define th itivity shift t-
+Classify the sensitivity of the provided es WE CAINE ANE BN IARS SEMIN Stele
+ric A. Let S = {s1,...,5n} be the set of n
+sentence. Choose exactly one class from .
+; : ; original sentences. For each s; € S, let P; =
+the following list: Formal/Polite, Infor-
+; {pi1,--- Pim, } be the set of m; paraphrases of s;.
+mal, Derogatory, Taboo. Provide your wee . . .
+. . . . Sensitivity is categorized into four ordinal levels,
+classification as a single word only (with-
+- represented by the ordered set C = {1,...,4}
+out any additional text). .
+Sentence for Classification: {sentence} where: 1 corresponds to Formal/Polite; 2 corre-
+eEMENCE JOP ASSICANON- sponds to Informal; 3 corresponds to Derogatory;
+4 ds to Ti . Each original sent
+We also tested the abilities of traditional text 7°" PONS © aboo BCD OFIBINAT SEMIENCE Si
+; ; a we ; is assigned a sensitivity level c; € C’, while each
+classifiers in predicting the sensitivity categories . . ve
+. paraphrase p;; € P; is assigned a sensitivity level
+of sentences. The text was preprocessed usinga . .
+. éi; © C. Both levels are determined either by hu-
+Count Vectorizer, and the dataset was split into an
+a ; man annotators or through automated methods. To
+80% training set and a 20% test set. Each model’s os wee .
+. . analyze the shift in sensitivity starting from a par-
+hyperparameters were tuned using grid search and . a
+ae . ticular sensitivity level c, we define the set of the
+cross-validation. The classifiers employed were: ._,. i . .
+. . indices of original sentences associated with c as
+Nearest Neighbors (Cover and Hart, 1967), Lin- Sc = file; = c}. To quantify the average shift
+ear SVM (Cortes and Vapnik, 1995), Random For- in sensitivit for sentences ori ‘mall labeled with
+est (Breiman, 2001), Naive Bayes (Hand and Yu, level c. we a. ute: & y
+2001), Multi-Layer Perceptron (Rumelhart et al., , pure:
+1986), and Born Classifier (Guidotti and Ferrara, _ 1 A
+2022), Aes Sa, De Le(Ou~ 0)
+ies, Se J=1
+3.3. Evaluation Methods This metric quantifies the average change in sen-
+In this section. we describe the evaluation meth- _Sitivity between original sentences labeled with
+ods used to compare the sensitivity levels of origi- level c and their corresponding paraphrases. A pos-
+nal sentences and their paraphrases. The insights __ itive A, indicates that paraphrases tend to increase
+gained from these methods will help us address our _—‘i?1 Sensitivity, while a negative Ac suggests that
+research questions. paraphrasing generally makes sentences less sen-
+sitive. Consider that if 0.5 < |A.| < 1.5, we can
+Detecting Sensitivity Shift. The examination of — conclude that, on average, the sensitivity level has
+potential sensitivity shifts between original and shifted by one level, either higher or lower. Sim-
+paraphrased sentences is conducted with the em- __ ilarly: for 1.5 < |A.| < 2.5, the average shift
+ployment of confusion matrices. In particular, us- is two levels; for 2.5 < |A.| < 3, the average
+ing the provided sensitivity classification schema, shift is three levels; if |A.| < 0.5, the change is
+we construct a 4 x 4 confusion matrix, with rows negligible, meaning the sensitivity level remains ap-
+representing the categories of original sentences proximately the same. Since sensitivity levels are
+5
+
+
+--- Page 6 ---
+
+Model A F/P AI AD AT AMSD
+Human Experts 0.16 (0.46) —0.38 (0.59) —0.87 (0.90) —1.7 (0.94) -
+Open-Source Large Language Models
+Llama 3.1 8B (2024) 0.05 (0.23) —0.23 (0.48) —0.52 (0.65) —2.33 (1.15) 0.05
+Gemma 2 9B (2024) 0.12 (0.46) —0.54 (0.75) —1.18 (1.11) —1.34 (1.32) 0.04
+Phi 3.5 Mini (2024) 0.21 (0.43) 0.03 (0.38) —0.32 (0.71) —0.90 (0.98) 0.16
+Ministral 8B (2024) 0.14 (0.51) —0.86 (0.38) —0.83 (1.00) —2.00 (1.15) 0.08
+OLMo 2 13B (2025) 0.24 (0.57) —0.21 (0.59) —0.34 (0.67) —0.70 (0.86) 0.11
+Qwen 2.5 14B (2025) 0.04 (0.20) —0.17 (0.67) —0.38 (0.89) —0.60 (0.96) 0.10
+Traditional Text Classifiers
+Nearest Neighbors (1967) 0.52 (0.64) —0.23 (0.54) —1.00 (0.63) - 0.06
+Linear SVM (1995) 0.35 (0.64) —0.24 (0.66) —1.00 (0.83) —2.14 (0.69) 0.02
+Random Forest (2001) 0.05 (0.21) —0.34 (0.48) —0.67 (0.58) - 0.02
+Naive Bayes (2001) 0.23 (0.49) —0.27 (0.56) —0.82 (0.87) —2.00 (0.00) 0.01
+MLP (1986) 0.32 (0.62) —0.34 (0.52) —0.87 (0.76) —1.67 (1.03) 0.01
+Born Classifier (2022) 0.29 (0.61) —0.29 (0.58) —0.72 (0.89) —1.42 (1.00) 0.02
+Table 1: Sensitivity shift (A) is measured for each level using annotations from Human Experts, Open-Source
+LLMs, and Traditional Classifiers, with standard deviations in parentheses. The last column (AMSD) shows the
+mean squared difference from expert annotations, with models closest to experts underlined.
+defined on a scale of 1 to 4, the maximum possible 4.1 Sensitivity Shifts in Expert Annotations
+shift is three levels and the minimum is zero. Lastly, We firstly explore whether the paraphrases gener-
+to summarize how much each automated classifica- ated by GPT-40-mini systematically shift the sensi-
+tion method ves from exp ert AN we tivity classifications compared to the original sen-
+comp ute the A Mean Squared pierence ( MSD) tences. Figure 2 shows the confusion matrix of
+for a given automated classifier A as expert annotations for the selected subset of anno-
+1 tated sentence pairs.
+A Ey2
+AMSD* = Tea So (Ac, — AE)
+a“ jae a.
+3] 17.2% 51.6% 15.6% 15.6%
+z 70%
+with C4 representing the sensitivity levels avail- ae sox
+. : . nhs SA | 3.3%
+able for a given classifier A, and AF denoting the 4 & 50%
+sensitivity shift values derived from expert annota- f 40%
+tions. UBS 43.4% 51.8% 4.4% 0.4% sox
+Ss - 20%
+Evaluating Automated Classifiers. We evalu- py 7.1% | sot
+ate the abilities of both the LLMs, prompted in a é
+zero-shot manner, and the traditional methods in Paraphrased Sentences (Experts)
+classifying sentences according to their sensitivity . . . Lo.
+. . Figure 2: The confusion matrix shows sensitivity classes
+level against the expert labels. The evaluation is . .
+
+: (Original vs. Paraphrased) based on expert annotations.
+conducted by computing overall accur acy and F Rows represent original sentence categories, columns
+score, as well as the fF for each sensitivity cate- _ represent paraphrased categories, and values show the
+gory. percentage of sentences that shifted between categories.
+4 Results The diagonal cells, which represent identical sen-
+
+sitivity classifications before and after paraphras-
+In this section we provide insights on the paraphras- ing, show that paraphrasing preserves sensitivity
+ing effect of GPT-40-mini, comparing the expert an- _ best for less sensitive categories (Formal/Polite
+notations of original sentences versus paraphrased 87.1%, Informal 51.8%) with respect to highly sen-
+sentences, and evaluate the performances of auto- __ sitive ones (Derogatory 37.9%, Taboo 15.6%), sug-
+matic classifiers in aligning their sensitivity levels gesting that sensitivity is rarely added when it was
+with those of human experts. originally absent. The higher values in the top-
+
+6
+
+
+--- Page 7 ---
+
+n a) Llama b) Gemma ow ry oy | d) Ministral e) Olmo f) Qwen Oo
+Ce oe
+5 g) Nearest Neighbors h) Linear SVM i) Random Forest | Bayes k) MLP 5
+
+F/P | D T F/P | D T F/P | Paraphrased | D T F/P I D T F/P | D T
+Figure 3: Confusion matrices show sensitivity classifications (Original vs. Paraphrased) for Open-Source LLMs
+(purple) and traditional classifiers (green). Rows indicate original sentence classifications, columns show paraphrased
+classifications, and color intensity reflects the percentage of category shifts, with stronger colors indicating higher
+transition rates.
+left corner, compared to the lower values in the have higher values on the main diagonal (e.g., Phi,
+lower-right corner, are evidence of a general ten- | OLMo, Qwen). This suggests that these LLMs per-
+dency of paraphrasing toward reducing sensitivity: | ceive GPT-40-mini paraphrases with the same level
+the majority (51.6%) of Taboo original sentences of sensitivity as the original sentences, refusing
+were paraphrased as Informal, while most (58.9%) the hypothesis of paraphrasing affecting sensitivity
+of originally Derogatory were paraphrased as For- _ level. Other LLMs (e.g. Gemma and Ministral) ap-
+mal/Polite or as Informal. These results are con- _ pear to have a tendency to classify paraphrases as
+firmed by Bowker’s test statistic, (y? = 138.255, | Formal/Polite, regardless of the original sentences’
+df = 6, p < 0.0001), which strongly rejects the sensitivity level. Lastly, LLaMA tends to classify
+null hypothesis of symmetry. as Formal/Polite paraphrases of original sentences
+To evaluate the magnitude of the sensitivity shift labeled as Taboo, and in general, it does not classify
+observed in expert annotations, we compute A for — paraphrases within the Taboo sensitivity category.
+each sensitivity class. The first row (Human Ex-
+perts) in Table 1 illustrates the resulting A based on Regarding the magnitude of the sensitivity shift
+human annotations. Considering the negative sign perceived by automated classifiers, the rows un-
+of A for higher levels of sensitivity, we can confirm der Open-Source LLMs and Traditional Classifiers
+that there is indeed a sensitivity shift toward less in Table 1 report the A for each sensitivity class,
+sensitive levels when GPT-40-mini is asked to para- _ based on annotations from each automated classi-
+phrase. The shift is particularly large for original _ fier. Among LLMs, Gemma is the most similar
+sentences classified as Taboo, with a A of —1.7, | to Human Experts in terms of A (lowest AMSD),
+which is still significant even considering values | Meaning that it has a similar perception of sensi-
+within one standard deviation. tivity as experts’ in classifying original and para-
+phrased sentences. Overall, LLMs consistently
+4.2 Automated Classification Performance agree on the sign of A, reinforcing GPT-40-mini’s
+We address the second research question evaluat- _ tendency to sanitize paraphrases in terms of sensi-
+ing how well local automated classifiers align with tive content, with the exception of Phi. Conforming
+experts in annotating sentence sensitivity. with our earlier observations about confusion matri-
+Figure 3 depicts confusion matrices resulting ces, some LLMs tend to assign the same sensitivity
+from automated classifier annotations. Comparing class to both original and paraphrased sentences,
+these matrices to Figure 2, created with experts’ an- _ as reflected in the lower A values. Among the
+notations, we can perceive a closer overlap of some six Traditional Text Classifiers, their AMSD val-
+matrices resulting from traditional text classifiers, | ues indicate a closer alignment with expert annota-
+in particular those from MLP and BornClassifier. tions compared to Open-Source LLMs. Notably, the
+On the contrary, many LLMs’ confusion matrices Naive Bayes and MLP classifiers achieve the low-
+7
+
+
+--- Page 8 ---
+
+Model Accuracy F, Score
+Overall Formal/Polite Informal Derogatory Taboo Overall
+Open-Source Large Language Models
+LLama 3.1 8B (2024) 0.43 0.45 0.45 0.39 0.05 0.42
+Gemma 2 9B (2024) 0.52 0.68 0.35 0.17 0.35 0.47
+Phi 3.5 Mini (2024) 0.35 0.10 0.49 0.36 0.26 0.28
+Ministral 8B (2024) 0.45 0.63 0.03 0.40 0.05 0.37
+OLMo 2 13B (2025) 0.42 0.43 0.45 0.39 0.23 0.42
+Qwen 2.5 14B (2025) 0.42 0.49 0.59 0.31 0.25 0.45
+Traditional Text Classifiers
+Nearest Neighbors (1967) 0.40 0.13 0.49 0.43 0.00 0.37
+Linear SVM (1995) 0.52 0.20 0.67 0.45 0.33 0.49
+Random Forest (2001) 0.46 0.06 0.62 0.33 0.00 0.38
+Naive Bayes (2001) 0.49 0.23 0.63 0.46 0.10 0.47
+MLP (1986) 0.55 0.30 0.69 0.48 0.31 0.52
+Born Classifier (2022) 0.54 0.32 0.66 0.46 0.57 0.53
+Table 2: Classification performance of Open-Source LLMs and Traditional Text Classifiers in predicting sentence
+sensitivity. Best in bold; best in model category underlined.
+est AMSD values among all methods. These clas- _ ber of annotations would benefit the robustness of
+sifiers exhibit a stronger tendency toward assigning __ the discussed results. To enhance annotation qual-
+less sensitive levels to GPT-40-mini paraphrases, ity and the overall insights’ relevance, we plan to
+as evidenced by higher A scores for both Taboo — expand the annotation task to a larger and more
+and Derogatory sensitivity levels, empirically sug- diverse group of annotators in the future and to
+gesting greater adherence to expert classifications. include a larger variety of data sources.
+Table 2 summarizes the performances of both
+the six representative open-source LLMs used in .
+a zero-shot classification setting and the six tradi- 6 Conclusion
+tional text classifiers. The performances are ex-
+pressed in terms of accuracy and F score com- This work empirically explores the implicit san-
+puted for each sensitivity level and overall. Tradi- _itization performed by GPT-40-mini when para-
+tional methods outperform LLMs overall, particu- _ phrasing sensitive content. Our findings show that
+larly in informal and derogatory language. The | GPT-40-mini systematically reduces the sensitivity
+classical MLP and Born Classifier consistently level of paraphrased text, suggesting that alignment
+ranked highest across multiple categories, with the | techniques cause an implicit moderation behavior
+latter achieving the highest overall F score of 0.53. | even without explicit detoxification instructions.
+However, the overall classification performances These results confirm prior observations of style
+across both open-source LLMs and traditional text transfer in LLMs, where offensive or explicit con-
+classifiers remain relatively poor, exhibiting a fail- _ tent is reduced by design to minimize harm (Ope-
+ure of automated systems in aligning with the hu-  nAJI, 2024a). Also, local LLMs (in zero-shot mode)
+man perception of sensitive language. slightly underperform compared to traditional text
+classifiers when matching experts’ classes. Di-
+5 Limitations rect supervision with in-domain data boosts per-
+formance, highlighting that generic LLMs may not
+In this section, we discuss the main limitations of be a quick substitute for trained classifiers in risky
+this work. First, regarding dataset creation, we re- moderation tasks. Simultaneously, open-source
+lied solely on the English Web Corpus as our source LLMs remain attractive for scalability, rapid de-
+for collecting sentences, which could have limited ployment, and easier prompt customization. These
+the scope of our evaluation given the specificity insights deepen our understanding of how aligned
+of this data source. Additionally, despite being | LLMs sanitize user input and underscore the impor-
+experts in linguistics and native English speakers, tance of careful oversight when automating moder-
+annotators’ inherent preconceptions may have in- __ ation at scale.
+fluenced their judgments. Moreover, a higher num-
+8
+
+
+--- Page 9 ---
+
+References Jacob Devlin, Ming-Wei Chang, Kenton Lee, and
+. . . . .. Kristina Toutanova. 2019. BERT: Pre-training of
+Meysam Alizadeh, Maél Kubli, Zeynab Samei, Shirin deep bidirectional transformers for language under:
+Dehghani, Mohammadmasiha Zahedivafa, Juan D standing. In Proceedings of the 2019 Conference of
+Bermeo, Maria Korobeynikova, and Fabrizio Gilardi. the North American Chapter of the Association for
+2025. Open-source LLMs for text annotation: a prac- Computational Linguistics: Human Language Tech-
+tical guide for model setting and fine-tuning. Journal nologies, Volume 1 (Long and Short Papers), pages
+of Computational Social Science, 8(1):17. 4171-4186, Minneapolis, Minnesota. Association for
+John Ayto, editor. 1999. Oxford Dictionary of Slang, 2 Computational Linguistics.
+edition. Oxford University Press, London, England. Samuel Gehman, Suchin Gururangan, Maarten Sap,
+Yuntao Bai, Saurav Kadavath, Sandipan Kundu, Yejin Choi, and Noah A. Smith. 2020. RealToxi-
+Amanda Askell, Jackson Kernion, Andy Jones, Anna cityPromp ts: Evaluating neural toxic degeneration
+Chen, Anna Goldie, Azalia Mirhoseini, Cameron in language models. In Find ings of the Association
+McKinnon, Carol Chen, Catherine Olsson, Christo- for Comp utational Ling uISTICS. EMNLP 2020, pages
+: 3356-3369, Online. Association for Computational
+pher Olah, Danny Hernandez, Dawn Drain, Deep aenrer
+Ganguli, Dustin Li, Eli Tran-Johnson, Ethan Perez, Linguistics.
+Jamie Kerr, Jared Mueller, Jeffrey Ladish, Joshua Gemma Team. 2024. Gemma 2: Improving open
+Landau, Kamal Ndousse, Kamile Lukosuite, Liane language models at a practical size. Preprint,
+Lovitt, Michael Sellitto, Nelson Elhage, Nicholas arXiv:2408.00118.
+Schiefer, Noemi Mercado, Nova DasSarma, Robert
+Lasenby, Robin Larson, Sam Ringer, Scott John- Fabrizio Gilardi, Meysam Alizadeh, and Maél Kubli.
+ston, Shauna Kravec, Sheer El Showk, Stanislav Fort, 2023. Chatgpt outperforms crowd workers for
+Tamera Lanham, Timothy Telleen-Lawton, Tom Con- text-annotation tasks. Proceedings of the National
+erly, Tom Henighan, Tristan Hume, Samuel R. Bow- Academy of Sciences, 120(30):e2305016120.
+man, Zac Hatfield-Dodds, Ben Mann, Dario Amodei,
+Nicholas Joseph, Sam McCandlish, Tom Brown, and Emanuele Guidotti and Alfio Ferrara. 2022. Text clas-
+Jared Kaplan. 2022. Constitutional ai: Harmlessness sification with born's rule. In Advances in Neural
+from ai feedback. Preprint, arXiv:2212.08073. Information Processing Systems, volume 35, pages
+30990-31001. Curran Associates, Inc.
+A H Bowker. 1948. A test for symmetry in contingency
+tables. Journal of the American Statistical Associa- _ David J Hand and Keming Yu. 2001. Idiot’s bayes—not
+tion, 43(244):572-574. so stupid after all? International Statistical Review,
+69(3):385-398.
+Leo Breiman. 2001. Random forests. Machine Learn-
+ing, 45(1):5-32. Milo’ Jakubiéek, Adam Kilgarriff, Vojtéch Kovar, Pavel
+Rychly, and Vit Suchomel. 2013. The tenten cor-
+Corinna Cortes and Vladimir Vapnik. 1995. Support- pus family. In 7th International Corpus Linguistics
+vector networks. Machine Learning, 20(3):273-297. Conference CL 2013, pages 125-127, Lancaster.
+Thomas Cover and Peter E Hart. 1967. Nearest neighbor | Deepak Kumar, Yousef Anees AbuHashem, and Zakir
+pattern classification. IEEE Transactions on Infor- Durumeric. 2024a. Watch your language: Investigat-
+mation Theory, 13(1):21—27. ing content moderation with large language models.
+David Dale, Anton Voronov, Daryna Dementieva, Var- Proceadings of the er i arene Conference
+vara Logacheva, Olga Kozlova, Nikita Semenov, and >
+Alexander Panchenko. 2021. Text detoxification us- | Deepak Kumar, Yousef Anees AbuHashem, and Zakir
+ing large pre-trained neural models. In Proceedings Durumeric. 2024b. Watch your language: Investigat-
+of the 2021 Conference on Empirical Methods in Nat- ing content moderation with large language models.
+ural Language Processing, pages 7979-7996, Online Proceedings of the International AAAI Conference
+and Punta Cana, Dominican Republic. Association on Web and Social Media, 18(1):865-878.
+for Computational Linguistics.
+Jiaxi Liu. 2024. ChatGPT: perspectives from human-
+Tom Dalzell, editor. 2018. The Routledge dictionary of computer interaction and psychology. Frontiers in
+modern American slang and unconventional English, Artificial Intelligence, 7:1418869.
+2 edition. Routledge, London, England.
+Llama Team. 2024. The llama 3 herd of models.
+Daryna Dementieva, Daniil Moskovskiy, Nikolay Preprint, arXiv:2407.21783.
+Babakov, Abinew Ali Ayele, Naquee Rizwan, Flo-
+rian Schneider, Xintong Wang, Seid Muhie Yimam, Aman Madaan, Amrith Setlur, Tanmay Parekh, Barn-
+Dmitry Ustalov, Elisei Stakovskii, Alisa Smirnova, abas Poczos, Graham Neubig, Yiming Yang, Ruslan
+Ashraf Elnagar, Animesh Mukherjee, and Alexander Salakhutdinov, Alan W Black, and Shrimai Prabhu-
+Panchenko. 2024. Overview of the multilingual text moye. 2020. Politeness transfer: A tag and generate
+detoxification task at pan 2024. In CLEF (Working approach. In Proceedings of the 58th Annual Meet-
+Notes), pages 2432-2461. ing of the Association for Computational Linguistics,
+9
+
+
+--- Page 10 ---
+
+pages 1869-1881, Online. Association for Computa- | Emmanuel Vargas Penagos. 2024. ChatGPT, can you
+tional Linguistics. solve the content moderation dilemma? Jnterna-
+tional Journal of Law and Information Technology,
+
+Microsoft. 2024. Phi-3 technical report: A highly capa- 32(1).
+ble language model locally on your phone. Preprint,
+arXiv:2404. 14219.
+
+Mistral AI Team. 2024. Un Ministral, des Min-
+istraux. https://mistral.ai/news/ministraux.
+[Accessed 29-01-2024].
+
+Tong Niu and Mohit Bansal. 2018. Polite dialogue
+generation without parallel data. Transactions of the
+Association for Computational Linguistics, 6:373-
+389.
+
+OpenAI. 2024a. Gpt-4 technical report. Preprint,
+arXiv:2303.08774.
+
+OpenAI. 2024b. GPT-40 mini: advancing cost-efficient
+intelligence. https: //openai.com/index/
+gpt-40-mini-advancing-cost-efficient-intelligence.
+[Accessed 23-07-2024].
+
+Long Ouyang, Jeffrey Wu, Xu Jiang, Diogo Almeida,
+Carroll Wainwright, Pamela Mishkin, Chong Zhang,
+Sandhini Agarwal, Katarina Slama, Alex Ray, John
+Schulman, Jacob Hilton, Fraser Kelton, Luke Miller,
+Maddie Simens, Amanda Askell, Peter Welinder,
+Paul F Christiano, Jan Leike, and Ryan Lowe. 2022.
+Training language models to follow instructions with
+human feedback. In Advances in Neural Information
+Processing Systems, volume 35, pages 27730-27744.
+Curran Associates, Inc.
+
+Qwen Team. 2025. Qwen2.5 technical report. Preprint,
+arXiv:2412.15115.
+
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan,
+Dario Amodei, Ilya Sutskever, et al. 2019. Language
+models are unsupervised multitask learners. OpenAI
+blog, 1(8):9.
+
+Colin Raffel, Noam Shazeer, Adam Roberts, Katherine
+Lee, Sharan Narang, Michael Matena, Yanqi Zhou,
+Wei Li, and Peter J Liu. 2020. Exploring the lim-
+its of transfer learning with a unified text-to-text
+transformer. Journal of Machine Learning Research,
+21(1).
+
+David E Rumelhart, Geoffrey E Hinton, and Ronald J
+Williams. 1986. Learning representations by back-
+propagating errors. Nature, 323(6088):533-536.
+
+Anirudh Som, Karan Sikka, Helen Gent, Ajay Di-
+vakaran, Andreas Kathol, and Dimitra Vergyri. 2024.
+Demonstrations are all you need: Advancing offen-
+sive content paraphrasing using in-context learning.
+
+In Findings of the Association for Computational Lin-
+guistics: ACL 2024, pages 12612-12627, Bangkok,
+Thailand. Association for Computational Linguistics.
+
+Richard A Spears. 1990. Forbidden American English.
+McGraw-Hill Contemporary, Maidenhead, England.
+
+Team OLMo. 2025. 2 olmo 2 furious. Preprint,
+arXiv:2501.00656.
+
+10

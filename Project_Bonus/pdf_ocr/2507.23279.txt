@@ -1,0 +1,962 @@
+
+
+--- Page 1 ---
+
+Unveiling Super Experts in Mixture-of-Experts Large Language Models
+Zunhai Su'?*, Qingyuan Li’, Hao Zhang’, Yulei Qian”, Yuchen Xie’, Kehong Yuan!
+'Shenzhen International Graduate School, Tsinghua University, Shenzhen, China
+>Meituan
+Abstract 45
+a) ~ (num=3, PPL=59.86) ke Super Experts
+N Sparsely activated Mixture-of-Experts (MoE) models have B40 pic mg Non-Super Experts
+ns) shown promise in enhancing the learning capacity of large 5
+N language models (LLMs), yet their substantial number of pa- a 35
+— rameters presents significant challenges for the deployment x
+5 of MoE LLMs. Leveraging the intrinsic importance differ- ‘Sp 3° Baseline:
+om) ences among experts, recent research has explored expert- 2 ; (num=0, PPL=8.70) (num= , PPL= )
+— level compression techniques to improve the efficiency of i t e-ae8--8t
+roa) MoE LLMs. However, existing approaches often rely on em- need ace Wess otbs a TEs cTps oe Tire es se leszsnevessrasnesvoveesavacssaveeensnsecsend fee
+pirical criteria to identify critical experts, lacking a deeper 6 100200 300 400, 500 600 700 800 900 1000
+— exploration and understanding of the heterogeneous impor- Number of Pruned Experts
+— tance of experts. In this study, we present the first discovery Figure 1: Analysis of experts pruning on Qwen3-30B-A3B
+UO and investigation of a distinct subset of experts that play a : “+: :
+. : : : : ; using the WikiText-2 dataset. Pruning three Super Experts
+° crucial role in the underlying mechanisms during the model’s Its i ‘onifi d dation i lexitv (PPL
+N forward inference. These experts are prevalent in open-source results in a significant degradation in perplexity ( ).
+Oo MoE LLMs, and despite their limited number, pruning them
+leads to a significant decline in model performance (e.g.,
+— pruning three causes Qwen3-30B-A3B to produce repetitive 2025). This paradigm has led to the development of state-
+> and uninformative outputs). We refer to these experts as Su- of-the-art MoE LLMs, including DeepSeek (Guo et al. 2025;
+Nn per Experts (SEs). Our comprehensive analysis provides pro- Liu et al. 2024b), Qwen (Team 2024b; Yang et al. 2025), and
+t~ gressively deeper insights into SEs. (i) SEs are characterized others (Meta 2025; Jiang et al. 2024). Despite their potential,
+N by rare but extreme activation outliers in the output of the . : :
+; : ar . a ae a significant challenge with MoE LLMs stems from their
+cn down_proj, which give rise to massive activations in the : : : :
+P vee large parameter size and high computational cost (Li et al.
+N hidden states between decoder layers. Moreover, the distri- . : :
+
+° bution of SEs remains model-specific and is unaffected by 2023; Lu et al. 2024; Chowdhury et al. 2024), which present
+C~ post-training processes. (ii) By pruning SEs, we assess their considerable obstacles for deployment. Model compression
+-) significance across a variety of tasks, revealing their consid- techniques, such as quantization (Frantar et al. 2022; Xiao
+a) erable impact on the model’s overall performance, particu- et al. 2023a; Su et al. 2025) and pruning (Frantar and Alis-
+N larly in mathematical reasoning. (iii) We further enhance our tarh 2023; Sun et al. 2023; Ma, Fang, and Wang 2023), en-
+
+> understanding of the influence of SEs compression. Our find- able the development of more compact and computationally
+o—- ings confirm that MoE LLMs rely on SEs to induce atten- efficient models (Zhu et al. 2024; Wang et al. 2024).
+< tion sinks, which are crucial for the distribution of atten- Beyond LLM-oriented compression approaches, expert-
+ws tion scores but are significantly disrupted by SE pruning. We :
+: . level compression methods have been developed by lever-
+3 also develop an automated tool for the rapid and precise pro- : h Ich te f MoE del d th
+filing of SEs in new MoE LLMs. The code is available at aging t le structural ¢ aracteristics oO ob models an t €
+https://github.com/ZunhaiSu/Super-Experts-Profilling. uneven importance of experts induced by training strategies
+(Chowdhury et al. 2024; Chi et al. 2022; Lu et al. 2024).
+Specifically, expert-level compression employs various ex-
+. ert importance metrics to guide the pruning, merging, or
+1 Introduction <kipping of less critical experts (Lu et al 2024. Huang et al.
+Sparsely activated Mixture-of-Experts (MoE) models em- 2025; Xie et al. 2024), prioritize more important ones by
+loy dynamic routing and sparse activation, demonstratin assigning higher bit budgets during quantization (Duanmu
+ploy dy’ & P , g gning argn g &q
+significant potential in enhancing the learning capacity of et al. 2025; Li et al. 2024; Zheng et al. 2025), and allocate
+large language models (LLMs) (Cai et al. 2024; Mu and Lin more ranks in low-rank decomposition (Yang et al. 2024; Li
+et al. 2023). For instance, several studies evaluate expert im-
+“Work done as an intern at Meituan. portance based on access frequency or other statistical fea-
+Email: zh-su23 @mails.tsinghua.edu.cn tures derived from the routers in MoE layers (Chen et al.
+
+
+--- Page 2 ---
+
+2022; Li et al. 2024, 2023; Huang et al. 2025). (out) Ay ac aa
+Analyzing expert importance not only facilitates model x i (down |
+compression but also provides deeper insights into the in- atenton | SEs
+ner workings of MoE LLMs. However, existing approaches i i ° @)
+often rely on empirical criteria to identify critical experts, —- ah
+lacking a deeper exploration and understanding of the het- I | i Tn 1
+erogeneous importance among experts. In this study, we ad- Quik i
+dress a fundamental yet previously overlooked question: Is t t t = 1 (5) ca
+there a distinct subset of experts that plays a critical role in LayerNorm LayerNorm ee
+the underlying mechanisms during the forward inference a a
+of MoE LLMs? Through comprehensive analysis of various
+open-source MoE LLMs, we consistently confirm the exis- Figure 2: Decoder Architecture of MoE LLM.
+tence of such experts. Despite their limited number, pruning
+these experts leads to a significant collapse in model per-
+formance. As shown in Figure 1, pruning just three experts ¢ We conduct extensive experiments to evaluate the impor-
+from Qwen3-30B-A3B (Yang et al. 2025) leads to a sig- tance of SEs, revealing their significant impact on the
+nificant degradation in model performance, while randomly model’s overall performance, particularly in mathemat-
+pruning other experts results in a considerably smaller im- ical reasoning abilities.
+pact. We refer to these experts as Super Experts (SEs), and * We further enhance the understanding of SEs compres-
+our subsequent comprehensive analysis offers increasingly sion. Our findings confirm that MoE LLMs rely on SEs
+deeper insights into SEs. to induce attention sinks. Using the proposed attention
+In Section 3, we first characterize SEs and explore their sink decay rate, we quantitatively assess the significant
+distribution across different models and input data domains. disruption of attention sinks caused by SE pruning.
+SEs are identified by rare but extreme activation outliers in * This discovery of SEs provides new insights into the in-
+the output of the down-proj, which induce massive acti- ner workings of MoE LLMs and highlights the critical
+vations (Sun et al. 2024) in the hidden states between de- importance of preserving SEs during model compres-
+coder layers. Intriguingly, the distribution of SEs remains sion. These insights offer valuable guidance for achiev-
+model-specific, and the SEs in the base model maintain con- ing more effective MoE LLM compression strategies.
+sistency after post-training processes. For instance, Qwen3-
+30B-A3B-Base and Qwen3-30B-A3B exhibit identical SEs . .
+distribution patterns. In Section 4, we assess the importance 2 Preliminaries on Mok LLMs
+of SEs by quantifying performance degradation across mul- MoE LLMs _ LLMs are typically structured as a stack of
+tiple capabilities following their pruning. For non-reasoning Transformer decoder blocks (Vaswani et al. 2017), each con-
+models, all few-shot evaluations we conducted demonstrate sisting of a multi-head self-attention (MHSA) layer and a
+considerable performance degradation, with the most pro- feed-forward network (FFN) layer. In MoE LLMs, the FFN
+nounced decline observed in the GSM8K dataset (Cobbe layers are replaced by MoE layers, where each layer con-
+et al. 2021). Notably, for reasoning models, pruning SEs sists of multiple experts, each represented by a FFN. A con-
+leads to a complete performance collapse, with Pass@ 1 cise overview of MoE LLMs is presented in Figure 2. Let
+dropping to nearly zero on tasks such as AIME and Math- H°® € R"*¢ represent the input to the first decoder, where d
+500 (AIME 2024, 2025; Lightman et al. 2023). This high- is the embedding dimension, and n is the length of the tok-
+lights the critical role of SEs in the model’s overall perfor- enized input sequence. Then, the output of the /-th decoder
+mance, particularly in mathematical reasoning tasks. block, H' € R”"™“, is given by:
+In Section 5, we further enhance our understanding of the l I! I!
+influence of SE compression. Our findings confirm that MoE Hl” = MoE (LNnoe (4 )) +H, (1)
+LLMs rely on SEs to induce attention sinks, which are cru- a 1 l-1 Al I-1
+cial for the distribution of attention scores and must be pre- H’ =O + H’’,O' = MHSA (LNinisa (H )) » Q)
+served during sparse attention or token compression (Xiao where 1 < 1 < JL, with L denoting the total number of
+et al. 2023b; Su et al. 2025). We quantitatively assess the blocks. LN refers to layer normalization, O! representing the
+significant disruption of attention sinks caused by SE com- output of the MHSA, and H v denoting residual summations
+pression, as measured by the proposed attention sink decay after the MHSA.
+rate. Our contributions are summarized as follows: MHSA Layer After LN, the input H’} is projected
+¢ We present the first discovery and investigation of Su- through the weight matrices Wo, Wi, Wi € R**4 to gen-
+per Experts (SEs) in MoE LLMs. We identify and lo- erate the Query, Key, and Value, which are then divided into
+calize SEs across various prominent open-source MoE K heads, denoted as Q!*, K4*,V'*, for 1 < k < K. The
+LLMs, thoroughly validating that their distribution re- MHSA is computed as:
+mains model-specific and unaffected by post-training T
+na Qhk Kuk
+processes. Additionally, we develop an automated tool AL® — Softmax ( + u) (3)
+for rapid and precise profiling of SEs in new models. Vd,
+
+
+--- Page 3 ---
+
+Layer 1 @Q _.--— ~~ Niax Output Magnitudes: of | Layer 2 @ _.--~~ Nias Output Magnitudes of | Layer 3 @ _.--~"Miax Output Magnitudes of |
+< down_proj Across Layers ! < down_proj Across Layers ' < down_proj Across Layers !
+ey we Expert 68 | cay c | Expert 92 | ey = | Expert 82
+Ws P| H NA zo ! Wa Zoal_| !
+B00) || qi i | can Z| || 1
+usa L router}... | || Crouter_}.. ‘|| BAD sins Lrouter_).. 1 er
+Figure 3: Super Experts mechanism in Qwen3-30B-A3B. The line plots depict the maximum output magnitudes of down_proj
+for experts 68/92/82 across layers. Massive activation is gradually amplified through expert 68 in layer 1, expert 92 in layer 2,
+and expert 82 in layer 3. Extreme activation outliers from these Super Experts are propagated into the hidden states between
+decoders via residual summation, progressively leading to massive activation.
+1200 1400 eae sevesesiesacsenesiaasenssnoteoeoossonissivey 175
+1000 3" Rise . - ‘ | a
+8 fee 3 800 34 Rise Sve | 34 Rise 3 | 2"4 Rise \ a
+§, 600 5 600 5 5400 e
+z 400 2"4 Rise = 400 | "| Sad * vee | ES 7
+- averter fH Prune the SEs in Layer 1 Prune the SEs in Layer 2 Prune the SEs in Layer 3 7 ia Hlayertitt be
+Original Model Prune the SEs in Layer
+1&2&3
+Figure 4: Impact of SEs pruning on massive activations in Qwen3-30B-A3B. Massive activations are computed using 100 input
+samples from the C4 (Raffel et al. 2020) dataset, each with a length of 2K.
+O! = Concat}_, (A’*V""*) Wé, (4) 3.1 Exploring Super Experts
+where M represents the attention mask, and d, = d/K. For Massive Activations in MoE LLMs The discovery of
+simplicity, the rotation position encoding (RoPE) (Su et al. SEs arises from an exploration and analysis of the forma-
+2024) is omitted here. tion of massive activations (Sun et al. 2024) in MoE LLMs.
+. Recent research has explored a distinct class of extreme ac-
+MoE Layer Next, 7 Vis passed through a new LN and eer . P . : .
+. . tivation outliers in LLMs, which appear in the hidden states
+enters the MoE layer. First, the router network determines : .
+which experts to activate and how to scale their outputs between decoder layers and are known as massive activa-
+. . : : tions (Sun et al. 2024; Guo et al. 2024; Yu et al. 2024).
+through the weight matrix Wg. The routing weights G € se :
+nxi They are limited in number, yet their values are orders of
+R are computed as: . i.
+F magnitude larger than those of other activations (e.g., up to
+G = softmax(H" Wa). (5) 100,000 times larger). Existing research has yet to exten-
+Then, sparse activation of the experts is achieved by select- sively explore massive activations in MoE LLMs and the
+ing the top-k routing weights for each input token. The out- mechanisms behind their formation. To address this gap, we
+put of the activated experts is scaled by the routing weights first validate the existence of massive activations across sev-
+and aggregated to form the output of the MoE layer: eral open-source MoE LLMs. Our findings reveal that mas-
+; I . sive activations persist in all MoE LLMs we investigated, as
+» Gj FFN (LNmnoe(H} )) » W=l...n, (6) shown in the first image on the left in Figure 4.
+i€Top-k(G;) . . . .
+where Top-k(G,) denotes the indices of the top-k routing Super Expe rts Induce Massive Activations Given that
+: Ls : : massive activations are also present in MoE LLMs, a deeper
+weights for the j-th input token. The FEN is defined as: question arises: How are these massive activations formu
+FEN (X) = (¢ (XW,) © x Wu) Wa, (7) lated in MoE LLMs? Are they the result of all activated
+where W,, Wy, and Wq are the weight matrices for the experts working together, or are they driven by only a few
+gating, up-projection, and down-projection, respectively. specific experts, or perhaps caused by other parts of the
+o denotes the activation function, and © represents the model? Through observations of several prominent open-
+Hadamard product. source MoE LLMs (e.g., Qwen series, DeepSeek series,
+. . oo. Mistral), we surprisingly find that a small subset of experts
+3 Super Experts: Discovery and Localization consistently generates rare yet extreme activation outliers
+In this section, we first demonstrate the discovery process of in the output of their down_proj layers. These outliers
+SEs using Qwen’s latest MoE LLM, Qwen3-30B-A3B, as an are subsequently passed onto the hidden states via resid-
+example. Next, we analyze SEs across different MoE LLMs ual summation after the MoE layers, leading to massive ac-
+and data domains to examine their distribution patterns and tivations. The entire process is illustrated in Figure 3 us-
+highlight the widespread presence of SEs. ing the Qwen3-30B-A3B example. This phenomenon typ-
+
+
+--- Page 4 ---
+
+Model Total Experts SECount SEProportion Top! Top2 Top3 Top4 Top5 Top10 Top05% Top1*0.1
+Qwen3-30B-3B 6144 3 0.05% 744.0 540.0 430.0 63.5 19.1 12.1 7.3 74.4
+DeepSeek-R1 15677 10 0.06% 616.0 536.0 171.0 143.0 143.0 67.0 36.75 61.6
+DeepSeek-V2-Lite-Chat 1782 2 0.22% 1424.0 462.0 112.5 89.5 37.5 24.0 34.5 142.4
+Mixtral-8x7B-Instruct-v0. 1 256 1 0.39% 5600.0 302.0 286.0 258.0 253.0 139.0 5600.0 560
+
+Table 1: The activations identified as Super Experts are highlighted in bold.
+0 1000 0 1000 0 1000
+ran I. a I. rey |.
+o oO o
+Pa 600 > 600 > 600
+(o~] (on) lo]
+400] 400 400
+7 i 200 oS I” u I”
+Expert Z u Expert & Expert Z
+(a) Qwen3-30B-A3B. (b) DeepSeek-V2-Lite-Chat. (c) Mixtral-8x7B-v0. 1-instruct.
+0 1000 0 1000 0 1000
+ray [. a I. rey |.
+o oO o
+Pa 600 > 600 > 600
+(o~] (o-] lon)
+4 400 4] 400 400
+7 | 200 DS i u Ir
+2 Expert ey uw Expert 2 o Expert Z
+(d) Qwen3-30B-A3B-Base. (e) DeepSeek-V2-Lite. (f) Mixtral-8x7B-v0.1.
+Figure 5: Heatmap visualizations of the maximum output magnitudes from the down_pro J for each expert across layers. The
+analysis is conducted using the C4 (Raffel et al. 2020) dataset. SEs are highlighted with arrows.
+ically occurs in a single layer (e.g., Mixtral) or in just a few Model Super Experts
+layers (e.g., Qwen3-30B-A3B) starting from the initial de- Qwen3-30B-A3B Layer 1 Expert 68, Layer 2 Expert 92,
+coder layers, ultimately leading to stable massive activations Qwen3-30B-A3B-Base Layer 3 Expert 82
+across nearly all subsequent layers. To directly validate this DeepSeek-V2-Lite-Chat |. 4.2, a ge raver? Expert $4. Laver 3 Expert 38
+mechanism, we also perform ablation experiments by prun- DeepSeek-V2-Lite y p » Lay’ Pp
+ing the SEs in Qwen3-30B-A3B. As illustrated in Figure 4, —_—.WTJT—M_————__
+. : : Le : Mixtral-8x7B-Instruct-v0. 1
+pruning SEs from a single layer effectively eliminates their : Layer 1 Expert 3
+ye : ae Mixtral-8x7B-v0.1
+contribution to massive activations. Furthermore, when all
+SEs are pruned, massive activations are completely elimi- Table 2: Distributions of SEs in Several MoE LLMs.
+nated, confirming that they are directly generated by SEs.
+3.2 Localization of Super Experts various MoE LLMs we investigated, as highlighted in bold
+In this section, we begin by discussing how to accurately in Table L We have developed an automated tool for rapid
+identify SEs and then examine their distribution patterns and precise SE profiling based on this definition. The code
+across various models and data domains. is available at https://github.com/ZunhaiSu/Super-Experts-
+; rofilling.
+Super Experts Profiling Given that SEs are defined by
+their influence on the formation of massive activations Distribution of SEs Across Different Models We select
+through the extreme activation outliers they generate, we three representative MoE LLMs with distinct designs for
+propose the following broad yet effective quantitative def- analysis: Qwen3-30B-A3B, DeepSeek-V2-Lite-Chat, and
+inition. Specifically, we compute the maximum output mag- Mixtral-8x7B-Instruct-v0.1. We also include the base mod-
+nitudes to the down_proj for all experts across all layers. els of these three LLMs to illustrate the impact of post-
+Let L denote the set of layers responsible for the formation training processes. Although all of these models are MoE
+of massive activations. Let a;,- denote the maximum output LLMs, they exhibit distinct design differences. For instance,
+magnitude to the down_pro j of expert ¢ in layer /, and let Qwen3 and Mixtral do not employ shared experts, whereas
+A = {aie} be the set of all such values across the entire DeepSeek does. DeepSeek-V2-Lite adopts a hybrid archi-
+model. An expert e in layer / is classified as a SE if: tecture, wherein the first layer utilizes dense MLPs, while
+1 the remaining layers are based on MoE blocks. Through
+aie > Pog5 and ate > T9 amex and 1eEL (8) the proposed SE profiling tool, we identify the SEs in these
+models. A summary of the SEs is provided in Table 2, and
+where Po9.5 = Percentilegg 5(A) and @max = max A. This heatmap visualizations of the maximum output magnitudes
+criterion effectively identifies the experts of interest across from the down_proj are shown in Figure 5. The key con-
+
+
+--- Page 5 ---
+
+Model | Setting | PPL | Avg. ARC-c ARC-e BoolQ GSM8K Swaa MMLU Boako 4 PIQA oe
+| Baseline | 8.70 | 70.22 52.65 79.5 88.72 89.61 59.63 77.82 34.2 79.33 70.56
+Qwen3 | Prune SEs | 59.86 | 0.5500 46.08 76.05 70.73 42.38 39.31 56.03 29.8 72.52 62.12
+30B-A3B Drop Rate (%) - 21.68% 12.48% 4.34% 20.28% 52.71% 34.08% 28.00% 12.87% 8.58% 11.96%
+| Random Pruning | 8.71 | 70.36 52.73 79.46 88.59 89.84 59.5 77.84 34 79.76 71.51
+Drop Rate (%) - -0.20%  -0.15% 0.05% 0.15% -0.26% 0.22%  — -0.03% 0.58% -0.54% — -1.35%
+| Baseline | 6.31 | 60.27 46.59 78.37 79.79 37.83 58.75 55.03 34.6 80.3 71.19
+DeepSeek | Prune SEs | 10.75 | 43.90 29.27 54.92 68.62 9.78 43.72 41.77 21 68.28 57.7
+V2-Lite Drop Rate (%) - 27.17% 37.18% 29.92% 14.00% 74.15% 25.58% 24.10% 39.31% 14.97% 18.95%
+| Random Pruning | 6.31 | 60.30 46.5 78.45 80.37 37.38 58.77 55.1 34.4 80.14 71.59
+Drop Rate (%) - -0.05% 0.19%  -0.10%  -0.73% 1.19% -0.03% — -0.13% 0.58% 0.20% = -0.56%
+| Baseline | 3.84 | 67.84 56.57 84.26 85.02 57.32 64.89 67.83 35.6 82.48 76.56
+Mixtral | Prune SEs | 6.23 | 49.38 36.01 6444 75.66 24.34 50.6 42.47 20.6 73.12 57.22
+8x7B-v0.1 | Drop Rate (%) - 27.21% 36.34% 23.52% 11.01% 57.54% 22.02% 37.39% 42.13% 11.35% 25.26%
+| Random Pruning | 3.86 | 67.82 56.57 84.09 85.23 58.15 64.92 68.08 35 82.21 76.16
+Drop Rate (%) - 0.02% 0.00% 0.20% -0.25% -145% -0.05%  -0.37% 1.69% 0.33% 0.52%
+Table 3: Evaluation of the importance of SEs in non-reasoning models. The results of random pruning are obtained by averaging
+the performance over five runs, each randomly pruning the same number of experts.
+Model | Setting | PPL | Avg. GPQA Diamond Math-500 AIME 2024 AIME 2025  LiveCodeBench
+| | | Pass@ 1 Pass@ 1 Pass@ 1 Pass@ 1 Pass@ 1
+| Baseline | 3.33 | 75.64 71.50 97.60 79.33 66.33 63.44
+DeepSeek-R1 | Prune SEs | 5.18 | 1.81 5.05 4.00 0.00 0.00 0.00
+Drop Rate (%) - 97.61% 93.0% 95.9% 100% 100% 100%
+| Random Pruning | 3.35 | 75.53 72.63 98.00 77.67 67.00 62.37
+Drop Rate (%) - 0.32% -2.4% -0.4% 2.1% -1.0% 1.7%
+Table 4: Evaluation of the importance of SEs in DeepSeek-R1.
+clusions regarding SEs are summarized as follows: number of experts as baselines. To more effectively eval-
+(i) SEs are consistently present across the investigated uate the importance of SEs, we utilize distinct benchmark
+models, accounting for less than 0.5% of all experts. types for non-reasoning and reasoning models. For non-
+(ti) After post-training processes, the distribution of SEs reasoning models, we conduct a series of few-shot evalua-
+remains unchanged compared to the base model. tions, whereas for reasoning models, we employ more de-
+(tii) Some experts in the final layers also exhibit extreme manding benchmarks, encompassing tasks such as mathe-
+activation outliers. However, since they do not contribute to matical reasoning and coding.
+the formation of massive activations, they do not hold the
+same level of significance as SEs. Additional experimental .
+results are available in Appendix A. 4.1 Impact on Non-Reasoning Models
+Distribution of SEs Across Different Data Domains We For non-reasoning models, we select three models: the non-
+also examine their patterns across various input data do- thinking mode of Qwen3-30B-A3B, DeepSeek-V2-Lite and
+mains. Specifically, in addition to the C4 dataset (Raffel Mixtral-8x7B-v0.1. We utilize the datasets listed below and
+et al. 2020), we analyze SE distributions across several other conduct evaluations using Im-eval (Gao et al. 2024), includ-
+datasets, including WikiText-2 (Merity et al. 2016), C-Eval ing ARC-challenge (ARC-c), ARC-easy (ARC-e) (Clark
+(Huang et al. 2023), GSM8K (Cobbe et al. 2021), and Hu- et al. 2018), BoolQ (Clark et al. 2019a), GSM8K (Cobbe
+manEval (Chen et al. 2021). As shown in the Appendix B, et al. 2021), HellaSwag (Zellers et al. 2019), MMLU
+the distribution of SEs remains highly stable, regardless of (Hendrycks et al. 2021), OpenBookQA (Mihaylov et al.
+variations in the input data domain. 2018), PIQA (Bisk et al. 2020), and WinoGrande (Keisuke
+et al. 2019). As shown in Table 3, pruning only a few super-
+4 The Importance of Super Experts experts leads to significant degradation across all tasks, with
+In this section, we evaluate the significance of SEs by quan- average accuracy dropping by 21.68% to 27.21%. In partic-
+tifying the performance degradation across various capabil- ular, for GSM8K, the degradation ranges from 52.71% to
+ities following their pruning. We use the original model and 74.15%. In contrast, random pruning has a negligible im-
+the average results from random pruning of an equivalent pact, underscoring the crucial role of SEs.
+
+
+--- Page 6 ---
+
+Model | Setting | ppt! avg, GPQADiamond Math-500 AIME 2024 AIME 2025 HumanEval
+| | | Pass@1 Pass@ 1 Pass @ 1 Pass@1 Pass@ 1
+| Baseline | 8.70 | 69.37 61.62 88.00 80.00 73.33 43.90
+Prune SEs 59.86 4.02 18.69 1.40 0.00 0.00 0.00
+Qwen3-30B-A3B | Drop Rate (%) | - | 93.62% 69.7% 98.4% 100% 100% 100%
+Random Pruning | 8.71 | 69.33 61.62 89.00 80.00 73.33 42.70
+Drop Rate (%) - 0.32% 0.00% -1.10% 0.00% 0.00% 2.7%
+Table 5: Evaluation of the importance of SEs in Qwen3-30B-A3B.
+DeepSeek-R1 | Problem | Answer
+Okay, so the problem is asking: How many of the first
+Original Model ut f the first hundred it one hundred positive integers are divisible by 3, 4,
+riginal Mode How many of the first one Hundred posiuve | and 5? Hmm, let me think. First, I need to understand
+integers are divisible by 3, 4, and 5?
+_____*!s«~2*ilease reason step by step, and put your ee
+final answer within \boxed{}. Okay, let’s see here. So the question is how many of
+the first one hundred positive integers are divisible
+by 3, 4, and 5 right? Okay, so first, that’s probably
+Prune Super Experts going to, like, but, that’s, the way, it’s, the way, it’s,
+the way, it’s, the way, it’s, the way, it’s, the way, it’s,
+wo. Repeating... ...
+the way, it’s, the way, it’s, the way, it’s, the way, it’s
+Okay, so the problem is asking: How many of the first
+Random Pruni one hundred positive integers are divisible by 3, 4,
+ancom fruning and 5? Hmm, let me think. First, I need to understand
+Table 6: Responses of DeepSeek-R1 in the MATH-500 (Lightman et al. 2023) benchmark.
+4.2 Impact on Reasoning Models ing the critical role of SEs. During the review of model re-
+For evaluating the importance of SEs in reasoning models, sponses on the Math-500 benchmark, we made a striking
+we select DeepSeek-R1 and the thinking mode of Qwen3- observation: after pruning the SEs, the model consistently
+30B-A3B. We select benchmarks more suitable for test- generated repetitive responses in nearly every test, continu-
+ing reasoning models and conduct evaluations based on ing until it reached the maximum output length, as shown in
+the EvalScope (Team 2024a), a comprehensive model eval- Table 6. This behavior suggests that the model loses its abil-
+uation and performance benchmarking framework metic- ity to reason and solve problems entirely after SE pruning.
+ulously developed by the ModelScope community (Team More results are in Appendix C.
+2023). The generation configurations used in the evaluation .
+align with the corresponding technical reports of the models. 5 Understanding the Impact of Super
+These benchmarks are: Experts Compression
+¢ General Tasks: We use GPQA-Diamond under a 5- In this section, we focus on deepening our understanding of
+shot setting. GPQA (Rein et al. 2024) is a challenging the underlying impact of SE compression and further quan-
+dataset of multiple-choice questions authored by domain- titatively assessing its effects.
+specific multidisciplinary experts. 51 5S E ts Ind Attention Sink
+¢ Math & Text Reasoning: To evaluate mathematical and ~~ uper xper S induce Attention Sinks
+logical reasoning skills, we use high-level math bench- Previous studies in dense LLMs (Sun et al. 2024; Gu et al.
+marks, including MATH-500 (Lightman et al. 2023), 2024; An et al. 2025) suggest that massive activations tend to
+AIME’24 (AIME 2024), and AIME’25 (AIME 2025). attract disproportionately high attention scores in multi-head
+* Ascent & Coding: To test th del’ fici incod self-attention (MHSA) layers, leading to attention sinks for
+Agen ding: 10 test me moder $ proficiency 1n COd- initial tokens. StreamLLM (Xiao et al. 2023b) conducted an
+ing and agent-based tasks, we use LiveCodeBench (Jain initial j tivati ling th f attenti ink
+t al, 2024) and HumanEval (Chen et al. 2021) initial investigation revealing the presence of attention sinks
+ora’. . . in LLMs. Subsequent studies (Gu et al. 2024; Guo et al.
+The experimental results, presented in Tables 4 and 5, 2024) have demonstrated that although attention sinks of-
+show that pruning the SEs causes a significant performance ten emerge at semantically insignificant tokens, the mech-
+degradation, while random pruning has almost no impact. anism itself is critical for model performance. In efficient
+The Pass@1 scores for most tasks drop to zero, highlight- LLM techniques such as sparse attention and KV cache
+
+
+--- Page 7 ---
+
+. Layer 15 Head 10 . on Layer 25 Head 10 . on Layer 35 Head 10 . . Layer 15 Head 10 . . Layer 25 Head 10 . . Layer 35 Head 10 .
+® "3 & = Sat & 2 & ‘ “ i & 4
+a. Zs Hh» Hs: Hs Hm } H
+(a) Layer 15 Head 10. (b) Layer 25 Head 10. (c) Layer 35 Head 10. (d) Layer 15 Head 10. (e) Layer 25 Head 10. (f) Layer 35 Head 10.
+Figure 6: Attention scores of Qwen3-30B-A3B. Figures (a), (b), and (c) depict the attention score maps of the original model,
+where the first token clearly functions as an attention sink, consistently attracting the majority of attention. Figures (d), (e), and
+(f) illustrate the attention scores following SE pruning, where the attention sink completely disappears.
+100% Attention Sink Decay Rate (Qwen3-30B-A3B) quently, the impact of SE pruning on attention computation
+90% ban = aba accleag A acct, ng Ardechcte Ay Arhcleschh, Acad Ney | remains both continuous and significant.
+80%
+ov After Pruning Super Experts 6 Related Work
+0% 6.1 Expert-Level Compression
+nov Beyond traditional LLM-focused compression methods, re-
+cent advancements have increasingly focused on expert-
+0% level compression strategies, capitalizing on the distinct
+0 10 aver 30 40 structural features of MoE LLMs and the natural varia-
+, tions in expert importance. These approaches—including
+Figure 7: Attention sink decay rate across layers. expert pruning, skipping, merging, and expert-level mixed-
+precision quantization—are being actively explored for their
+potential to enhance MoE model efficiency. M-SMoE (Li
+compression, maintaining attention sinks is essential for pre- al. 2023) performs expert merging by using activation
+: : ae . . frequencies to consolidate less significant experts, while
+venting undesirable distributional shifts of attention scores also applying low-rank techniques to the merged experts
+(Xiao et al. 2023b; Su et al. 2025). Building on this insight hi further compression. NAEE (Lu et al. 2024) in-
+and our previous findings, we hypothesize that pruning SEs ‘0 in ne ol d-pl P rs d skippi . hods th
+not only eliminates massive activations but also disrupts the a uces plug-anc-play pruning anc’ skipping methods that
+underlying attention sink mechanism. leverage reconstruction loss to selectively compress less crit-
+ical experts. MC (Huang et al. 2025) harnesses the signifi-
+5.2 Impact of Super Experts Compression cance of both experts and tokens to perform mixed-precision
+quantization and dynamic expert pruning, achieving extreme
+To validate this insight and quantitatively assess the impact compression. MC-Suite (Jaiswal et al. 2025) reviews various
+of SE pruning on attention sinks, we introduce (i) Attention empirical criteria for identifying critical experts, considering
+Sink Decay Rate, denoted as Dsink. It is defined as the aver- four dimensions: weight, expert behavior, intermediate acti-
+age decay rate of attention sinks for each head: vations, and gradient behavior. While these methods exam-
+H m ine expert importance from various perspectives to optimize
+Denk = 1 — i S~ dies Pi (9) expert compression, they lack a deeper exploration and un-
+iT at Dies pi derstanding of expert significance, overlooking the mecha-
+nistic importance of specific experts. Our work presents the
+where H is the total number of heads, p‘ represents the at- first discovery and investigation of Super Experts, offering
+tention score between the Query token ¢ and the Key token an in-depth analysis of their mechanistic role in inference,
+i before SE pruning, pt denotes the attention score after SE thereby filling a critical gap in current research.
+pruning, and S refers to the set of sink tokens. .
+As shown in Figure 7, after pruning SEs, the attention 7 Conclusion
+sink decay rate remains consistently high, at approximately In this work, we present the first identification and sys-
+or even exceeding 90%, demonstrating a substantial disrup- tematic study of a distinct subset of experts, termed Su-
+tive effect on attention sinks. Figure 6 visualizes the atten- per Experts. We analyze their characteristics, distributions,
+tion scores for several heads before and after pruning SEs, and critical functional roles within MoE LLMs. Quantitative
+highlighting the complete disappearance of attention sinks evaluations demonstrate that compressing SEs significantly
+following SE pruning. Notably, attention sinks introduce im- disrupts the attention sink mechanism, leading to a degra-
+plicit attention biases (Sun et al. 2024; An et al. 2025) that dation in model performance. Future research will focus on
+persist across all subsequent tokens and may encode global leveraging SEs to develop more refined compression meth-
+or other critical information (Darcet et al. 2023). Conse- ods for MoE LLMs.
+
+
+--- Page 8 ---
+
+References Clark, P.; Cowhey, I.; Etzioni, O.; Khot, T.; Sabharwal, A.;
+AIME. 2024. AIME problems and solutions. https://aime24. Schoenick, C.; and Tafjord, O. 2018. Think you have Solved
+aimedicine..info/. Question Answering? Try ARC, the AI2 Reasoning Chal-
+AIME. 2025. AIME problems and_ solutions. lenge. arXiv:1803.05457v1.
+https://artofproblemsolving.com/wiki/index.php/ Cobbe, K.; Kosaraju, V.; Bavarian, M.; Chen, M.; Jun, H.;
+AIMEProblemsandSolutions. eer L.; copper Si wore’ ne J.; Nakano,
+.5 Hesse, C.; and Schulman, J. . raining Ver-
+An, Ys; Zhao, xX Yu, T.; Tang, M.; and Wang, J. 2025. Sys- ifiers to Solve Math Word Problems. arXiv preprint
+tematic outliers in large language models. arXiv preprint arXiv:2110.14168.
+arXiv:2502.06415. . .
+. . Dai, D.; Deng, C.; Zhao, C.; Xu, R.; Gao, H.; Chen, D.; Li,
+Ashkboos, S.; Croci, M. L.; Nascimento, M. G. d.; Hoefler, J.; Zeng, W.: Yu, X.; Wu, Y.; et al. 2024. Deepseekmoe:
+T.; and Hensman, J. 2024a. Slicegpt: Compress large lan- Towards ultimate expert specialization in mixture-of-experts
+guage models by deleting rows and columns. arXiv preprint language models. arXiv preprint arXiv:2401.06066.
+arXiv:2401.15024. . . .
+. . . Darcet, T.; Oquab, M.; Mairal, J.; and Bojanowski, P.
+Ashkboos, S.; Mohtashami, A.; Croci, M. L.; Li, B.; 2023. Vision transformers need registers. arXiv preprint
+Cameron, P.; Jaggi, M.; Alistarh, D.; Hoefler, T.; and Hens- arXiv:2309. 16588.
+man, J. 2024b. Quarot: Outlier-free 4-bit inference in rotated ;
+Ilms. Advances in Neural Information Processing Systems, Devlin, J.; Chang, M.-W.; Lee, K. and Toutanova, K. 2019.
+37: 100213—-100240. Bert: Pre-training of deep bidirectional transformers for lan-
+. . guage understanding. In Proceedings of the 2019 conference
+Bisk, Y.; Zellers, R.; Bras, R. L.; Gao, J.; and Choi, Y. 2020. of the North American chapter of the association for compu-
+PIQA: Reasoning about Physical Commonsense in Natural tational linguistics: human language technologies, volume 1
+Language. In Thirty-Fourth AAAI Conference on Artificial (long and short papers), 4171-4186.
+Intelligence. Dosovitskiy, A.; Beyer, L.; Kolesnikov, A.; Weissenborn,
+Bondarenko, Y.; Nagel, M.; and Blankevoort, T. 2021. D.; Zhai, X.; Unterthiner, T.; Dehghani, M.; Minderer, M.;
+Understanding and overcoming the challenges of efficient Heigold, G.; Gelly, S.; et al. 2020. An image is worth 16x16
+transformer quantization. arXiv preprint arXiv:2109.12948. words: Transformers for image recognition at scale. arXiv
+Bondarenko, Y.; Nagel, M.; and Blankevoort, T. 2023. preprint arXiv:2010.11929.
+Quantizable transformers: Removing outliers by helping at- Duanmu, H.; Li, X.; Yuan, Z.; Zheng, S.; Duan, J.; Zhang,
+tention heads do nothing. Advances in Neural Information X.; and Lin, D. 2025. MxMoE: Mixed-precision Quantiza-
+Processing Systems, 36: 75067-75096. tion for MoE with Accuracy and Performance Co-Design.
+Cai, W.; Jiang, J.; Wang, F.; Tang, J.; Kim, S.; and Huang, arXiv preprint arXiv:2505.05799.
+J. 2024. A survey on mixture of experts. arXiv preprint Frantar, E.; and Alistarh, D. 2023. Sparsegpt: Massive lan-
+arXiv:2407.06204. guage models can be accurately pruned in one-shot. In Inter-
+Chen, M.; Tworek, J.; Jun, H.; Yuan, Q.; de Oliveira Pinto, national Conference on Machine Learning, 10323-10337.
+H. P.; Kaplan, J.; Edwards, H.; Burda, Y.; Joseph, N.; Brock- PMLR.
+man, G.; and Ray, A. 2021. Evaluating Large Language Frantar, E.; Ashkboos, S.; Hoefler, T.; and Alistarh, D. 2022.
+Models Trained on Code. arXiv preprint arXiv:2107.03374. Gptq: Accurate post-training quantization for generative
+Chen, T.; Huang, S.; Xie, Y.; Jiao, B.; Jiang, D.; Zhou, H.; Li, pre-trained transformers. arXiv preprint arXiv:2210.17323.
+J.; and Wei, F. 2022. Task-specific expert pruning for sparse Gao, L.; Tow, J.; Abbasi, B.; Biderman, S.; Black, S.; DiPofi,
+mixture-of-experts. arXiv preprint arXiv:2206.00277. A.; Foster, C.; Golding, L.; Hsu, J.; Le Noac’h, A.; Li,
+Chi, Z.; Dong, L.; Huang, S.; Dai, D.; Ma, S.; Patra, B.; H.; McDonell, K.; Muennighoff, N.; Ociepa, C.; Phang, J.;
+Singhal, S.; Bajaj, P.; Song, X.; Mao, X.-L.; et al. 2022. Reynolds, L.; Schoelkopf, H.; Skowron, A.; Sutawika, L.;
+On the representation collapse of sparse mixture of experts. Tang, E.; Thite, A.; Wang, B.; Wang, K.; and Zou, A. 2024.
+Advances in Neural Information Processing Systems, 35: The Language Model Evaluation Harness.
+34600-34613. Gu, X.; Pang, T.; Du, C.; Liu, Q.; Zhang, F; Du, C.;
+Chowdhury, M. N. R.; Wang, M.; Maghraoui, K. E.; Wang, Wang, Y.; and Lin, M. 2024. When attention sink emerges
+N.; Chen, P.-Y.; and Carothers, C. 2024. A provably effective in language models: An empirical view. arXiv preprint
+method for pruning experts in fine-tuned sparse mixture-of- arXiv:2410.10781.
+experts. arXiv preprint arXiv:2405.16646. Guo, D.; Yang, D.; Zhang, H.; Song, J.; Zhang, R.; Xu, R.;
+Clark, C.; Lee, K.; Chang, M.-W.; Kwiatkowski, T.; Collins, Zhu, Q.; Ma, S.; Wang, P.; Bi, X.; et al. 2025. Deepseek-r1:
+M.; and Toutanova, K. 2019a. Boolq: Exploring the sur- Incentivizing reasoning capability in Ilms via reinforcement
+prising difficulty of natural yes/no questions. arXiv preprint learning. arXiv preprint arXiv:2501.12948.
+arXiv: 1905.10044. Guo, T.; Pai, D.; Bai, Y.; Jiao, J.; Jordan, M. I.; and Mei,
+Clark, K.; Khandelwal, U.; Levy, O.; and Manning, C. D. S. 2024. Active-dormant attention heads: Mechanistically
+2019b. What does bert look at? an analysis of bert’s atten- demystifying extreme-token phenomena in Ilms. arXiv
+tion. arXiv preprint arXiv: 1906.04341. preprint arXiv:2410.13835.
+
+
+--- Page 9 ---
+
+Hendrycks, D.; Burns, C.; Basart, S.; Zou, A.; Mazeika, M.; Ilm compression and acceleration. Proceedings of Machine
+Song, D.; and Steinhardt, J. 2021. Measuring Massive Mul- Learning and Systems, 6: 87—100.
+
+titask Language Understanding. Proceedings of the Interna- Liu, A.; Feng, B.; Wang, B.; Wang, B.; Liu, B.; Zhao,
+tional Conference on Learning Representations (ICLR). C.; Dengr, C.; Ruan, C.; Dai, D.; Guo, D.; et al.
+
+Hu, X.; Chen, Z.; Yang, D.; Xu, Z.; Xu, C.; Yuan, Z.; Zhou, 2024a. Deepseek-v2: A strong, economical, and effi-
+S.; and Yu, J. 2025. MoEQuant: Enhancing Quantization cient mixture-of-experts language model. arXiv preprint
+
+for Mixture-of-Experts Large Language Models via Expert- arXiv: 2405.04434.
+
+Balanced Sampling and Affinity Guidance. arXiv preprint Liu, A.; Feng, B.; Xue, B.; Wang, B.; Wu, B.; Lu, C.; Zhao,
+
+arXiv:2505.03804. C.; Deng, C.; Zhang, C.; Ruan, C.; et al. 2024b. Deepseek-
+
+Huang, W.; Liao, Y.; Liu, J.; He, R.; Tan, H.; Zhang, S.; v3 technical report. arXiv preprint arXiv:2412.19437.
+
+Li, H.; Liu, S.; and Qi, X. 2025. Mixture Compressor for Liu, E.; Zhu, J.; Lin, Z.; Ning, X.; Blaschko, M. B.; Yan,
+
+Mixture-of-Experts LLMs Gains More. In The Thirteenth S.; Dai, G.; Yang, H.; and Wang, Y. 2024c. Efficient expert
+
+International Conference on Learning Representations. pruning for sparse mixture-of-experts language models: En-
+
+Huang, Y.; Bai, Y.; Zhu, Z.; Zhang, J.; Zhang, J.; Su, T.; hancing performance and reducing inference costs. arXiv
+
+Liu, J.; Lv, C.; Zhang, Y.; Lei, J.; Fu, Y.; Sun, M.; and He, preprint arXiv:2407.00945.
+
+J. 2023. C-Eval: A Multi-Level Multi-Discipline Chinese Lu, X.; Liu, Q.; Xu, Y.; Zhou, A.; Huang, S.; Zhang, B.; Yan,
+
+Evaluation Suite for Foundation Models. arXiv preprint J.; and Li, H. 2024. Not all experts are equal: Efficient expert
+
+arX1v:2305.08322. pruning and skipping for mixture-of-experts large language
+
+Jain, N.; Han, K.; Gu, A.; Li, W.-D.; Yan, F; Zhang, models. arXiv preprint arXiv:2402.14800.
+
+T.; Wang, S.; Solar-Lezama, A.; Sen, K.; and Stoica, I. Ma, X.; Fang, G.; and Wang, X. 2023. Llm-pruner: On the
+
+2024. Livecodebench: Holistic and contamination free eval- structural pruning of large language models. Advances in
+
+sin on eon models for code. arXiv preprint neural information processing systems, 36: 21702-21720.
+
+ar . : ‘ ae wet: p. ; ; Merity, S.; Xiong, C.; Bradbury, J.; and Socher, R. 2016.
+
+Jaiswal, A.; Wang, J.; Li, Y.; Li, P; Chen, T.; Wang, Z.; pointer Sentinel Mixture Models. arXiv:1609.07843.
+
+Wang, C.; Pang, R.; and Du, X. 2025. Finding Fantastic Ex- M 025. LLaMA 4: Multimodal Intelli
+
+perts in MoEs: A Unified Study for Expert Dropping Strate- eta. 025. LLa > Multimodat Intelligence.
+
+gies and Observations. arXiv preprint arXiv:2504.05586. Mihaylov, T.; Clark, P.; Khot, T.; and Sabharwal, A. 2018.
+: . . . . Can a Suit of Armor Conduct Electricity? A New Dataset
+
+Jiang, A. Q.; Sablayrolles, A.; Roux, A.; Mensch, A.; . :
+
+Savary, B.; Bamford, C.: Chaplot, D. S.; Casas, D. d. 1.; for Open Book Question Answering. In EMNLP.
+
+Hanna, E. B.; Bressand, F; et al. 2024. Mixtral of experts. Mu, S.; and Lin, S. 2025. A comprehensive survey of
+
+arXiv preprint arXiv:2401.04088. mixture-of-experts: Algorithms, theory, and applications.
+
+Keisuke, S.; Ronan, L. B.; Chandra, B.; and Yejin, C. 2019. arXiv preprint arXiv:2503.07137.
+
+WinoGrande: An Adversarial Winograd Schema Challenge Raffel, C.; Shazeer, N.; Roberts, A.; Lee, K.; Narang, S.;
+at Scale. Communications of the ACM. Matena, M.; Zhou, Y.; Li, W.; and Liu, P. J. 2020. Explor-
+
+Kovaleva, O.; Romanov, A.; Rogers, A.; and Rumshisky, A. ing the limits of transfer learning with a unified text-to-text
+
+2019. Revealing the dark secrets of BERT. arXiv preprint transformer. Journal of machine learning research, 21(140):
+
+arXiv: 1908.08593. 1-67.
+
+Li, P.; Jin, X.; Cheng, Y.; and Chen, T. 2024. Examining ‘Rein, D.; Hou, B. L.; Stickland, A. C.; Petty, J.; Pang, R. Y.;
+
+post-training quantization for mixture-of-experts: A bench- Dirani, J.; Michael, J.; and Bowman, S. R. 2024. Gpaqa: A
+
+mark. arXiv preprint arXiv:2406.08155. graduate-level google-proof q&a benchmark. In First Con-
+
+Li Modeling.
+
+Li, P.; Zhang, Z.; Yadav, P.; Sung, Y.-L.; Cheng, Y.; Bansal, ference on Language Modeling .
+
+M.; and Chen, T. 2023. Merge, then compress: Demys- Su, J.; Ahmed, M.; Lu, Y.; Pan, S.; Bo, W.; and Liu, Y. 2024.
+
+tify efficient smoe with hints from its routing policy. arXiv Roformer: Enhanced transformer with rotary position em-
+
+preprint arXiv:2310.01334. bedding. Neurocomputing, 568: 127063.
+
+Liang, Z.; Xu, Y.; Hong, Y.; Shang, P.; Wang, Q.; Fu, Q.; Su, Z.; Chen, Z.; Shen, W.; Wei, H.; Li, L.; Yu, H.; and Yuan,
+and Liu, K. 2024. A Survey of Multimodel Large Language K. 2025. RotateKV: Accurate and Robust 2-Bit KV Cache
+
+Models. In Proceedings of the 3rd International Conference Quantization for LLMs via Outlier-Aware Adaptive Rota-
+
+on Computer, Artificial Intelligence and Control Engineer- tions. arXiv preprint arXiv:2501.16383.
+
+ing, 405-409. Sun, M.; Chen, X.; Kolter, J. Z.; and Liu, Z. 2024. Mas-
+
+Lightman, H.; Kosaraju, V.; Burda, Y.; Edwards, H.; Baker. sive activations in large language models. arXiv preprint
+
+B.; Lee, T.; Leike, J.; Schulman, J.; Sutskever, I.; and Cobbe, arXtv:2402.17762.
+
+K. 2023. Let’s verify step by step. In The Twelfth Interna- Sun, M.; Liu, Z.; Bair, A.; and Kolter, J. Z. 2023. A simple
+tional Conference on Learning Representations. and effective pruning approach for large language models.
+
+Lin, J.; Tang, J.; Tang, H.; Yang, S.; Chen, W.-M.; Wang, arXiv preprint arXiv:2306.11695.
+
+W.-C.; Xiao, G.; Dang, X.; Gan, C.; and Han, S. 2024. Team, M. 2024a. EvalScope: Evaluation Framework for
+
+Awq: Activation-aware weight quantization for on-device Large Models.
+
+
+--- Page 10 ---
+
+Team, Q. 2024b. Qwen?2 technical report. arXiv preprint Zheng, Z.; Cui, X.; Zheng, S.; Li, M.; Chen, J.; Chen,
+arXiv:2407.10671. X.; et al. 2025. MoQa: Rethinking MoE Quantization
+Team, T. M. 2023. AIME problems and solutions, 2025. with Multi-stage Data-model Distribution Awareness. arXiv
+https://github.com/modelscope/modelscope. preprint arXiv:2503.21135.
+
+Touvron, H.; Martin, L.; Stone, K.; Albert, P.; Almahairi, A.; Zhu, X.; Li, J.; Liu, Y.; Ma, C.; and Wang, W. 2024. A survey
+Babaei, Y.; Bashlykov, N.; Batra, S.; Bhargava, P.; Bhosale, on model compression for large language models. Transac-
+S.; et al. 2023. Llama 2: Open foundation and fine-tuned tions of the Association for Computational Linguistics, 12:
+chat models. arXiv preprint arXiv:2307.09288. 1556-1577.
+
+Vaswani, A.; Shazeer, N.; Parmar, N.; Uszkoreit, J.; Jones,
+
+L.; Gomez, A. N.; Kaiser, L.; and Polosukhin, I. 2017. At-
+
+tention is all you need. Advances in neural information pro-
+
+cessing systems, 30.
+
+Wang, W.; Chen, W.; Luo, Y.; Long, Y.; Lin, Z.; Zhang,
+
+L.; Lin, B.; Cai, D.; and He, X. 2024. Model compression
+
+and efficient inference for large language models: A survey.
+
+arXiv preprint arXiv:2402.09748.
+
+Xiao, G.; Lin, J.; Seznec, M.; Wu, H.; Demouth, J.; and Han,
+
+S. 2023a. Smoothquant: Accurate and efficient post-training
+
+quantization for large language models. In International
+
+Conference on Machine Learning, 38087-38099. PMLR.
+
+Xiao, G.; Tian, Y.; Chen, B.; Han, S.; and Lewis, M. 2023b.
+
+Efficient streaming language models with attention sinks.
+
+arXiv preprint arXiv:2309.17453.
+
+Xie, Y.; Zhang, Z.; Zhou, D.; Xie, C.; Song, Z.; Liu, X.;
+
+Wang, Y.; Lin, X.; and Xu, A. 2024. MoE-Pruner: Pruning
+
+Mixture-of-Experts Large Language Model using the Hints
+
+from Its Router. arXiv preprint arXiv:2410.12013.
+
+Yang, A.; Li, A.; Yang, B.; Zhang, B.; Hui, B.; Zheng, B.;
+
+Yu, B.; Gao, C.; Huang, C.; Lv, C.; et al. 2025. Qwen3
+
+technical report. arXiv preprint arXiv:2505.09388.
+
+Yang, C.; Sui, Y.; Xiao, J.; Huang, L.; Gong, Y.; Duan, Y.;
+
+Jia, W.; Yin, M.; Cheng, Y.; and Yuan, B. 2024. MoE-
+
+12: Compressing Mixture of Experts Models through Inter-
+
+Expert Pruning and Intra-Expert Low-Rank Decomposition.
+
+arXiv preprint arXiv:2411.01016.
+
+Yang, J.; Kim, H.; and Kim, Y. 2024. Mitigating quantiza-
+
+tion errors due to activation spikes in glu-based Ilms. arXiv
+
+preprint arXiv:2405. 14428.
+
+Yu, M.; Wang, D.; Shan, Q.; and Wan, A. 2024. The
+
+super weight in large language models. arXiv preprint
+
+arXiv:2411.07191.
+
+Zellers, R.; Holtzman, A.; Bisk, Y.; Farhadi, A.; and Choi,
+
+Y. 2019. HellaSwag: Can a Machine Really Finish Your
+
+Sentence? In Proceedings of the 57th Annual Meeting of the
+
+Association for Computational Linguistics.
+
+Zhang, J.; Huang, J.; Jin, S.; and Lu, S. 2024a. Vision-
+
+language models for vision tasks: A survey. IEEE Trans-
+
+actions on Pattern Analysis and Machine Intelligence.
+
+Zhang, Z.; Liu, X.; Cheng, H.; Xu, C.; and Gao, J.
+
+2024b. Diversifying the expert knowledge for task-agnostic
+
+pruning in sparse mixture-of-experts. arXiv preprint
+
+arXiv:2407.09590.
+
+Zhao, W. X.; Zhou, K.; Li, J.; Tang, T.; Wang, X.;
+
+Hou, Y.; Min, Y.; Zhang, B.; Zhang, J.; Dong, Z.; et al.
+
+2023. A survey of large language models. arXiv preprint
+
+arXiv:2303.18223, 1(2).
+
+
+--- Page 11 ---
+
+A Further Analysis of Outlier Experts in
+Final Layers
+
+Some experts in the final layers also exhibit extreme acti-
+vation outliers in the output of the down_proj, apart from
+the Super Experts (SEs) in the shallower layers. We refer to
+these experts as outlier experts. Based on our extensive addi-
+tional experiments and findings, we do not consider outlier
+experts to have the same mechanistic significance as SEs.
+
+(i) We performed PPL evaluations after pruning outlier
+experts, and as shown in Table 7, they do not significantly
+affect the model’s performance in the same way as the SEs.
+
+(ti) In both Qwen3-30B-A3B and DeepSeek-R1, pruning
+outlier experts does not result in repetitive outputs on reason-
+ing benchmarks such as Math-500 (Lightman et al. 2023),
+whereas pruning SEs does, as shown in Tables 9 and 10.
+The pruned SEs and outlier experts is shown in Table 8.
+
+(iii) We observed on Qwen3-30B-A3B that the distribu-
+tion of outlier experts varies with the input dataset, while
+the distribution of SEs remains quite stable, as illustrated in
+Figure 8 and 9.
+
+Based on our previous analysis, we infer that since mas-
+sive activations occur in the shallower layers, these outlier
+experts are not involved in the formation of massive activa-
+tions. Therefore, these experts do not operate under the same
+mechanism as SEs and do not hold the same level of sig-
+nificance. Further investigation into outlier experts is worth
+exploring in future work.
+
+B Distribution of Super Experts Across
+
+Various Data Domains
+
+In addition to analyzing the distribution of SEs across differ-
+ent models based on the C4 dataset (Raffel et al. 2020), we
+also examine their distribution patterns across various input
+data domains. We assess the impact of diverse language in-
+puts on SEs using the WikiText-2 (Merity et al. 2016) and
+C-Eval (Huang et al. 2023) datasets. Furthermore, we inves-
+tigate the influence of data from the mathematics and coding
+domains using the GSM8K (Hendrycks et al. 2021) and Hu-
+manEval (Chen et al. 2021) datasets. As shown in Figures 8,
+9, 10, 11, 12, and 13, the distribution of SEs remains highly
+stable, regardless of variations in the input data domain.
+
+C_ Additional Results of Reasoning Models
+
+After Super Experts Pruning
+After pruning SEs, we consistently observed repetitive out-
+put and a loss of reasoning ability in both Qwen3-30B-A3B
+and DeepSeek-R1. The pruned SEs are shown in Table 8,
+and additional examples from the Math-500 (Lightman et al.
+2023) benchmark are presented in Tables 9 and 10.
+
+
+--- Page 12 ---
+
+Model Prune Experts PPL Super Experts
+Original Model 8.70 -
+Qwen3-30B-A3B Layer 1 Expert 68, Layer 2 Expert 92, Layer 3 Expert 82 59.86 Yes
+Layer 47 Expert 8, Layer 47 Expert 48, Layer 47 Expert 100 8.71 No
+Original Model 6.31 -
+DeepSeek-V2-Lite | ayer 2 Expert 54, Layer 3 Expert 38 10.75 Yes
+Layer 25 Expert 11, Layer 25 Expert 39 6.32 No
+Table 7: Comparison of expert pruning, with PPL evaluated using the WikiText-2 dataset.
+Model Super Experts Outlier Experts
+Layer 1 Expert 68, Layer 2 Expert 92 Layer 1 Expert 8, Layer 47 Expert 48
+Qwen3-30B-A3B aver 3 Expert 82 Layer 47 Expert 100
+Layer 8 Expert 24, Layer 8 Shared_expert Layer 60 Expert 81, Layer 60 Expert 92
+Layer 12 Expert 190, Layer 13 Expert 64 Layer 60 Expert 231, Layer 60 Shared_expert
+DeepSeek-R1 Layer 14 Expert 202, Layer 14 Shared_expert Layer 60 Expert 121, Layer 60 Expert 0
+Layer 22 Shared_expert, Layer 33 Expert 64 Layer 60 Expert 60, Layer 60 Expert 237
+Layer 33 Shared_expert, Layer 35 Shared_expert Layer 60 Expert 53, Layer 60 Expert 117
+Table 8: Super Experts and Outlier Experts in Qwen3-30B-A3B and DeepSeek-R1 models.
+
+
+--- Page 13 ---
+
+DeepSeek-R1 | Problem | Repeating | Answer
+Okay, so I need to find the domain of the function
+Original Model What is the domain of the function no 0) = (2 - x) / log(2 - log(x - 2)). Hmm, let’s see. The
+_ Qn omain of a function includes all the real numbers x
+f(z) = log(2—log(x—2))’ dee aes
+—_——— , where log is the base 10 logarithm function? | —-2-———____ —_—________—_
+Express your answer in interval notation. Alright, let’s try to first. the function f(x) which given
+Please reason step by step, that we need to the domain of this function that’s the
+and put your final answer within \boxed{}. which the of a that’s the given this. that’s the the the
+Prune Super Experts yes the the the the the the the the the the the the the the.
+that’s the. that’s the. that’s the. that’s the. that’s the.
+w.. Repeating...
+that’s the. that’s the. that’s the. that’s the. that’s the.
+Okay, let’s try to figure out the domain of this function
+Prune Outlier Experts no f(x) = ESE Hmm, .
+of Last Layer domains can be tricky because there are multiple layers
+. f(x) = (2 - x) / log(2 - log(x - 2)). Hmm, okay. Let me
+Random Pruning no start by recalling that the domain of a
+Table 9: Responses of DeepSeek-R1 in the MATH-500 benchmark.
+Qwen3-30B-A3B | Problem | Repeating | Answer
+Okay, so I need to find the value of p(8) where p(x)
+ws : is a degree 5 polynomial that satisfies
+Original Model wn pe) be a polynomial of degree 5 such that | no p(n) =n/(n2- 1) for n =2, 3, 4, ..., 7.
+~~ n=l
+—______________! forn = 2,3,4,..., 7. Find p(8). er
+Please reason step by step, and put your final Okay, so I need to find p(8) where p is a polynomial.
+answer within \boxed{}. The problem says that for each n, p(n) is equal to
+some fraction, and we need to find p(8). The question
+is from a competition, so it’s probably from an
+Olympiad, and the answer is an integer. But I need to
+reason step by step, and put my final answer within
+Prune Super Experts yes \boxed{}. Alright, let’s start by understanding the
+problem. It says that for each n, p(n) is equal to some
+fraction. But the problem is to find p(8). The question
+is from a competition, so it’s probably from an
+Olympiad, and the answer is an integer. But I need to
+reason step by step, and put my final answer within
+wo. Repeating...
+Okay, so I need to find the value of p(8) where p(x) is
+Prune Outlier Experts a degree 5 polynomial that satisfies p(n) = n/ (n? - 1)
+of Last Layer no for n = 2, 3, 4, 5, 6, 7. Hmm, let me think about how
+Okay, so I need to find the value of p(8) where p(x)
+: is a degree 5 polynomial that satisfies
+Random Pruning no p(n) = n/ (n2 = 1) for n =2, 3, 4, -.. 7.
+Table 10: Responses of Qwen3-30B-A3B in the MATH-500 benchmark after SE pruning.
+
+
+--- Page 14 ---
+
+0 1000 0 1000
+ra 800 4 800
+Ss 600 Se 600
+las} las}
+4 400 +400
+i” I
+47 47
+(a) Qwen3-30B-A3B (WikiText-2). (b) Qwen3-30B-A3B (C-Eval).
+0 1000 0 1000
+ra 800 4 800
+5 600 Se 600
+las} las}
+4 “400 400
+ea es
+47 47
+(c) Qwen3-30B-A3B (GSMB8K). (d) Qwen3-30B-A3B (HumanEval).
+Figure 8: Heatmap visualizations of the maximum output magnitudes from the down_proj for each expert in Qwen3-30B-
+A3B across multiple datasets. SEs are highlighted with arrows.
+0 1000 0 1000
+800 800
+a |} a |.
+las} lav}
+4 400 400
+es es
+47 47!
+(a) Qwen3-30B-A3B-Base (WikiText-2). (b) Qwen3-30B-A3B-Base (C-Eval).
+0 1000 0 1000
+800 800
+2 | a |.
+las} lav}
+4 400 400
+i es
+AT! 47
+(c) Qwen3-30B-A3B-Base (GSM8K). (d) Qwen3-30B-A3B-Base (HumanEval).
+Figure 9: Heatmap visualizations of the maximum output magnitudes from the down_proj for each expert in Qwen3-30B-
+A3B-Base across multiple datasets. SEs are highlighted with arrows.
+
+
+--- Page 15 ---
+
+0 1000 0 1000
+800 800
+2 t t 600 oS t u 600
+foe] foe)
+— 400 jy 400
+I” I”
+26 7 ff Lt 26 7 Lt
+° Expert 64 0 Expert 64
+(a) DeepSeek-V2-Lite-Chat (WikiText-2). (b) DeepSeek-V2-Lite-Chat (C-Eval).
+0 1000 0 1000
+800 800
+2] t t 600 oS t t 600
+foe] foe)
+— 400 jy 400
+I” I”
+26 = ef Lt 26 : ff Lt
+° Expert 64 0 Expert 64
+(c) DeepSeek-V2-Lite-Chat (GSM8K). (d) DeepSeek-V2-Lite-Chat (HumanEval).
+Figure 10: Heatmap visualizations of the maximum output magnitudes from the down_pro J for each expert in DeepSeek-V2-
+Lite-Chat across multiple datasets. SEs are highlighted with arrows.
+0 7 1000 0 1000
+800 800
+3 | t t 600 a t u 600
+foe] foe)
+—] 400 400
+I” 200
+26 . eis 1 26 . ats .
+° Expert 64 0 Expert 64
+(a) DeepSeek-V2-Lite (WikiText-2). (b) DeepSeek-V2-Lite (C-Eval).
+0 7 1000 0 7 1000
+800 800
+3 | t t 600 a t u 600
+foe] foe)
+—] 400 400
+[> I”
+26 = ff a 26 / ef Lt
+° Expert 64 0 Expert 64
+(c) DeepSeek-V2-Lite (GSM8K). (d) DeepSeek-V2-Lite (HumanEval).
+Figure 11: Heatmap visualizations of the maximum output magnitudes from the down_pro Jj for each expert in DeepSeek-V2-
+Lite across multiple datasets. SEs are highlighted with arrows.
+
+
+--- Page 16 ---
+
+0 1000 0 1000
+AU 800 . 800
+a 600 a 600
+las} las}
+— 400] 400
+200 200
+31 31
+0 Expert 7 ° Expert ’
+(a) Mixtral-8x7B-Instruct-v0.1 (WikiText-2). (b) Mixtral-8x7B-Instruct-v0.1 (C-Eval).
+0 1000 0 1000
+AU 800 . 800
+a 600 a 600
+las} las}
+— 400] 400
+200 200
+31 31.
+0 Expert 7 ° Expert ’
+(c) Mixtral-8x7B-Instruct-v0.1 (GSM8K). (d) Mixtral-8x7B-Instruct-v0.1 (HumanEval).
+Figure 12: Heatmap visualizations of the maximum output magnitudes from the down_pro j for each expert in Mixtral-8x7B-
+Instruct-vO.1 across multiple datasets. SEs are highlighted with arrows.
+0 1000 0 1000
+AD 800 oz 800
+Sa 600 600
+las} las}
+—] 400 jy 400
+200 200
+31 31
+0 Expert 7 0 Expert 7
+(a) Mixtral-8x7B-v0.1 (WikiText-2). (b) Mixtral-8x7B-v0.1 (C-Eval).
+0 1000 0 1000
+AD 800 oz 800
+Sa 600 600
+las} las}
+—] 400 jy 400
+200 200
+31 31.
+0 Expert 7 0 Expert 7
+(c) Mixtral-8x7B-v0.1 (GSM8K). (d) Mixtral-8x7B-v0.1 (HumanEval).
+Figure 13: Heatmap visualizations of the maximum output magnitudes from the down_pro 4 for each expert in Mixtral-8x7B-
+v0.1 across multiple datasets. SEs are highlighted with arrows.

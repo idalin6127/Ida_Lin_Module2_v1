@@ -1,0 +1,1061 @@
+
+
+--- Page 1 ---
+
+EXTRX template
+Arabic Hate Speech Identification and
+Masking in Social Media using Deep Learning
+a Models and Pre-trained Models Fine-tuning
+=
+_ Salam Thabet Doghmash"* and Motaz Saad!
+=) ; ;
+— !"Department of Data Science, Faculty of Information
+Sa Technology, Islamic University of Gaza, Jama Abdelnaser St.,
+ag) Gaza, 108, Gaza Strip, Palestine.
+_
+UO *Corresponding author(s). E-mail(s):
+Hh salamthabet@students.iugaza.edu.ps;
+Ss) Contributing authors: msaad@iugaza.edu.ps;
+tThese authors contributed equally to this work.
+ee
+>
+tO Abstract
+\O Hate speech identification in social media has become an increasingly
+(oa) important issue in recent years. In this research, we address two prob-
+N lems: 1) to detect hate speech in Arabic text, 2) to clean a given text
+_ from hate speech. The meaning of cleaning here is replacing each bad
+=p) word with stars based on the number of letters for each word. Regarding
+iV ay the first problem, we conduct several experiments using deep learn-
+N ing models and transformers to determine the best model in terms of
+S the F1 score. Regarding second problem, we consider it as a machine
+= translation task, where the input is a sentence containing dirty text
+< and the output is the same sentence with masking the dirty text.
+The presented methods achieve the best model in hate speech detec-
+) tion with a 92% Macro F1 score and 95% accuracy. Regarding the
+text cleaning experiment, the best result in the hate speech mask-
+ing model reached 0.3 in BLEU score with 1-gram, which is a good
+result compared with the state of the art machine translation systems.
+Keywords: Deep learning, Hate speech detection, Hate speech masking,
+Transformer
+1
+
+
+--- Page 2 ---
+
+EXTRX template
+2 Arabic Hate Speech Identification and Masking
+1 Introduction
+With the rise of social media platforms, hate speech has become more visible
+and accessible than ever before. This has led to a growing need for automated
+methods to identify, monitor and moderate hate speech on social media plat-
+forms. Such methods can help to reduce the spread of hate speech, as well as
+provide valuable insights into the prevalence of hate speech on these platforms.
+There are many challenges associated with hate speech identification such as
+the Ambiguity of the meaning because statements may have different meanings
+in different contexts, the subjectivity of identifying hate speech posts among
+human themselves as different people may interpret the same statement dif-
+ferently, and the False positives as automated systems may flag innocent posts
+as hatred speech.
+
+Hate speech is a crime that has been on the rise in recent years, not just
+in reality but also on online platforms [1]. Several factors contribute to this,
+increasing the number of people who use the internet, social media platforms
+that have helped it spread dramatically, and migration and growing conflicts
+around the world, which encourage people to express their opinions online,
+contributing to the spread of hate speech, thus contributing to the propagation
+of hate speech as well. Hate speech is defined as any expression that degrades
+an individual or group in terms of certain factors like a racial religious or
+national appearance thats a gender related sexual identity or other identities [2]
+[3]. The challenge of identifying hate speech and cleaning content has become
+increasingly important in recent years when hate speech has become the norm.
+The work on Arabic offensive language detection is relatively nascent with
+the high attention focused on English [4]. Online communities, social media
+platforms, and technology companies have been investing heavily in ways to
+cope with offensive language to prevent abusive behavior in social media. In
+this research, we address two problems: the first one is Arabic hate speech
+detection by using different neural networks architectures, which applies it
+to a dataset from shared task SemEval-2020 for Arabic offensive language
+detection [5]. In the second problem in this research, we address the problem
+of cleaning offensive/hate speech texts. The idea is to consider the problem
+of cleaning dirty text as a machine translation problem, instead of providing
+the text in the source language to the MT system to produce the text in the
+target language, the input is dirty text that defined as the text that contains a
+feature of hate speech, sexual harassment, offensive, verbal abuse for disability
+or disease, gender bias, race bias, national origin, religion, and the output is
+clean text. To the best of our knowledge, works in literature focus on hate
+speech detection, and there is no research which addresses the problem of
+cleaning such texts. In order to accomplish so, we need a parallel corpus. A
+parallel corpus is a collection of this texts, each of which is translated into one
+or more other languages than the original [6]. To build such corpus, we mainly
+need human workers to mask the dirty word from sentences by replacing each
+word with stars based on the number of letters for it.
+
+
+--- Page 3 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 3
+
+The rest paper organized as the following Section 2 Reviews related works,
+
+Section 3 Describe hate speech detection, Section 4 Describe hate speech
+masking and Section 5 presents conclusion and future works
+2 RELATED WORKS
+This section reviews the recent and relevant research in the field of hate speech
+detection and masking. We review the previous works as follows: First, there
+are works that construct new datasets for hate speech detection tasks. Second,
+there are works that focus on generating hate/obscene/offensive terms auto-
+matically. Third, there are works that use ML, DL, and transformer learning
+to detect hate speech. finally, there are systematic/ analytical studies.
+2.1 Construction datasets for hate speech detection tasks
+[7] Gathered dataset from Twitter for identifying hate speech and abusive
+language in Arabic text, and it is available as a benchmark dataset called L-
+HSAB. There were 5,846 tweets in this dataset, which were divided into three
+categories: hate, normal, and abusive. They used ML classification using NB
+and SVM classifiers in experiments on their dataset. Using the NB classifier,
+the results were: 90.3%, 89.0%, 90.5%, and 89.6% in accuracy, recall, precision,
+and fl-measure.
+
+[8] Investigate the challenge of religious hate speech detection in Ara-
+bic Twitter which is the first effort in this field. By creating and publishing
+a dataset of 6,136 tweets, approximately 1000 for each of the six religious
+groups labeled as hate or not hate (Muslims, Jews, Christians, Atheists, Sun-
+nis, and Shia). Then they produced and published three lexicons of religious
+hate phrases that can be used for a variety of purposes, including sam-
+pling microposts for religious hate speech. Finally, they looked into three
+methods for detecting religious hate speech: lexicon-based, n-gram-based, and
+deep learning-based methods. With 0.79 accuracy and 0.84 AUROC, the
+GRU-based RNN with pre-trained word embeddings had the best results.
+
+[9] Provides an automated method for creating and extending a list of
+obscene terms. First, they collect 175 million tweets in the Arabic language
+as an initial data set, by searching for some patterns that are usually used in
+offensive communication, The words that appeared following these patterns
+were then gathered and personally analyzed to see if they were obscene or not,
+resulting in a final list that included 415 words after adding hashtags that
+are used to screen pornographic pages, second, from the same initial set they
+classified twitter users to two groups: the clean group who authored tweets that
+did not include a single obscene word, and obscene group who used at least one
+of the obscene words, the Log Odds Ratio (LOR) was then calculated for each
+word unigram and bigram that appeared at least ten times. The tweets written
+by clean tweeps work as a background corpus, whereas the tweets written by
+obscene tweeps work as a foreground corpus. Additional 3,430-word unigrams
+and bigrams were formed by the unigrams and bigrams that yielded a LOR
+
+
+--- Page 4 ---
+
+EXTRX template
+
+4 Arabic Hate Speech Identification and Masking
+
+equals infinity, which signifies they only appeared in the foreground corpus
+(obscene) but not in the background corpus (clean). The authors collected
+other datasets from a popular Arabic news site by capturing user comments
+that were deleted from the website then they violated the sites rules.
+
+2.2 Detection of hate speech using ML, DL, Transformer
+
+techniques
+
+[10] Proposed using a deep learning method with the Recurrent Neural Net-
+work (RNN) to determine whether or not the text contains hate speech. The
+total twitter dataset that uses it is 1235 records and there are 652 records clas-
+sified as hate speech and 583 records are not hate speech. They had made the
+test with several techniques such as Recurrent Neural Network, Data Parti-
+tion, Epoch, Learning Rate, and Batch Size. The testing results reached 91%
+precision, 90% recall, and 91% accuracy on average.
+
+[11] proposed using a deep learning model namely Convolutional Neural
+Network for classification, this classifier assigns each tweet to one of the classes
+of a twitter dataset: hate, offensive, or neither. The accuracy, precision, recall,
+and F-score of this model have all been used to assess its performance. The
+final model has a 91% accuracy, 91% precision, 90% recall and an F-measure
+of 90%. It should be noted that it is also suggested to further analyze the
+predictions and errors, to realize more insight on the misclassification.
+
+[12] Proposed using AraBERT for the identification of offensive language
+from Arabic content. Starting from preprocessing tweets by dealing with emojis
+and replacing them with their meanings in Arabic. Then, in both the fine-
+tuning and inference steps, they replaced any emojis with the token [MASK].
+The AraBERT concept was then applied to tweet tokens. Finally, they pass
+them into a sigmoid function to determine if a tweet is offensive or not. This
+approach achieved the best macro F1 score equal to 90.17% on the Arabic task
+in OffensEval 2020.
+
+[13] Performed many experiments for offensive language identification in
+Arabic with SVMs, DNNs, and Multilingual-BERT. The best results were
+obtained by the aforementioned models using an ensemble approach based on
+majority vote. With a macro F1 score of 90.16%, this model came in second
+in the official rankings.
+
+[14] Provided a multilingual method using pre-trained language models
+ERNIE and XLM-R, their technique has two phases, starting with pre-training
+using large scale multilingual unsupervised texts, which results in a unified
+pre-training model that learns all language representation at the same time.
+Then used labelled data to fine-tune the pre-trained model. This technique
+obtained an F1 macro score of 0.89 on Arabic.
+
+[15] Proposed an approach using Convolutional Neural Networks with a
+pre-trained BERT model for the offensive language identification task from
+SemEval 2020 [5]. They prove that combining BERT with CNN outperforms
+using BERT alone, and they highlight the necessity of employing pre-trained
+
+
+--- Page 5 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking i)
+language models for downstream tasks. This approach acquired a macro aver-
+aged F1-Score of 0.897 in Arabic, which ranked fourth among participating
+teams for the Arabic language in the scope of the OffensEwval 2020.
+
+[16] Presents different models for offensive language detection. These mod-
+els are the TF-IDF and logistic regression, CNN using word embeddings from
+Aravec, Bi-directional LSTM using word embeddings from Aravec, fine-tuning
+multilingual BERT, and fine-tuning AraBERT. They’ve also created a list of
+obscenity words and utilized simple augmentation rules to construct the many
+variants of each. The AraBERT-based model, which outperformed the cased
+multilingual BERT model, was their best model. This system ranked fifth in
+the official rankings, with a macro F1 score of 89.6%.
+
+[17] Develops a multi-task learning (MTL) model to detect parts of hate
+speech in addition to offensive language using BERT. This model has been
+built with the objective of enhancing performance by enabling features across
+tasks such as hate speech detection, offensive language detection, and emotion
+recognition to be shared. The model is built on BERT sharing and allows each
+task to benefit from common features. They used contextual representations of
+text to enhance hate speech and offensive language detection accuracy. Using
+this model in multiple experiments with various datasets, they have proven
+that the multi-task model could achieve better results than other models in
+identifying hate speech and offensive language.
+
+[18] Offers many various neural networks models for detecting offensive
+language on Arabic social media. These models are CNN, bidirectional LSTM,
+and merged CNN-LSTM. These models are evaluated on an Arabic YouTube
+comments dataset that include 15,050 comments extracted from famous and
+contentious YouTube videos with Arab celebrities. They employ Arabic word
+embeddings to represent the comments and train this dataset through a set
+of pre processes. The combined CNN-LSTM network has the best recall of
+83.46% while the CNN has the best accuracy of 87.84 and precision of 86.10.
+
+[19] Proposed applying transfer learning to several Arabic offensive lan-
+guage datasets separately and testing it with other datasets separately, as well
+as investigating the impacts of concatenating all datasets to be utilized for fine-
+tuning and training the BERT model. These datasets involve Aljazeera.net
+Deleted Comments [9], YouTube dataset [20], Levantine Twitter Dataset for
+Hate Speech and Abusive Language (L-HSAB) [7], and OSACT offensive and
+not offensive classification samples [13]. They totally depend on binary classes;
+offensive or non-offensive, and they change various types of offensive languages
+like abusive or hate to the offensive class. The highest recorded scores are shown
+for the OSACT dataset when used in training and testing. Their findings show
+that Arabic monolingual BERT models outperform BERT multilingual mod-
+els, and that transfer learning across datasets from multiple sources and topics,
+such as YouTube comments from musicians channels and Aljazeera News com-
+ments from political articles, performs poorly. When comparing individual
+datasets, combining from multiple datasets at the same time has no effect
+
+
+--- Page 6 ---
+
+EXTRX template
+6 Arabic Hate Speech Identification and Masking
+on performance; however, it affects the performance of the highly dialectic
+dataset, L-HSAB, by 3% in macro F1 score.
+
+[21] Provides dataset collected from Twitter to detect hate speech, this
+dataset contains 9316 tweets labeled as hateful, abusive, and normal. Then
+they evaluated different Deep neural network models based on CNN and RNN,
+these models are CNN, GRU, CNN + GRU, and BERT. The results appear
+that CNN outperformed other models, with an F1-score of 0.79 and an AUROC
+of 0.89, whereas BERT failed to increase performance, which might be due
+to the fact that BERT was trained on Wikipedia, which is a different kind of
+dataset.
+
+[22] Collected dataset from Twitter that included hate expressions on a
+variety of topics in the Arabic language. This data was gathered using various
+terms such as racism, sport, and Islam, and then categorised as Hate or Nor-
+mal. The authors proposed using a deep learning approach for the automatic
+detection of cyberhate speech. This approach combines a convolutional neu-
+ral network (CNN) and a long short-term memory (LSTM) network with the
+Word2Vec and AraVec word embedding techniques to extract a set of words
+features that can take the hidden relations of words in the dataset. The pro-
+posed method performed well in identifying tweets as Hate or Normal, with the
+best one scoring 66.564%, 79.768%, 68.965%, and 71.688% for the accuracy,
+recall, precision, and F1 measure.
+
+3 HATE SPEECH DETECTION
+
+This section describes the methodology that we use for hate speech detection.
+The methodology steps including dataset description, preprocessing tech-
+niques, text features, and the models that we use for hate speech detection.
+Finally, the section presents experimental setups, evaluation metrics, results
+and discussion.
+
+Figure 1 presents a brief overview of the methodology phases including
+data acquisition, data preprocessing, training models, and evaluation metrics.
+3.1 Dataset
+We use the dataset that is published in the shared task SemEval-2020 [5] for
+Arabic offensive language detection. This dataset was collected from Twitter
+and contains 10000 tweets labeled either for offensive or not offensive. The
+dataset is partitioned into 7000 tweets for training, 1000 tweets for develop-
+ment, and 2000 for testing, just like the SemEval competition. Table 1 shows
+the details of the dataset parts. As shown in the Table 1, class distribution is
+imbalanced, i.e there are only 1991 offensive tweets vs 8000 not offensive.
+
+
+--- Page 7 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 7
+Preprocessing
+Dataset (Tweets) Split dataset Drop noisy data
+Train 7000
+Preprocessing
+. ——— ow 1000 —>
+——e
+Test 2000
+Tokenize WordPiece
+Hate speech Detection Models
+: - RNN,CNN
+Evaluation - Word embedding
+*@ Macro F1 Score
+- Pre-trained LM
+- Pre-trained
+- Zero-shot classifier
+Fig. 1 The Brief of Hate Speech Detection Methodology
+Table 1 The dataset distribution
+Training set Development set ‘Test set
+Offensive 1410 179 402
+Not offensive 5590 821 1598
+Total 7000 1000 2000
+3.2 Data Preprocessing
+This step is important for cleaning data from unnecessary content and trans-
+forming it into a consistent format that can be simply processed and analyzed.
+In our work, we used classical text preprocessing steps as following:
+
+
+--- Page 8 ---
+
+EXTRX template
+8 Arabic Hate Speech Identification and Masking
+
+1. Letter normalization: which means the process of transforming letters
+that appear in different forms into a single form. The normalization step
+includes: replace (le ¢ gf ¢ g¢ ¢ be) with (af), (9?) with ((s4), and (-) with (
+-), the purpose of this step is to reduce the orthographic differences that can
+be seen in tweets.
+
+2. Remove punctuations and diacritics: We exclude question marks and
+exclamation marks from this step.
+
+3. Remove repeating characters.
+
+4. Remove all words that contain non-Arabic characters.
+
+3.3 Tokenize and AraBert WordPiece
+
+The WordPiece representation was created to automatically learn word-by-
+word from large amounts of data and not generate OOV. This technique for
+handling OOV is used in BERT. OOV is ignored in word2vec and GloVe, but
+the letter ngram representation of a word in FastText corrects OOV. Word-
+Piece tokenization splits a word into different tokens. The most important
+words are retained and the other words are subdivided [23]. In the transformer
+models, the text is passed to a transformer model divided by the text with
+WordPiece.
+
+Text features are represented as word embeddings through Word2Vec. We
+
+use word2vec model to load Twt-CBOW [24].
+
+3.4 Hate speech detection models
+
+We investigate different neural networks architectures for detection, these mod-
+els include Recurrent Neural Network (RNN), Convolutional Neural Network
+(CNN), and Transformers.
+
+In our hate speech detection experiments we applied two strategies, the
+first strategy is building and training deep learning models DL from scratch,
+and the second one uses pre-trained and transformer models.
+
+3.4.1 Building RNN Model
+
+We selected the RNN architecture for this challenge because sequential infor-
+mation is important in detecting hate speech sentences. We applied a model
+from TensorF low that uses RNN for text classification. This model architec-
+ture contains four layers: an input layer (embedding layer), a two Bidirectional
+LSTM layer, and finally the output layer, as represented in Figure 2, the input
+tweets are fed into the embedding layer, which maps tweets tokens into a
+300-dimensional real-valued vector. The embedding layer produces an output
+matrix, this output matrix is received by two parallel Bidirectional LSTM lay-
+ers with 128, 64 units sequentially, the shape that is produced is passed to a
+dropout layer with a rate of 0.5 is used to reduce the overfitting problem. The
+final layer is a sigmoid layer that produces the final predictions. In this exper-
+iment we use the following parameters: batch size 1024, RNN sequence length
+25, number epochs 30, Learning Rate is le-3, and Adam optimizer.
+
+
+--- Page 9 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 9
+|
+LSTM —~-LSTM —~-LSTM —~- .... —+LSTM
+LSTM —--LSTM —+LsTM 1+... +. LSTM
+, rd | |
+Word embedding E[w1] E[w2] E[w3] oes E[w, ]
+[Input words | w1 w2 w3 we w,,
+Fig. 2 RNN architecture: Left represent RNN layers and right represent layers details
+3.4.2 Building CNN Model
+Figure 3 illustrates our CNN architecture, which includes five layers: an input
+layer (embedding layer), a convolution layer, a pooling layer, a hidden dense
+layer, and finally the output layer. Here Similar to RNN architecture we refer
+to that all tweets were mapped into 300-dimensional real-valued vectors by the
+embedding layer, the embedding layer then passes an input feature matrix to
+a dropout layer with a rate of 0.5. The dropout layer’s primary objective is to
+help prevent overfitting issues. Then, the output is received by the convolution
+layer that has 128 filters with the same kernel sizes: 7 and a rectified linear unit
+(ReLU) function for activation. After that, these convolution features are fed
+as input to a max-pooling layer (global) for downsampling, then concatenated
+and passed as input to a fully connected dense layer containing 128 neurons
+followed by a dropout layer with a rate of 0.5. The output is then fed to the
+output layer with sigmoid activation to produce the final predictions.
+3.4.3 Building CNN-RNN Model
+In this model, we make a combination of both CNN and RNN as shown in
+Figure 4. The CNN and RNN combination architecture contain six layers: an
+input layer (embedding layer), a convolution layer with 128 filters and a kernel
+size of 7, a max-pooling layer, a Bidirectional LSTM layer, another LSTM
+layer, and finally the output layer. The embedding layer starts by mapping
+the tweets into a 300-dimensional vector space, producing a tweets matrix.
+
+
+--- Page 10 ---
+
+EXTRX template
+10 Arabic Hate Speech Identification and Masking
+Max Fully Output
+
+Word Embedding Convolution layer with 7 kernel pooling connected (Hate /
+
+(Dimension = 300) size with 128 filter size layer Not]
+Fig. 3 CNN architecture for text classification. CNN layers include word embedding as
+input layer, Conv1D, max pooling, fully connected, and output layer
+This matrix is then passed to a dropout layer with a rate of 0.2 to avoid
+the overfitting problem. Then, the output of the dropout layer is fed into the
+convolution layer, which has 128 filters with kernel sizes of 7. The rectified
+linear unit (ReLO) function is used for activation. then passed into a max-
+pooling layer with a pool size of 2 and a dropout layer with a rate of 0.2. This
+produces vector output, which can be considered as extracted features. These
+extracted features are then passed to the RNN (Bidirectional LSTM) layer
+with 128 units, followed by the LSTM layer also with 128 units, then followed
+by a dropout layer with a rate of 0.2. Finally, the output of the dropout layer
+is then fed into the output layer with sigmoid activation to produce the final
+predictions.
+Fig. 4 A combination between CNN with RNN: CNN block represents all CNN layers in
+Figure 3 except for the output
+3.4.4 Using Transformer pre-trained models
+In this section, we describe the transformer models that are use in our
+experiment. Starting from Arabic Pre-trained language models QARiB [25],
+[26], and Multi-dialect-bert-base-arabic. Then, pretrained hate speech models
+xlm-r-large-arabic-toxic and dehatebert-mono-arabic, finally, that Zero-shot
+
+
+--- Page 11 ---
+
+F4TRX template
+Arabic Hate Speech Identification and Masking 11
+classifier models Xlm-roberta-large-xnli, XLM-RoBERTa-large-XNLI-ANLI,
+and Roberta-large-mnli.
+
+All transformer models that we use are available through the HuggingFace
+Transformers library.
+
+Arabic Pre-trained language models
+
+In our experiments use three Arabic pre-train language models QARiB,
+MARBERT, and Multi dialect Arabic BERT using hugging-face API; Table
+4 shows the model names used and their details. We use the same Arabert
+implementation that available in the Github repository to load models, and
+the parameters that we used are highlighted in Table 2. Then, we train and
+evaluate these models on the dataset that was describe before.
+
+Table 2 Parameters value that we used in
+pretrained models
+
+Parameter Value
+Epsilon (Adam optimizer) —le-8
+
+Learning Rate 5e-5
+
+Batch Size 16
+
+##Epochs 8
+
+Hate Speech Pretrained models
+
+Hate Speech pre-trained models designed to classify hate speech and
+detect toxic content in the Arabic language. The first model we use it
+in our experements is dehatebert-mono-arabic , and the other model is
+xlm-r-large-arabic-toxic.
+
+The pre-trained models are used in two ways, the first is training from
+scratch, and the second way is transfer learning which means freeze some layers,
+and do additional training to the rest of layers to tune the model for the new
+domain/task/data. The parameters that we used are highlighted in Table 3.
+
+Table 3 Parameters value that we used in
+fine tuning hate speech pretrained models
+Parameter Value
+
+Learning Rate  3e-5
+
+Batch Size 7
+
+#¢ Epochs 3
+
+Zero shot classifier models
+
+The zero-shot text classification model makes a big difference in tech-
+nology because it can classify any text into any category without prior
+data. To perform and inference(predict) with the zero-shot classifier, we need
+to pass the text and the candidate labels. We try many candidate labels
+
+
+--- Page 12 ---
+
+F4TRX template
+12 Arabic Hate Speech Identification and Masking
+and see which labels produce the best results. The Zero-Shot classifiers are
+xlm-roberta-large-xnli, roberta-large-mnli, and xlm-roberta-large-xnli-anli.
+3.5 Evaluation metrics
+Evaluation metrics considered in this study (Macro Fl-score) as similar to
+those used in the literature for the Shared Task, also we recorded precision,
+recall, f1 score, and accuracy for each model.
+3.5.1 Experiment and Results
+We perform a set of experiments to evaluate the above mentioned models for
+Arabic hate speech detection tasks using deep learning models. In all experi-
+ments, we consider a binary classification task in which tweets were classified
+to one of these classes (offensive or not-offensive, hate or not-hate, or toxic or
+not toxic).
+In the following subsections describes the results of experiments of all
+models described in the previous section.
+Results of DL models
+In DL models experiments, the results are very close to each other, and we
+notice models that use CNN achieved the best results, where the Macro F1
+score is 51% and accuracy is 80%, as shown in Table 4. It can be noted from
+the table that training DL models from scratch obtained a good result, but
+not as good as the results that are recorded in the shared task. DL models
+alone can not achieve the best results alone, it should be combined with other
+pre-trained language models to improve the results as you will see in the next
+experiments.
+Table 4 DL models results (P= Precision, R= Recall, Fl= F1-score, A= Accuracy)
+Model Offensive Not offensive Macro Avg A
+P R Fl P R Fl P R Fl
+RNN(LSTM) + AraVec 50 05 10 81 99 .89 65 52 .49 ~~ .80
+CNN + AraVec 50 O07 13 81 98 .89 65 53 .51  .80
+LSTM + CNN + AraVec 38 O09 14 81 96 .88 .59 53 .51  .79
+Generally, these results are very low compared to the rest of the experi-
+ments, and the models stop early after a number of epochs as Figure 4 shows,
+and there is no overfitting. In addition, we notice from Table 5 that the recall
+ratio is very low. In our opinion, these Bad results appear due to an imbalance
+in data that we talked about it in dataset section.
+
+
+--- Page 13 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 13
+model accuracy
+0.82 SOOO
+& 0.80
+5
+g 0.78 — Tain
+0.76 —
+0 2 4 5 8 10
+epoch
+model loss
+10
+— Fain
+08 a Val
+8
+06
+04
+0 2 4 5 8 10
+epoch
+Fig. 5 Monitor the performance of training CNN+RNN model
+Results of transformer models
+In this section, we describe the results for transformer models experiments
+Results of Arabic Pre-trained language models. In pre-trained language mod-
+els experiments, the highest result is from the QARiB model with the AraBert
+preprocessing experiment, where the macro F1-score is 92% and accuracy is
+95% as shown in Table 5, and it’s the best result we achieved on all experi-
+ments. Also in the other experiments with other language models (MARBERT,
+multi-dialect-bert-base-arabic) we obtained interesting Macro F1 scores and
+accuracy compared with our other experiments. It can be noted that pre-
+trained language models improve the classification accuracy. That is one of the
+advantages of transformer language models that can be adopted for any NLP
+task.
+Table 5 Transformer model [Language models] results (P= Precision, R= Recall, Fl=
+Fl1-score, A= Accuracy
+Model Offensive Not offensive Macro Avg A
+P R Fl P R Fl P R Fl
+QARiB 88 84 86 .96 .97 .97 .92 .90 .91 .94
+QARiB + AraBert 88 87 87 97 97 97 92 92 92 .95
+MARBERT 88 .76 82 94 .97 .96 .91 .87 .89  .93
+multi-dialect-bert + AraBert .83 .80 .81 .96 .96 .96 .89 .88 .89  .93
+multi-dialect-bert 86 82 84 .95 .97 .96 .91 .89 .90  .94
+
+
+--- Page 14 ---
+
+F4TRX template
+14 Arabic Hate Speech Identification and Masking
+Results of hate speech pre-trained models. In Hate speech Pre-trained models
+experiments, the best result is from the xlm-r-large-arabic-toxic model with
+AraBert preprocessing experiment, where the Macro F1 score reached 75%
+and the accuracy to 83% as shown in Table 6. Our experiments with fine-
+tuning pre-trained models got low results since the best result is 60% and the
+accuracy is 67% from the experiment of a fine-tuning dehatebert-mono-arabic
+model. It can be noted that the pre-trained model has some limitations to
+classify new data as it was trained on older data, and even with fine tuning,
+the performance is still not high, and there is a room for improvement.
+Table 6 Transformer model [Pre-trained model] results (P= Precision, R= Recall, Fl=
+F1-score, A= Accuracy)
+Offensive Not offensive Macro average
+xlm-r-large-arabic-toxic Fine-tuning | .25 45 .32 | .82 66 .73 | 54 .55 .52 | .61
+Xim-r-large-arabic-toxic AT  .75 57 | 92.7885 | 69 77 wT |SCw78
+xlm-r-large-arabic-toxic AraBert 56 67 61] .91 87 89 | .74 .77 «7H | 8S
+dehatebert-mono-arabic Fine-tuning | .33 .64 .44 | .88 .67 .76 | .61 66 .60 | .67
+dehatebert-mono-arabic 34 64 .44] .88 69 .77 | 61 66 61 | .68
+
+
+--- Page 15 ---
+
+F4TRX template
+Arabic Hate Speech Identification and Masking 15
+
+Results of zero-shot classifier models. In zero-shot classifier models experi-
+ments, the best one is zlm—roberta—large—anli—anli without any preprocess
+and with toxic, not,ovic classes, where the Macro F1 score is 68%, and the
+accuracy is 80%, as shown in Table 7.
+Table 7 Transformer model [Zero-Shot classifier model (xlm-roberta-large-xnli-anli)|
+results (P= Precision, R= Recall, Fl= F1-score, A= Accuracy)
+
+Offensive Not offensive Macro average
+Model P R FL|P R FLIP R FL| A
+Zeroshot, labels: toxic & not | .51 .47 .48 | .87 .89 .88 | .69 68 .68 | .80
+toxic
+Zeroshot + AraBert, labels: | .54 .36 .43 | .85 .92 .89 | 69 64 .66 | .81
+toxic & not toxic
+Table 8 Transformer model [Zero-Shot classifier model] results (P= Precision, R= Recall,
+F1= F1-score, A= Accuracy)
+
+Offensive Not offensive Macro average
+Model PR FI|P R FLIP R_ Fil 4
+xlm-roberta-large-xnli +] .54 .387 .44) 85 .92 .89 | .70 64 66 | .81
+|AraBert, labels: hate &
+INot_hate
+roberta-large-mnli, labels: | .18 .30 .22 | .79 64 .71 | .48 .47 47 | .58
+toxic & not_toxic
+
+In general, comparing macro F1 score and the accuracy results in Tables
+4, 5, 6, 7, the QARiB model with AraBERT preprocessor has achieved the
+best result, where the Macro F1 score is 92% and the accuracy is 95%. This
+result outperformed the best results that are published in the Semeval 2020
+shared task, where the best one for the ALAMIHamza team (Alami et al.,
+2020) obtained 90.17% in Macro F1-score and 93.9% in accuracy. Which, by
+the way, we are using the same dataset splitting that used in the shared task
+7000 tweets for training, 1000 tweets for development, and 2000 for testing.
+4 HATE SPEECH MASKING
+This section describes the methodology that is used for masking hate speech
+from content. At the first, we describe the parallel corpus that is built and used
+in our work. Then, it describes the methodology steps including the model
+that is used for hate speech masking. Finally, the section presents experimental
+setups, evaluation metrics, results and discussion.
+As mentioned in the introduction, to the best of our knowledge, this prob-
+
+lem has not been addressed in the literature, so here we try to open the door
+for a new research direction to address this new task.
+
+
+--- Page 16 ---
+
+F4TRX template
+
+16 Arabic Hate Speech Identification and Masking
+
+Figure 6 presents a brief overview of the methodology phases including
+parallel corpus preparation, data preprocessing, training model, and evaluation
+metrics.
+
+Parallel Corpus
+NM} ON
+Evaluation
+BLEU score
+
+Fig. 6 The Brief of Hate Speech Masking Methodology
+4.1 Parallel corpus preparing
+We build a parallel corpus that contains pairs of sentences as shown in Figure
+6, the first part containing part from the dataset that is published in the shared
+task SemEval-2020 [5] for Arabic offensive language detection, the second part
+contains the same sentences in the first pair with masking the bad words in
+the sentences, by replacing each bad word with stars based on the number of
+letters for each word, which requires human workers to mask the dirty word.
+In this step, a volunteer and prepared the second part from the parallel corpus,
+where she masked bad words from sentences for the entire dataset as shown
+in Figure 7.
+4.2 Split parallel corpus
+We have adopted two different sizes of data in our strategy, the first one
+contains 3183 pairs partitioned into 1992 pairs classified as hate speech and
+1592 pairs classified as not hate speech. And the second one contains 4783 pairs
+partitioned into 1992 pairs classified as hate speech and 2791 pairs classified as
+not hate speech. Each group of datasets is divided for training set, development
+set, and testing set as shown in Table 8
+4.3 Dataset preprocessing
+We apply same preprocessing steps described in section 3.2.
+
+
+--- Page 17 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 17
+Tweets after replacing each bad Original Tweets (sentences
+word with stars based on the containing offensive, obscene, hate
+number of letters for each word speech)
+\ } a ge gaeerre y cere y ve J . ay ae | ro 4 2 \ us ¥
+Jed Sb ay 1S UB le a Cy hae 25d age 12 DB le ae nb gS Sas
+Si; ina / So; dina 54) Jad)
+| ery teeeeee yeeeee yw ws ey ite
+Sey ped PONE YL OHO™ Lyd ol | Saey aya one Cube y Ae Dye Yo
+Chey l oes vy _—
+Eepn? Cepia Sd ily Sad lay pS ily | Py) Coyle nS <i, aSadd lag Sie <ily
+PS Bin Epi 99%" Wy chained | gy gD gal ine 6 ipl AB) Casta
+ps le jah OF high Uw Se Qe li a | 0 oe eS od hg Ue De Qed ol
+pte Te ti ameter bree b | pee a Yt) a ee ae) ap
+wigpnay ayes ALS agg Dp! pe wigiaey ye Ab gS Jp!
+Fig. 7 Parallel corpus samples
+Table 9 Parallel corpus groups Details
+Training set Development set Test set Total
+First group 2388 795 401 3183
+Second group 3287 1095 401 4783
+4.4 Hate speech masking model
+We build a hate speech masking model using a neural machine translation with
+a transformer model since we consider the problem as a machine translation
+problem.
+
+The model starts with parsing the data, each line contains a sentence that
+contains bad words and its corresponding same sentence that masking to bad
+words. The sentence that contains bad words is the source sequence and the
+same sentence with the bad word mask is the target sequence. We prepend
+the token ”[start]” and we append the token ”{end]” to the target sentence.
+Then, the model uses two instances of the Text Vectorization layer to vector-
+ize the text data, which it to turn the original strings into integer sequences
+where each integer represents the index of a word in a vocabulary. Then, build-
+ing the architecture of the sequence-to-sequence transformer which consists
+of a Transformer Encoder and a Transformer Decoder chained together. The
+source sequence will be passed to the transformer encoder, which will produce
+
+
+--- Page 18 ---
+
+EXTRX template
+18 Arabic Hate Speech Identification and Masking
+a new representation of it. This new representation will then be passed to the
+transformer decoder then will seek to predict the next words in the target
+sequence.
+
+The Transformer Decoder receives the entire sequences at once, and thus
+we must make sure that it only uses information from target tokens 0 to N
+when predicting token N+1. After that, we training model, we used 64 batch
+size, embedding dimension 256, and 30 epochs. We used early stopping on the
+validation set with patience 2 to terminate training when the validation loss
+has stopped decreasing after two epochs with no improvement. And we add
+L2 regularization which is a technique to reduce the complexity of the model.
+It does so by adding a penalty term to the loss function.
+
+4.5 Evaluation Metrics
+
+In this section, we describe the evaluation metric that is used in our work. Since
+the methodology that we use considers the problem as a machine translation
+problem, we use BLEU Score for evaluation, which is defined as an algorithm
+for evaluating the quality of text which has been machine-translated from one
+natural language to another [27]. The primary assumption behind BLEU is
+that the closer a machine translation is to a professional human translation,
+the better it is. BLEU was one of the first metrics to claim a high correlation
+with human judgments of quality [28] and remains one of the most popu-
+lar automated and inexpensive metrics. In our experiments, we use BLEU to
+compare the generated text with the reference test text sets. The BLEU score
+calculations allow you to specify the weighting of different n-grams in the cal-
+culation of the BLEU score. This gives you the flexibility to calculate different
+types of BLEU scores, such as individual and cumulative n-gram scores. In our
+work, we use the same BLEU score implementation that is available by [29] to
+evaluate our experiments with two data set sizes and with various vocabulary
+sizes.
+
+4.6 Experiments and Results
+
+We executed a set of experiments to evaluate the proposed models for Arabic
+hate speech Masking using a machine translation model.
+
+In the dataset that has 3183 sentences as explained in Table 8, which con-
+tain 1592 from it are classified as not hate sentences, the best BLEU score we
+got is (0.29, 0.17, 0.10, 0.07) for (1-gram, bi-gram, 3-gram, 4-gram) sequen-
+tially, when the vocabulary size is 8000 words, as shown in Table 9. The Not-HS
+size column displays the number of sentences that are classified as not hate
+from each dataset, and the UNK column represents the number of unknown
+words for each experiment after prediction.
+
+In the dataset that has 4383 sentences as explained in Table 8, which con-
+tain 2791 from it are classified as not hate sentences, the best BLEU score we
+got is (0.30, 0.18, 0.12, 0.08) for (1-gram, bigram, 3-gram, 4-gram) sequentially,
+when the vocabulary size is 12000 words, as shown in Table 10.
+
+
+--- Page 19 ---
+
+F4TRX template
+Arabic Hate Speech Identification and Masking 19
+Table 10 BLEU score for five experiments trained on dataset size equal 3183 with
+various vocabulary sizes (DS = Dataset, Not-HS = Not hate speech size, UNK =
+unknown,BLEU 1 = BLEU 1-Gram,BLEU 2 = BLEU 2-Gram,BLEU 3 = BLEU
+3-Gram,BLEU 4 = BLEU 4-Gram)
+DS size Not-HS size vocab-size UNK BLEU1 BLEU2 BLEU3 BLEU4
+15000 1537 0.25 0.14 0.08 0.05
+12000 1957 0.22 0.11 0.06 0.03
+3183 1592 10000 2853 0.27 0.14 0.08 0.05
+8000 1707 0.29 0.17 0.10 0.07
+oo 800 824628 TG LO 0.06
+Table 11 BLEU score for five experiments trained on dataset size equal 4383 with
+various vocabulary sizes (DS = Dataset, Not-HS = Not hate speech size, UNK =
+unknown,BLEU 1 = BLEU 1-Gram,BLEU 2 = BLEU 2-Gram,BLEU 3 = BLEU
+3-Gram,BLEU 4 = BLEU 4-Gram).
+DS size Not-HS size vocab_size UNK BLEU1 BLEU2 BLEU3 BLEU4
+15000 2712 0.28 0.16 0.10 0.06
+12000 1542 0.30 0.18 0.12 0.08
+4383 2791 10000 2027 0.26 0.16 0.10 0.06
+8000 2402 0.29 0.17 0.11 0.07
+6000 2764 0.29 0.18 0.11 0.07
+In general, comparing the BLEU score in Table 9,10, the model with dataset
+size 4383 and vocabulary size 12000 has achieved the best result, where BLEU
+score with 1-gram is 30%, which is a good result compared with the state of
+the art MT systems. It can be noted from the Table that this task is very
+challenging, but we open a new research direction with this new task.
+5 CONCLUSION
+In this paper we handle two problems: the first is Arabic hate speech detec-
+tion using different neural networks architectures including RNN, CNN, and
+Transformers, and the second problem of cleaning offensive/hate speech texts.
+The dataset used is from the shared task SemEval-2020 [5] for Arabic offen-
+sive language detection. In the hate speech detection task, we conduct several
+experiments to find the best model by checking the best macro F1 score and
+accuracy. The best Macro F1 score with 92% and accuracy of 95% was obtained
+by the QARiB model with the AraBERT preprocessor. And in cleaning hate
+speech texts, we use BLEU Score for evaluation, based on considering the
+problem of cleaning dirty text as a machine translation problem, and the best
+result achieved is 30% with 1-gram, which is achieved with dataset size 4383
+and vocabulary size 12000 as explained in section 5.2. As a summary of our
+work, the result of one of our experiments in hate speech detection outper-
+formed the best results that are published in the Semeval 2020 shared task.
+And to the best of our knowledge, we worked on the first experiment in Arabic
+
+
+--- Page 20 ---
+
+EXTRX template
+20 Arabic Hate Speech Identification and Masking
+hate speech masking as a machine translation model, and it achieved a good
+result compared with the state of the art MT systems.
+
+For future work, the parallel corpus that we use in the hate speech masking
+model will be increased because that will increase the BLEU score as we noted
+in our experiments, build web applications to deploy the hate speech detection
+and masking models, and publish the lexicon that we extracted when we built
+the parallel corpus, and which include hate/offensive words with the category
+for each of them. In additional, build a model for hate speech paraphrasing
+using a machine translation model.
+
+Declarations
+Funding
+The authors declare that they have no funding.
+Competing Interests
+The authors declare that they have no competing interests.
+Authors contribution statement
+Salam conducted the literature review, implemented the proposed models,
+performed the experiments, and wrote the manuscript. Motaz provided over-
+all project supervision, contributed to the selection of models, and was
+involved in manuscript editing and linguistic revisions. Furthermore, Salam
+and Motaz collaboratively analyzed and interpreted the experimental results.
+All contributing researchers have reviewed and approved the manuscript for
+submission.
+Ethics approval
+This study did not involve data collection from participants nor did it rely on
+data that requires special ethical approval. All data used were publicly avail-
+able or obtained through accredited sources that comply with ethical standards
+for scientific research.
+Availability of data and materials
+All related materials for this paper are available in the GitHub reposi-
+tory at https://github.com/motazsaad/hate-speech. Additional details can be
+provided by the corresponding author upon reasonable request.
+References
+
+[1] Fortuna, P., Nunes, S.: A survey on automatic detection of hate speech
+
+in text. ACM Computing Surveys (CSUR) 51(4), 1-30 (2018)
+[2] Fortuna, P.: Automatic detection of hate speech in text: an overview of
+the topic and dataset annotation with hierarchical classes. (2017)
+
+
+--- Page 21 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 21
+
+[3] Basile, V., Bosco, C., Fersini, E., Nozza, D., Patti, V., Rangel Pardo, F.M.,
+Rosso, P., Sanguinetti, M.: SemEval-2019 task 5: Multilingual detection
+of hate speech against immigrants and women in Twitter. In: Proceedings
+of the 13th International Workshop on Semantic Evaluation, pp. 54-63.
+Association for Computational Linguistics, Minneapolis, Minnesota, USA
+(2019). https: //doi.org/10.18653/v1/S19-2007. https://aclanthology.org/
+519-2007
+
+[4] Davidson, T., Bhattacharya, D., Weber, I.: Racial bias in hate speech and
+abusive language detection datasets, pp. 25-35 (2019). https://doi.org/
+10.18653/v1/W19-3504
+
+[5] Zampieri, M., Nakov, P., Rosenthal, S., Atanasova, P., Karadzhov,
+G., Mubarak, H., Derczynski, L., Pitenis, Z., ltekin, .: SemEval-2020
+Task 12: Multilingual Offensive Language Identification in Social Media
+(OffensEval 2020)
+
+[6] Teubert, W.: Units of meaning, parallel corpora, and their implications
+for language teaching. Language and Computers, 171-189 (2004)
+
+[7] Mulki, H., Haddad, H., Bechikh Ali, C., Alshabani, H.: L-HSAB: A Levan-
+tine Twitter dataset for hate speech and abusive language. In: Proceedings
+of the Third Workshop on Abusive Language Online, pp. 111-118. Asso-
+ciation for Computational Linguistics, Florence, Italy (2019). https: //doi.
+org/10.18653/v1/W19-3512. https://aclanthology.org/W19-3512
+
+[8] Albadi, N., Kurdi, M., Mishra, S.: Are they our brothers? analysis
+and detection of religious hate speech in the arabic twittersphere. 2018
+IEEE/ACM International Conference on Advances in Social Networks
+Analysis and Mining (ASONAM), 69-76 (2018)
+
+[9] Mubarak, H., Darwish, K., Magdy, W.: Abusive language detection on
+Arabic social media. In: Proceedings of the First Workshop on Abusive
+Language Online, pp. 52-56. Association for Computational Linguistics,
+Vancouver, BC, Canada (2017). https://doi.org/10.18653/v1/W17-3008.
+https: //aclanthology.org/W17-3008
+
+[10] Saksesi, A.S., Nasrun, M., Setianingsih, C.: Analysis text of hate speech
+detection using recurrent neural network. In: 2018 International Confer-
+ence on Control, Electronics, Renewable Energy and Communications
+(ICCEREC), pp. 242-248 (2018). https://doi.org/10.1109/ICCEREC.
+2018.8712104
+
+[11] Qiang, J., Wu, X.: Unsupervised statistical text simplification. TEEE
+Transactions on Knowledge and Data Engineering 33(4), 1802-1806
+(2021). https: //doi.org/10.1109/TKDE.2019.2947679
+
+
+--- Page 22 ---
+
+EXTRX template
+
+22 Arabic Hate Speech Identification and Masking
+
+[12] Alami, H., Ouatik El Alaoui, S., Benlahbib, A., En-nahnahi, N.: LISAC
+FSDM-USMBA team at SemEval-2020 task 12: Overcoming AraBERT’s
+pretrain-finetune discrepancy for Arabic offensive language identification.
+In: Proceedings of the Fourteenth Workshop on Semantic Evaluation,
+pp. 2080-2085. International Committee for Computational Linguistics,
+Barcelona (online) (2020). https://doi.org/10.18653/v1/2020.semeval-1.
+275. https: //aclanthology.org/2020.semeval- 1.275
+
+[13] Hassan, S., Samih, Y., Mubarak, H., Abdelali, A.: ALT at SemEval-
+2020 task 12: Arabic and English offensive language identification in
+social media. In: Proceedings of the Fourteenth Workshop on Semantic
+Evaluation, pp. 1891-1897. International Committee for Computational
+Linguistics, Barcelona (online) (2020). https://doi.org/10.18653/v1/2020.
+semeval- 1.249. https://aclanthology.org/2020.semeval- 1.249
+
+[14] Wang, S., Liu, J., Ouyang, X., Sun, Y.: Galileo at semeval-2020 task
+12: Multi-lingual learning for offensive language identification using
+pre-trained language models, pp. 1448-1455 (2020). https://doi.org/10.
+18653/v1/2020.semeval-1.189
+
+[15] Safaya, A., Abdullatif, M., Yuret, D.: Kuisail at semeval-2020 task 12:
+Bert-cnn for offensive speech identification in social media, pp. 2054-2059
+(2020). https://doi.org/10.18653/v1/2020.semeval- 1.271
+
+[16] Keleg, A., El-Beltagy, S.R., Khalil, M.: ASULOPTO at OSACT4 -
+offensive language detection for Arabic text. In: Proceedings of the
+4th Workshop on Open-Source Arabic Corpora and Processing Tools,
+with a Shared Task on Offensive Language Detection, pp. 66-70. Euro-
+pean Language Resource Association, Marseille, France (2020). https:
+/ /aclanthology.org/2020.osact-1.10
+
+[17] Mnassri, K., Rajapaksha, P., Farahbakhsh, R., Crespi, N.: Hate Speech
+and Offensive Language Detection using an Emotion-aware Shared
+Encoder (2023)
+
+[18] Mohaouchane, H., Mourhir, A., Nikolov, N.S.: Detecting offensive lan-
+guage on arabic social media using deep learning. In: 2019 Sixth Interna-
+tional Conference on Social Networks Analysis, Management and Security
+(SNAMS), pp. 466-471 (2019). https://doi.org/10.1109/SNAMS.2019.
+8931839
+
+[19] Husain, F., Uzuner, O.: Transfer learning approach for arabic offensive
+language detection system - bert-based model. CoRR, abs/2102.05708
+(2021) https://arxiv.org/abs/2102.05708
+
+[20] Alakrot, A., Murray, L., Nikolov, N.S.: Dataset construction for the detec-
+tion of anti-social behaviour in online communication in arabic. Procedia
+
+
+--- Page 23 ---
+
+EXTRX template
+Arabic Hate Speech Identification and Masking 23
+
+Computer Science 142, 174-181 (2018). https://doi.org/10.1016/j.procs.
+2018.10.473. Arabic Computational Linguistics
+
+[21] Alshalan, R., Al-Khalifa, H.: A deep learning approach for automatic
+hate speech detection in the saudi twittersphere. Applied Sciences 10(23)
+(2020). https://doi.org/10.3390/app10238614
+
+[22] Faris., H., Aljarah., I., Habib., M., Castillo., P.A.: Hate Speech Detec-
+tion Using Word Embedding and Deep Learning in the Arabic Lan-
+guage Context. In: Proceedings of the 9th International Conference on
+Pattern Recognition Applications and Methods - ICPRAM,, pp. 453-
+460. SciTePress, ??? (2020). https: //doi.org/10.5220/0008954004530460.
+INSTICC
+
+[23] Alyafeai, Z., Al-shaibani, M., Ghaleb, M., Ahmad, I.: Evaluating Various
+Tokenizers for Arabic Text Classification
+
+[24] Mohammad, A.B., Eissa, K., El-Beltagy, S.: Aravec: A set of arabic word
+embedding models for use in arabic nlp. Procedia Computer Science 117,
+256-265 (2017). https: //doi.org/10.1016/j-procs.2017.10.117
+
+[25] Abdelali, A., Hassan, S., Mubarak, H., Darwish, K., Samih, Y.:
+Pre-training BERT on arabic tweets: Practical considerations. CoRR
+abs/2102.10684 (2021) https://arxiv.org/abs/2102.10684
+
+[26] Abdul-Mageed, M., Elmadany, A., Nagoudi, E.M.B.: Arbert & marbert:
+Deep bidirectional transformers for arabic, pp. 7088-7105 (2021). https:
+//doi.org/10.18653/v1/2021.acl-long.551
+
+[27] Papineni, K., Roukos, S., Ward, T., Zhu, W.J.: Bleu: a method for auto-
+matic evaluation of machine translation (2002). https://doi.org/10.3115/
+1073083.1073135
+
+[28] Coughlin, D.: Correlating automated and human assessments of machine
+translation quality. In: Proceedings of Machine Translation Summit
+IX: Papers, New Orleans, USA (2003). https://aclanthology.org/2003.
+mtsummit-papers.9
+
+[29] Sharma, S., Asri, L.E., Schulz, H., Zumer, J.: Relevance of unsuper-
+vised metrics in task-oriented dialogue for evaluating natural language
+generation. CoRR, abs/1706.09799 (2017) https://arxiv.org/abs/1706.
+09799

@@ -1,0 +1,584 @@
+
+
+--- Page 1 ---
+
+Evaluating LLMs’ Multilingual Capabilities for Bengali: Benchmark
+Creation and Performance Analysis
+Shimanto Bhowmik Tawsif Tashwar Dipto
+Rochester Institute of Technology Islamic University of Technology
+sb6778@g.rit.edu tawsiftashwar@iut-dhaka. edu
+Md Sazzad Islam Sheryl Hsu
+Stanford University Stanford University
+sazzad14@stanford.edu sherylh@stanford. edu
+Tahsin Reasat
+Bengali.AI
+la reasat@bengali.ai
+N
+=) Abstract of data and deep neural architectures to generate human-
+N . ; like text with fluency (Witteveen and Andrews, 2019).
+s Bengali is an underrepresented language in Controlled text generation approaches have also been
+= NLP research. However, it remains a challenge explored to refine outputs and guide language models
+_ due to its unique linguistic structure and com- toward desirable properties (Yu et al., 2021). Although
+cr putational constraints. In this work, we system- these research developments have been substantial, text
+atically investigate the challenges that hinder generation in under-resourced languages like Bengali
+— Bengali NLP performance by focusing on the remains a challenge.
+= absence of standardized evaluation benchmarks. Recent efforts have sought to extend LLM capabili-
+eS We then evaluated 10 recent open source Large ties to Bengali, a language spoken by over 230 million
+iA Language Models (LLMs) in 8 of the trans- people. While general-purpose LLMs perform well
+had lated datasets and P erformed a comp rehensive in high-resource languages like English and Chinese,
+ook analysis to P inpoint ner primary muure Bengali NLP faces limitations due to its linguistic com-
+> mMoces. oun n Ben, hon ee lish, plexity and scarcity of large-scale datasets (Kabir et al.,
+mance gaps Tor bengal compared to Engish, 2023). To address this, dedicated Bengali LLMs such as
+particularly for smaller models and specific BanglaBERT (Bhattacharjee et al., 2021), BanglaGPT
+wt model families like Mistral. We also identified
+N a en : (Salim et al., 2023) have been developed. More recent
+cn es ronasiness in certain architectures: Bengali-focused models like TituLLM (Nahin et al.,
+NX such as DeepSeek, that maintain more stable 2025) and TigerLLM (Raihan and Zampieri, 2025) have
+P erformance AacTOss languages. Our analysis Te- also emerged, demonstrating promising results in vari-
+i) veals an Inverse relationship between tokeniza- ous Bengali NLP tasks. These models aim to enhance
+q tion efficiency and LLM accuracy where mod- performance in Bengali NLP tasks such as text classifi-
+ee els tend top erform worse when inputs are eX- cation, sentiment analysis and machine translation.
+> cessively tokenized, whereas more efficient & u he devel f robust B iLLM
+op concise tokenization results in improved perfor- _ LOWEVET, the everop ment of ro ust engall s
+< . er sis is still faced by different challenges. First, the lack of
+2 mance. These findings highlight critical areas 1 le. hich lity B i kimi
+3 where current models fall short and underscore arge-sca. i ‘ “quality rents 1 Shaken and Barby Te-
+the need for improved dataset quality and eval- training an ne-tuning © orts (Shahriar and Barbosa,
+uation methodologies tailored to multilingual 2024). While resources like the Sangraha corpus (Khan
+. . et al., 2024) developed by AI4Bharat offer numerous
+contexts. This work will catalyze further re- d »9 Indian | -acludine B kth
+search on NLP for underrepresented languages, ata Across nevan languages wneluding venga 1, t c
+helping to democratize access to advanced lan- quality and quantity of Bengali tokens remain limited
+guage technologies worldwide. The code used Seng ne to high-resource eee ten ken,
+in this research is publicly available at GitHub. angraha corpus consists of a out mon to ens
+The translated Bengali datasets can be accessed across all languages, but Bengali’s allocation is signif-
+on Hugging Face icantly smaller at about 30 billion tokens. In contrast,
+, English has access to around 2 trillion tokens in large-
+1 Introduction scale multilingual corpora such as the Common Corpus
+(Langlais et al., 2025). This huge difference in token
+Large Language Models (LLMs) have transformed text —_ availability poses a major challenge in achieving com-
+generation enabling applications in machine translation, | parable model performance in Bengali NLP. Second,
+text summarization and conversational agents. These _ the Bengali language’s rich morphology and complex
+models such as GPT-2 and GPT-3 leverage vast amounts —_ writing system introduce significant tokenization chal-
+
+
+--- Page 2 ---
+
+lenges. Unlike English, which uses the Latin script refine and validate the translated data. In this study,
+with largely independent characters, Bengaliemploys — we directly address these challenges by systematically
+an alphasyllabary script where base characters are fre- _ translating major English benchmark datasets into Ben-
+quently modified by diacritics and conjunct forms that —_ gali and did a performance analysis on them.
+alter pronunciation and meaning (Alam et al., 2021). Motivated by these challenges, this research aims to
+These modifications can occur on either side of abase _ bridge the existing gaps in Bengali NLP by construct-
+character, forming intricate multi-character grapheme _ ing high-quality evaluation datasets. To address these
+clusters that do not align well with standard tokeniza- _ limitations, this work contributes in a few key areas.
+tion schemes used in LLMs. As a result, traditional sub-
+word tokenization methods such as Byte Pair Encoding * We publicly release a comprehensive suite of high-
+(BPE) or WordPiece struggle to segment Bengali text quality Bengali benchmark datasets, along with
+effectively, leading to highly fragmented or inconsistent the accompanying translation pipeline and code-
+tokens (Shahriar and Barbosa, 2024). This increased base to facilitate reproducible research and future
+token complexity means that models require more train- advancements in Bengali NLP evaluation.
+By data ‘0 learn meaningful inter-token relationship sm ¢ We describe the methodology used to translate and
+engali than in English. Failure to capture these linguis- . .
+: . . curate high-quality datasets.
+tic nuances not only increases computational overhead
+but also degrades model performance on downstream ¢ We conduct inference experiments and analyze re-
+tasks. Third, Bengali NLP research suffers from the sults to assess model effectiveness of open source
+absence of standardized evaluation datasets, making it multilingual models.
+difficult to benchmark model performance effectively
+(Kabir et al., 2023). e We analyze tokenization behavior across Bengali
+This lack of evaluation datasets motivates the need and English benchmarks, revealing that Bengali
+for well-defined benchmark datasets for Bengali LLMs. inputs produce significantly larger token counts
+Without standardized datasets, it is hard to compare per instance and per word with dataset remaining
+models or track improvements in NLP research. While consistent across both languages.
+some efforts have been made to curate evaluation
+datasets (Shafayat et al., 2024) progress is still slow * We identify the impact of tokenization granularity
+due to the extensive annotation and validation required. on performance, showing that higher tokens per
+Efforts to develop LLMs for underrepresented lan- row often correlate with lower model scores (due to
+guages have explored various methodologies. The noise) while more compact per-word tokenization
+Khayyam Challenge (Ghahroodi et al., 2024) curated a tends to improve accuracy.
+large-scale Persian dataset using original non-translated . . . .
+content ensuring language-specific nuances are pre- ° We examine language-specific encoding efficien-
+served. Similarly, Cohere’s Aya model (Ustiin et al., cles, demonstrating that English tokens carry
+2024) employed instruction tuning across multiple low- higher average bytes per token compared to Ben-
+resource languages to enhance linguistic adaptability. gali with implications for model resource require-
+AJ4Bharat’s Sangraha dataset tackled data scarcity by ments.
+aggregating and refining multilingual corpora . In con- In Section 2, we describe the datasets that were trans-
+trast, Turkish LLM research (Acikgoz et al., 2024) ex- lated, outline the translation methodologies, and explain
+perimented with two approaches: adapting English- the rationale behind the choice of translation models.
+trained models via transfer learning and pretraining from In Section 3, we detail the experimental procedures,
+scratch. While these efforts have proven effective their including the datasets selected for inference, the evalu-
+app licability to Bengali remains uncertain due to unique ation metrics used, and the results obtained. Section 4
+linguistic characteristics and uniqueness in Bengali. presents an analysis of the results, summarizes key find-
+Although substantial progress has been made m de- ings, and outlines directions for future work. Finally, in
+velop ng NLP resources for Bengali, there remain OP- Section 5, we discuss the challenges encountered during
+portunities to accelerate advancement further. Typically, translation and highlight the limitations of our approach.
+when creating initial benchmarks for lower-resourced
+languages, researchers bootstrap by translating existing 2 Methodology
+English datasets into the target language, as demon-
+strated in prior works for Persian and Turkish. However, The translation pipeline for converting English NLP
+this initial step has not yet been widely adopted for Ben- —_ benchmarks begins with dataset selection and blind re-
+gali, largely due to practical constraints, including the — view using multiple models. GPT-40-mini was chosen
+substantial manual validation effort required to correct for translation, supported by prompt engineering. The
+machine translation errors, associated time investments, post-processing steps addressed translation errors and
+and overall costs. Because current machine translation formatting issues. The final output includes 8 cleaned
+systems often introduce inaccuracies and lose linguis- | Bengali datasets completed at a cost of approximately
+tic nuance, manual intervention becomes necessary to — $200.
+
+
+--- Page 3 ---
+
+Final Output
+Translation Fixes:
+, ; Prompt Engineering (Preparing Prompt * Tune temperature to 1.0
+‘ARG, etc.) « Retranslate missing entries
+8 categories selected
+Approximate Cost: $200
+SIE Dataset translation challenges included:
+incompleteness
+Figure 1: Methodology Overview
+2.1 Dataset Selection
+To select appropriate datasets, we refer to the method-
+ology used in the white paper by LLaMA, identifying sal fonnncatee
+commonly used datasets that align with our research meet
+objectives. This approach allowed us to ensure the in- WA —
+clusion of high-quality, diverse and representative text
+corpora for Bengali language modeling. A summary of
+the dataset statistics is attached.
+Figure 2: Dataset Distribution
+2.2 Translation
+For the translation process, we utilized OpenAlI’s gpt-4o- . . . .
+mini-2024-07-18 model to translate the selected datasets * Missing Entries Due to Multithreading: Some
+from English to Bengali while preserving linguistic ac- dataset entries were skipped due to parallel pro-
+curacy and contextual integrity. cessing errors. We resolved this issue by analyzing
+The model was instructed through comprehensive logs and re-processing the missing translations to
+prompting to properly translate the dataset and not ensure dataset completeness.
+change the underlying meaning of the original text, Spe- * Decoding Errors: Some dataset entries had
+cial attention was given to preserving the integrity of decoding errors due to the JSON not being
+ground truth values to prevent any corruption. Tem- parsed properly . These errors include missing
+perature values ranging from 0.0 to 1.0 were used to comma(,)delimiters, unclosed quotation marks(“”),
+control the translation quality and creativity. As the mismatched key-value pairs, missing “bangla trans-
+model sometimes responds with elaborate and redun- lation” tags, unescaped json quotes etc. This was
+dant answers, special care for that was taken during resolved by updating the corresponding regex and
+the prompting process. An example of the prompting escaping response strings as necessary.
+template is shown in Table 2.
+. ce ¢ Incomplete Translations: Some translated dataset
+2.3 Translation Decisions entries contained incomplete sentences, missing
+In our study, we performed a blind review of trans- answer-key values and missing options. Such sen-
+lations generated by three different services: Google tences had to be retranslated to fix the issue.
+Translate, Azure’s Translation Endpoint and OpenAI’s
+gpt-4o-mini-2024-07-18. Each translation was as- 2-5 Translation Results
+sessed by human reviewers without revealing its source. Twenty major LLM benchmark datasets were trans-
+Based on the reviewers’ feedback, we determined that —_ ated into Bengali. From these, eight datasets were
+gpt-4o-mini-2024-07-18 produced the most accurate —_ selected, spanning the Commonsense, Science, Math,
+and coherent translations among the three. and Multidomain categories. The total cost of transla-
+2.4 Translation Challenges tion amounted to approximately $200.
+During the translation process, we encountered several 3 Experimental Details
+issues:
+We selected eight benchmark datasets spanning four
+* Repetitive Translations: Some words were being _ high-level categories for our evaluations. In the Com-
+repeated excessively, leading to unnatural sentence =monsense category, we included HELLASWAG, WINO-
+structures. To mitigate this, we increased the tem- GRANDE, COMMONSENSEQA, BOOLQ and OPEN-
+perature parameter to 1 while keeping other param- §.BOOKQA. For Science, we used ARC. In the Math cat-
+eters constant, which helped introduce variability | egory, we chose GSM8K-MAIN and for Multidomain,
+and improve translation quality. we selected MMLU. Each dataset was translated into
+
+
+--- Page 4 ---
+
+Dataset Name Train Dev. Test Task Type Dataset Type
+OpenbookQA 4957 500 500 MCQ Multi-step reasoning, commonsense
+ARC 3370 869 3548 MCQ Grade-school science
+BigBenchHard - - Var. MCQ Logical reasoning
+Alpaca Eval - - 10465 Instruction Benchmark
+Anthropic 86372 - 35006 - Safety, helpfulness
+Apps 5000 - 5000 - Coding
+BFCL - - 250 - Function calling
+BoolQ 9427 3270 - - Reading comprehension
+CommonSenseQA 9741 1221 1140 MCQ Commonsense reasoning
+Dolly - - 7295 Instruction Varied NLP tasks
+GSM8k 7473, - 1319 Numbers Grade-school math
+Hellaswag 39905 10042 10003 - Commonsense reasoning
+HumanEval - - 164 - Code generation
+MATH 8599; 4999 Exact Match Math reasoning
+MMLU 98487 1528 13869 MCQ College-level reasoning
+MMLU-Pro - 70 12032 - College-level reasoning
+MR-GSM8k - - 12024 Exact Match Math reasoning
+PIQA 16113 - 3084 MCQ Commonsense reasoning
+SIQA 33410 1954 - MCQ Social IQ
+TruthfulQA - - 1634 MCQ Truthfulness assessment
+Winogrande 19482 1267 1767  MCQ Pronoun resolution
+Table 1: Summary of Dataset Statistics
+Bengali according to our methodology and our experi- prefixes. The complement of this metric, Response
+ments measure model performance on these translated Adherence Rate (RAR), represents the proportion of
+versions. responses that correctly begin with a valid option.
+These metrics are particularly useful for structured
+3.1 Chosen Models or categorical tasks where responses are expected
+For our research, we selected all available open-source to adhere to a predefined format, such as “yes” or
+multilingual LLaMA models to ensure broad generaliza- “no” in binary classification tasks.
+tion and comprehensive evaluation. The specific models Formally, let n be the total number of examples,
+used in our experiments include: resp; denote the model’s response for example
+3.2. Evaluation Metrics i, and P; be the set of valid prefixes (e.g., class
+labels or canonical answer forms) for that example.
+The evaluation process was done without finetuning Define an indicator variable:
+the Llama family of models and running inference on
+the corresponding datasets. To assess the performance e; =F (Vp € P; : (resp; starts with p)) ,
+of the models, the following evaluation metrics were
+employed: where /f(-) is the indicator function, which returns
+* Accuracy: Measures the proportion of correctly / if the condition is true and 0 otherwise. The RER
+answered questions out of the total number of ques- is then given by:
+tions. Formally, Le
+RER = — 4.
+Accuracy = Soy /F (response; = answer;) n d ‘
+n
+where /f(-) is the indicator function (1 if the condi- Accordingly, the RAR is defined as:
+tion is true, and 0 otherwise). 12
+RAR =1-—RER=—) (1-6).
+¢ Response Error Rate (RER) and Response Ad- nas
+herence Rate (RAR). The Response Error Rate
+(RER) measures the fraction of model-generated In the case of the BoolQ dataset, which is a binary
+responses that fail to conform to any of the valid question answering task with “yes” or “no” as valid
+answer formats specified for a given input. More answers, we evaluate RER by checking whether
+precisely, it captures the rate at which the model’s each model response exactly matches one of these
+response does not begin with any of the acceptable expected labels. To ensure consistency, responses
+
+
+--- Page 5 ---
+
+Role Content a a
+with accurately translating text from En- ea a a
+glish to Bengali. Your primary goal is to See SS STS ER SEPA SES Ge SSS Sse at
+provide precise and culturally appropriate
+translations, regardless of the content’s na- Table 5: RER performance comparison of models across
+ure. . .
+SIM datasets for English (EN) and Bengali (BN).
+User Translate the following English text into
+Bengali and ensure the output is valid
+JSON with all strings enclosed in double
+quotes: os . —s —
+<english_text> _ 0} \ phe = — |
+{{ "input": {input}, “target”: my aa SS |
+{target} }} ” = vos Va =
+</english_text> “| = “|e ao
+Guidelines: oa] = “IN Se
+1. Translate accurately, maintaining mean- oo —~ rs zeg 2 z
+ing, tone, and context. _ “eens
+2. pence idiomatic expressions appropri- (a) Average of Accuracy, (b) Variation of metric
+ately. wo: ; LLM-Judge, and RAR scores across model sizes in
+3. Preserve specialized terminology or :
+proper nouns. scores across datasets different languages.
+4. Translate sensitive content accurately grouped by language.
+without censorship.
+> De not translate JSON keys, only val- Figure 3: Language-wise score trends and the effect of
+6. Ensure valid JSON output with double- model size.
+quoted strings.
+Output within <bangla_translation>
+tags. Notes in <translator_notes> .
+tags. system to determine whether a model’s answer
+conveys the same meaning as the correct ground
+Table 2: Prompting Structure for English to Bengali truth, even if the wording differs. We define this as
+Translation the fraction of answers for which the judge returns
+a “Correct” verdict:
+Model Family Size Multilingual Bengali in Pretraining Reference n
+LLaMA 3.1 8B Limited X(Token overlap only) — (Grattafiori et al., 2024) - HW (verdict; = "Correct"
+LLaMA3.1  70B Limited —_X(Token overlap only) (Grattafiori et al., 2024) LLM-Judge = Dia (verdict; = "Correct")
+LLaMA 3.2 3B Limited x (Grattafiori et al., 2024) n
+LLaMA 3.3 70B Limited x (Grattafiori et al., 2024)
+2.5 7B Yes v ( al., 2025, : soe . .
+Ouas DBO ¥ (Owen otal. 2033) The judge is implemented via a few-shot learning
+Mistral 7B No x (Jiang et al., 2023) : : :
+Mistral Small 24B No x (Mistral AI Team, 2025) approach with GPT models to provide consistent,
+DeepSeek-R1 14B Yes v (Guo et al., 2025) _lj
+DeepSeek-R1 70B Yes v (Guo et al., 2025) human like assessments.
+Table 3: Benchmark models evaluated on Bengali data. “Model ——————————— es
+Bengali coverage is based on available documentation = = |p G2 SS Ge ee
+or token overlap estimates. —E—E—rvrvrere a S——S—SESESl rc aaorre
+Table 6: LLM Judge performance comparison of models
+. . across datasets for English (EN) and Bengali (BN).
+are first normalized through a label mapping func-
+tion (e.g., mapping “Yes” to “yes”’) and converted : : : :
+to lowercase. The error condition is met if the These metrics provide a comprehensive overview of
+response does not match any of the valid labels the model’s effectiveness in understanding and respond-
+associated with the input. The final RER is com- ing to commonsense questions across both English and
+puted as the proportion of such mismatches across Bengali languages.
+all examples, and RAR is derived as its comple- .
+Dies, : P 3.3 Result Analysis
+ment. This evaluation framework ensures that the ;
+model not only answers correctly but also adheres In Fig. 3a, we present the average scores grouped by
+strictly to the expected response format. dataset and language. As expected, performance in
+Bengali is generally lower than in English.
+* LLM-Judge : Uses a separate LLM-based “judge” Fig. 3b shows how Accuracy, LLM-Judge, and RAR
+metrics vary with model size. Smaller models tend to
+. . underperform, especially in Bengali, with noticeable
+a er In Fig. 5a, we observe the distribution of scores across
+Seat OO SR ee ee oe various model families. Mistral models consistently
+; underperform across both languages.
+Table 4: Accuracy performance comparison of models Fig. 5b illustrates the standard deviation of average
+across datasets for English (EN) and Bengali (BN). scores across languages. A lower deviation indicates
+
+
+--- Page 6 ---
+
+. el age normalized sequence length (ANSL) (Dagan et al.,
+i 3.4.1 Average Token Count
+a In order to compare the efficiency of different tokenizers
+LOPES fF oft across dataset, we compute the mean number of tokens
+™ generated. Formally, given a dataset D = {x;}_, of
+Figure 4: The models sorted by average of the score N text entries (rows), let T(x) denote the number of
+difference observed between English and Bengali across _ tokens assigned to text x by a given tokenizer. We then
+datasets. define two related metrics.
+: — — 3.4.2 Average Token Count Per Row
+7 | hin ATPR = + Dd T(a)-
+| - = =: “t ES Here each x; is the full concatenation of “System
+_ eee Prompt” and “Prompt” from one response CSV row,
+(a) LLM-Judge score dis- (b) Standard deviation of aver- and T(a;) is the length of its tokenized sequence.
+tributions across different age scores across languages for
+model architecture families. each model family. 3.4.3 Average Token Count Per Word
+Figure 5: Architecture-wise performance and robustness — Let Words(x;) be the number of whitespace-separated
+across languages. words in x;. We define
+1 T(zx;)
+greater robustness. In particular, the DeepSeek model ATPW = — S- a
+. . N & Words(a;)
+family demonstrates high robustness across languages. i=1
+
+Fig. 4 illustrates the sorted score differences be-
+tween English and Bengali prompts. Earlier LLaMA This normalizes each row’s token count by its word
+models show greater performance drops, likely due  ©0UNt, giving a per-word encoding cost.
+to limited Bengali representation in their pretraining This metric captures the average amount of raw text
+data. Interestingly, the Qwen 72B model also ap- (in bytes) that each token represents. Because tokens
+pears among the lower-performing group, alongside correspond to subword units, a lower ABPT means
+smaller models (3B-8B). The language gap is most each token encodes more of the original text, indicating
+pronounced in tasks involving math (GSM-8K) and _a more byte-efficient tokenizer. Conversely, a higher
+commonsense reasoning (Hellaswag, OpenbookQA). Value implies finer granularity more tokens for the same
+In contrast, larger models tend to show more consistent _ byte length potentially increasing downstream compute
+performance across both languages. Moreover, in select Costs.
+scenarios—particularly on DeepSeek and Mistral ar-
+chitectures—Bengali prompts unexpectedly outperform 3.4.4 Bytes Per Token
+English ones; this may stem from the more structured [et D = {D;}%_, be a corpus of N text examples.
+and context-rich translations, which better align with the For each Dj, let B; = |Di|bytes denote its UTF-8 byte
+models tokenization and leverage additional semantic length, and 0 = |T)(D,)| its token count under tok-
+cues present in the Bengali prompts. enizer T. The per-example bytes-per-token is
+3.4 Tokenization
+
+Q) Bi
+We now proceed to evaluate and compare various tok- uo gn’
+enizers on our translated Bengali datasets. We report the :
+computed values of the metrics for each tokenizer un- and the average over the corpus is
+der consideration. These results highlight the tradeoffs
+between encoding granularity and byte-efficiency in the ie
+context of Bengali text. Finally, we analyze how these ABPT(A) = — S- ~.
+differences in tokenization affect downstream model N j=1 ¢! )
+performance.
+
+To simplify notation, we use the following abbre- This metric reflects the average number of bytes each
+viations for tokenization metrics: average tokens per _ token spans. Lower ABPT indicates coarser, more byte-
+row (ATPR), average tokens per word (ATPW), average __ efficient tokenization, while higher values suggest finer
+bytes per token (ABPT) (Dagan et al., 2024), and aver- _— granularity and potentially greater compute cost.
+
+
+--- Page 7 ---
+
+i “ ~ . “ ° .
+20 =a =m" of 0.23 1.00 I ro 0.23 1.00 “05
+| = Srorance 5 = wevance 2 2
+tang tang £ s -1.0 ry s 1.0
+(a) ATPR (b) ATPW & &
+Figure 6: Comparison of tokenization efficiency metrics
+(a) ATPR (b) ATPW
+across datasets.
+Figure 7: Correlation of token efficiency metrics with
+3.4.5 Average Normalized Sequence Length LLM-Judge Score.
+Let 0? _ |T3(D;)| be the token count under the base- eres ees
+line tokenizer Tg. Define the per-example normalized . avi ee Ras . k a a: :
+length ffeil a fk FE eae
+‘ 9” i ee “4 a
+Its dataset-wide average is —_ ~—
+(a) ATPR (b) ATPW
+rw
+ANSL(A) = — S- Toe Figure 8: Scatter plot of tokenization efficiency metrics
+N i= 4; against LLM-Judge Score.
+This ratio measures how the tokenizer’s sequence
+length compares to that of a fixed baseline. A value findings underscore the need for a balanced tokenization
+below | indicates that 7 produces shorter token se- approach, tailoring strategies to dataset characteristics
+quences than the baseline—reducing model input length — tg optimize model performance effectively.
+and inference latency—while a value above 1 signals The scatter plots in Figure 8 provide insights into the
+longer, more fragmented encodings that may increase _yeJationship between tokenization metrics and scores.
+computational overhead. ; . Figure 8a shows that scores tend to stabilize or slightly
+The bar plots in Figure 6 illustrate the tokenization —gec]ine as the average token count per row increases
+performance varies across different datasets. At a glance beyond a certain threshold, suggesting a potential satura-
+we can see that the Token counts 1n Bengali are signif- tion point where additional tokens may not significantly
+icantly larger than English. In Figure 6a, the average —_ post performance. Figure 8b indicates that scores are
+token count per row reveals that boolq and hellaswag generally higher with lower average token counts per
+lead with over 1000 tokens, suggesting greater complex- word, implying that more efficient tokenization at the
+ity or verbosity, particularly in the Bengali dataset. Their = org Jevel could enhance model accuracy. These find-
+English counterparts also rank high but show lower and —_ ings suggest that an optimal tokenization strategy might
+less varied token counts. The order of datasets with the involve limiting excessive tokenization per row while
+highest average token counts remains consistent across prioritizing concise word-level representation to maxi-
+both bn and en versions, underscoring a persistent trend mize score outcomes.
+in tokenization behavior. Figure 6b presents the aver- The bar plot in Figure 9a reveals that English(en)
+age token count per word, revealing a more balanced datasets consistently show higher average bytes per to-
+distribution, with bn and lang datasets ranging between —_ en, suggesting that English tokenization may involve
+2-7 tokens per word, while en consistently shows the more complex or larger representations, potentially due
+lowest counts, suggesting more efficient tokenization tg richer vocabulary or encoding schemes. In contrast,
+for English. These findings highlight the challenges Bengali(bn) datasets exhibit lower and more uniform
+of tokenizing Bengali text, potentially due to linguistic byte counts, indicating a more compact tokenization pro-
+complexity, compared to English. . cess, which could reflect simpler linguistic structures or
+The heatmaps m Figure 7 provide valuable insights optimized encoding for these datasets. These findings
+into the impact of tokenization on performance metrics. imply that tokenization efficiency varies by language,
+Figure 7a suggests that models with higher token counts ith English requiring more storage per token, possibly
+per row tend to correlate with lower scores, potentially impacting model resource demands
+indicating that capturing more contextual information
+also introduces more noise. In contrast, Figure 7b re- 4 (Cgnclusion
+veals that lower token counts per word are associated
+with lower scores, hinting at the advantage of concise __In this work, we conducted a systematic evaluation of
+tokenization in maintaining semantic integrity. These recent large language models on Bengali, an underrep-
+
+
+--- Page 8 ---
+
+=== === os = a
+. be - a ve on eo en & 7 . $ : & Pe
+(a) ABPT (b) ANSL . edt eee
+Figure 9: Comparison of tokenization efficiency met- (a) Correlation (b) Scatter plot
+rics across datasets and languages (Bengali & English) —_ Figure 11: Influence of tokenization length normaliza-
+reflecting variations in encoding efficiency. tion, measured by ANSL on LLM-Judge scores demon-
+strating how relative sequence length affects evaluation
+to “aa oe Taye outcomes.
+a {- i i os ~ | techniques to ensure reliable and fair evaluation.
+a wl .: , ' | 5 Limitations
+; — While our study offers valuable insights into multilin-
+(a) Correlation (b) Scatter plot gual model performance, it is not without limitations.
+Figure 10: Effect of tokenization efficiency measured First, the Bengali datasets used in our evaluation were
+by ABPT on LLM-Judge scores showing how byte-level translated from English using automatic machine trans-
+tokenization impacts on model evaluation quality. lation methods. These translations were not manually
+validated, which may introduce linguistic inaccuracies,
+ambiguities, or cultural mismatches that could affect
+resented language in NLP research. By translating and model performance unfairly.
+adapting major LLM benchmark datasets, we provided a Second, model outputs can vary significantly in for-
+comprehensive assessment of model performance across Matting and phrasing across different model families.
+multiple metrics, languages, and dataset categories. Our © While we attempt to evaluate correctness using auto-
+findings reveal consistent performance gaps for Bengali mated methods such as exact match for accuracy, these
+compared to English, particularly for smaller models _strict rules may penalize valid answers that do not con-
+and specific model families like Mistral. We also identi- form to a narrow format, especially in generative tasks.
+fied promising robustness in certain architectures, such This limits the reliability of accuracy-based metrics
+as DeepSeek, that maintain more stable performance _—_ across diverse models.
+across languages. Lastly, our use of LLM-as-a-judge assumes that the
+Despite the challenges posed by machine-translated | judgment provided by a reference LLM is accurate.
+datasets and variability in model outputs, our study high- | However, LLMs themselves can make mistakes, show
+lights critical areas where current models fall short and _ bias, or misinterpret nuanced cases. This introduces an
+underscores the need for improved dataset quality and additional layer of uncertainty in the evaluation pipeline.
+evaluation methodologies tailored to multilingual con- We acknowledge these limitations and consider them
+texts. We hope that by open-sourcing our datasets and —_— important areas for future work, including manual val-
+code, this work will catalyze further research on NLP for —idation, improved normalization across outputs, and
+low-resource languages, helping to democratize access — more robust automatic evaluation methods.
+to advanced language technologies worldwide.
+Moreover, our detailed tokenization analysis shows 6 Acknowledgements
+that Bengali inputs show substantially higher token ; ; ;
+counts per instance and per word compared to English, We would like to express our sincere gratitude to the
+when datasets are kept consistent across languages. We Stanford AI Club and Phison Electronics Corporation
+find that excessive tokens per row often introduce noise for their collaboration and computational resources
+and degrade model accuracy, while concise per-word throughout this research.
+tokenization improves score outcomes. Additionally,
+English tokens carry higher average bytes per token
+than Bengali, highlighting language-specific resource References
+implications for model deployment. Emre Can Acikgoz, Mete Erdogan, and Deniz Yuret.
+Future efforts should focus on addressing the limita- 2024. Bridging the bosphorus: Advancing turk-
+tions noted here, including manual dataset validation, ish large language models through strategies for
+more flexible evaluation criteria to accommodate di- low-resource language adaptation and benchmarking.
+verse model output, and improved automatic judging ArXiv, abs/2405.04685.
+
+
+--- Page 9 ---
+
+Samiul Alam, Tahsin Reasat, Asif Shahriyar Sushmit, Meeting of the Association for Computational Lin-
+Sadi Mohammad Siddique, Fuad Rahman, Mahady guistics (Volume 1: Long Papers), page 15831-15879.
+Hasan, and Ahmed Imtiaz Humayun. 2021. A large Association for Computational Linguistics.
+multi-target dataset of common bengali handwritten
+graphemes. In International Conference on Doc-  Pierre-Carl Langlais, Carlos Rosas Hinostroza, Mattia
+ument Analysis and Recognition, pages 383-398. Nee, Catherine Armett, Pavel Chizhov, Eliot Krzystof
+Springer. Jones, Irene Girard, David Mach, Anastasia Stasenko,
+
+and Ivan P. Yamshchikov. 2025. Common corpus:
+
+Abhik Bhattacharjee, Tahmid Hasan, Kazi Samin The largest collection of ethical data for Ilm pre-
+Mubasshir, M. Sohel Rahman, Anindya Iqbal, and Ri- training. Preprint, arXiv:2506.01732.
+fat Shahriyar. 2021. Banglabert: Combating embed-
+ding barrier for low-resource language understanding. | Mistral AI Team. 2025. Mistral-Small-24B-Instruct-
+ArXiv, abs/2101.00204. 2501. Hugging Face Model Card, Apache-2.0
+
+licensed. https://huggingface.co/mistralai/
+
+Gautier Dagan, Gabriel Synnaeve, and Baptiste Roz- Mistral-Small-24B-Instruct-2501 (accessed
+iére. 2024. Getting the most out of your tokenizer 2025-07-20).
+for pre-training and domain adaptation. Preprint,
+arXiv:2402.01035. Shahriar Kabir Nahin, Rabindra Nath Nandi, Sagor
+
+Sarker, Quazi Sarwar Muhtaseem, Md Kowsher,
+
+Omid Ghahroodi, Marzia Nouri, Mohammad Vali Apu Chandraw Shill, Md Ibrahim, Mehadi Hasan
+Sanian, Alireza Sahebi, Doratossadat Dastgheib, Menon, Tareq Al Muntasir, and Firoj Alam. 2025.
+Ehsaneddin Asgari, Mahdieh Soleymani Baghshah, Titullms: A family of bangla llms with comprehen-
+and Mohammad Hossein Rohban. 2024. Khayyam sive benchmarking. Preprint, arXiv:2502.11187.
+challenge (persianMMLU): Is your LLM truly wise
+to the persian language? In First Conference on Qwen, :, An Yang, Baosong Yang, Beichen Zhang,
+Language Modeling. Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan
+
+Li, Dayiheng Liu, Fei Huang, Haoran Wei, Huan
+
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Lin, Jian Yang, Jianhong Tu, Jianwei Zhang, Jianxin
+Aiesha Letman, Akhil Mathur, Alan Schelten, Alex ers. 2025. Qwen2.5 technical report. Preprint,
+Vaughan, Amy Yang, Angela Fan, Anirudh Goyal, arXiv:2412.15115.
+
+Anthony Hartshorn, Aobo Yang, Archi Mitra, Archie
+
+Sravankumar, Artem Korenev, Arthur Hinsvark, and Nishat Raihan and Marcos Zampieri. 2025. Tigerllm -
+542 others. 2024. The llama 3 herd of models. a family of bangla large language models. Preprint,
+Preprint, arXiv:2407.21783. arXiv:2503.10995.
+
+Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Md. Shahidul Salim, Hasan Murad, Dola Das, and Faisal
+Song, Ruoyu Zhang, Runxin Xu, Qihao Zhu, Shi- Ahmed. 2023. Banglagpt: A generative pretrained
+rong Ma, Peiyi Wang, Xiao Bi, and | others. 2025. transformer-based model for bangla language. 2023
+Deepseek-r1l: Incentivizing reasoning capability in International Conference on Information and Com-
+Ilms via reinforcement learning. arXiv preprint munication Technology for Sustainable Development
+arXiv:2501.12948. (ICICT4SD), pages 56-59.
+
+Albert Q. Jiang, Alexandre Sablayrolles, Arthur Men- H M Quamran Hasan Sheikh Shafayat, Minhajur Rah-
+sch, Chris Bamford, Devendra Singh Chaplot, Diego man, Chowdhury Mahim, Rifki Afina, James Pu-
+de las Casas, Florian Bressand, Gianna Lengyel, Guil- tri, Alice Thorne, Oh, Kabir Ahuja, Rishav Hada,
+laume Lample, Lucile Saulnier, Lélio Renard Lavaud, Millicent Ochieng, Prachi Jain, Harshita Diddee,
+Marie-Anne Lachaux, Pierre Stock, Teven Le Scao, Samuel C. Maina, Tanuja Ganu, Sameer Segal,
+Thibaut Lavril, Thomas Wang, Timothée Lacroix, Maxamed Axmed, Kalika Bali, Jonathan H. Choi,
+and William El Sayed. 2023. Mistral 7b. Preprint, Kristin E Hickman, and 40 others. 2024. Benqa:
+arXiv:2310.06825. A question answering and reasoning benchmark for
+
+. . bengali and english. ArXiv, abs/2403.10900.
+
+M. Golam Kabir, Mohammed Saidul Islam, Md Tah-
+
+mid Rahman Laskar, Mir Tafseer Nayeem, M Saiful — Arif Shahriar and Denilson Barbosa. 2024. Improv-
+Bari, and Enamul Hoque. 2023. Benllm-eval: A ing bengali and hindi large language models. In In-
+comprehensive evaluation into the potentials and pit- ternational Conference on Language Resources and
+falls of large language models on bengali nlp. ArXiv, Evaluation.
+abs/2309.13173.
+
+Sam Witteveen and Martin Andrews. 2019. Paraphras-
+
+Mohammed Khan, Priyam Mehta, Ananth Sankar, ing with large language models. In Conference on
+Umashankar Kumaravelan, Sumanth Doddapaneni, Empirical Methods in Natural Language Processing.
+Suriyaprasaad B, Varun G, Sparsh Jain, Anoop
+Kunchukuttan, Pratyush Kumar, Raj Dabre, and Dian Yu, Kenji Sagae, and Zhou Yu. 2021. Attribute
+Mitesh Khapra. 2024. Indicllmsuite: A blueprint alignment: Controlling text generation from pre-
+for creating pre-training and fine-tuning datasets for trained language models. In Conference on Empirical
+indian languages. In Proceedings of the 62nd Annual Methods in Natural Language Processing.
+
+
+--- Page 10 ---
+
+Ahmet Ustiin, Viraat Aryabumi, Zheng-Xin Yong, Wei-
+Yin Ko, Daniel D’souza, Gbemileke Onilude, Neel
+Bhandari, Shivalika Singh, Hui-Lee Ooi, Amr Kayid,
+Freddie Vargus, Phil Blunsom, Shayne Longpre,
+Niklas Muennighoff, Marzieh Fadaee, Julia Kreutzer,
+and Sara Hooker. 2024. Aya model: An instruction
+finetuned open-access multilingual language model.
+Preprint, arXiv:2402.07827.

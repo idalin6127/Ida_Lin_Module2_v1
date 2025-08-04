@@ -1,0 +1,1385 @@
+
+
+--- Page 1 ---
+
+Med-R?: Enhancing Medical Retrieval-Augmented Reasoning of LLMs via
+Progressive Reinforcement Learning
+Keer Lu', Zheng Liang®, Youquan Li’, Jiejun Tan’, Da Pan*®, Shusen Zhang®,
+Guosheng Dong’, Huang Leng?
+*Center for Data Science, Academy for Advanced Interdisciplinary Studies, Peking University,
+#School of CS & Key Lab of High Confidence Software Technologies (MOE), Peking University, ®Baichuan Inc.
+y & & & y:
+W— Abstract Question() What is the most appropriate next step in managing this patient's condition?
+N In medical scenarios, effectively retrieving external knowl- <document> Proprietary Model: OY %
+op) edge and leveraging it for rigorous logical reasoning is of Serum urea levels and <think Considering the
+N significant importance. Despite their potential, existing work tests for diagnoshrg kidney enews Prouie intraven-
+has predominantly focused on enhancing either retrieval or function as they indicate... || _||ous hydration </answer> Retrieval al
+— . wie wor : . . </document> Reference a2 Numb: 7
+> reasoning capabilities of the models in isolation, with lit- a Renseniitallnalectoreh lumber cam
+= tle attention given to their joint optimization, which leads & tal train
+to limited coordination between the two processes. Addi- @**” | They aren't helpful & Model Answer GX
+— tionall : : fi IRy for my reasoning... = Correctness MEV
+cn ionally, current methods rely heavily on supervised fine- Reasoner New Alot
+tuning (SFT), which can cause models to memorize exist- Se a sEpModel [unstaie o E>
+— ing problem-solving pathways, thereby restricting their gen- (isonet oe lackofGeneralzabe) (2 > ee | Sy
+—) eralization ability when confronted with novel problem con- pes oe pata er peweneral on
+texts. Furthermore, while some studies have explored to im- Si : 2
+O prove retrieval-augmented reasoning in general domains via r —
+WN reinforcement learning, their reward function designs do not Q, Retrieval ot Me i
+© adequately capture the specific demands of the medical do- J AEN ee * oN
+— main. To address these challenges, we introduce Med-R®, a Zrnarorain 49.6)
+Medical Retrieval-augmented Reasoning framework driven & eo ad ail “1 | aa hy)
+rr by progressive Reinforcement learning. In this framework, Py Reasonin
+> we first develop the model’s ability to perform logical reason » 7 |_ Stage Stage 2 arate ee R
+4 ; : . - LLM Physician ;; Progressive Reinforcement Learning Med-
+= ing over medical problems. Subsequently, on the basis of this
+WwW foundation, we adaptively optimize the retrieval capability to Figure 1: Comparison of Me d-R° (bottom) with existing
+better align with the characteristics of knowledge corpus and hod f dical probl vj
+ag) external information utilization throughout the reasoning pro- methods (top) for medical problem-solving.
+N cess. Finally, we conduct joint optimization of the model’s
+Ct retrieval and reasoning coordination. Extensive experiments
+i) indicate that Med-R’ could achieve state-of-the-art perfor- Despite their potential, existing works face some limita-
+a) mances, with LLaMA3.1-8B-Instruct + Med-R" surpassing tions: (C1) Limited Coordination between Retrieval and
+N closed-sourced GPT-40-mini by 3.93% at a comparable pa- R a : P
+. : 3 easoning: While extensive research has been devoted to
+ee rameter scale, while Qwen2.5-14B augmented with Med-R ind dently i ine the retrieval (J t al. 2024:
+> shows a more substantial gain of 13.53%. im ependently improving the rel rieval (Jeong et al. >
+an) Xiong et al. 2024a,b) and reasoning (Goh et al. 2024; Lucas
+>< . et al. 2024) capabilities of models in the medical domain,
+=| Introduction they do not adequately align the retrieval strategy with the
+With the rapid development of artificial intelligence, large requirements of the reasoning process, which is a critical
+language models (LLMs) have demonstrated significant po- gap that limits the system’s end-to-end performance (Yoran
+tential in various fields (Lewkowycz et al. 2022). However, et al. 2023; Asai et al. 2024). (C2) Lack of Generalization
+when applied to the medical domain, LLMs face unique in SFT: Subsequent studies have investigated to achieve the
+challenges. Accurate diagnosis of medical conditions re- joint optimization of these components during the super-
+quires rigorous logical reasoning (Lucas et al. 2024; Savage vised fine-tuning (SFT) stage (Wang et al. 2024). However,
+et al. 2024), yet unlike domains such as mathematics or pro- recent findings suggest that SFT inherently causes models to
+gramming, where internal knowledge is often sufficient, the memorize task-specific shortcuts rather than learning gen-
+complexity and specificity of medical diagnosis necessitate eralizable reasoning in novel scenarios (Lai et al. 2025).
+the integration of external, up-to-date, and domain-specific Conversely, reinforcement learning (RL) has shown high ef-
+knowledge (Xiong et al. 2024a; Lu et al. 2025). Therefore, fectiveness at enhancing sophisticated reasoning capabilities
+during the process of solving medical problems, both re- in LLMs (Jaech et al. 2024; Guo et al. 2025; Team et al.
+trieval and reasoning play crucial roles. 2025). (C3) Tailored Reward Design for Medical Scenar-
+
+
+--- Page 2 ---
+
+ios: While recent works such as R1-Searcher (Song et al. and UltraMedical (Zhang et al. 2024) series. However, solv-
+2025) and ReSearch (Chen et al. 2025) have explored train- ing medical problems requires structured multi-step reason-
+ing models for retrieval-augmented reasoning via reinforce- ing (Lucas et al. 2024; Savage et al. 2024). Existing research
+ment learning in general-domain tasks, their reward strate- indicates that the pretraining and SFT phases bias mod-
+gies are not well suited to the medical domain, wherein fac- els towards memorizing established problem-solving path-
+tors including the comprehensive coverage of entities and re- ways, diminishing their generalization capabilities when
+lationships, as well as the credibility of retrieved documents, confronted with novel scenarios (Havrilla et al. 2024; Lai
+are of paramount importance within the reasoning process. et al. 2025). In contrast, the reinforcement learning (RL)
+To address these challenges, we introduce Med-R®, a phase is more conducive to cultivating a model’s cogni-
+Medical Retrieval-augmented Reasoning framework driven tive abilities, particularly in domains that demand substan-
+by progressive Reinforcement learning. For CZ and C2, we tial logical reasoning, such as mathematics, coding, and
+perform a progressive RL to co-optimize the model’s re- medicine (Jaech et al. 2024; Guo et al. 2025; Team et al.
+trieval and reasoning capabilities in three distinct stages: (1) 2025). Nevertheless, unlike mathematical and coding skills,
+Stage 1: Reasoner Cultivation. We begin by developing the the specific knowledge inherent in the medical domain is not
+model’s logical reasoning abilities when addressing med- always available within foundation models (Singhal et al.
+ical questions. (2) Stage 2: Retriever Awakening. Build- 2023; Wang et al. 2023). Therefore, establishing connec-
+ing upon the reasoning capabilities acquired in Stage 1, we tions to the knowledge corpus to acquire external informa-
+adaptively optimize the retriever to better align with the re- tion is of paramount importance for medical scenarios.
+trieval features of the knowledge base and external infor- Reinforcement Learning in LLMs Compared to su-
+mation utilization during the model’s reasoning process. (3) pervised fine-tuning (SFT), reinforcement learning (RL)
+Stage 3: Joint Optimization. Finally, we refine the coor- provides an alternative by enabling emergent reasoning of
+dination between retrieval and reasoning in models to en- models without explicit supervision (Jaech et al. 2024; Team
+hance their collaborative performance in medical scenarios. et al. 2025). The GRPO (Shao et al. 2024; Guo et al.
+For C3, we design specialized rewards tailored to the char- 2025) RL framework has proven to be highly effective in
+acteristics of medical reasoning at each training stage, en- augmenting the reasoning abilities of LLMs through rule-
+compassing aspects such as the coverage of entities and re- based rewards. Efforts have been made to improve the med-
+lations during the reasoning process, as well as the effective- ical reasoning capability in LLMs through the RL process,
+ness of retrieval mechanisms that jointly consider the quality with notable works including HuatuoGPT-o1 (Chen et al.
+of medical evidence (Sackett et al. 1996) and the influence of 2024a), Med-S? (Jiang et al. 2025), and AlphaMed (Liu
+retrieved documents within the overall reasoning trajectory. et al. 2025a). However, they neglect the fact that specialized
+Contributions. The main contributions are three-fold: medical knowledge is not sufficiently encoded within the
+* Training Framework Advancement. We propose Med-R°, model’s learned parameters. In such cases, the integration of
+a novel training framework to improve the retrieval- external and up-to-date knowledge becomes crucial (Wang
+augmented reasoning performance within the medical sce- et al. 2024). While prior works have focused on enhanc-
+nario based on progressive reinforcement learning, which ing retrieval-augmented reasoning via RL in general-domain
+jointly enhances the model’s capability in retrieval and settings (Chen et al. 2025; Song et al. 2025), the reward
+reasoning through a three-stage co-optimization strategy. modeling strategies developed therein are not well adapted
+. . ar . to the medical scenario. To mitigate this, we systematically
+* Reward Design Innovation. Considering the unique char- loy the RL process to jointly enhance the retrieval and
+acteristics of logical inference during medical problem- emprey pro J y . .
+: : . : : reasoning capabilities of models in the medical domain.
+solving, we design reward metrics specifically tailored to
+the medical domain to supervise the reasoning process. M 3
+; ; ; ; ed-R
+¢ Performance and Effectiveness. Extensive experiments in- _. ;
+dicate that the models trained with Med-R?® significantly Training Data Construction
+improve medical performances. Notably, LLaMA3.1-8B- Inspired by the data selection and verifiability transforma-
+Instruct + Med-R® surpasses the closed-sourced propri- tion process of HuatuoGPT-ol (Chen et al. 2024a), we fil-
+etary model GPT-40-mini by 3.93% at a comparable pa- tered medical questions based on their cognitive complex-
+rameter scale, while Qwen2.5-14B integrated with Med- ity and compatibility with reinforcement learning, and then
+R® shows a more substantial gain of 13.53%. constructed reference reasoning trajectories for verifying.
+Related Work Data Selection We utilize both closed-set exam questions
+; : and rare disease diagnostic datasets for our progressive re-
+LLMs for Medical Domain Large Language Models inforcement learning (RL) phase, including the training sets
+(LLMs) have been increasingly deployed in the medical field from MedQA-USMLE, MedQA-MCMLE (Jin et al. 2020),
+as their application expands (Zeng et al. 2020; Gu et al. MedMCQA (Pal, Umapathi, and Sankarasubbu 2022), and
+2021; Clusmann et al. 2023). Extensive studies have fo- RareArena! (THUMedInfo 2025). Data filtering and pro-
+cused on the direct use of medical data for the pretrain- cessing are conducted referring to the following criteria:
+ing or supervised fine-tuning of LLMs (Singhal et al. 2023;
+Thirunavukarasu et al. 2023), leading to prominent open- 'Ror the RareArena dataset, we manually split the data into
+source milestones such as MEDITRON (Chen et al. 2023) training and test sets with a ratio of 8:2 through random sampling.
+
+
+--- Page 3 ---
+
+Stage 1: Reasoner Cultivation Stage 2: Retriever Awakening &. Stage 3: Dual-Process Collaboration
+Reasoning Process (whivniicnenay hots Retrieval Effectiveness B 7 QR @*’
+SEBS 020103 .. 03 @ o . fen g Hish A oe Q ~ x a )) a
+oO B Oo oO @, [oaloa|o2| .. jos) e@ 3 y__\ al Retrieval Collaboration Reasoning
+GGen ales] oa [oa 5 -_S—_—_
+04 02 N > Response Format: SP A&P Sy; S
+goon 7 Oe " ware wy minal - eeseens er) ee)
+mbedaing ow vi [Quality | reasoning process sequence 1...
+O B G o 2] le ke a : <search> query for retrieval 1 </search>
+Cosine Similarity of the Embeddil Fcap)| ad ‘Hop ~@ With Retrieval <document> retrieved documents 1 </document>
+‘osine Similarity of the Embeddings gg Logical | "a overtap seatinine “2 Without Retrieval reasoning process sequence 2. [USAMA]
+. = h aed 4 ) v @ <search> query for retrieval 2 </search> *~
+eiigurla : . ° rato (2) caused by = < has somo =) « Kidney health <document> retrieved documents 2 </document>
+a vo - on patient ae ote oe Retrieved Document Format
+Entity Entity Relation Relation " reasoning process sequence Nn...
+~ —_— = Retrieval Proportion » <search> query for retrieval n </search>
+Key Entity Coverage Relation Coverage Statistic [Breadth] in the Reasoning Process Sdocuments rereved documents n </document>
+|] </think>
+Retrieval Retrieval <think> ...<search>...</search> ... | <think> ...<search>...</search> ... <answer> final answer </answer>
+Retrieval & & </think><answer> ... </answer> </think><answer> ... </answer>
+SQ & Format
+S = S Format Format
+3 9 rl Taccmen Answer — Completely Correct NA
+@ . ) o~ =~ =~ Partially C t
+e J eisonin g Process SY xX x eS Ground rman AK x Ground vane Pay erred xX
+___RetrievalNumber | Answer Correctness Answer Correctness Answer Correctness
+Figure 2: The three-stage progressive reinforcement learning pipeline of Med-R®. We designed tailored reward metrics for
+different training stages to facilitate the effective optimization of the model’s ability to interpret and answer medical questions.
+* Content Suitability Judgment: We employed DeepSeek- dynamically retrieves relevant external knowledge as
+V3 (Liu et al. 2024) to exclude the medical questions that needed and integrates the retrieved information to sup-
+are unsuitable for RL or lacking unique answers (e.g., port continued inference. Then we employed DeepSeek-
+those requiring the identification of incorrect options). V3 as an evaluator to assess the generated reasoning pro-
+¢ Reasoning Complexity Filtering: We then used pass@n cesses and answers on a scale from | to 5, retaining those
+metrics to assess the question difficulty. Specifically, we with a score of 5. This procedure yielded 5 high-quality
+employed DeepSeek-R1 (Guo et al. 2025) to generate up reasoning processes per question on average.
+to n = 16 answers along with the corresponding reason- ¢ Medical Knowledge Graph Extraction: Different from
+ing process for each medical question. DeepSeek-V3 was mathematical problems, which typically rely on rigid
+then utilized to evaluate both the intermediate reasoning sequential logic, medical reasoning demands an under-
+steps and final answers, with scores ranging from | to standing of rich, multi-relational structures that link
+5. We filtered out questions that were either too simple symptoms, diagnoses, and therapeutic interventions. To
+(achieving full correctness within a few rollouts, n’ < 3) better capture such a relational structure, we formalize
+or excessively ambiguous (consistently receiving scores reasoning processes as medical knowledge graph triplets,
+of 2 or lower across all 16 rollouts). Finally, we ob- enabling a more precise comparison of coverage in both
+tained a training dataset comprising 2,140 questions from entities (e.g., disease, surgery, etc.) and relations. Here
+MedQA-USMLE, 1,204 from MedQA-MCMLE, 6,748 we utilize DeepSeek-V3 to extract the medical knowl-
+from MedMCQA, and 429 from the RareArena dataset. edge graph from the natural language reasoning process:
+Construction of Reference Reasoning Trajectories We G={(h,lt,s)|hEeEleLteéseB} (1)
+performed data augmentation by rephrasing closed-set ques- where € denotes the set of all entities, £ represents the
+tions into open-ended formats, generating high-quality rea- set of all relations, and (h,1,t) is a triple in which the
+soning process, and further extracting structured reasoning head entity h is connected to the tail entity ¢ via the rela-
+paths that capture the pivotal logical steps. tion I. For each triplet, we add a binary attribute s, where
+¢ Open-Ended Standardization: We then reformatted the B = {0,1}, specifying whether it was obtained through
+multiple-choice questions into open-ended formats using external knowledge retrieval (s = 1) or internally gener-
+DeepSeek-V3 (Liu et al. 2024), transforming questions ated via the model’s reasoning capabilities (s = 0).
+with predefined answer choices into tasks that require . . .
+f Progressive Reinforcement Learning
+ree-form, reasoning-based responses. Ww ; h eli h th del
+. . . e employ a three-stage pipeline to enhance the model’s ca-
+¢ Reasoning Process Generation: Similar to the rollout employ . S© PIP : . :
+. . pabilities in retrieval and reasoning when addressing medi-
+process of data selection based on reasoning complex- : va.
+: . cal problems, as illustrated in Figure 2.
+ity, we prompted DeepSeek-R1 to generate all possible
+reasoning paths along with final answers for each med- Stage 1: Cultivating the Reasoner In this stage, we focus
+ical question. During the reasoning process, the model on developing the model’s ability to reason through medical
+
+
+--- Page 4 ---
+
+problems. Unlike previous works (Chen et al. 2024a; Liu * Restatistic: Medical reasoning typically emphasizes the
+et al. 2025b) that typically verify model performance based completeness of inferred entities and their interrelations.
+only on the correctness of the final answer, we incorporate To capture this aspect, we introduce evaluation metrics
+a reasoning process evaluation mechanism into the reward based on the coverage of entities and relations. Following
+function, aligning closely with the characteristics of clini- the procedure used during training data construction, we
+cal decision-making. Overall, the reward function design in extracted knowledge graphs from the natural language
+Stage | is the sum of normalized components: reasoning processes generated by the model, resulting in
+Format. The model is required to produce its outputs triplets in the form of Equation (1). We then compute the
+according to a predefined output paradigm. Specifically: Jaccard similarity (Jaccard 1912) between the entity and
+(1) All responses must strictly adhere to the format of relation sets generated by the model during training and
+<think>...</think><answer>...</answer>, those present in the reference reasoning processes.
+and no duplicate tags are allowed within the response.
+(2) When retrieving the external knowledge is necessary, ; ;
+the corresponding query should be delineated using the Rea a je? A Egen| ow A Leen|
+<search>...</search> tag pair, and then the re- statistic ie(L N] e®UYe + COUL
+trieved documents from knowledge corpus are encapsulated Ever U Exen| [Leet U Lgen|
+SS e+. _—_—
+within <document>...</document> tags. Based on Key Entity Coverage _ Relation Coverage
+the above requirements, the format reward is defined as: (6)
+f° if the format is correct * Riogicat: Moreover, to evaluate the multi-step logical
+R format = ; (2) structure of the reasoning process, we also assess the
+O, if the format is incorrect logical archi li b ing the J d
+ogical architecture alignment by computing the Jaccar
+Answer Correctness. In contrast to mathematical prob- similarity between the j-hop (j = 1, 2,..., K) reasoning
+lems, medical questions often lack a strictly defined ground paths generated by the model during training, denoted as
+truth, as models may express the correct Tesponse with syn PL, and the 7-th reference diagnostic reasoning trajecto-
+onyms or paraphrases. As a result, exact string matching is . (ij) . ..
+not an effective method for verifying correctness in medi- ries P,.¢. Here K is the minimum path length between
+cal tasks. To address this, we employ a frontier model (e.g., the longest reasoning chains extracted from the model-
+DeepSeek-V3) as the evaluator to score the generated an- generated and reference medical knowledge graphs.
+swers. It assesses whether the model’s output semantically 2 K Py n PY
+aligns with the reference ground truth. Answers are assigned Riogical = Max, ———~ S- J: TAT (7)
+a score of 2 for fully correct, | for partially correct (e.g., ief.N] K(K + 1) j=l |Pret U Peen|
+providing multiple answers, with at least one matching the Retrieval Number, Another objective of this stage is
+correct answer), and 0 for incorrect responses:
+to encourage the model to conduct external knowledge
+2, if completely correct searches to assist its reasoning process, thereby laying the
+Ranswer = 4 1, if partially correct (3) foundation for improving retrieval capabilities in the subse-
+0, if incorrect quent stage. To this end, we established a reward mechanism
+. ; ; based on the number of search operations performed:
+Reasoning Process. _ This aspect constitutes a core com-
+ponent in fostering the model’s deliberative reasoning capa- Revopes _ flif noo (8)
+bilities during Stage 1. Given the characteristics of medi- retrieval-num ~) 9 if nm <6
+cal reasoning, whic h reqaes @ holistic understanding of in- where n indicates the count of retrieval invocations, and the
+terconnected entities and their relationships—such as those : i“
+; —- minimum allowable number of searches is set to 6 = 3.
+between symptoms, diagnoses, and therapeutic interven-
+tions (Wu et al. 2023; Gao et al. 2025), we design the fol- Stage 2: Awakening the Retriever Following the ini-
+lowing reward for reasoning process evaluation: tial training stage, the model has acquired a foundational
+5 5 5 aradigm for medical reasoning. In this stage, we shift our
+Rreasoning = Ksemantic + Rstatistic + Rrogical (4) focus to enhancing the model's ability to retrieve external
+where fF is the normalized score of R. Given N reference knowledge. Specifically, we aim to improve the generation
+reasoning processes {OV » Reemantics statistic and of semantically accurate and retrieval-efficient query terms.
+i=1 In general, the design of the reward function in Stage 2 is
+Riogicat Of the current generated response rgen are: the sum of normalized components: format, answer correct-
+* Rsemantic: It measures the semantic alignment between ness, and retrieval effectiveness, with the first two already
+the reasoning process generated by the model and those formally defined in Equation (2) and Equation (3).
+previously constructed by the frontier model for refer- Retrieval Effectiveness. _ It encompasses two normal-
+ence, which is quantified by the cosine similarity. 4(r) ized reward components: (J) the authority of the retrieved
+denotes the embedding of the reasoning process utilized medical documents, and (2) the extent to which the retrieved
+the embedding model (Chen et al. 2024b). content is utilized throughout the entire reasoning process:
+_ (4) ~ ~
+Rsemantic ~ ie[LN] cos( (ri). (ren) () Rretrieval = Raquality + Roreadth (9)
+
+
+--- Page 5 ---
+
+¢ Rquality: Each retrieved document is assigned an in- Source Type Data Resource #Volume #Avg. Token
+teger evidence level e by the proprietary model (e.g., Dene DAT Cantal ENN ANA RIN
+DeepSeek-V3) according to the principles of Evidence- papers ee Wikipedia oo o00 ore
+Based Medicine (EBM) (Sackett et al. 1996), where e € Books NCBI Bookshelf 10,000 4.083
+{z € Z|1< a < 6}, with | indicating the highest level Guidelines Guidelines from MEDITRON 10,000 1,100
+of credibility. Here D denotes the number of documents ee —_aonnnnmm00——OOooT—re—ws
+retrieved by the model during a single rollout: Table 1: Overall statistics of medical knowledge resources.
+D
+1
+Rauatity = D S 6 _ (e; _ 1)) (10)
+j=l Models and Implementation. We use LLaMA3.1-8B-
+. . . Instruct (Dubey et al. 2024), Qwen2.5-7B and Qwen?.5-
+Bbreadth: Whore we extract knowledge raphe triplets in 14B (Yang et al. 2024) as the backbone models for our train-
+the form of Equation (1) from the reasoning processes veal lee reinfe fal 0D warning (RL) framework ise uilt on
+generated by the model. Therefore, the proportion of re- _nigation (GRPO) (Shao et al. 2024) as the learning
+trieved triplets in the reasoning process is computed as: gorithm. The training dataset obtained from the data con-
+1 |G| y I(s = 1) struction phase contains 10,521 samples. Each sample un-
+R = s;= Saltese AY 11 dergoes 16 rollouts during training, with a training batch
+breadth j ( ) g g g g
+IG | j=l IG| size of 256 and a rollout batch size of 64. The total num-
+Stage 3: Orchestrating the Dual-Process Collaboration ber of training epochs is set to 3, where each training stage
+. . corresponds to 1 epoch comprising 41 training steps. The
+Having separately enhanced the model’s reasoning and re- learning rate is 166. Notably, in our training setup, exter-
+trieval capabilities in the earlier stages, Stage 3 concentrates nal documents retrieved by the model are concatenated into
+on strengthening the coordination and synergy between rea- the reasoning process, which are not generated by the train-
+? encing gradient updates, we a masking during loss cal-
+directly prioritizes end-to-end (E2E) performance of the ulti- culation: where ye mask out all content enclosed within
+mate objective, as defined in Equation (2) and Equation (3). <document>...</document > tags. When conducting
+. supervised fine-tuning (SFT) for method comparison, we uti-
+Experiments lized a learning rate scheduler featuring linear warm-up and
+Experimental Setup cosine decay, with a learning rate peaking at 2e-5, alongside
+Datasets. Datasets for training are detailed in the previ- a warmup Tatlo of 0.03 and a weight decay of 0.0.
+ous methodology section. For evaluation, we have selected Baselines. | We compare our Med-R® against the fol-
+seven medical datasets including the MedQA-USMLE, lowing baselines: (1) We employ GPT-40-mini (Hurst et al.
+MedQA-MCMLE (Jin et al. 2020), MedMCQA (Pal, Uma- 2024) as the Close-Sourced Models competitors. (2) Open-
+pathi, and Sankarasubbu 2022), RareArena? (THUMed- Sourced Medical-Specific Models include MEDITRON-
+Info 2025), MMLU-Med (Hendrycks et al. 2021), NE- 7B, MEDITRON-70B (Chen et al. 2023), UltraMedical3-
+JMQA (Katz et al. 2024) and MedXpertQA (Alonso, 8B, and UltraMedical3.1-8B (Zhang et al. 2024). (3) Open-
+Oronoz, and Agerri 2024), covering both standard and real- Sourced Medical Reasoning Models comprise HuatuoGPT-
+world clinical scenarios. We utilize LLM-as-Judge based on o1-8B (Chen et al. 2024a), MedS”-8B (Jiang et al. 2025) and
+the frontier model DeepSeek-V3 (Liu et al. 2024) to verify AlphaMed-8B (Liu et al. 2025a), the backbone models of
+the correctness of the responses, and then calculate the ac- which are all LLaMA3.1-8B-Instruct (Dubey et al. 2024).
+curacy scores as the evaluation metric. (4) The simplest baseline is Naive Response, where the
+Medical Knowledge Corpus We establish a compre- model generates responses directly without external knowl-
+hensive medical knowledge base to support information re- edge retrieval or dataset training. (5) We also compare with
+trieval, curated from multiple data reliable sources (Roberts the training strategy in which we perform Supervised Fine-
+2001; Hoeppner 2012; Chen et al. 2023; Foundation 2024; qT uning (SFT) using our constructed reasoning trajecto-
+Lu et al. 2025). As detailed in Table 1, it comprises four ties produced by frontier models. (6) General Retrieval-
+representative types of resources: academic papers, entries, Augmented Reasoning RL for comparison includes R1-
+books, and guidelines, offering both depth and breadth of in- Searcher (Song et al. 2025) and ReSearch (Chen et al. 2025).
+formation. We employ the hybrid retrieval strategy, includ-
+ing BGE-Large-EN-v1.5 (Xiao et al. 2023) for the dense and Main Results
+SPLADE-v3 (Lassance et al. 2024) for the sparse retrieval. The main results of baselines and Med-R®? are demonstrated
+During the rollout phase in both training and evaluation, we in Table 2. and we summarize the observations below
+retrieve the top-5 related documents for each query. Med-R? is effective across different models. Experi-
+?For MedQA, we merge the dev and test subsets for evaluation. mental results in Table 2 show that Med-R® consistently
+For MedMCQA, dev subset is employed for assessment. As for outperforms other baseline methods on both base and
+RareArena, we use the test sets that we have manually split before. instruction-tuned models across different scales in terms
+
+
+--- Page 6 ---
+
+MedQA-US MedQA-MC MedMCQA RA-RDC RA-RDS|MMLU-Med NEJMQA MedXpert
+Model | Method ee DE Avg.
+Close-Sourced Models
+GPT-40-mini | - | 74.45 69.25 70.52 52.03 43.24 | 80.96 57.87 21.58 [58.74
+Open-Sourced Medical-Specific Models
+MEDITRON-7B - 48.67 44.28 46.78 37.97 21.60 50.12 33.40 16.55 [37.42
+UltraMedical3-8B - 61.57 52.42 61.82 40.76 28.54 72.52 45.31 10.82 |46.72
+UltraMedical3.1-8B - 66.86 58.45 65.73 43.83 32.39 75.86 50.66 12.08 {50.73
+MEDITRON-70B - 60.60 55.64 56.48 75.16 48.85 70.53 65.33 18.72 {56.41
+Open-Sourced Medical Reasoning Models
+HuatuoGPT-01-8B - 66.97 66.15 72.45 49.76 41.59 74.52 51.60 14.34 54.67
+MedS?-8B | - 73.51 69.63 65.47 46.85 37.72 78.75 55.09 12.50 EE
+AlphaMed-8B - 64.06 64.98 66.43 43.55 38.14 71.44 51.48 22.01 |52.76
+Open-Sourced Base / Instruct Models
+Naive Response| 31.16 41.45 30.02 41.85 22.16 37.12 50.41 14.90 (33.63
+LLaMA3.1-8B SFT 61.39 62.10 63.27 44.83 35.20 63.08 49.64 12.72 |49.03
+“Instruct R1-Searcherx | 60.28 60.92 63.54 42.87 38.65 70.19 53.81 15.73 |50.75
+ReSearch« 62.76 66.03 66.25 46.35 38.44 71.27 53.26 14.65 |52.38
+Med-R? (ours)| 75.91 75.95 75.89 57.34 47.16 79.07 60.60 16.48 {61.05
+Naive Response! 22.58 39.14 28.77 32.17 23.10 44.45 41.48 11.59 |30.41
+SFT 52.56 50.04 57.90 53.45 34.67 56.94 48.23 11.28 45.63
+Qwen2.5-7B R1-Searcherx 56.78 49.70 58.35 53.69 33.27 66.81 52.98 12.55 |48.02
+ReSearch* 62.47 60.24 63.11 55.95 34.68 70.29 52.30 12.67 [51.46
+Med-R? (ours)| 68.64 67.53 68.97 63.02 45.76 75.81 58.54 14.98 {57.91
+Naive Response} 50.01 50.70 42.85 43.17 26.58 71.60 45.63 11.06 42.70
+SFT 68.85 70.22 70.15 75.27 52.82 75.81 47.08 11.54 58.97
+Qwen2.5-14B | R1-Searcherx | 69.20 71.75 68.45 76.32 54.05 77.69 52.08 12.65 |60.27
+ReSearch« 69.52 74.05 722.20 75.67 53.54 80.25 50.65 13.10 |61.12
+Med-R? (ours)| 78.01 80.59 75.42 77.94 58.15 85.33 62.40 15.69 |66.69
+Table 2: Comparison of Med-R?® with baselines. We use abbreviations for some tasks. « denotes the re-implementation with the
+same amount of our constructed data for a fair comparison. The best and second best of each model are in bold and underlined.
+of medical problem-solving. Compared to the naive re- This finding further underscores the importance of integrat-
+sponse, Med-R® enhances the average downstream task ing external knowledge retrieval during reasoning, particu-
+performances by 73.93%. Furthermore, models enhanced larly in the medical domain, where knowledge is highly spe-
+with Med-R? demonstrate the potential to outperform cialized, rapidly evolving, and broad in scope.
+close-sourced models in medical scenarios. Specifically, Tailored reward design counts for medical scenarios.
+LLaMA3.1-8B-Instruct + Med-R? achieves an average im- Compared to general outcome-based approaches that en-
+provement of 3.93% over GPT-40-mini at a comparable hance retrieval-augmented reasoning through reinforcement
+parameter scale, while Qwen2.5-14B + Med-R® shows a learning (RL), e.g., R1-Searcher and ReSearch, our Med-R?
+more substantial gain of 13.53%. Remarkably, even when achieves an average improvement of 16.73% and 12.54%
+compared to larger open-sourced medical-specific models in medical problem-solving. This performance gain is pri-
+such as MEDITRON-70B (Chen et al. 2023), our approach marily attributed to our effective supervision of the model’s
+achieves over 9.70% higher performance on average with medical reasoning process and the design of reward func-
+much smaller parameter scale (7B-14B). tions specifically tailored to the medical domain.
+Retrieval-augmented-reasoning boosts medical per- Ablations and Analysis
+formances. The backbone model for all open-sourced medi- . . . .
+
+. . . ou. . Ablation studies and in-depth analysis are performed on
+cal reasoning models considered in this study is LLaMA3. 1- dels to highlicht th ity of . Iti-st
+8B-Instruct (Dubey et al. 2024). One of the advantages of MOCSS 10 MEME © NECESSITY OF PROSTESSIVE MUNTSAe
+Med-R? lies in its ability to dynamically retrieve and in- training and the contribution of each training stage, as well
+
+y y y
+: . as to assess the impact of their sequential order and the in-
+corporate external medical knowledge during the reason- Al : . . 3
+: . uence of medical-specific reward design on Med-R”.
+ing process. Experimental results demonstrate that Med-
+R® achieves an average performance improvement of over Necessity of Progressive Training We consolidated the
+12.80% across medical tasks compared to these competitors. reward functions from all stages throughout training to ver-
+
+
+--- Page 7 ---
+
+Order | In-Domain | Out-of-Domain | Avg. Removing Stage 1: Stage 1 aims to enhance the reason-
+— «Standard Pipeline Sst=~CS ing capabilities of the models when solving medical prob-
+lems. As depicted in Table 3 (2 — 3), the absence of Stage
+1>2->3) 62.78 | 49.78 | 57.91 1 leads to a notable degradation of 7.30% in overall model
+Necessity of Progressive Training performance. This reduction occurs because Stage 1 serves
+OTT TT NT A DE bop ee ET as the foundation for Stage 2. When the model lacks stron
+1&2 & 3 | 60.04 1 4.36%) | 47.00 5.58%) | 55.15 4.77%) medical reasoning capabilities, it is unlikely to recognize
+The Role of Each Stage when external knowledge is needed or to construct effec-
+233 |57.86 (| 7.84%) | 46.71 (| 6.17%) | 53.68 (|. 7.30%) tive retrieval queries for obtaining supportive information.
+133 | 59.28 (| 5.58%) | 46.54 (| 6.51%) | 54.50 (| 5.89%) Consequently, the potential benefits offered by subsequent
+152 |61.21 (| 2.50%) | 47.95 (| 3.68%) | 56.24 (| 2.88%) training stages are substantially compromised.
+OT Removing Stage 2: Stage 2 builds upon the groundwork
+Sequential Order of Stages established in Stage 1 to refine the generation of semanti-
+2 + 1 + 3] 61.29 (f 2.37%) | 48.33 (J 2.91%) | 56.43 (| 2.56%) cally precise and retrieval-efficient query terms, which aims
+to further augment the quality and utility of retrieved docu-
+Table 3: Analysis of training stages and sequential order ments. As seen in Table 3 (1 — 3), after removing Stage 2,
+using Qwen2.5-7B. “Order” is the sequence of each stage. there is a slight decrease of 5.89% in the accuracy compared
+The best and second best scores are in bold and underlined. to the corresponding model trained with all three stages.
+Removing Stage 3: Stage 3 is designed to further enhance
+Method | In-Domain |Outof-Domain| Avg. the synergy between the model’s retrieval and reasoning ca-
+a a SE pabilities, thereby improving its overall end-to-end perfor-
+Med-R* | 62.78 | 49.78 | 57.91 mance in solving medical problems. As observed in Table 3
+Analysis of Rreasoning = Rsemantic + Rstatistic + Riogical d—- 2), the performance of models declines by 2.88% when
+wo Rsemantic|61.78 (11.59%) |48.42 (12.73%)|56.77 (11.97%) Stage 3 is excluded. However, due to the presence of com-
+wlo Rersrstic {59.00 (|6.02%)|47.37 (|4.84%)|54.64 (|5.65%) plete Stage 1 and 2, the gap remains close to that of the com-
+wld Riogieat {60.95 (1.2.91%)|48.67 (12.23%) | 56.34 (J 2.71%) plete three-stage training model and relatively low.
+Analysis of Rretrievat = Rquatity + Roreadth Sequential Order of Stages We swap Stage | and Stage
+—AASs 2 to assess their impact on models. As shown in Table 3
+w/o Rquality \co'68 (3 ascelar 60 (laaeeolssa7 (12.85%) (2 + 1 -+ 3), exchanging Stage 1 and Stage 2 leads to
+Wo Roreaath ]60-68 (13.35%) |47.60 (14.38%) [55.77 (13.70%) a slight performance drop by 2.56%. Our analysis of each
+: : : stage demonstrates the robustness and rationale of our orig-
+—_—_—arsee pabilities, followed by adaptive refinement of retrieval abil-
+ities. This training order stems from the fact that a solid rea-
+soning foundation is essential for recognizing retrieval needs
+ify the importance of progressively optimizing the model’s during problem-solving. Only with this prerequisite can the
+retrieval and reasoning capabilities in a staged manner. The model meaningfully improve its ability to generate retrieval
+results are presented in Table 3 (1 & 2 & 3), where we ob- queries that effectively capture relevant information.
+serve a performance drop of 4.77% compared to our orig- .
+inal nai. stage training Pot egy (1 > 5. 5 3). A key r nd Analysis of Reward Design We conducted ablation stud-
+son for this decline is the inherent complexity and potential ies on the comp jonents of the two reward metrics, Rreasoning
+conflicts among diverse reward signals, i.e., the retrieval- and Rretrieval, with results summarized in Table 4. The
+focused and reasoning-oriented components impose differ- findings indicate that the absence of statistic iN Rreasoning
+ent behavioral pressures on the model, leading to unstable leads to a higher drop in model p erformance. This highlights
+policy updates in training. For instance, early in training, that the comp rehensive coverage of medical entities and re-
+the model may not yet possess a sufficiently developed rea- lations P lays a crucial role in the reasoning Process, which
+soning structure to effectively utilize or prioritize external sa key distinction from reasoning processes in mathemat-
+knowledge retrieval, resulting in misaligned gradient signals ics and code. Furthermore, the removal of Roreaath from
+and diminished learning efficiency. Rretrieval also results in a notable decline in performance,
+underscoring the importance of evaluating the contribution
+The Role of Each Stage To evaluate the significance of of the retrieved documents to the reasoning process.
+each stage, we conduct three ablation experiments by in- .
+dividually removing Stage 1, 2, and 3. We then assess the Conclusion
+performance on benchmarks, including standard as well as In this paper, we introduce Med-R?, a novel progressive
+real-world clinical scenarios, with results summarized in Ta- reinforcement learning framework aimed at enhancing the
+ble 3. To control for the influence of training data volume medical retrieval-augmented reasoning capabilities of mod-
+on model performance, we set the total number of training els. Extensive experimental results indicate that Med-R?
+epochs at 3 to align with the main experiment, and allocate achieves state-of-the-art training outcomes among open-
+1.5 epochs to each of the remaining two stages for training. sourced base and instruct models in medical scenarios.
+
+
+--- Page 8 ---
+
+Acknowledgment Guo, D.; Yang, D.; Zhang, H.; Song, J.; Zhang, R.; Xu, R.;
+This work is supported by National Natural Science Founda- Zhu, Q.; Ma, S.; Wang, P.; Bi, X.; et al. 2025. Deepseek-r1:
+tion of China (62172015), and High-performance Comput- Incentivizing reasoning capability in llms via reinforcement
+Hakala, K.; Kaewphan, S.; Salakoski, T.; and Ginter, F.
+References 2016. Syntactic analyses and named entity recognition for
+Alonso, I.; Oronoz, M.; and Agerri, R. 2024. Medex- PubMed and PubMed Central — up-to-the-minute. In Co-
+pga: Multilingual benchmarking of large language models hen, K. B.; Demner-Fushman, D.; Ananiadou, S.; and Tsujii,
+for medical question answering. Artificial intelligence in J.-i., eds., Proceedings of the 15th Workshop on Biomedical
+medicine, 155: 102938. Natural “anguage Processing: pues Berlin, Germany:
+Asai, A.; Zhong, Z.; Chen, D.; Koh, P. W.; Zettlemoyer, L.; ssociation for Computational | inguistics.
+Hajishirzi, H.; and Yih, W.-t. 2024. Reliable, adaptable, and Hall, P. 1987. On Kullback-Leibler loss and density estima-
+attributable language models with retrieval. arXiv preprint tion. The Annals of Statistics, 1491-1519.
+arXiv:2403.03187. ; ; Havrilla, A.; Du, Y.; Raparthy, S. C.; Nalmpantis, C.;
+Chen, J.; Cai, Z.; Ji, K.; Wang, X.; Liu, W.; Wang, R.; Dwivedi-Yu, J.; Zhuravinskyi, M.; Hambro, E.; Sukhbaatar,
+Hou, J.; and Wang, B. 2024a. Huatuogpt-ol, towards S.; and Raileanu, R. 2024. Teaching large language mod-
+medical complex reasoning with Ilms. arXiv preprint els to reason with reinforcement learning. arXiv preprint
+arXiv:2412.18925. arXiv:2403.04642.
+Chen, Js Xiao, S.; Zhang, P.; Luo, K; Lian, D.; Hendrycks, D.; Burns, C.; Basart, S.; Zou, A.; Mazeika, M.;
+and Liu, Z. 2024b. : Bge- m3-embedding: Multi- Song, D.; and Steinhardt, J. 2021. Measuring Massive Mul-
+lingual, multi-functionality, multi-granularity text embed- titask Language Understanding. Proceedings of the Interna-
+anes rowan Set Knowledge distillation. arXiv preprint tional Conference on Learning Representations (ICLR).
+arXiv: . .
+Chen, M.:Li,T; Sun, H. Zhou, Ys Zhu, Cs Wang, H.: Pan. nets in life sciences and health cate. Nucleic Acids Re-
+to reason with search for lime via reinforcement learning, S24” (D1): DI251-D1260,
+arXiv preprint arXiv:2503.19470. Hurst, A.; Lerer, A.; Goucher, A. P.; Perelman, A.; Ramesh,
+Chen, Z.; Cano, A. H.; Romanou, A.; Bonnet, A.; Ma- A.; Clark, A.; Ostrow, A.; Welihinda, A.; Hayes, A.; Rad-
+toba, K.; Salvi, F.; Pagliardini, M.; Fan, S.; Kopf, A.; Mo- ford, A.; et al. 2024. Gpt-4o0 system card. arXiv preprint
+htashami, A.; et al. 2023. Meditron-70b: Scaling medi- arXiv:2410.21276.
+cal pretraining for large language models. arXiv preprint Jaccard, P. 1912. The distribution of the flora in the alpine
+arXiv:2311.16079. zone. 1. New phytologist, 11(2): 37-50.
+Clusmann, J.; Kolbinger, F. R.; Muti, H. S.; Carrero, Z. 1; Jaech, A.; Kalai, A.; Lerer, A.; Richardson, A.; El-Kishky,
+Eckardt, J.-N.; Laleh, N. G.; Loffler, C. M. L.; Schwarzkopf, A.; Low, A.; Helyar, A.; Madry, A.; Beutel, A.; Carney,
+S.-C.; Unger, M.; Veldhuizen, G. P.; et al. 2023. The future A.; et al. 2024. Openai ol system card. arXiv preprint
+landscape of large language models in medicine. Communi- arXiv:24]12.16720.
+cations medicine, 3c): lar. ; . ; ; Jeong, M.; Sohn, J.; Sung, M.; and Kang, J. 2024. Improving
+Dubey, A.; J auhri, A.; Pandey, A. Kadian, AY Al-Dahle, As medical reasoning through retrieval and self-reflection with
+Letman, A.; Mathur, A.; Schelten, A.; Yang, A. Fan, A. retrieval-augmented large language models. Bioinformatics,
+t al. 2024. The Il 3 herd of model Xi t
+arXiv: . .
+
+. a . Jiang, S.; Liao, Y.; Chen, Z.; Zhang, Y.; Wang, Y.; and
+Foundation, W. 2024. Wikimedia Downloads. ; Wang, Y. 2025. MedS*: Towards Medical Small Language
+Gao, Y.; Li, R.; Croxford, E.; Caskey, J.; Patterson, B. W.; Models with Self-Evolved Slow Thinking. arXiv preprint
+Churpek, M.; Miller, T.; Dligach, D.; and Afshar, M. 2025. arXiv:2501.12051.
+
+Leveraging medical knowledge graphs into large language :
+
+models for diagnosis prediction: Design and application Jin, D.; Pan, E.; Oufattole, N.; Weng, W.-H.; Fang, H.; and
+study. Jmir Ai, 4: e58670. Szolovits, P. 2020. What Disease does this Patient Have?
+Goh, E.; Gallo, R.; Hom, J.; Strong, E.; Weng, Y.; Kerman, purge scale we nag vaniy preprint arXive2009. 13081.
+H.; Cool, J. A.; Kanjee, Z.; Parsons, A. S.; Ahuja, N.; et al. : ~~ .
+2024. Large language model influence on diagnostic reason- Katz, U.; Cohen, E.; Shachar, E.; Somer, J.; Fink, A.; Morse,
+ing: a randomized clinical trial. JAMA Network Open, 7(10): E.; Shreiber, B.; and Wolf, I. 2024. GPT versus resident
+€2440969-e2440969. physicians—a benchmark based on official board scores.
+Gu, Y.; Tinn, R.; Cheng, H.; Lucas, M.; Usuyama, N.,; Liu, Nejm Ai, 1(5): Aldbp2300192.
+
+X.; Naumann, T.; Gao, J.; and Poon, H. 2021. Domain- Lai, Y.; Zhong, J.; Li, M.; Zhao, S.; and Yang, X. 2025.
+specific language model pretraining for biomedical natural Med-rl: Reinforcement learning for generalizable medi-
+language processing. ACM Transactions on Computing for cal reasoning in vision-language models. arXiv preprint
+Healthcare (HEALTH), 3(1): 1-23. arXiv:2503.13939.
+
+
+--- Page 9 ---
+
+Lassance, C.; Déjean, H.; Formal, T.; and Clinchant, S. Singhal, K.; Azizi, S.; Tu, T.; Mahdavi, S. S.; Wei, J.; Chung,
+2024. SPLADE-v3: New baselines for SPLADE. arXiv H. W.; Scales, N.; Tanwani, A.; Cole-Lewis, H.; Pfohl, S.;
+preprint arXiv:2403.06789. et al. 2023. Large language models encode clinical knowl-
+Lewkowycz, A.; Andreassen, A.; Dohan, D.; Dyer, E.; edge. Nature, 620(7972): 172-180.
+
+Michalewski, H.; Ramasesh, V.; Slone, A.; Anil, C.; Schlag, Song, H.; Jiang, J.; Min, Y.; Chen, J.; Chen, Z.; Zhao, W. X.;
+I.; Gutman-Solo, T.; et al. 2022. Solving quantitative rea- Fang, L.; and Wen, J.-R. 2025. R1l-searcher: Incentiviz-
+soning problems with language models. NeurIPS, 35: 3843— ing the search capability in Ilms via reinforcement learning.
+3857. arXiv preprint arXiv:2503.05592.
+
+Liu, A.; Feng, B.; Xue, B.; Wang, B.; Wu, B.; Lu, C.; Zhao, Team, K.; Du, A.; Gao, B.; Xing, B.; Jiang, C.; Chen, C.;
+C.; Deng, C.; Zhang, C.; Ruan, C.; et al. 2024. Deepseek-v3 Li, C.; Xiao, C.; Du, C.; Liao, C.; et al. 2025. Kimi k1.5:
+technical report. arXiv preprint arXiv:2412.19437. Scaling reinforcement learning with Ilms. arXiv preprint
+Liu, C.; Wang, H.; Pan, J.; Wan, Z.; Dai, Y.; Lin, F.; Bai, W.; arXiv:2501,12599.
+
+Rueckert, D.; and Arcucci, R. 2025a. Beyond Distillation: Thirunavukarasu, A. J.; Ting, D. S. J.; Elangovan, K.;
+Pushing the Limits of Medical LLM Reasoning with Mini- Gutierrez, L.; Tan, T. F.; and Ting, D. S. W. 2023. Large lan-
+malist Rule-Based RL. arXiv preprint arXiv: 2505.17952. guage models in medicine. Nature medicine, 29(8): 1930-
+Liu, C.; Wang, H.; Pan, J.; Wan, Z.; Dai, Y.; Lin, F.; Bai, W.; 1940.
+
+Rueckert, D.; and Arcucci, R. 2025b. Beyond Distillation: THUMedInfo. 2025. RareArena: A Dataset for Rare Disease
+Pushing the Limits of Medical LLM Reasoning with Mini- Information Retrieval.
+
+malist Rule-Based RL. arXiv preprint arXiv:2505.17952. Wang, B.; Xie, Q.; Pei, J.; Chen, Z.; Tiwari, P.; Li, Z.; and
+Lu, K.; Liang, Z.; Zhang, Z.; Pan, D.; Zhang, S.; Wu, X.; Fu, J. 2023. Pre-trained language models in biomedical do-
+Chen, W.; Zhou, Z.; Dong, G.; Cui, B.; Wang, T.; and main: A systematic survey. ACM Computing Surveys, 56(3):
+Zhang, W. 2025. Med-R?: Crafting Trustworthy LLM 1-52.
+
+Physicians through Retrieval and Reasoning of Evidence- Wang, J.; Yang, Z.; Yao, Z.; and Yu, H. 2024. Jmir: Joint
+Based Medicine. arXiv preprint arXiv:2501.11885. medical Ilm and retrieval training for enhancing reason-
+Lucas, M. M.; Yang, J.; Pomeroy, J. K.; and Yang, C. C. ing and professional question answering capability. arXiv
+2024. Reasoning with large language models for medical preprint arXiv:2402.17887.
+
+question answering. Journal of the American Medical Infor- Wikimedia Foundation. 2024. Wikipedia Dataset. https:
+matics Association, 31(9): 1964-1975. /Mhuggingface.co/datasets/wikimedia/wikipedia. Accessed:
+Pal, A.; Umapathi, L. K.; and Sankarasubbu, M. 2022. 2025-07-08.
+
+Medmceqa: A large-scale multi-subject multi-choice dataset Wu, X.; Duan, J.; Pan, Y.; and Li, M. 2023. Medical knowl-
+for medical domain question answering. In Conference on edge graph: Data sources, construction, reasoning, and ap-
+health, inference, and learning, 248-260. PMLR. plications. Big Data Mining and Analytics, 6(2): 201-217.
+Roberts, R. J. 2001. PubMed Central: The GenBank of the Xiao, S.; Liu, Z.; Zhang, P.; and Muennighoff, N. 2023.
+published literature. C-Pack: Packaged Resources To Advance General Chinese
+Sackett, D. L.; Rosenberg, W. M.; Gray, J. M.; Haynes, Embedding. arXiv:2309.07597.
+
+R. B.; and Richardson, W. S. 1996. Evidence based Xiong, G.; Jin, Q.; Lu, Z.; and Zhang, A. 2024a. Bench-
+medicine: what it is and what it isn’t. marking retrieval-augmented generation for medicine. In
+Savage, T.; Nayak, A.; Gallo, R.; Rangan, E.; and Chen, J. H. Findings of the Association for Computational Linguistics
+2024. Diagnostic reasoning prompts reveal the potential for ACL 2024, 6233-6251.
+
+large language model interpretability in medicine. NPJ Dig- Xiong, G.; Jin, Q.; Wang, X.; Zhang, M.; Lu, Z.; and Zhang,
+ital Medicine, 7(1): 20. A. 2024b. Improving retrieval-augmented generation in
+Sayers, E. W.; Beck, J.; Bolton, E. E.; Bourexis, D.; Bris- medicine with iterative follow-up questions. In Biocomput-
+ter, J. R.; Canese, K.; Comeau, D. C.; Funk, K.; Kim, S.; ing 2025: Proceedings of the Pacific Symposium, 199-214.
+Klimke, W.; et al. 2021. Database resources of the na- World Scientific.
+
+tional center for biotechnology information. Nucleic acids Yang, A.; Yang, B.; Zhang, B.; Hui, B.; Zheng, B.; Yu, B.;
+research, 49(D1): D10-D17. Li, C.; Liu, D.; Huang, F.; Wei, H.; et al. 2024. Qwen?2. 5
+Shao, Z.; Wang, P.; Zhu, Q.; Xu, R.; Song, J.; Bi, X.; Zhang, Technical Report. arXiv preprint arXiv:2412.15115.
+
+H.; Zhang, M.; Li, Y.; Wu, Y.; et al. 2024. Deepseekmath: Yoran, O.; Wolfson, T.; Ram, O.; and Berant, J. 2023. Mak-
+Pushing the limits of mathematical reasoning in open lan- ing retrieval-augmented language models robust to irrele-
+guage models. arXiv preprint arXiv:2402.03300. vant context. arXiv preprint arXiv:2310.01558.
+
+Sheng, G.; Zhang, C.; Ye, Z.; Wu, X.; Zhang, W.; Zhang, Zeng, G.; Yang, W.; Ju, Z.; Yang, Y.; Wang, S.; Zhang, R.;
+R.; Peng, Y.; Lin, H.; and Wu, C. 2025. Hybridflow: A Zhou, M.; Zeng, J.; Dong, X.; Zhang, R.; et al. 2020. Med-
+flexible and efficient rlhf framework. In Proceedings of Dialog: Large-scale medical dialogue datasets. In Proceed-
+the Twentieth European Conference on Computer Systems, ings of the 2020 conference on empirical methods in natural
+1279-1297. language processing (EMNLP), 9241-9250.
+
+
+--- Page 10 ---
+
+Zhang, K.; Zeng, S.; Hua, E.; Ding, N.; Chen, Z.-R.; Ma, data filtered out from MedQA and MedMCQA were classi-
+Z.; Li, H.; Cui, G.; Qi, B.; Zhu, X.; et al. 2024. Ultra- fied as overly simplistic, whereas in the case of RareArena,
+medical: Building specialized generalists in biomedicine. most excluded samples were considered overly complex.
+Advances in Neural Information Processing Systems, 37:
+26045-26081. Knowledge Corpus Details
+We have established a comprehensive medical knowledge
+. base to support document retrieval during training and eval-
+Appendix uation, which comprises four representative types of re-
+sources: academic papers, entries, books, and guidelines.
+Data Preprocessing Details ¢ Academic Papers Academic literature provide valu-
+Training Datasets Details able insights drawn from recent scientific research, offer-
+; _ ing a strong theoretical basis for guiding clinical prac-
+We have collected the following datasets for our training, tice and public health policies. We sourced the pub-
+covering both closed-set exam questions and rare disease di- licly available academic articles from PubMed Central
+agnostic scenarios. (PMC) (Roberts 2001), and processed them following the
+
+* MedQA-USMLE and MedQA-MCMLE (Jin et al. pipeline of Hakala et al. (2016).
+
+2020): The MedQA dataset is sourced from the profes- ¢ Entries Medical entries serve as a rich source of mul-
+sional medical board exams, including content in En- tidimensional healthcare information, spanning clinical
+glish, simplified Chinese, and traditional Chinese. In this applications to biomedical research. We compile such
+study, we use the subsets from the US and Mainland entries by extracting and curating health-related con-
+China. MedQA-USMLE is based on 18 English medical tent from the Wikipedia dataset (Wikimedia Foundation
+textbooks, while MedQA-MCMLE is constructed from 2024) to build the entries. The final collection comprises
+33 simplified Chinese textbooks. approximately 470k documents.
+
+* MedMCQA (Pal, Umapathi, and Sankarasubbu 2022): ¢ Books Medical textbooks are key sources of structured
+This dataset is a large-scale collection of multiple- and validated medical knowledge, valuable for tackling
+choice questions covering 2,400 health-related topics complex clinical problems or staying updated on specific
+and 21 medical disciplines. The content spans medicine diseases. We compiled materials from the NCBI Book-
+(such as endocrinology, infectious diseases, haematol- shelf (Sayers et al. 2021), and following the handling
+ogy, and respiratory medicine), surgery (including gen- strategy of Hakala et al. (2016), finally obtained 10k doc-
+eral surgery, endocrinological surgery, breast and vascu- uments for knowledge retrieval.
+lar surgery), as well as radiology and biochemistry. The * Guidelines Clinical practice guidelines play a criti-
+questions are derived from both real-world clinical sce- cal role in Evidence-Based Medicine (EBM) by provid-
+narios and simulated examinations. ing evidence-informed recommendations to guide clini-
+
+* RareArena (THUMedInfo 2025): This dataset is a com- cal decision-making. We incorporated the guideline data
+prehensive dataset curated for rare disease diagnosis, en- when training the MEDITRON series (Chen et al. 2023),
+compassing nearly 50,000 patient cases that cover more and curated approximately 10k documents.
+than 4,000 diseases. It features 2 task settings, Rare Dis- The statistical information on volume and token number
+ease Screening (RDS) where patient records are truncated across different knowledge resources can be found in Ta-
+before any diagnostic tests are performed, and Rare Dis- ble 1. For retrieval, we segment the texts into chunks con-
+ease Confirmation (RDC) where cases are truncated at taining no more than 1,000 tokens. The segmentation prior-
+the point of final diagnosis. itizes natural divisions such as chapters or sections. When
+Th ‘ vy: ee such structural boundaries are unavailable or exceed the
+
+e data construction pipeline can be found in Figure 3. wo :
+After data filtering, we constructed a final training dataset token limit, we apply truncation based on the predefined
+or & : & threshold to ensure consistency in input length.
+consisting of 2,140 questions from MedQA-USMLE, 1,204 y P 8
+from MedQA-MCMLE, 6,748 from MedMCQA, and 429 . . . .
+from RareArena. The training process was structured into 3 Progressive Reinforcement Learning Details
+stages, with each stage trained for one full epoch. Here, we first introduce the core concepts and methodolo-
+For the MedQA-USMLE and MedQA-MCMLE datasets, gies employed in our progressive reinforcement learning
+the original data is divided into three parts: train, dev, and process, and then provide an elaboration on the algorithms
+test. We utilize the training part for RL, and merge the dev and procedural significance across the different stages.
+and test subsets for evaluation. Since the test split of MedM- ek
+CQA does not include ground truth labels, we use the train- Preliminaries
+ing set for RL and reserve the development set for evalua- Group Relative Policy Optimization (GRPO) During
+tion purposes. As for RareArena, we manually partitioned the training process, we utilize the Group Relative Policy
+the RareArena-RDC task set into training and test sets at an Optimization (GRPO) as the RL algorithm. For each ques-
+8:2 ratio using random sampling. It is worth noting that due tion x ~ PD, the behavior policy 79,,, generates a set of G
+to the distribution of question complexity, the majority of candidate completions tT = {y;}@_, ~ 7o,4(-|”), with each
+
+
+--- Page 11 ---
+
+Content Suitability | Reasoning A 13-year-old boy is brought to the emergency room by his mother for a generalized tonic-clonic
+Judgment ‘Complexity Filtering Too Difficult® seizure that occurred while attending a laser light show. The patient’s mother reports that he has been otherwise healthy
+but states, “he often daydreams”. Over the past several months, he has reported recurrent episodes of jerky movernents
+involving his fingers and arms. These episodes usually occurred shortly after waking up in the morning. He has not lost
+consciousness during these episodes. Which of the following is the most appropriate treatment for this patient's condition?
+o A. Carbamazepine B. Diazepam C. Ethosuximide D. Phenytoin E. Valproate Open-Ended
+3 E izath
+3 © mu Standardization
+2 Filtered [Open-Ended Question] A 13-year-old boy is brought to the emergency room by his mother for a generalized tonic-clonic
+= Training Data seizure that occurred while attending a laser light show. The patient’s mother reports that he has been otherwise healthy
+RS but states, “he often daydreams”. Over the past several months, he has reported recurrent episodes of jerky movements
+s involving his fingers and arms. These episodes usually occurred shortly after waking up in the morning. He has not lost
+5 consciousness during these episodes. What is the most appropriate treatment for this patient's condition?
+3 FRESE Vaiproate !  |Reasoning Process
+< Reasoning Process 1\The patient’s clinical features—morning| | (Reasoning Process 2 Reasoning Process n' Generation
+ro myoclonic jerks, a generalized tonic-clonic seizure triggered by | |........ see tee ne
+Q photic stimulation, and history of "daydreaming'—are classic
+= Too Easy® for juvenile myoclonic epilepsy (JME). Valproate is a first-line (austen) Gian
+Ss therapy for JME due to its efficacy in controlling myoclonic, ab- Lamotrigine Valproate
+< sence, and generalized tonic-clonic seizures... Score:5 . .
+g Answer 1)The most appropriate treatment is vaiproate\// x Score: 3 VA Score: 5 Knowledge Graph
+= (13-year-old boy, has symptom, tonic-clonic seizure, 0) se Extraction
+. of (13-year-old boy, likely has, JME, 0)... ... of see ae
+Unsuitable for RL @ (valproate, is treatment for, JME, 1)... ... oe
+Data Selection Construction of Reference Reasoning Trajectories
+Figure 3: The pipeline of training data construction for Med-R°.
+KL
+Reference Model Eo
+QL spot wordy Group
+y ¥ 3 Computation 3
+Question eee Reward Model ae eon coe
+Rollout Reward Advantage
+Figure 4: The Group Relative Policy Optimization (GRPO) pipeline.
+response receiving a scalar reward r;. The training objective Kullback—Leibler (KL) loss coefficient (Hall 1987). To en-
+is to optimize the policy 7g based on reference policy 79,,,: sure stability during policy updates, a KL divergence penalty
+G is included in the optimization objective, preventing signifi-
+1 _, To(yile) ¢ cant deviations from the original reference policy models.
+T (8) = Baw o,{y JS y~mag(le) G 2 lmnin(—— (yay a a
+i=l Bora Ya Jaccard Similarity Jaccard similarity (Jaccard 1912) is a
+(y;|2) . widely used measure of similarity between two sets, quanti-
+. 76 Yi x A D . . . .
+clip( (yin) 1—€,1+€)A;) — BDL (76||76,.:)] fying the degree of overlap by comparing shared and distinct
+Boa Yi elements. It is defined as the ratio of the size of the intersec-
+(12) . ; ; ;
+tion to the size of the union of the two sets. Formally, given
+where the group-normalized advantage A, of the i-th rollout two sets A and B, the Jaccard similarity is expressed as:
+in current group is defined as: ANB
+Jaccard(A, B) = woe (13)
+. rm- mean({r;}@,) | |
+Ai = std({r;}@,) where |A ™ B| denotes the number of elements common to
+Jig=4 both sets, and | AU B| represents the total number of distinct
+The illustration of GRPO is shown in Figure 4. Here € is elements in either set. The Jaccard similarity ranges from
+the clipping ratio, a hyperparameter controlling the tolerance 0, indicating no overlap, to 1, indicating identical sets. It is
+for policy deviation, and the clip function clips the impor- applicable to sets containing either numerical values or cat-
+tance weight r; to the interval [1 — €, 1 + €], which stabilizes egorical strings. Here we use Jaccard similarity to compute
+training and mitigating the risk of policy collapse. ( is the the reward signals during Stage | of deliberative reasoner
+
+
+--- Page 12 ---
+
+Algorithm 1: Evaluation for the Logical Structure of the
+2 High Meta-Analyses i tematic Reviews Reasoning Process (details for Equation (7))
+is .
+& Rand omized Controlled Trials Input: Model-generated reasoning paths Pyen, reference
+= reasoning trajectories Pref
+rx} | Cohort Studies Parameter: Maximize path length kK for comparison
+> Output: Logical score of the reasoning process Riogical
+> © Case-Control Studies 1: Initialize logical score: Riogical <— 0
+= 2: Compute maximize path length:
+S Individual Case Series or Case Reports
+fey Kk © min{ max |p|, max |p|}
+Low Background Information or Expert Opinion PEP en PEPret
+3: for each reference trajectory Pu € Pret do
+Figure 5: Illustration of Hierarchy of Evidence in EBM. 4: Initialize the logical score for Pa) : Score < 0
+5: for 7 =1,2,...,K do
+6: Filter model paths of length 7:
+cultivation, specifically for quantifying the overlap in rea-
+soning paths used to derive Retatistic and Riogical- PY + {p © Pgen | |p| = 7}
+Evidence-Based Medicine (EBM) involves the integra- i i :
+tion of individual clinical expertise with the most reli- Prot ye {(p¢ Pas | lp] = at
+able external clinical evidence derived from systematic re- 7: if PY # ( then
+search (Sackett et al. 1996). To identify the “best evidence’, 8: Compute Jaccard similarity for the j-hop paths
+researchers evaluate trial quality using grading systems that and update weighted score:
+assess the likelihood of bias and the reliability of results.
+The hierarchy of evidence informs clinical decision-making ) a: IP dA PY? |
+by prioritizing evidence according to its methodological Score’’ < Score’ + j pli), pQ))
+strength, as illustrated in Figure 5. Its structure is typically [Pree U Paen|
+organized from the highest to the lowest level of reliabil- 9: end if
+ity, which we utilized to inform the quality scoring reward 10: end for
+(Rquatity) for the retrieved documents in Equation (10). 11: Normalize the logical score for pi).
+¢ Systematic Reviews/Meta-Analyses (SR/MA) represent 1 9
+the highest level of evidence, evaluating the consistency Score“) = Score -— +— = Score“). ——~__
+and risk of bias across medical studies to summarize the an j K(K + 1)
+overall effect of interventions or exposures. ;
+* Randomized Controlled Trials (RCTs) constitute the 12: Update Riogicar — max{ Riogical, Score}
+second-highest level of evidence, designed to minimize 13: end for
+confounding biases and assess causal relationships be- 14: return Riogical
+tween interventions and outcomes across study groups. Te
+¢ Cohort Studies represent the third-highest level of evi-
+dence. While both retrospective and prospective designs Reward Modeling Details
+are subject to bias, prospective studies are generally more We provide an in-depth description of the reward com-
+reliable, offering better control over information bias. putation process associated with progressive reinforcement
+¢ Case-Control Studies rank as the fourth-highest level of learning described in the main content. As shown in the right
+evidence. They aim to identify associations between out- part of Figure 6, during the verification phase of each train-
+comes and past exposures but are prone to selection, in- ing stage, we first parse the model’s natural language output
+formation, and confounding biases, which limit their reli- into a structured knowledge graph representation in the form
+ability compared to cohort studies. of Equation (1). The stage-specific reward metric is then ap-
+* Individual Case Series and Case Reports are of the plied to assess both the natural language response and the
+second-lowest level, essentially consisting of uncontrolled structural and logical accuracy of the reasoning trajectory
+studies without a comparison group. The lack of controls encoded in the knowledge graph.
+limits the ability to establish reliable associations between Stage 1: Reasoner Cultivation The primary objective of
+interventions, exposures, or risk factors and outcomes. : : . : ,
+ad : : this stage is twofold: (1) to regularize the model’s output for-
+° Expert Opinion is considered the lowest level of evidence mat, ensuring structured and consistent responses, and (2) to
+due to its inherent susceptibility to bias. Experts may fa- cultivate its ability to perform logical reasoning when an-
+vor information that supports existing beliefs, leading to swering medical questions. In addition, by incorporating re-
+confirmation bias, conflicts of interest, and a narrow focus ward signals based on the number of knowledge retrievals,
+that overlooks broader contextual factors. we encourage the model to make increased use of exter-
+
+
+--- Page 13 ---
+
+Stage 1: Reasoner Cultivation Stage 2: Retriever Awakening Three hours after undergoing open proctocolectomy for ulcerative colitis, a
+Rreasoning = Rsemantic + Retatistic + Rogical Reetrieval = Rauatity + Roreadth poneabiteal a oe Cee eee tae Socios $5)
+nf a ] in, ivatic 12/min, and blood is 110/72 Hg......
+Ooo0 @.  [o2loz)oa| .. [os| v Raquality =— IG — (e; _ 1)) examination shows a 20 cm vertical midline incision and an ileostomy in the
+- ° D “ right lower quadrant. There is no fluid drainage from the surgical wounds.
+LJ Oo | Oo (o2lo1/o4) .. |o2| N » Quality jai, The urinary catheter flushes easily and is without obstruction. Serum studies
+show a blood urea nitrogen of 30 mg/dL and tinine of 1.3 mg/dL. What
+BD B B B Embedding (05[0a/02| .. [oa | @ e 1 Gg Y . I(s = 1) is the most appropriate next step in managing this patients condition? "
+HaHa wa] 03/02). |o2) © Roreadth = Tel Ss: sj = —, Question
+Semantic | Rsemantic = Max, cos (o(r%), $(re)) Breadth| j=l IS|
+ig[LN] Retrieval Effectiveness <think>Considering the patient's postoperative Status after an open procto-
+colectomy for ulcerative colitis, it is essential to evaluate the potential causes
+oo < [| of the abdominal pain located in the periumbilical and hypogastric regions.
+5 A ; eae aot . The low uri tput since th id of th dure indicate ible oligur-
+statistic = max 7 + (i), pi and creatinine as mar! ers of renal function ‘psearc! ased...  \electrolytes to determine the underlying cause. The elevated blood urea nitro-
+(1,.] 10) (i) hink
+es \Evce U Egen| [Lice U Leen| </think> <answer> Provide intravenous hydration </answer> gen (BUN) and creatinine may suggest renal impairment... <search>BUN
+| Statistic ae aA A R _ J1,ifthe format is correct and creatinine as markers of renal function </search><document> Serum
+Key Entity Coverage Relation Coverage ‘format = 0, if the format is incorrect ured levels and cea, are lnporcant tests for diagnosing kidney function
+> as they indicate .... </document>Based on the patient's symptoms and test
+=] K-Hop 2 K (pe? AP, (2) | Format results...</think> <answer> Provide intravenous inydration lanswer>
+Riogicat = max ———— ) > j. ei ——
+(Lesiea] ei K (Kk + 1) » J (pe? U PY| Answer: The most appropriate next step in managing this = poet ORES
+. patient's condition is to provide intravenous hydration.
+Reasoning Process Ground Truth: Administer intravenous fluids " V (patient, has symptom, oliguria, 0)
+a | 2, if letel: t (oliguria, d by, | azotemia, 0)
+answer ify V) (BUN indicates, efficiency of ronal fitration, 1)
+Reretrieval num = yy. 0, if incorrect x / (creatinine, indicates, overall health of the kidneys, 5B)
+SQ - 0,if n<od A CaREET ca
+= nswer COrrectness (patient, needs treatment, intravenous fluid administration, 0)
+Retrieval Number Stage 3: Dual-Process Collaboration G={(h,lt,s) |hEElLEL,te€E,s € B}
+Medical Knowledge Graph Extraction
+Figure 6: Detailed illustration of the reward function design during the progressive reinforcement learning of Med-R?. The
+model’s natural language outputs are first structured into knowledge graph representations. In each training stage, tailored
+reward functions assess both the textual answer and the corresponding reasoning trajectory in the format of Equation (1).
+nal medical knowledge sources, which lays the groundwork Model Method Average Retrieval Frequency
+: : eqege : Ode. ethno:
+for enhancing the model’s retrieval capabilities in the sub- Stage I Stage2 Stage 3
+sequent stage. The reward metric is composed of four as- 3578 Wlo Rretrievatnum| 0.44 0.83 0.92
+pects: format, answer correctness, reasoning process and re- Qwen2.5- WwW! Reetrieval.num | 3.67 481 4.56
+trieval number, as depicted in Figure 6. While format and —_-_— _$§|—<—
+answer corre : : :
+cthess are commonly used reward components, Table 5: Comparison of average retrieval frequency with
+we place particular emphasis on the rationale behind the de- : :
+: : : and without Ryetrieval_num in Stage 1.
+sign of rewards for reasoning process and retrieval number.
+Reasoning Process. In designing the reward function,
+we have consi i : : ot 5 arc)
+idered the following aspects be highly similar to one another due to the diversity of
+¢ Alignment with High-Quality Reasoning Trajectories: valid clinical reasoning. Therefore, in designing Equa-
+>
+We aim to guide the model’s reasoning process toward tion (5) to Equation (7), we opt to use the maximum simi-
+high-quality trajectories observed in frontier models. To larity score between the model’s reasoning process and the
+this end, our evaluation criteria incorporate semantic and reference reasoning processes, both in terms of semantics
+structural characteristics of reference reasoning paths (see and structure, rather than an average score, to ensure ro-
+Equation (4) to Equation (7)), enabling the model to learn bust and meaningful scoring.
+from expert-like inference patterns. * Flexibility and Generalization: Leveraging the strengths
+* Capturing Medical Reasoning Specifics: Medical rea- of reinforcement learning (RL), we avoid rigidly con-
+soning often requires both logical coherence and compre- straining the model’s reasoning trajectory. Instead, we en-
+hensive coverage of relevant entities and their relation- courage it to approximate high-quality reasoning behav-
+ships. Unlike mathematical or programming tasks that em- iors while allowing room for variation and creativity. This
+phasize rigid logical order, medical reasoning allows for flexible guidance enhances the model’s generalization ca-
+multiple valid pathways, provided they are semantically pability when faced with novel or out-of-distribution rea-
+rich and clinically grounded (Wu et al. 2023; Gao et al. soning tasks. To support this goal, we design a multi-
+2025). Accordingly, we introduce: (1) a structural coher- dimensional reward scheme that captures various aspects
+ence score based on the sequential logic of the reasoning of medical logic reasoning, as depicted in Equation (4).
+path, as outlined in Equation (7), and (2) a completeness As detailed in Algorithm 1, we have also provided the al-
+score evaluating the coverage of key entities and relations, orithm implementation of Riogical defined in Equation (7).
+as shown in Equation (6) ° ¢ ‘att :
+q . Retrieval Number. — One of the key motivations for in-
+* Robust Evaluation via Maximum Similarity Matching: corporating this reward in Stage | is to lay the foundation
+For each training instance, we provide multiple reference for enhancing the model’s retrieval capabilities in the subse-
+reasoning trajectories. However, these references may not quent stage. Specifically, only when the model develops the
+
+
+--- Page 14 ---
+
+habit of querying external knowledge upon encountering un- to assess Med-R®’s relative advantage. Specifically, the
+familiar concepts during reasoning, can there be meaningful backbone model of UltraMedical3.1-8B is LLaMA3.1-
+room for optimizing its retrieval behavior. Our experiments 8B-Instruct, which facilitates a more intuitive comparison.
+also confirm this intuition: without such a reward signal in * Open-Sourced Medical Reasoning Models: Inspired by
+Stage 1, certain models tend to rely solely on internal knowl- the breakthrough of OpenAI ol, these models are capa-
+edge and cease performing external retrievals altogether. As ble of complex medical reasoning, applying o1-like meth-
+observed in Table 5, using Qwen2.5-7B as an example, the ods to the medical field. We have selected HuatuoGPT-
+average number of knowledge retrievals during logical rea- o1-8B (Chen et al. 2024a), MedS°-8B (Jiang et al. 2025)
+soning drops significantly when the retrieval count compo- and AlphaMed-8B (Liu et al. 2025a) as competitors.
+nent is omitted from the reward function. HuatuoGPT-01-8B improved models capabilities in med-
+Stage 2: Retriever Awakening The principal objective of ical reasoning by performing a two-stage SFT + RL train-
+this stage is to further enhance the model’s ability to re- ing on verifiable medical problems. MedS”-8B equips the
+trieve external knowledge built upon the medical reason- model with a self-evolution paradigm and proposes PRM-
+ing capabilities developed in Stage 1. Specifically, we aim guided Vote-Sum (P-VS) strategy during inference to en-
+to improve the model’s capacity to generate search queries hance long-chain reasoning capabilities in the medical do-
+such that the resulting documents (J) exhibit higher se- main. AlphaMed-8B is trained exclusively on rule-based
+mantic relevance, and (2) contribute more meaningfully to RL. The backbone models of these competitors are all
+the logical reasoning process. In other words, this stage LLaMA-3.1-8B-Instruct, allowing for a more direct com-
+focuses on adaptively optimizing the content within the parison with LLaMA-3.1-8B-Instruct + Med-R®.
+<search>...</search> tags. * Naive Response: It refers to the case where the model di-
+The core reward metric in this phase is the retrieval effec- rectly generates answers to the medical questions without
+tiveness, which evaluates both the quality of the retrieved training or retrieval from external knowledge bases.
+documents and their influence within the model’s overall ¢ Supervised Fine-Tuning (SFT): The model undergoes
+reasoning trajectory, as outlined in Equation (9). For doc- supervised fine-tuning (SFT) using our constructed train-
+ument quality assessment, we adopt the Evidence-Based ing dataset, with reasoning trajectories produced by fron-
+Medicine (EBM) grading framework illustrated in Figure 5 tier models (e.g., DeepSeek-V3), enriched with knowl-
+to classify the retrieved documents into different quality lev- edge obtained through retrieval mechanisms. During train-
+els. To evaluate the contribution of these retrieved docu- ing, retrieved documents are with masked losses.
+ments to the model’s reasoning trajectory, we compute the * General Retrieval-Augmented Reasoning RL: We also
+ratio of retrieved knowledge graph triples relative to the to- compare our method with approaches that enhance
+tal number of triples in the reasoning trajectory, as defined in the model’s retrieval-augmented reasoning capabilities
+Equation (11). This metric reflects the extent to which exter- through RL in the general domain. R1-Searcher (Song
+nal knowledge contributes to the logical inference process. et al. 2025) is a two-stage outcome-based RL method de-
+Stage 3: Dual-Process Collaboration After the previous signed to enhance the model’s capabilities of searching
+two stages which have separately enhanced the model’s rea- and integrating additional knowledge during the reason-
+soning and retrieval cabilities, in the final training stage, the ing process. To ensure a more equitable comparison, we
+model’s end-to-end (E2E) performance on medical problem- replaced the training dataset and the knowledge corpus for
+solving is directly optimized based on the accuracy of the retrieval with one that matches our experimental setup. In
+final answers. As a result, the reward function in this stage the first stage, we trained the model for | epoch, and in the
+consists solely of format and answer correctness. second stage for 2 epochs, with a total number of training
+samples matching that of Med-R®. ReSearch (Chen et al.
+Experiment Details 2025) considers search operations as integral components
+. of the reasoning chain, and trains models to reason with
+Baselines search via RL without using any supervised data on rea-
+In this section, we provide a comprehensive overview of the soning steps. Here we also train the model for 3 epochs
+various models as well as methods that serve as baselines in to align with our experimental configuration. The RL pro-
+our comparative analysis. cess is implemented by the Group Relative Policy Opti-
+* Close-Sourced Models: Close-sourced models are re- mization (GRPO) (Shao et al. 2024) algorithm.
+garded as embodying the current peak performance across We evaluate these baselines under different inference
+various capabilities of LLMs, and serve as the strongest methods, including Naive (direct generation), CoT (pure
+baselines. Here we have selected GPT-40-mini (Hurst reasoning), RAG (pure retrieval), and CoT-RAG (interleaved
+et al. 2024) for comparison. reasoning and retrieval), as detailed in Table 6.
+¢ Open-Sourced Medical-Specific Models: These models
+refer to domain-specific models that were trained specifi- Benchmarks
+cally on medical data. We have selected MEDITRON-7B, To evaluate the performance of our proposed Med-
+MEDITRON-70B (Chen et al. 2023), UltraMedical3-8B, R? in both standard and real-world clinical scenarios
+and UltraMedical3.1-8B (Zhang et al. 2024) to represent of the medical domain, we have selected seven med-
+the open-sourced medical-specific models for comparison ical datasets, including the MedQA-USMLE, MedQA-
+
+
+--- Page 15 ---
+
+MCMLE (Jin et al. 2020), MedMCQA (Pal, Umapathi, and Within-Domain eee ae. sen nsPonse
+Sankarasubbu 2022), MMLU-Med (Hendrycks et al. 2021), Out-of Domain MedMCQA = eenieeas = Raceoerer
+RareArena (THUMedInfo 2025), MedXpertQA (Alonso, — Med R?
+Oronoz, and Agerri 2024) and NEJMQA (Katz et al. 2024).
+Among these benchmarks, MedQA series, MedMCQA and RareArena-RDC, MedQA-MCMLE
+MMLU-Med are standard question-answering tasks, while A S\
+RareArena, MedXpertQA and NEJMQA are related to real- Uj
+world clinical scenarios. We employ LLM-as-Judge based
+on the frontier model DeepSeek-V3 (Liu et al. 2024) to as- | \
+sess the correctness of the responses, then compute the ac- \\ MedQA-USMLE
+curacy scores as our evaluation metric. RareArefe-RDS = 6080
+We have introduced within-domain tasks in the section of ]
+training datasets details, where we use the training subsets i
+for the RL process and test subsets (if no ground-truth labels I
+provided, we use the development subsets) for in-domain Le ——]
+evaluation. In the following, we give descriptions of the re- MMLU-Med MedXpertQA
+maining out-of domain benchmarks:
+¢ MMLU-Med (Hendrycks et al. 2021): The MMLU-Med NEJMQA
+task is composed of six medical domains, anatomy, clin-
+ical knowledge, professional medicine, human genetics, Figure 7: Comparison of Med-R® with baselines that utilize
+college medicine, and college biology, which is extracted the LLaMA3.1-8B-Instruct as the backbone model.
+from the MMLU benchmark.
+¢ NEJMQA (Katz et al. 2024): The NEJMQA dataset is
+constructed from clinical case challenges sourced from phase. Specifically, R1-Searcher, ReSearch, and Med-R° all
+The Lancet and the New England Journal of Medicine, employ RL-based training approaches. As shown in Table 6,
+which is centered on diagnostic reasoning using patient on the in-domain benchmarks, the performance gap between
+symptom information. SFT and R1-Searcher/ReSearch is relatively small, with SFT
+* MedXpertQA (Alonso, Oronoz, and Agerri 2024): underperforming by 0.59% and 5.39%, respectively. How-
+The MedXpertQA dataset incorporates specialty-specific ever, on out-of-domain tasks, p articularly on MMLU-Med,
+evaluations and realistic clinical case questions derived the gap becomes much larger, with SFT lagging behind
+from authentic medical practice. Here we utilize the text R1-Searcher and ReSearch by 9.21% and 10.07%, Tespec-
+part of this benchmark. tively. A primary reason for this discrepancy lies in the na-
+ture of SFT as a strongly supervised learning paradigm. Un-
+More Experimental Observations der this setting, the model tends to learn by directly imi-
+The performance of each baseline reported in Table 2 in ine problem solving patcrn rather than truly earning ‘he
+the main content represents the best result achieved across underlying reasoning process. Consequently, its generaliza-
+four different inference strategies. The cmprehensive scores tion capability is notably limited when faced with novel or
+? f methods that sh h backb i lof the training data includes retrieval-augmented reasoning tra-
+: ee a ? which mitigates the inherent limitations of SFT to some ex-
+we from on several addaition observations and insights de- tent. Nevertheless, a clear performance gap still remains.
+rived from our experiments as follows:
+Retrieval and reasoning capabilities need to be culti- Ablation Study and Analysis Details
+vated. When employing the CoT-RAG inference method, the We report the original perf f th del
+performance improvements across different models relative Port mae orginal perrormance scores oF the moce's on
+to the naive responses vary significantly. Smaller-scale mod- each benchmark during training stage ablation as well as re-
+els such as Qwen?2.5-7B and LLaMA3.1-8B-Instruct exhibit ward design ablation, as depicted in Table 7 and Table 8.
+only modest gains under the CoT-RAG setup, with average Environment and Hardware Configurations
+improvements of just 4.11% and 6.81%, respectively, in the : - : : :
+absence of targeted training. In contrast, the larger Qwen?2.5- The experiment utilizes the following core libraries and
+14B model demonstrates a stronger adaptation to CoT-RAG, their respective versions: torch=2.5.1, CUDA_version=12.4,
+achieving a more substantial improvement of 18.43%. This ray=2.40.0, — vilm=0.7.3, — verl=0.2.0.post2, — transfomr-
+indicates that lightweight models, stand to benefit greatly ers=4.49.0, datasets=3.3.2, tqdm=4.40.0, flash-attn=2.5.8,
+from dedicated training aimed at enhancing their retrieval- pyarrow=19.0.1, tensordict=0.5.0. Experiments are con-
+augmented reasoning capabilities in the medical domain. ducted using 32 NVIDIA GPUs with 96GB memory.
+RL boosts generalizable medical performances. We .
+compare the performance of models after SFT and RL Case Studies
+
+
+--- Page 16 ---
+
+Model Training | Inference |MedQA-US MedQA-MC MedMCQA RA-RDC RA-RDS|MMLU-Med NEJMQA MedXpert Ay
+Method Method In-Domain (ID) Out-of-Domain (OOD) 8.
+Close-Sourced Models
+
+Naive 72.31 67.28 66.00 50.67 38.75 74.60 55.08 17.84 |55.32
+
+GPT-4o-mini CoT 75.61 68.32 69.58 48.97 42.35 80.63 57.40 20.74 |57.95
+
+~omn ~ RAG 73.30 68.18 66.82 51.25 3947) 77.11 54.89 15.63 |55.83
+
+CoT-RAG| 74.45 69.25 70.52 52.03 43.24 80.96 57.87 21.58 |58.74
+
+Open-Sourced Medical-Specific Models
+
+MEDITRON-7B - CoT-RAG| 48.67 44.28 46.78 37.97 21.60 50.12 33.40 16.55 [37.42
+
+UltraMedical3-8B - CoT-RAG| 61.57 52.42 61.82 40.76 28.54 72.52 45.31 10.82 |46.72
+
+UltraMedical3.1-8B - CoT-RAG| 66.86 58.45 65.73 43.83 32.39 75.86 50.66 12.08 {50.73
+
+MEDITRON-70B - CoT-RAG| 60.60 55.64 56.48 75.16 48.85 70.53 65.33 18.72 |56.41
+
+Open-Sourced Medical Reasoning Models
+
+Naive 62.67 62.78 65.45 45.86 36.02 70.80 51.57 13.39 [51.07
+
+HuatuoGPT-01-8B CoT 67.84 65.40 70.88 46.42 39.15 74.36 51.03 14.17 |53.66
+
+mannose SO ~ RAG 64.52 63.75 66.76 48.50 38.94 | 7218 50.63 13.97 |52.41
+
+CoT-RAG'| 66.97 66.15 72.45 49.76 41.59 74.52 51.60 14.34 |54.67
+
+Naive 58.14 60.24 60.20 44.60 33.79 72.12 53.61 12.01 [49.34
+
+CoT 69.11 65.23 61.35 43.79 34.08 74.36 52.17 13.64 {51.72
+
+MedS?-8B - RAG 63.67 62.68 62.51 47.83 37.14 70.50 52.97 12.23 |52.44
+
+CoT-RAG| 71.59 66.84 64.95 45.17 34.63 75.38 52.89 11.76 52.90
+
+P-vs°t 73.51 69.63 65.47 46.85 37.72 78.75 55.09 12.50 |54.94
+
+Naive 59.30 62.50 62.85 40.88 35.36 70.63 50.72 23.67 |50.74
+
+AlphaMed-8B CoT 63.82 64.49 65.85 41.57 = 37.38 72.26 50.93 25.43 |52.72
+
+paaeee ~ RAG 62.70 64.17 63.96 41.83 38.22 | 71.85 51.04 20.75 |51.82
+
+CoT-RAG'| 64.06 64.98 66.43 43.55 38.14 71.44 51.48 22.01 |52.76
+
+Open-Sourced Base / Instruct Models
+
+Naive 31.16 41.45 30.02 41.85 22.16 37.12 50.41 14.90 |33.63
+
+~ CoT-RAG 33.80 41.69 35.75 43.12 25.99 42.83 52.97 11.24 35.92
+
+| SFT | CoT-RAG | 61.39 62.10 63.27 44.83 35.20 | 63.08 49.64 12.72 [49.03
+
+LLaMA3.1-8B |R1-Searcher+| CoT-RAG | 60.28 60.92 63.54 42.87 38.65 | 70.19 53.81 15.73 [50.75
+
+-Instruct | ReSearch* | CoT-RAG | 62.76 66.03 66.25 46.35 38.44 | 71.27 53.26 14.65 [52.38
+
+Naive 67.17 62.35 71.06 52.06 41.20 T4.AS 56.00 12.29 [54.54
+
+Med-R®? CoT 69.43 65.58 73.78 52.63 43.87 76.84 56.39 14.76 |56.66
+
+ec RAG 70.09 67.56 74.80 55.00 45.52 76.25 58.10 13.94 57.66
+
+CoT-RAG'| 75.91 75.95 75.89 57.34 47.16 79.07 60.60 16.48 |61.05
+
+Naive 22.58 39.14 28.77 32.17 23.10 44.45 41.48 11.59 |30.41
+
+~ CoT-RAG| = 27.45 37.33 28.21 30.80 24.85 48.16 45.52 10.97 31.66
+
+| SFT | CoT-RAG | 52.56 50.04 57.90 53.45 34.67 | 56.94 48.23 11.28 [45.63
+
+|R1-Searcher+| CoT-RAG | 56.78 49.70 58.35 53.69 33.27 | 66.81 52.98 12.55 [48.02
+
+Qwen2?.5-7B | ReSearcht |CoT-RAG| 6247 60.24 63.11. 55.95 34.68 | 70.29 52.30 —:12.67_|51.46
+
+Naive 60.82 55.60 62.28 59.98 37.56 69.72 54.09 12.22 [51.53
+
+Med-R®? CoT 64.48 62.28 63.74 61.05 38.09 73.73 52.57 13.85 |53.72
+
+ec RAG 65.99 64.83 66.18 60.86 42.49 71.04 55.92 12.78 {55.01
+
+CoT-RAG') 68.64 67.53 68.97 63.02 45.76 75.81 58.54 14.98 |57.91
+
+_ Naive 50.01 50.70 42.85 43.17 26.58 71.60 45.63 11.06 42.70
+
+CoT-RAG| 56.83 58.75 52.67 61.26 44.39 73.48 46.02 11.14 |50.57
+
+| SFT | CoT-RAG | 68.85 70.22 70.15 75.27 52.82 | 75.81 47.08 11.54 [58.97
+
+|Rl-Searcher+|CoT-RAG| 69.20 71.75 68.45 76.32 54.05 | 77.69 52.08 12.65 |60.27
+
+Qwen2.5-I4B | ReSearch« |CoT-RAG| 69.52 74.05 72.20. 75.67 53.54 | 80.25 50.65 13.10 [61.12
+
+Naive 72.98 73.40 71.78 78.80 55.45 78.87 55.35 13.67 |62.54
+
+Med-R? CoT 72.30 74.82 70.44 76.95 56.37 83.67 59.81 15.33 |63.71
+
+ec RAG 76.58 77.75 73.28 78.36 = 57.11 81.49 56.64 14.01 |/64.40
+
+CoT-RAG'| 78.01 80.59 75.42 77.94 58.15 85.33 62.40 15.69 |66.69
+Table 6: Comprehensive comparison of Med-R® with baselines, where we have provided the inference strategy for each com-
+petitor. Here we have selected the highest-performing one (marked with ') to represent the optimal performance of each method,
+as summarized in Table 2. « denotes our re-implementation with the same amount of our constructed training data for a fair
+comparison. ° represents the PRM guided Vote Sum (P-VS) strategy during inference, which unlocks the full potential of
+
+MedS?-8B (Jiang et al. 2025). The best and second best of each model are in bold and underlined.
+
+
+--- Page 17 ---
+
+MedQA-US MedQA-MC MedMCQA RA-RDC RA-RDS|MMLU-Med NEJMQA MedXpert
+Order | Model eee (ID) Out-of-Domain (OOD) Avg.
+Standard Pipeline
+Qwen?2.5-7B 68.64 67.53 68.97 63.02 45.76 75.81 58.54 14.98 |57.91
+1 > 2 > 3)/LLaMA3.1-8B-Instruct] 75.91 75.95 75.89 57.34 47.16 79.07 60.60 16.48 |61.05
+Qwen?2.5-14B 78.01 80.59 75.42 77.94 58.15 85.33 62.40 15.69 |66.69
+Necessity of Progressive Training
+Qwen?2.5-7B 64.83 64.18 65.26 62.87 43.04 72.80 54.35 13.85 [55.15
+1&2 &3 |LLaMA3.1-8B-Instruct] 70.67 71.85 70.79 55.12 44.78 75.43 58.64 15.34 |57.83
+Qwen?2.5-14B 75.30 79.04 73.38 77.00 55.89 84.65 60.16 15.42 |65.11
+Effectiveness of Stage 1 (Reasoner Cultivation)
+Qwen?2.5-7B 62.92 60.96 63.78 61.57 40.05 71.12 54.87 14.14 [53.68
+2—3 |LLaMA3.1-8B-Instruct] 66.85 69.36 68.95 51.11 43.80 73.62 55.84 14.85 [55.55
+Qwen?2.5-14B 72.69 74.81 72.81 75.33 56.95 80.42 57.04 14.33 |63.05
+Effectiveness of Stage 2 (Retriever Awakening)
+Qwen?2.5-7B 65.71 63.52 66.15 60.14 40.88 71.69 53.96 13.97 |54.50
+1—3 |LLaMA3.1-8B-Instruct] 72.58 72.43 73.02 53.17 42.19 75.80 57.28 13.62 |57.51
+Qwen?2.5-14B 74.80 76.74 74.62 77.68 56.07 82.58 57.83 14.95 |64.41
+Effectiveness of Stage 3 (Dual-Process Collaboration)
+Qwen?2.5-7B 66.84 65.45 66.94 63.18 43.63 73.65 55.63 14.56 |56.24
+1—2 |LLaMA3.1-8B-Instruct} 69.73 70.67 71.56 54.28 45.14 78.23 59.32 16.80 58.22
+Qwen?2.5-14B 76.55 80.28 74.03 76.97 57.46 83.26 59.47 14.78 |65.35
+Sequential Order of Stages
+Qwen?2.5-7B 65.98 65.78 67.52 64.46 42.72 74.90 55.28 14.80 [56.43
+2 — 1 — 3)/LLaMA3.1-8B-Instruct} 71.49 73.07 73.60 53.26 45.98 77.44 60.09 15.93 |58.86
+Qwen?2.5-14B TITAS 78.57 75.59 76.54 57.72 82.91 60.75 15.16 |65.59
+Table 7: Original scores for each benchmark of the ablation study on multiple training stages and sequential order.
+Order: sequential order of Stage 1, 2, and 3. Specifically, “1 & 2 & 3” refers to a joint training configuration in which reward
+functions from all three stages are merged and optimized concurrently. The best and second best scores of each model are in
+bold and underlined. We evaluate these models under the inference strategy of CoT-RAG (interleaved reasoning and retrieval).
+Method MedQA-US MedQA-MC MedMCQA RA-RDC RA-RDS |MMLU-Med NEJMQA MedXpert A
+Tn-Domain (ID) Out-of-Domain (OOD) VE:
+Naive Response | 22.58 39.14 28.77 32.17 23.10 | 44.45 41.48 11.59 | 30.41
+Analysis of Rreasoning = Rsemantic + Rstatistic + Riogical
+w/o Rsemantic 66.47 67.19 67.25 64,33 43.68 75.04 55.36 14.86 | 56.77
+w/o Restatistic 64.06 63.34 64.80 61.28 41.53 72.47 55.91 13.72 | 54.64
+w/o Riogical 64.95 65.81 66.84 62.67 44.46 74.28 57.42 14.30 | 56.34
+Analysis Of Rretrieval = Raquatity + Roreadth
+w/o Rquality 68.18 66.07 67.35 62.46 42.79 73.82 54.73 14.67 | 56.26
+w/o Roreadth 66.35 64.84 66.92 61.70 43.58 73.40 55.34 14.06 |55.77
+Med-R® | _—-68.64 67.53 68.97 63.02 45.76 | 75.81 58.54 14.98 | 57.91
+Table 8: Original scores for each benchmark of the ablation study on reward design. w/o: removing the reward component
+from the original metric. The best and second best scores are marked in bold and underlined. We employ Qwen2.5-7B for
+experimental analysis, and evaluate the model under the inference strategy of CoT-RAG (interleaved reasoning and retrieval).
+
+
+--- Page 18 ---
+
+A 41-year-old construction worker presents to the office complaining of a progressively worsening
+breathlessness for the last 2 months. He has no other complaints. His medical history is significant for
+hypertension being treated with lisinopril-hydrochlorothiazide and gastroesophageal reflux disease
+being treated with pantoprazole. He has a 30-pack-year smoking history and drinks alcohol on the
+Question) weekends. He works mainly with insulation and drywall placing. His temperature is 37.0°C (98.6°F),
+the blood pressure is 144/78 mm Hg, the pulse is 72/min, and the respirations are 10/min. Upon
+further questioning about his employment, the patient admits that he does not regularly use a mask or
+other protective devices at work. Given his occupational exposure, smoking history, and symptoms,
+what malignancy is this patient most likely at risk for?
+Ground Truth Lung cancer
+Answer
+<think> Note that the patient is a 41-year-old construction worker who presented with a progressively worsening
+breathlessness for the last 2 months, which could be a symptom of many respiratory issues. The patient has a significant
+smoking history, which puts him at risk for lung cancer as well as other respiratory cancers. His presenting symptom of
+progressive breathlessness over the past two months raises concern for a pulmonary or pleural-based malignancy. Asbestos
+exposure is strongly linked to both lung cancer and mesothelioma. While lung cancer is more common overall, mesothelioma
+is more specifically associated with asbestos exposure. The latency period for mesothelioma is long (often decades), and
+symptoms such as dyspnea, chest pain, and cough may appear only when the disease is advanced. Considering the _~
+occupational exposure pattern, lack of protective measures, and clinical presentation, “mesothelioma” 2.8)
+should be considered a likely concern in this patient. </think><answer> Mesothelioma </answer> xX e)
+<think> Given the patient's occupational exposure to insulation and drywall materials, his significant smoking history, and
+the progressive breathlessness symptom, it is important to consider malignancies linked to these risk factors. Insulation
+work often involves exposure to asbestos, a known carcinogen associated with mesothelioma and lung cancer. Additionally,
+smoking further increases the risk of lung cancer. Breathlessness may suggest lung involvement or pleural disease.
+<search> occupational exposure asbestos-related cancers </search><document> Epidemiological studies have
+consistently demonstrated a strong association between occupational asbestos exposure and the development of lung
+cancer and mesothelioma. \n Studies have shown that workers in industries such as construction, shipbuilding, and
+asbestos mining are at a significantly higher risk of developing asbestos-related cancers. The latency period between initial
+exposure and the onset of cancer can range from 10 to 50 years, making early detection and prevention crucial. \n Meta-
+analysis of 25 studies involving over 100,000 workers exposed to asbestos revealed a significant increase in the risk of
+lung cancer. The standardized mortality ratio (SMR) for lung cancer was 2.8 (95% Cl: 2.5-3.1). These findings underscore
+the substantial health risks associated with occupational asbestos exposure. </document> The patient is at an increased
+risk for lung cancer and mesothelioma due to his occupational exposure to asbestos, significant smoking history, and the
+presence of progressive breathlessness. Asbestos exposure is strongly associated with both malignancies, particularly in
+individuals working in construction, insulation, and drywall installation without protective equipment. Smoking
+synergistically increases the risk of lung cancer in individuals exposed to asbestos. Given that the 6a
+patient has been exposed to both risk factors—smoking and asbestos—the most likely malignancy SY es wy
+he is at risk for is lung cancer. </think><answer> Lung cancer </answer> ©
+Figure 8: Case study of Med-R®.
+
+
+--- Page 19 ---
+
+Prompts 4: ; ;
+P — facilitate subsequent information retrieval. Once
+Here we present the prompts used throughout our pipeline relevant content is retrieved, the model continues
+in Med-R - Only the English version 1S presented due to its reasoning based on the retrieved information.
+LaTeX compilation issues with non-English languages. It is important to note that the content within
+P Cc Suitabili <document> search results </document>
+rompt: Content Suitability Judgment represents externally retrieved information and is
+. . . . not generated by the model itself. Therefore, this
+Please judge whether the following multiple-choice content should not be used to assess the model’s
+eae is Suita ion aaron into ‘te dust logical reasoning ability. Instead, it should be used
+en ‘ eee © whi ton 0 be converted MUS solely to evaluate the model’s capability to process
+meet te roMowmng Concanons: and integrate external information.
+1. After removing the options, the question itself re-
+mains valid, and the answer is unique and correct. Please judge the student’s thinking process and
+2. There is no ambiguity in the question and answer. SUES based on the correct answer, rate it from | to
+. . . 5 points, and explain the reason.
+3. The question must have a unique optimal answer,
+not a range or a vague value. 5 Point Answer Criteria:
+4. Questions with negative options, such as select- La. . .
+ing the option that does not meet the conditions 1. he thinking Process 1S ee seamless, and
+or the “least likely” option, are not suitable. € reasoning process Is spect © and’ cleat.
+5. In other cases, please use your logical judgment 2. The in answer Is consistent with the Cents
+va ripelee Gra SaTA swer, allowing synonyms, abbreviations, etc. 0
+the correct answer, but cannot contain incorrect
+options.
+# Question 3-4 Point Answer Criteria:
+uestion Le .
+{a } 1. The thinking process is reasonable.
+# Correct Answer 2. The final answer is consistent with the correct an-
+answer} swe swer, allowing some supplements, as long as they
+do not conflict with the correct answer, and the
+correct answer is the main one, not other mislead-
+‘misleading options} 1-2 Point Answer Criteria:
+1. The thinking process is not clear.
+2. The final answer is inconsistent with the correct
+answer or contains incorrect options.
+Output Format: . e .
+vane 3. Contains garbled characters, format errors, disor-
+| json der, and irrelevant information.
+"unique": True,
+"reason": "Because..." # Question
+} {question}
+mre
+# Student’s Answer
+Prompt: Reasoning Complexity Filtering {answer }
+You are an expert in the medical field. You will be # Correct Answer
+given a question, a student’s answer, the correct and {correct_answer}
+unique answer to the question, and other misleading
+options. Please compare the student’s answer with # Mi 9 9
+; isleading Options
+the correct answer and analyze whether the student’s {misleadin - tons}
+answer is correct. In the student’s answer, the 8-0P
+<think>...</think> tag wraps the thinking I
+process, and the <answer>...</answer> tag
+wraps the final answer. During the model’s reason- Output Format:
+ing process, uncertain parts are encapsulated using ***4so0n
+the <search>search query</search> tags to {
+
+
+--- Page 20 ---
+
+"score": XXX, </document>. The answer needs to summarize
+"reason": "..." the reasoning process and give the final answer.
+} You are required to continue your reasoning and
+rrr response in conjunction with the existing answer and
+retrieved information, ensuring that the subsequent
+ue answers you generate maintain coherence with the
+Prompt: Open-Ended Standardization previously generated answers.
+You are an expert in question reformulation within ;
+the medical field. Please convert the following # Question ;
+multiple-choice question into an open-ended ques- {reformulated_question }
+tion. Please try to keep the content of the question
+unchanged as much as possible, and modify the last # Existing Answer and Retrieved Information
+question into an open-ended inquiry, that is, modify {existing _answer} [optional]
+the original “Which of the following is’, “The most
+likely option is”, etc. The modified question should . .
+also be semantically smooth and unambiguous, and Prompt: Reasoning Process Generation
+the answer to the question should be consistent with (without Retrieval, for inference mode of CoT)
+the correct answer to the original question. The lan- . . .
+guage used in the modified question should be con- You are a medical expert, Given 2 GIRO, YOU
+sistent with the original question. should answer it by first thinking about the reason-
+ing process in the mind and then providing the final
+.. . answer. Please answer the question in the format of
+#t Original Question <think>...</think><answer>...</answer>.
+{question} That is, <think>Here is the reasoning pro-
+cess</think><answer>answer</answer>.
+# Answer You should perform thinking with decomposing,
+{answer} reflecting, brainstorming, verifying, refining, and
+revising. The answer needs to summarize the
+oo. reasoning process and give the final answer.
+Output Format: # Question
+; {reformulated_question}
+***4son
+{
+"question": "..." Prompt: Answer Generation
+} (without Retrieval, for inference mode of Naive)
+mre
+You are a medical expert, please provide answer for
+the following question.
+Prompt: Reasoning Process Generation (with Re-
+trieval, for training data construction, rollout in ,
+Med-R°, and inference mode of CoT-RAG) # Question .
+{reformulated_question }
+You are a medical expert. Given a question, you
+should answer it by first thinking about the reason- Prompt: Answer Generation
+ing process in the mind and then providing the final (with Retrieval, for inference mode of RAG)
+answer. Please answer the question in the format of
+<think>...</think><answer>...</answer>. You are a medical expert. Given the following ques-
+That is, <think>Here is the reasoning pro- tion, please consult the retrieved documents, identify
+cess</think><answer>answer</answer>. key information that are directly related to the ques-
+You should perform thinking with decomposing, tion, and provide the answer.
+reflecting, brainstorming, verifying, refining, and
+revising. Besides, you can perform Searching for # Question
+uncertain knowledge if necessary with the format :
+. {reformulated_question }
+of <search>search query</search> during
+your thinking process. Then, the search system
+will provide you with the retrieval information # Retrieved Documents
+with the format of <document> search results {retrieved_documents}
+
+
+--- Page 21 ---
+
+Prompt: Medical Knowledge Graph Extraction chalk) canta: im amedicel ilegic). Nesative
+You are a medical expert. Given a_ reason- relationships should be explicitly marked (€.3.,
+ing process for solving a medical problem does not cause”, “Tule out”).
+in the format of <think>...</think> 4. Retrieval Marking Determination: If an
+and <answer>...</answer>. The content entity or relationship is directly from the
+within <think>...</think> demonstrates the <document> search results </document>,
+thought process and may use <search>search mark “if_retrieval=1”; otherwise,
+query</search> to mark uncertain knowledge “if-retrieval=0". The search keywords
+that requires searching. The search system provides themselves should not be considered as entities
+relevant information in the format of <document > or relationships.
+search results </document>. Your task is to 5. Special Handling: Retain hypothetical relation-
+extract important medical concepts, relationships, ships in the reasoning process (marked as [hy-
+and attributes from the given reasoning process and pothesis]), convert time relationships to medical
+represent them in the knowledge graph format. temporal expressions (acute/chronic/ongoing pe-
+riod, etc.), and quantify probabilistic conclusions
+# Reasoning process as (high/medium/low) risk levels.
+{reasoning_reference }
+Prompt: Evidence Quality Judgment
+You are an expert in evidence quality annotation
+Output Format: within the medical field. There are 6 quality levels
+.*\4s30n of evidence, ranging from the highest to the low-
+[[ est as follows: Meta-Analyses and Systematic Re-
+"entityl", "relationship", views, Randomized Controlled Trials, Cohort Stud-
+"entity2", "if_retrieval"] ies, Case-Control Studies, Individual Case Series or
+], wee] Case Reports, Background Information or Expert
+ree Opinion. Please classify the following evidence doc-
+ument based on its structure and characteristics, pro-
+viding only the names of the levels, without any ad-
+Definitions: ditional description:
+1. entity1, relationship, entity2: Clearly extract
+entities or relationships from the natural language # Evidence
+(e.g., “patient”, “has symptom’, “fever’). {retrieved_document}
+2. if_retrieval: A boolean value (1/0) indi-
+cating whether the entity or relationship
+is retrieved from the search results within Prompt: Answer Correctness Judgment
+<document>...</document>.
+You are an expert in the medical field. You
+; will be given a question, a student’s answer,
+Processing rules: and the correct answer to the question. Please
+1. Overall: Extract only entities and relationships compare the student’s answer with the correct
+related to solving medical problems, ignoring ir- answer and analyze whether the student’s an-
+relevant background information. The knowledge swer is correct. In the student’s answer, the
+graph should be concise and clear, avoiding re- <think>...</think> tag wraps the thinking pro-
+dundancy, and based on facts, avoiding subjective cess, and the <answer>...</answer> tag wraps
+speculation. the final answer. Please judge the student’s answer
+2. Entity Extraction: Must be specific medical con- encapsulated within the <answer Pee answer
+cepts (diseases, symptoms, drugs, etc.), exclud- tag based on the correct answer, rate it from 0 to 2
+ing vague descriptions (such as “some condi- points, and explain the reason.
+tions” or “related factors”). Synonymous expres- . ae
+sions should be merged (e.g., “myocardial infare- 2 Point Answer Criteria ce .
+tion” instead of “heart attack”). The final answer is consistent with the correct
+. . . answer, allowing synonyms, abbreviations, etc.
+3. Relationship Definition: Use verb phrases
+(cause, inhibit, lead to, accompany, etc.) and 1 Point Answer Criteria:
+must have a clear directionality (AB or BoA The final answer is consistent with the correct
+
+
+--- Page 22 ---
+
+answer, allowing some supplements, as long as they
+do not conflict with the correct answer.
+0 Point Answer Criteria:
+The final answer is inconsistent with the correct an-
+swer, or contains garbled characters, format errors,
+disorder, and irrelevant information.
+# Question
+{question}
+# Student’s Answer
+{answer}
+# Correct Answer
+{correct_answer}
+Output Format:
+{
+"Score": XXX,
+"reason": "..."
+}
+vree

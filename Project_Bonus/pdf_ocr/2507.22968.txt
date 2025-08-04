@@ -1,0 +1,1254 @@
+
+
+--- Page 1 ---
+
+C?: A Bilingual Benchmark for Spoken Dialogue Models Exploring
+Challenges in Complex Conversations
+Chengqian Ma!*, Wei Tao?*, Yiwen Guo**
+'Peking University, 7LIGHTSPEED, *Independent Researcher
+chengqianma@yeah.net, wtao@ieee.org, guoyiwen89@gmail.com
+® Dataset (=: Website © GitHub Repo
+Abstract and Figure 1(b). These ambiguities can lead to mis-
+interpretations, necessitating careful understanding
+Val Spoken Dialogue Models (SDMs) have re- and response from participants. Recently, Spoken
+N my attracted significant atrention for ert Dialogue Models (SDMs), such as GPT-40-Audio-
+CN ar ty to generate voice responses Cirectly to Preview (OpenAI, 2024b) and MooER-Omni (Xu
+users’ spoken queries. Despite their increasing . . . .
+— : . . et al., 2024), have become increasingly involved in
+= popularity, there exists a gap in research fo- : : ,
+= cused on comprehensively understanding their human Interactions. An SDM processes voice input
+Oo practical effectiveness in comprehending and and delivers voice response (Ji et al., 2024), and an
+al emulating human conversations. This is espe- effective SDM should be capable of recognizing
+cially true compared to text-based Large Lan- and addressing challenging ambiguities to produce
+_) guage Models (LLMs), which benefit from ex- coherent replies.
+tensive benchmarking. Human voice interac-
+O tions are inherently more complex than text Even in contexts without ambiguity, challenges
+iS due to characteristics unique to spoken dia- can arise for SDMs. Speakers may omit previously
+4 logue. Ambiguity Poses one challenge, stem- mentioned entities or those understood as common
+ming from semantic factors like polysemy, as knowledge, as illustrated in Figure 1(c). Addition-
+— well as phonological aspects such as hetero- .
+> ally, speakers often use pronouns to refer to specific
+oO graph, heteronyms, and stress patterns. Ad- a h in Ej 1(d). Such
+No ditionally, context-dependency, like omission, entities, as s! own m 1gur © 1 ) . ue context-
+On coreference, and multi-turn interaction, adds dependency is significant in multi-turn interaction
+N further complexity to human conversational dy- (Figure 1(e)). This requires SDMs to accurately
+N namics. To illuminate the current state of SDM identify and resolve omissions and coreferences to
+Ct development and to address these challenges, understand the intent of a speaker.
+i) we present a benchmark dataset in this paper,
+«~ which comprises 1,079 instances in English and Despite the importance of handling ambiguity
+N Chinese. Accompanied by an LLM-based eval- and context-dependency, it is yet unclear whether
+; = uation method that closely aligns with human current SDMs are capable of addressing these chal-
+>< judgment, this dataset facilitates a comprehen- lenges. To bridge the gap, we conduct an in-
+w sive exploration of the performance of SDMs depth empirical study on the complexity of spo-
+fae} in tackling these practical challenges. . .
+ken dialogues and propose a novel dataset meticu-
+lously designed to study SDMs in handling com-
+y g y g
+plex dialogue situations with phonological ambigu-
+1 Introduction ity, semantic ambiguity, omission, coreference, and
+multi-turn interaction. Together with the dataset,
+Human conversations, particularly spoken dia- we also propose an automatic LLM (Large Lan-
+logues, are inherently complex owing to ambiguous —_ gyage Model)-based evaluation method to test the
+contexts Sole and Seoane, 2014) that introduce un- capability of SDMs, which aligns well with hu-
+certainties In communication. Ambiguity arises man evaluation results. After studying six popular
+from phonological elements like pauses and intona-  §DMs, we deliver three findings to the commu-
+tion, as well as semantic factors such as lexical and nity, including pointing out the different difficulties
+syntactic ambiguity, as demonstrated in Figure l(a) of five phenomena, two languages in spoken dia-
+“Equal contribution. logues, and demonstrating the different advantages
+‘Corresponding author. of the SDMs.
+1
+
+
+--- Page 2 ---
+
+“BAMIZ" in different iti =o ission in (2): B: ORF, BRIG MER) ; .
+SERA | meats diferont (0 sral but cety, | ene ea next nave cbomRAR, EHRINE 20 The response inthe ial
+(2) not very tasty. Derry Friday). : content of the previous
+C2 BNET A Sai ps turns of conversation:
+Amae wie.
+You're going to Different intonations means different: eg., TIRUMSE 20 LA
+: icates a question. i "(ti HT js
+the parts barty S2 Falling indicates a statement happy but Tom angry, Te omission in (2: made 2. SeRME— REE Ceadtoguener ction
+8, CIAEMERRS AEA, “SME 20 TELLIN’ in the
+(a) Phonological ambiguity (c) Omission (ab i oe first-turn.
+) A: Can you tell me the results of my
+; ; ; . Ln home inspection? ; ; The final
+mex tesmessrencmmeonas Human Ok *7 CQ a cong em meno reasonable
+ee, BR(“summer’): wear as little as possible. A: [never had a home inspection i ressing u e
+—— #X(‘winter’): wear as much as possible. (Re, HEASEA- STEP Recents before. results coherently
+Crap is OP “FARE (next Wednesday). 35 LeGonD Ie EN HESS reflecting logical ,
+Mr. Smith loves Two possible meanings: —_ A: Can you tell me the results of my comety mis
+than his wife. oe ae UG corneas refused “they” refers to: B Your: home has been inspected and dialogue.
+OO becatseyinetiicsed a “The city councilmen”. is ready for occupancy.
+(b) Semantic ambiguity (d) Coreference (e) Multi-turn interaction
+Figure 1: The structure and exemplars within the dataset. The subplots correspond to the sub-datasets of five
+phenomena. The blue boxes enclose the input for SDM, with some parts of the prompts omitted, while the
+corresponding outputs are within dashed boxes. Blue underlined text indicates the focal elements of interest, and
+gray text represents a segment of the prompt. The arrow indicates a rising or falling intonation. The (?) denotes an
+omitted sentence component. The » points to the referent of the pronoun. The ... represents the omitted dialogue.
+2 Related Work guages’ conversation, MooER-Omni (Xu et al.,
+2024), GLM-4-Voice (Zeng et al., 2024), VITA-
+2.1 Spoken Dialogue Models Audio (Long et al., 2025), Step-Audio (Huang
+SDMs can be divided into earlier cascaded models“ a oO) oe Seon et al., “) °
+and recent end-to-end models (Ji et al., 2024; Cui ad een h -Omni ( tik a ” b , ‘; P hich na
+et al., 2024). The end-to-end model can directly ane they show great ability in ot ngush an
+. Chinese spoken dialogues. We will study all these
+understand and generate speech representations, ‘oned end 4d SDMs in thi
+while the cascaded model consists of Automatic  M°M4oned end-to-en Sin this paper.
+Speech Recognition (ASR) (Malik et al., 2021; Yu 22 Bench ks and Dataset
+. enchmarks and Datasets
+et al., 2021; Hsu et al., 2021), Language Models
+(LMs), and Text-to-Speech (TTS) modules (Mehta _ To evaluate the capacities of SDMs, several bench-
+et al., 2024; Popov et al., 2021). Cascaded models _—_s marks have been developed, each focusing on dif-
+p g
+lose crucial audio features (e.g., intonation) during _— ferent aspects of audio (Hu et al., 2025; Qu et al.,
+ASR processing, forcing LMs to work only on text. 2025). ADU-Bench (Gao et al., 2024) examines the
+This prevents them from interpreting phonetic phe- _cross-lingual and cross-skill spoken dialogue under-
+nomena in raw audio. Consequently, itis natural —_ standing capabilities of SDMs. Other benchmarks
+that they underperform when there exists ambiguity extend beyond language to include additional fea-
+in human speech. Our evaluation in this paper thus _ tures. For instance, AIR-Bench (Yang et al., 2024)
+focuses on end-to-end models. first evaluates the ability to understand various
+GPT-40-Audio-Preview (OpenAI, 2024b) is the _ types of audio signals. SUPERB (Yang et al., 2021)
+first end-to-end SDM that can generate fluent voice | focuses on speaker and emotion recognition. Au-
+responses and analyze the emotions and intona- dioBench (Wang et al., 2024a) assesses the ability
+tions of the audio input. Since the implementa- to understand speech, audio scenes, and paralin-
+tion is not public, some open-source works, in- guistic features. SD-Eval (Ao et al., 2024) evalu-
+cluding LLaMA-Omni (Fang et al., 2024) and ates SDMs’ responses to utterances with varying
+Freeze-Omni (Wang et al., 2024b), are explored emotions, accents, ages, and background sounds.
+and proposed. These works achieve low-latency © MMAU (Sakshi et al., 2024) includes perception
+spoken responses based on LLM in English con- _ and reasoning tasks across speech, sound, and mu-
+versation. To achieve real-time full-duplex dia- sic. VoiceBench (Chen et al., 2024) focuses on
+logue capabilities for spoken large language mod- _ real-world scenarios involving speaker characteris-
+els, Moshi (Défossez et al., 2024) is proposed, and __ tics, environmental conditions, and content factors.
+it supports interruptions. To support more lan- However, these benchmarks have some limita-
+2
+
+
+--- Page 3 ---
+
+tions in four aspects: nals (Xie et al., 2024; Landini et al., 2024).
+(1) Most of the above benchmarks ignore the am-
+biguity. The only exception, ADU-Bench, consid- 3.1.1 Phonological Ambiguity
+ers it but does not cover phonological ambiguities | Phonological ambiguity can be classified into two
+such as press, heterograph, heteronym, and some types: segmental and supra-segmental. The for-
+semantic ambiguities, such as syntactic ambigui- mer refers to discrete units that can be identified
+ties. auditorily in the stream of speech. The latter refers
+(2) None of the aforementioned benchmarks con- __ to those features that extend over more than a sin-
+sider comprehension difficulties caused by corefer- gle unit in an utterance (Ladefoged et al., 2006;
+ence and omission phenomena. Sharma, 2021). To make this section clearer, some
+(3) All of the benchmarks listed include real- _ terms are clarified as shown in Figure 2.
+world spoken dialogue data from only one lan~
+guage (i.e., English). While ADU-Bench incor- — }.-..-------- 22S Segmental Features
+porates other languages, these datasets are trans-
+lated from English, which means they may lack ee cisitiiiine
+language-specific features, such as tone in Chinese. 2 >
+. \_ Difference,” I ARBIgUEEY 7
+(4) These benchmarks focus solely on single- =“. URE
+turn dialogues, whereas multi-turn interactions are —
+more common in spoken communication. They do
+not assess the ability of SDMs to handle multi-turn
+dialogues. Figure 2: The relation between terms in Section 3.1.1.
+3 A New Benchmark for SDMs Firstly, we investigate the segmental ambiguity.
+Tone-only Difference: In spoken dialogue, espe-
+The field of SDMs is rapidly evolving. Few studies cially in Chinese, the same segmental features do
+could reveal the limitations and real performance of pot convey the same meaning. For example, the
+these models in handling complex ambiguity and Chinese phonetic alphabet hao can have four differ-
+context-dependency, which widely exist inhuman ent tones, and each tone refers to a set of Chinese
+conversations. characters. The tone-only difference in pronuncia-
+In this section, we first empirically study each tion can lead to ambiguity. We use the tool (pyp) to
+aspect of conversational complexity. Based on our —_ count the situation in the dataset. We find that more
+empirical study, we design the dataset specifically. than 99.25% Chinese characters from real-world
+. . dialogues have characters with the same phonetic
+3.1 The Complexity of Spoken Dialogues alphabet but different tones, which can contribute
+To investigate the importance of the complex phe- _ to the ambiguity.
+nomena in spoken dialogue, we conduct a liter- Heterograph: Some words with the same pronun-
+ature review, statistical analysis, and case study. ciation may have different spellings. For example,
+The statistical analysis is performed using datasets —_in English, “night” and “knight”, “tail” and “tale”
+in both English and Chinese. For English dia- are heterographs!. We use the tools (pyp; pro) to
+logues, we use CABank (MacWhinney and Wag- count the situation in the dataset and find that there
+ner, 2010; Yaeger-Dror, 2007; Yaeger-Dror and are 7.05% of the English words and 97.94% of the
+Beaudrie, 2007). For Chinese dialogues, we use —_ Chinese characters in dialogues are heterographs.
+MagicData-RAMC (Yang et al., 2022) as the stud- Heteronym: Some words with the same spelling
+ied dataset. These datasets are selected because also have different pronunciations. Of the 2,000
+they are constructed based on real-world spoken _ most frequently used English words, 9 of them are
+dialogues rather than text-based dialogues. The rea- heteronyms” (Parent, 2012). A study (Zhang and
+son for not using text-based dialogues is that they Chu, 2002) reveals that there are at least 688 Chi-
+differ from spoken dialogues not only inform but nese heteronyms. We use the tool (pro) to explore
+also in content (Le Bigot et al., 2004; Placifiskiand =
+Zywiczynski, 2023). Moreover, these two datasets ‘A word whose pronunciation is the same, but whose
+. spelling and meaning differ from another’s.
+are used in many top conferences (Guo et al., 2023; 24 word having the same spelling as another but a different
+Li et al., 2021; Maheshwari et al., 2025) and jour- _— meaning, and often a different pronunciation.
+3
+
+
+--- Page 4 ---
+
+English dialogues and find that at least 851 En- have omissions in dialogues.
+glish heteronyms appear more than 42,315 times in We use the tools (spa) for analysis and find that
+real-world spoken dialogues. the incidence of subject omission (just one type of
+The numbers above demonstrate the widespread omission) in the dataset was 2.42% in the English
+existence of each phenomenon that can contribute — subset and 16.51% in Chinese. It indicates the wide
+to the segmental phonological ambiguity. existence of omission in spoken dialogues.
+Secondly, we investigate the supra-segmental
+ambiguity. Pause, intonation, and stress are three 3-1.4 Coreference
+supra-segmental features that can lead to ambigu- Pronouns can be used to refer to what is men-
+ity. Figure 1(a) shows two examples with different tioned before in spoken dialogues, which is called
+pause positions and with different intonations. The coreference. Two examples are shown in Figure 1.
+placement of stress in English can lead to ambigu- A study (Su et al., 2019) shows that coreference
+ity (Haolan, 2025). For example, “a green house” —_ occurs in 33.5% of Chinese daily conversations.
+refers to a building with a roof and sides made Statistically, we use the tools (spa; jie) to count
+of glass when the word “green” is stressed, but it the number of pronouns and find that more than
+denotes a building that is colored green when the 69.60% English dialogues and 63.67% Chinese
+word “house” is stressed. ones have coreference. Such high usage of pro-
+. Lo. nouns suggests that coreference is frequent in spo-
+3.1.2 Semantic Ambiguity ken dialogues, either in English or Chinese.
+As shown in Figure 2, the words that have the same
+pronunciation and spelling do not have phonolog- 3.1.5 Multi-turn Interaction
+ical ambiguity, but semantic ambiguity can exist Commonly, one speaker interacts with the other
+in them. Semantic ambiguity can be classified into jy multiple turns in conversation (Lin et al., 2022).
+two types: lexical and syntactic. Statistically, in the Chinese dataset collected from
+Lexical Ambiguity: It means one word in a sen-  hyman conversations, speakers switch an average
+tence can have two or more meanings. Forexample, of 270 times per dialogue. In the English dataset,
+in the sentence “They exchanged addresses in dark- the average number of speaker turns per dialogue
+ness’, the term “darkness” can be interpreted as ei- —j¢ 331. Furthermore, the MagicData-RAMC (Yang
+ther “in the absence of light” or “secretly”. A study —¢¢ a]., 2022) dataset, also collected from human
+on 11 business articles (Jannah, 2021) identified 27 conversations, has an average of 135 turns per dia-
+instances of lexical ambiguity, demonstrating the —_|ggue. It indicates that multi-turn interactions are
+widespread presence. important in spoken conversation.
+Syntactic Ambiguity: This means the situation
+where a sentence can be interpreted in more than 3,2 Benchmark Dataset Design
+one way due to its grammatical structure. Exam- co.
+ples are shown in a 1(b). We use the tool (spa) 3.2.1 Pipeline
+to analyze the dataset and find that there are 15.79% Firstly, we collect real-world spoken dialogues with
+of Chinese and 41.14% of English sentences with | each phenomenon mentioned in Section 3.1. To
+syntactic ambiguity in dialogues. cover as many complex conversations as possible,
+The numbers mentioned above demonstrate that | We determine the standard for collection according
+semantic ambiguity often occurs in spoken dia- to the relevant literature (details can be found in
+logues. Appendix A.1). With the standard, we collect and
+extract speech data from web sources and some
+3.1.3 Omission datasets (Quan et al., 2020; Yu, 2017; Shepherd,
+Omission (also known as ellipsis) is common in 2011; Kocijan et al., 2020; Zhu et al., 2020; Li
+spoken conversations. Two examples are shown in et al., 2017).
+Figure 1. Moreover, subjects, verbs, and pronouns After that, we transfer each real-world spoken
+can be omitted in English dialogues (McShane, _ dialogue to a unified question instance for the evalu-
+2005). Statistically, a study (Glass, 2022) finds that ation. We incorporate each dialogue with a prompt
+the omission of verb objects is particularly common _for the evaluation. Different instructions are de-
+when describing routines. Another study (Su et al., signed for different phenomena. More details can
+2019) shows that 52.4% of Chinese utterances also _— be found in Section 3.2.2.
+4
+
+
+--- Page 5 ---
+
+For example, the incorporated data instance is | Omission: Our assessment focuses on two capabil-
+shown in Figure 3. To avoid the influence of ir- ities, (1) Detection: Instruct the SDM to identify
+relevant factors such as timbre and background __ if there are missing elements in the dialogues. (2)
+music, we re-generate each speech data with the | Completion: Inform that some content is omitted
+tool (Anastassiou et al., 2024), which makes the —_and instruct SDM to provide the completed sen-
+dialogue content have a unified timbre and no back- __ tence with the omission.
+ground noise. Coreference: We evaluate two related skills, (1)
+
+To ensure the quality of the generated speech, we _—_ Detection: Instruct the SDM to identify if there
+manually check each speech and replace incorrect _is any coreference in the instance. (2) Resolution:
+instances with human voices. The reference answer Inform that the coreference phenomenon exists in
+in each instance is also manually produced. the dialogue and instruct SDM to provide the coref-
+
+erence relationship.
+Table 1: The number for each category of Caata. “zh” Multi-turn Interaction:
+indicates Chinese, and “en” indicates English. After the real-world multi-turn dialogues, we
+“Category Subcategory. —~—~—Sozh~—en repeat the initial question and instruct SDM to pro-
+————————————————————— vide the identical answer as the previous one.
+Phonological 37 29
+Camdsta Semantic 118 Sl p p p
+I 4 Experiment Settings and Evaluation
+Omission 70 = 102
+Ceon-data Coreference 60 540 4.1 Experimental Settings
+Multi-turn Interaction 38 34 .
+Hs We select end-to-end SDMs instead of cascaded
+We divide the C into C honological ones because the latter are unable to retain the
+e evi c © data into Cam-data (P ono! ogica phonological features such as press, pause, and
+and semantic ambiguity) to evaluate the ability on . .
+
+bicuit dc . f d intonation during ASR.
+
+a haty y an con-data omssne wih hilia an For the SDMs (i.e., Freeze-Omni, LLaMA-
+multi-turn interaction) to eva uate the a 4 ity on Omni, VITA-Audio, and MooER-Omni) that do
+context-dependency (thus the ambiguous dialogues . . . .
+. not natively support multi-turn interaction, we con-
+
+are removed in Cgon-data). The number of each cat- . . .
+
+; ; catenate the dialogue history in sequence before the
+egory is presented in Table 1. There are 1,079 . . . .
+: . 3 _ . current input in the evaluation. The real-time full-
+instances in the C’, comprising 1,586 audio-text . Ss .
+
+; : ; duplex model (i.e., Moshi) interrupts the input au-
+paired samples. The number of audio-text pairs ex- . . a4: . .
+
+; . dio when provided with dialogue history, resulting
+ceeds the number of instances because multi-turn . .
+dialocues contain multiple samples in responses beyond the posed questions. As it can-
+talos P Pics. not be evaluated in the same setting of multi-turn
+3.2.2 Data Instance Construction interaction as others, it is not fair to be compared
+To evaluate SDM’s performance across different and thus not chosen. Note that some models (i.e,
+. eg: LLaMA-Omni and Moshi) do not support Chinese;
+complex phenomena, we design specialized instruc- . ;
+. . therefore, they are evaluated only in English.
+tions for each category. The complete set of in-
+structions and annotation details are provided in 4.2. LLM-based Evaluation
+Appendix A.2. .
+PP : 2, . . Preprocessing Most SDMs output both audio
+Phonological Ambiguity: The phonological ambi- . .
+
+. . and corresponding text simultaneously. For the
+guity evaluates both the comprehension and gener- : ee .
+
+. yey . model (i.e., Moshi) without generating correspond-
+ation capabilities of the SDM. For comprehension __. : . .
+
+: . ing text, we convert the audio to text using Whis-
+assessment, we instruct the SDM that the input con-
+
+. . . . per (Radford et al., 2023).
+tains potentially ambiguous phonological features
+and request a detailed interpretation. For genera- Evaluation Method We adopt different methods
+tion assessment, we explicitly indicate the presence _ for different categories in the dataset, Cdata. For
+of incorrect phonological features (e.g., pauses, in- —_ most tasks, except for generating audio with correct
+tonation) and prompt the SDM to generate acor- _ phonological features in the phonological ambigu-
+rected response with appropriate prosodic markers. | ity phenomenon, we evaluate the transcribed text
+Semantic Ambiguity: We inform the SDM that from the audio. This is because phonological fea-
+the meaning of the instance is unclear and instruct __ tures in the response do not affect the comparison
+the SDM to provide a detailed explanation. results with the reference, so evaluating the text
+
+5
+
+
+--- Page 6 ---
+
+Ome HEI epee Ge HHH (ihe {Hews ooo dite Hatfield ope — 1h — HN
+— P a © Please listen carefully to the following CO .
+The sentence below contains ambiguity: SEATSRER. EGE? Tae Gea Ca. (lewiil The sentence below is hard to understand:
+| know the girl better than you. ask you some uestions: John was the He saw the man [PAUSE] with glasses.
+Please tell me how to understand it. mate fin 1994 and Bob in 1998. Could you tell me what it means?
+Some content has been omitted in the
+sentence, please fill in the omitted parts
+The phrase ‘better than you' is ambiguous, and provide the complete sentence. The pause after 'man’ indicates that ‘with
+two distinct meaning is: | know the girl glasses’ is an additional description,
+better than you know her. | know the girl John was the winner in 1994 and Bob was meaning 'He saw the man, and he was
+better than | know you. the winner in 1998. —— wearing glasses’
+Figure 3: The structure of the data instance. The blue box contains input data in text and audio format, where blue
+text is the prompt and black text is the dialogue content being questioned. The dashed box contains the reference
+output, with the underlined portion highlighting the key element. “[PAUSE]” represents the pause in the audio.
+Table 2: Accuracy (%) of different SDMs on the Chinese (“zh”) or English (“en”) dialogue data subset of C°.
+Category Freeze-Omni_ GLM-4-Voice ee Kimi-Audio ai MoE Moshi Qwen?s Step-Audio VITA-Audio Overall
+zh en zh en zh en zh en en zh en en zh en zh en zh en zh en
+Phonological 16.22 8.62 18.92 27.59 29.73 53.45 20.27 46.55 15.52 20.27 18.97 10.34 27.03 48.28 22.97 29.31 8.11 31.03 20.44 28.97
+Semantic 1.69 11.76 2.54 15.69 5.93 70.59 4.24 29.41 12.75 2.12 46.08 9.80 6.78 32.35 5.08 21.57 3.39 18.63 3.97 26.86
+Cam-data 8.96 10.19 10.73 21.64 17.83 62.02 12.25 37.98 14.13 11.19 32.52 10.07 16.90 40.31 14.03 25.44 5.75 24.83 12.21 27.91
+Omission 4.29 686 5.71 637 44.29 16.18 29.29 10.29 5.88 32.14 490 2.94 27.86 15.20 17.86 10.78 643 7.84 20.98 8.73
+Coreference 10.83 47.22 16.67 68.98 54.17 91.11 40.00 87.41 56.94 32.50 36.02 24.63 55.83 68.15 50.83 57.31 33.33 74.81 36.77 61.26
+Multi-turn 11.84 44.12 10.53 58.82 13.16 47.06 / / 55.88 63.16 41.18 / 82.89 95.59 7.89 41.18 63.16 60.29 36.09 55.51
+Ccon-data 8.99 32.73 10.97 44.73 37.20 51.45 34.64 48.85 39.57 42.60 27.37 13.79 55.53 59.64 25.53 36.43 34.31 47.65 31.22 40.22
+Overall 8.97 23.72 10.87 35.49 29.45 55.68 23.45 43.42 29.39 30.04 29.43 11.93 40.08 51.91 20.93 32.03 22.88 38.52 23.33 35.15
+alone is sufficient. For the task of generating audio _ first conduct a human evaluation on the gener-
+with correct phonological features, we evaluate the ated responses by GPT-40-Audio-Preview for Cgata.
+audio output manually, as it requires examining Following best practice for the human evalua-
+phonological features that cannot be captured by _ tion (van der Lee et al., 2019), three human experts
+the transcribed text. manually label whether each response is correct.
+For the evaluation based on transcribed text, we _ If the labels from all experts are not the same, the
+design an automatic LLM-based evaluation method — majority label is chosen as the reference result.
+following the paradigm of LLM-as-a-judge (Gu After the human evaluation, we computed the
+et al., 2024). GPT-40 (OpenAI, 2024a) and Pearson (Cohen et al., 2009), Spearman (Xiao et al.,
+DeepSeek-R1 (DeepSeek-AI et al., 2025) are se- 2016), and Kendall (Abdi, 2007) correlation coef-
+lected as LLM judge due to their great performance _ ficients to quantify the consistency between LLM
+in reasoning (DeepSeek-AI et al., 2025). LLM judges and humans. All the coefficients’ values
+judges are used to compare the SDM output with are more than 0.87 in either the English or Chi-
+the reference and determine the correctness. More- nese subset, either for DeepSeek-R1 or GPT-40
+over, we divide the evaluation task into smaller as LLM judge (detailed numbers can be found in
+steps, instructing LLM judges with the prompts Appendix A.3). It demonstrates that LLM judges
+that are listed in the repository>. For the evalua- have high consistency with humans in each subset
+tion based on the audio, three human experts are for the two LLMs. Moreover, all p-values of the
+required to label whether each of the SDM outputs correlation coefficients are less than 0.001, which
+is correct, and we use a voting strategy to make the — means the consistency is significant. These statisti-
+final decision for each generated response. cal results validate the reliability of our automatic
+The accuracy (i.e., the proportion of instances _—_ evaluation method.
+judged correct out of the total number of instances)
+is regarded as the metric. 5 Experimental Results and Findings
+Reliability Analysis To validate the reliability 5.1 Experimental Results
+of our designed automatic evaluation method, we . ;
+To mitigate bias between DeepSeek-R1 and GPT-
+https: //step-out.github.io/C3-web 40, we compute the average of their accuracies as
+6
+
+
+--- Page 7 ---
+
+the final result, as shown in Table 2. The SDMs _ coreference
+perform differently across different languages and multi-cturn LO 4 \
+phenomena interaction, \
+, / ZA os?
+/ Ca | 0.6 \
+| S, b.2 04 \
+As shown in Table 2, the gap between English | WI j omission
+and Chinese exceeds 8% across each phenomenon, \
+indicating that SDMs exhibit varying capabilities o\ /
+depending on the language. Meanwhile, in the En- phonological NQ A
+glish subset, GPT-40-Audio-Preview significantly — “semantic
+outperforms other models, achieving an overall ac- —— LlaMAOmni  —— Freeze-Omni
+curacy of 55.68%, while the average performance == Kimi-Audio = Moshi
+of all SDMs is only 35.15%. In contrast, in the __ veh ven : _ Step audio
+Chinese subset, Qwen2.5-Omni stands out as the == MooER-Omni — GPT-40-Audio-Preview
+top-performing SDM, achieving an overall accu- .
+racy of 40.08%, while the average performance of Siar, © Rae cans cepicting the accuracies of each
+all SDMs is 23.33%. The gap between Chinese rn
+and English in top performances and overall scores coreference
+further highlights the differing strengths of SDMs aN
+across languages. interaction’ \
+/ fi oat °
+wae / y); oa 0h \
+Within the same language, the performance gap (5 sa | omission
+between the strongest and weakest phenomena is \ Bb av |
+over 9 times (for Chinese) and 6 times (for English), \ /
+suggesting that SDMs vary in their strengths across phonological J
+different phenomena. Ne
+semantic
+== Kimi-Audio —— Freeze-Omni
+To illustrate the performance in handling dif- == VITA-Audio = —— Qwen2.5-Omni
+ferent phenomena, radar charts are presented in —— GLM-4Voice = —— Step-Audio
+. . 7 . == MooER-Omni —— GPT-40-Audio-Preview
+Figure 4 and Figure 5. As shown in Figure 4,
+GPT-40-Audio-Preview has the largest green area __ Figure 5: Radar charts depicting the accuracies of each
+compared to the others, which validates its top | SDM on the Chinese subset of Coata.
+performance. In the dimension of multi-turn inter-
+action, GPT-40-Audio-Preview scores significantly . .
+lower than Qwen2.5-Omni, indicating a weakness 5.2 Experimental Findings
+of the model. Although the overall scores of the 5.2.1 Ambiguity Is Difficult for SDMs
+top two SDMs, GPT-40-Audio-Preview at 55.68% Especially Semantic Ones in Chinese
+ane enn i ae are ‘eran close As shown in Table 2, SDMs achieve overall accura-
+ve ioe 5. Oo - 5 Onn a eels sehen cies of 12.21% (Chinese) and 27.91% (English) on
+in Figure >, even Pe eney van one hey Cam-data, Significantly lower than the 31.22% (Chi-
+interaction, with a sharp accuracy gap over ot €F nese) and 40.22% (English) observed on Ceon-data:
+SDMs. The performance of the SDMs further high- .
+. ; ; ; The performance gap of over 10 percentage points
+lights their varying strengths across different phe-. Lo,
+: in both languages suggests that ambiguity presents
+nomena. Note that the detailed results from each hall for SDMs. Specifically, th
+LLM judge can be found in Appendix A 4 greater challenges for s. Specifically, the over-
+Jues PP _ all accuracy in semantic ambiguity is only 3.97% in
+Chinese, compared to 26.86% in English. This pro-
+To further investigate the ability to handle dia- | nounced disparity (exceeding a six-fold difference)
+logues with omission and coreference, two tasks, | underscores the challenges of processing semantic
+including detection and completion (resolution), | ambiguity in Chinese.
+are provided for the evaluation. The final results of Additionally, the difference in accuracies for
+these two tasks are presented in Table 3. phonological ambiguity, 20.44% (Chinese) and
+7
+
+
+--- Page 8 ---
+
+Table 3: Accuracy (%) of omission and coreference phenomena.
+Phenomenon Ability Lang. "Gini Voice Audio-Prex. Audio Omni Oma MOS Groat Audio Audio OYeT@l
+Detection 28 ~—-857-—«*10.00 82.86 5286 / 6143 48.57 32.86 8.57 38.65
+Omission en 882 4.90 13.73. 12.75 6.86 6.86 3.92 11.76 7.84 686 8.57
+Completion 22 0.00 1.43 5.71 5.71 / 2.86 / 7142.86 4.29 3.75
+en 4.90 7.84 18.63 784 490 294 196 1863 13.73 882 8.98
+Detection 2220.00 33.33 63.33 60.00 58.33. 86.67 70.00 56.67 56.41
+Coreference en 57.59 83.89 95.37 97.04 78.52 25.93 35.37 70.56 ~—63.33 87.59 69.61
+Resolution Zt 1670.00 45.00 20.00» / 6.67 / 25.00 31.67 10.00 17.00
+en 36.85 54.07 86.85 77.78 35.37 46.11 «13.89 65.74. 51.30 62.04 52.17
+28.97% (English), exceeds an 8% gap. The ex- ferred: In the coreference phenomenon, both the
+ception is MooER-Omni, which has a gap of less __ pronoun and the antecedent are present in the sen-
+than 1.5 percentage points. This contrast highlights — tence. The SDM can replace the pronoun with the
+MooER-Omni’s cross-linguistic ability to handle antecedent by understanding the sentence. How-
+phonological ambiguity. ever, in the omission phenomenon, the omitted
+. i. content is not present in the sentence. To complete
+5.2.2 Processing Omission Is the Most the omitted parts, the SDM should not only under-
+Difficult in Context-Dependency stand each component’s meaning but also generate
+Table 2 shows that, except for GPT-40-Audio- non-existent components. Therefore, resolving the
+Preview and Step-Audio in Chinese, all SDMs have —_ mission phenomenon is more difficult for SDMs
+the smallest accuracy when dealing with the omis- than resolving the coreference phenomenon.
+sion phenomenon among Ceon-data- This indicates Moreover, we observe that most SDMs exhibit
+that omission is the most difficult phenomenon for —_Jow accuracies (below 65%) in multi-turn inter-
+SDMs to handle in context-dependent dialogues. actions, whereas Qwen2.5-Omni achieves signifi-
+Dealing with spoken dialogues with omission or cantly higher accuracy, with 82.89% for Chinese
+coreference requires both detection and completion —_and 95.59% for English, outperforming the other
+(or resolution). To investigate the abilities of SDMs models.
+at a granular level, we compare the accuracies of
+each ability as shown in Table 3. In omission, most. 5-2-3 Complex Dialogues in Chinese Are More
+SDMs have higher accuracy in detection than in Difficult than Ones in English
+completion. This suggests that although the omis- | As shown in Table 2, the overall accuracies for
+sion is pointed out, the SDMs could not fully under- both Cam-data and Ceon-data are higher in English
+stand and thus complete the missing part. The ex- (27.91% and 40.22%) than in Chinese (12.21% and
+ception is GLM-4-Voice, GPT-40-Audio-Preview, 31.22%). The difference exceeds nine percentage
+Qwen2.5-Omni, Step-Audio, and VITA-Audioin points, indicating that, generally, SDMs perform
+English. With the prompt of the omission phe- _ better in English dialogues.
+nomenon, these five SDMs can complete more than Specifically, in each phenomenon, the overall
+what they can detect on their own. In coreference, accuracy in English is higher, except for omission,
+the finding is similar. Most SDMs have higher ac- _ suggesting that English phenomena are generally
+curacy in detection than resolution, indicating that easier for SDMs than their Chinese counterparts.
+although the coreference is pointed out, the SDMs Specifically, as shown in Table 2, most SDMs
+cannot fully understand and resolve it. The excep- demonstrate higher accuracy in English than in
+tion is MooER-Omni in English, which performs — Chinese. For instance, Freeze-Omni and GLM-4-
+better when pointing out coreference. The above Voice achieve accuracies of 23.72% and 35.49%
+findings teach us that pointing out the phenomenon __ in English, more than double their performance in
+in dialogue can be helpful for some SDMs, but — Chinese (8.97% and 10.87%). This substantial gap
+most of them benefit only slightly. highlights the need for enhanced cross-linguistic
+We also find that most SDMs demonstrated capabilities in current SDMs.
+higher accuracy in dealing with coreference res- Summary: These findings suggest that the choice
+olution than omission completion. The different | of SDM should depend on the specific situation,
+performances of these two phenomena can be in- _ such as the phenomenon or language.
+8
+
+
+--- Page 9 ---
+
+6 Conclusion Zhang, Wenjie Zhang, Yang Zhang, Zilin Zhao, De-
+jian Zhong, and Xiaobin Zhuang. 2024. Seed-tts:
+In this work, we introduce a new benchmark, C?, A family of high-quality versatile speech generation
+to evaluate SDMs’ capabilities in handling vari- models. arXiv Preprint, abs/2406.02430.
+ous comp lex conversations. Our emp irical study Junyi Ao, Yuancheng Wang, Xiaohai Tian, Dekun Chen,
+reveals five important phenomena in spoken dia- Jun Zhang, Lu Lu, Yuxuan Wang, Haizhou Li, and
+logues that are not fully explored in previous works. Zhizheng Wu. 2024. Sd-eval: A benchmark dataset
+With our designed dataset, Cgata, and LLM-based for spoken dialogue understanding beyond words. In
+evaluation method, SDMs can be evaluated more Advances in Neural Information Processing Systems
+. . 38: Annual Conference on Neural Information Pro-
+comprehensively. Furthermore, we conduct experi- cessing Systems 2024, NeurIPS 2024, Vancouver, BC,
+ments on six SDMs. The results point out different Canada, December 10 - 15, 2024.
+difficulties in processing these complex phenomena , ; ;
+in different languages Yiming Chen, Xianghu Yue, Chen Zhang, Xiaoxue Gao,
+: 3 ; Robby T. Tan, and Haizhou Li. 2024. Voicebench:
+We believe that C”, including real and complex Benchmarking Ilm-based voice assistants. arXiv
+challenges in spoken dialogues, is helpful for re- Preprint, abs/2410.17196.
+searchers ‘0 achieve natural and intelligent sp oken Israel Cohen, Yiteng Huang, Jingdong Chen, Jacob Ben-
+interaction with humans. In the future, we will esty, Jacob Benesty, Jingdong Chen, Yiteng Huang,
+collect more language dialogues into Cyata. and Israel Cohen. 2009. Pearson correlation coeffi-
+cient. Noise reduction in speech processing, pages
+Limitations 1-4.
+There are two limitations to this work: First, the | Wenqian Cui, Dianzhi Yu, Xiaoqi Jiao, Zigiao Meng,
+five complex phenomena discussed in this paper Guangyan Zhang, Qichao Wang, Yiwen Guo, and Ir-
+. . . . win King. 2024. Recent advances in speech language
+are not limited to English and Chinese; they have models: A survey. arXiv preprint arXiv:2410.03751.
+significant potential for other languages. Second,
+there is potential bias among human experts who Weiwei Dai. 2021. On the syntactic structure of chinese
+evaluate the outputs of SDMs. To mitigate this bias, BOO Open Access Library Journal,
+we employ a voting mechanism. : :
+DeepSeek-AI, Daya Guo, Dejian Yang, Haowei Zhang,
+Junxiao Song, Ruoyu Zhang, Runxin Xu, Qihao Zhu,
+References Shirong Ma, Peiyi Wang, Xiao Bi, Xiaokang Zhang,
+. . . . Xingkai Yu, Yu Wu, Z. F. Wu, Zhibin Gou, Zhihong
+aparrish/pronouncingpy: A simple interface for the Shao, Zhuoshu Li, Ziyi Gao, Aixin Liu, Bing Xue,
+cmu pronouncing dictionary. https: //github.com/ Bingxuan Wang, Bochao Wu, f Bei Feng, Chengda
+aparrish/pronouncingpy/. Lu, Chenggang Zhao, Chengqi Deng, Chenyu Zhang,
+Exsjy/jieba: Chinese text segmentation. https:// Erhate Ai Fanevun be Fucone Dai. Putt Lue
+gi thub.com/fxsjy/jieba. Guangbo Hao, Guanting Chen, Guowei Li, H. Zhang,
+mozillazg/python-pinyin: Chinese character pinyin Han Bao, Hanwei Xu, Haocheng Wang, Honghui
+conversion tool. (python version). https: / / Ding, Huajian Xin, Huazuo Gao, Hui Qu, Hui Li,
+github.com/mozillazg/python-pinyin. Jianzhong Guo, Jiashi Li, Jiawei Wang, Jingchang
+Chen, Jingyang Yuan, Junjie Qiu, Junlong Li, J. L.
+spacy - industrial-strength natural language processing Cai, Jiaqi Ni, Jian Liang, Jin Chen, Kai Dong, Kai Hu,
+in python. https: //spacy.io/. Kaige Gao, Kang Guan, Kexin Huang, Kuai Yu, Lean
+Wang, Lecong Zhang, Liang Zhao, Litong Wang,
+Hervé Abdi. 2007. The kendall rank correlation coef- Liyue Zhang, Lei Xu, Leyi Xia, Mingchuan Zhang,
+ficient. Encyclopedia of measurement and statistics, Minghua Zhang, Minghui Tang, Meng Li, Miaojun
+2:508-510. Wang, Mingming Li, Ning Tian, Panpan Huang, Peng
+Zhang, Qiancheng Wang, Qinyu Chen, Qiushi Du,
+Philip Anastassiou, Jiawei Chen, Jitong Chen, Yuanzhe Ruiqi Ge, Ruisong Zhang, Ruizhe Pan, Runji Wang,
+Chen, Zhuo Chen, Ziyi Chen, Jian Cong, Lelai Deng, R. J. Chen, R. L. Jin, Ruyi Chen, Shanghao Lu,
+Chuang Ding, Lu Gao, Mingqing Gong, Peisong Shangyan Zhou, Shanhuang Chen, Shengfeng Ye,
+Huang, Qingqing Huang, Zhiying Huang, Yuanyuan Shiyu Wang, Shuiping Yu, Shunfeng Zhou, Shuting
+Huo, Dongya Jia, Chumin Li, Feiya Li, Hui Li, Ji- Pan, and S. S. Li. 2025. Deepseek-rl: Incentiviz-
+axin Li, Xiaoyang Li, Xingxing Li, Lin Liu, Shouda ing reasoning capability in llms via reinforcement
+Liu, Sichao Liu, Xudong Liu, Yuchen Liu, Zhengxi learning. arXiv Preprint, abs/2501.12948.
+Liu, Lu Lu, Junjie Pan, Xin Wang, Yuping Wang,
+Yuxuan Wang, Zhen Wei, Jian Wu, Chao Yao, Yifeng Alexandre Défossez, Laurent Mazaré, Manu Orsini,
+Yang, Yuanhao Yi, Junteng Zhang, Qidi Zhang, Shuo Amélie Royer, Patrick Pérez, Hervé Jégou, Edouard
+9
+
+
+--- Page 10 ---
+
+Grave, and Neil Zeghidour. 2024. Moshi: a speech- Jiahao Gong, Junjing Guo, Jiashuai Liu, Jiahong
+text foundation model for real-time dialogue. arXiv Liu, Jie Feng, Jie Wu, Jiaoren Wu, Jie Yang, Jin-
+Preprint, abs/2410.00037. guo Wang, Jingyang Zhang, Junzhe Lin, Kaixiang
+: : : Li, Lei Xia, Li Zhou, Liang Zhao, Longlong Gu,
+Qingkai Fang, Shoutao Guo, Yan Zhou, Zhengrui Ma, Mei Chen, Menglin Wu, Ming Li, Mingxiao Li,
+Shaolei Zhang, and Yang Feng. 2024. Llama-omni: Mingliang Li, Mingyao Liang, Na Wang, Nie Hao,
+Seamless speech interaction with large language mod- Qiling Wu, Qinyuan Tan, Ran Sun, Shuai Shuai,
+els. arXiv Preprint, abs/2409.06666. Shaoliang Pang, Shiliang Yang, Shuli Gao, Shan-
+. ay: shan Yuan, Siqi Liu, Shihong Deng, Shilei Jiang,
+Kuofeng Gao, Shu-Tao Xia, Ke Xu, Philip Torr, and Sitong Liu, Tiancheng Cao, Tianyu Wang, Wenjin
+Jindong Gu. 2024. Benchmarking open-ended au- Deng, Wuxun Xie, Weipeng Ming, and Wenqing He.
+dio dialogue u nderstanding for large audio-language 2025. Step-audio: Unified understanding and genera-
+models. arXiv Preprint, abs/2412.05161. tion in intelligent speech interaction. arXiv Preprint,
+Lelia Glass. 2022. English verbs can omit their objects abs/2502.11946.
+when t hey describe routines. English Language & Nur Jannah. 2021. Lexical and syntactic ambiguity
+Linguistics, 26(1):49-73. in the business news of BBC News. Ph.D. thesis,
+Jiawei Gu, Xuhui Jiang, Zhichao Shi, Hexiang Tan, Universitas Islam Negeri Maulana Malik Ibrahim.
+Xuehao Zhai, Chengjin Xu, Wei Li, Yinghan Shen, Shen soy: : : :
+ws : gpeng Ji, Yifu Chen, Minghui Fang, Jialong Zuo,
+phengiic soa rene Liu, Neanzhuo wang. ane Jingyu Lu, Hanting Wang, Ziyue Jiang, Long Zhou,
+Pry ru0. bs/2 AMI 13504. on MMB as-a-JUCse. ATALW Shujie Liu, Xize Cheng, Xiaoda Yang, Zehan Wang,
+reprint, ads ; ; Qian Yang, Jian Li, Yidi Jiang, Jingzhen He, Yunfei
+Zishan Guo, Linhao Yu, Minghui Xu, Renren Jin, and Chu, Jin Xu, and Zhou Zhao. 2024. Wavchat: . A
+Deyi Xiong. 2023. CS2W: A chinese spoken-to- survey of spoken dialogue models. arXiv Preprint,
+written style conversion dataset with multiple conver- abs/2411.13577.
+sion types. In Proceedings of the 2023 Conference KimiTeam, Ding Ding, Zegian Ju, Yichong Leng
+on Empirical Methods in Natural Language Process- Songxiang Liu Tong Liu, Zeyu Shang Kai Shen.
+ing, EMNLP 2023, Singapore, December 6-10, 2023, Wei Song Xu. Tan Heyi Tang Zhengtao Wang,
+pages 3962-3979. Association for Computational Chu Wei Vifei Xin Xinran Xu Jianwei Yu Yu.
+Linguistics. tao Zhang, Xinyu Zhou, Y. Charles, Jun Chen, Yanru
+Yang Haolan. 2025. A brief analysis of phonological Chen, Yulun Du, Weiran He, Zhenxing Hu, Guokun
+ambiguity in language: A comparison between chi- re panecheng v wangyang Tau, Werdong Sun,
+nese and english. ianzhou Wang, Yuzhi Wang, Yuefeng Wu, Yuxin
+Wu, Dongchao Yang, Hao Yang, Ying Yang, Zhilin
+Wei-Ning Hsu, Yao-Hung Hubert Tsai, Benjamin Bolte, Yang, Aoxiong Yin, Ruibin Yuan, Yutong Zhang,
+Ruslan Salakhutdinov, and Abdelrahman Mohamed. and Zaida Zhou. 2025. Kimi-audio technical report.
+2021. Hubert: How much can a bad teacher benefit arXiv Preprint, abs/2504.18425.
+ASR pre-training? In IEEE International Conference . .. .. .
+on Acoustics, Speech and Signal Processing, ICASSP ve tpomas Tenaslew ic? one Davis, sary
+2021, Toronto, ON, Canada, June 6-11, 2021, pages rarcus, and Leora Morgenstern. - A Tevilew 0
+6533-6537. IEEE. winograd schema challenge datasets and approaches.
+arXiv Preprint, abs/2004.13831.
+He Hu, Yucheng Zhou, Lianzhong You, Hongbo Xu, .
+Qianning Wang, Zheng Lian, Fei Richard Yu, Fei Peter Ladefoged, Keith Johnson, and Peter Ladefoged.
+Ma, and Laizhong Cui. 2025. Emobench-m: Bench- 2006. A course in phonetics, volume 3. Thomson
+marking emotional intelligence for multimodal large Wadsworth Boston.
+language models. arXiv Preprint, abs/2502.04424. Federico Landini, Mireia Diez, Themos Stafylakis, and
+Ailin Huang, Boyong Wu, Bruce Wang, Chao Yan, Lukas Burget. 2024. Diaper: End-to-end neural di-
+Chen Hu, Chengli Feng, Fei Tian, Feiyu Shen, Jing- arization with perceiver-based attractors, IEEE ACM
+bei Li, Mingrui Chen, Peng Liu, Ruihang Miao, Trans. Audio Speech Lang. Process., 32:3450-3465.
+Wang vou x cen xuer Yang. Yechang Huang, Rim Mohammed Abdalla Lasheiky. 2024. Semantic
+Thou. i ang; S BR ong, Li Ch ang, Fone ambiguity in english: A review on lexical, structural,
+ou, stangian oun, bran engting Feng, and scope challenges in communication. AJASHSS,
+Changyi Wan, Hanpeng Hu, Jianchang Wu, Jiangjie ages 388-395
+Zhen, Ranchen Ming, Song Yuan, Xuelin Zhang, pag :
+Yu Zhou, Bingxin Li, Buyun Ma, Hongyuan Wang, — Ludovic Le Bigot, Eric Jamet, and Jean-Francois Rouet.
+Kang An, Wei Ji, Wen Li, Xuan Wen, Xiangwen 2004. Searching information with a natural language
+Kong, Yuankai Ma, Yuanwei Liang, Yun Mou, Bahti- dialogue system: a comparison of spoken vs. written
+yar Ahmidi, Bin Wang, Bo Li, Changxin Miao, modalities. Applied ergonomics, 35(6):557-564.
+Chen Xu, Chenrun Wang, Dapeng Shi, Deshan Sun,
+Dingyuan Hu, Dula Sai, Enle Liu, Guanzhe Huang, __Jinchao Li, Jianwei Yu, Zi Ye, Simon Wong, Man-Wai
+Gulin Yan, Heng Wang, Haonan Jia, Haoyang Zhang, Mak, Brian Mak, Xunying Liu, and Helen Meng.
+10
+
+
+--- Page 11 ---
+
+2021. A comparative study of acoustic and linguistic | Kevin Parent. 2012. The most frequent english
+
+features classification for alzheimer’s disease detec- homonyms. RELC Journal, 43(1):69-81.
+
+tion. In JEEE International Conference on Acous-
+
+tics, Speech and Signal Processing, ICASSP 2021, — Marek Placitiski and Przemystaw Zywiczynski. 2023.
+
+Toronto, ON, Canada, June 6-11, 2021, pages 6423-— Modality effect in interactive alignment: Differences
+
+6427. IEEE. between spoken and text-based conversation. Lingua,
+293:103592.
+
+Yanran Li, Hui Su, Xiaoyu Shen, Wenjie Li, Zigiang
+Cao, and Shuzi Niu. 2017. Dailydialog: A manually Vadim Popov, Ivan Vovk, Vladimir Gogoryan, Tasnima
+labelled multi-turn dialogue dataset. In Proceedings Sadekova, and Mikhail A. Kudinov. 2021. Grad-tts:
+of the Eighth International Joint Conference on Natu- A diffusion probabilistic model for text-to-speech.
+ral Language Processing, IJCNLP 2017, Taipei, Tai- In Proceedings of the 38th International Conference
+wan, November 27 - December 1, 2017 - Volume 1: on Machine Learning, ICML 2021, 18-24 July 2021,
+Long Papers, pages 986-995. Asian Federation of Virtual Event, volume 139 of Proceedings of Machine
+Natural Language Processing. Learning Research, pages 8599-8608. PMLR.
+
+Ting-En Lin, Yuchuan Wu, Fei Huang, Luo Si, Jian Xiaoye Qu, Yafu Li, Zhaochen Su, Weigao Sun, Jian-
+Sun, and Yongbin Li. 2022. Duplex conversation: hao Yan, Dongrui Liu, Ganqu Cui, Daizong Liu,
+Towards human-like interaction in spoken dialogue Shuxian Liang, Junxian He, Peng Li, Wei Wei, Jing
+systems. In KDD ’22: The 28th ACM SIGKDD Con- Shao, Chaochao Lu, Yue Zhang, Xian-Sheng Hua,
+ference on Knowledge Discovery and Data Mining, Bowen Zhou, and Yu Cheng. 2025. A survey of
+Washington, DC, USA, August 14 - 18, 2022, pages efficient reasoning for large reasoning models: Lan-
+3299-3308. ACM. guage, multimodality, and beyond. arXiv Preprint,
+
+. . abs/2503.21614.
+Zuwei Long, Yunhang Shen, Chaoyou Fu, Heting Gao,
+Lijiang Li, Peixian Chen, Mengdan Zhang, Hang Jun Quan, Shian Zhang, Qian Cao, Zizhong Li, and Deyi
+Shao, J tan Li, J inlong Peng, Haoyu Cao, Ke Li, Ron- Xiong. 2020. Risawoz: A large-scale multi-domain
+grong Ji, and Xing Sun. 2025. Vita-audio: Fast wizard-of-oz dataset with rich semantic annotations
+interleaved cross-modal token generation for effi- for task-oriented dialogue modeling. In Proceedings
+cient large speech-language model. arXiv Preprint, of the 2020 Conference on Empirical Methods in
+abs/2505.03739. Natural Language Processing, EMNLP 2020, Online,
+
+Brian MacWhinney and Johannes Wagner. 2010. Tran- for Computational Lingyites Association
+scribing, searching and data sharing: The clan soft- :
+ware and the talkbank data repository. Gesprachs- Alec Radford, Jong Wook Kim, Tao Xu, Greg Brock-
+forschung: Online-Zeitschrift zur verbalen Interak- Christine McLeavey, and Ilva Sutskever. 2023
+tion, 11:154. Rob vey, ane ae
+
+obust speech recognition via large-scale weak su-
+F : Z ervision. In International Conference on Machine
+
+Gaurav Maheshwari, Dmitry Ivanov, Théo Johannet, Learning, ICML 2023, 23-29 " ly 2023, Honolulu,
+and Kevin El Haddad. 2025. Asr benchmarking: .. . .
+Need for a more representative conversational dataset. Hawaii, USA, volume 202 of Proceedings of Machine
+
+P . Li ing Research, pages 28492-28518. PMLR.
+In ICASSP 2025-2025 IEEE International Confer- earning » Pas
+(ICA SSP) powes 15 TELE and Signal Processing. nifer Rodd. 2018. Lexical ambiguity. Oxford hand-
+, : . book of psycholinguistics, pages 120-144.
+
+Mishaim Malik, Muhammad Kamran Malik, Khawar . . .
+Mehmood, and Imran Makhdoom. 2021. Automatic S- Sakshi, Utkarsh Tyagi, Sonal Kumar, Ashish Seth,
+speech recognition: a survey. Multim. Tools Appl., Ramaneswaran Selvakumar, Oriol Nieto, Ramani
+80(6):941 1-9457. Duraiswami, Sreyan Ghosh, and Dinesh Manocha.
+
+2024. MMAU: A massive multi-task audio under-
+
+Marjorie J McShane. 2005. A theory of ellipsis. Oxford standing and reasoning benchmark. arXiv Preprint,
+University Press. abs/2410.19168.
+
+Shivam Mehta, Ruibo Tu, Jonas Beskow, Eva Székely, | Lok Raj Sharma. 2021. Significance of teaching the pro-
+and Gustav Eje Henter. 2024. Matcha-tts: A fast TTS nunciation of segmental and suprasegmental features
+architecture with conditional flow matching. In JEEE of english. Interdisciplinary Research in Education,
+International Conference on Acoustics, Speech and 6(2):63-78.
+
+Signal Processing, ICASSP 2024, Seoul, Republic of
+Korea, April 14-19, 2024, pages 11341-11345. IEEE. A Shepherd. 2011. Want to talk about it? a minimalist
+analysis of subject omission in colloquial english.
+
+OpenAI. 2024a. gpt-40._ ht tps: //openai.com/ Unpublished MRes thesis, submitted to the University
+index/hello-gpt-40/. of Southampton.
+
+OpenAI. 2024b. Gpt-40-audio-preview api. https: Ricard V. Solé and Luis F. Seoane. 2014. Ambiguity in
+//platform.openai.com/docs/guides/audio. language networks. arXiv Preprint, abs/1402.4802.
+
+11
+
+
+--- Page 12 ---
+
+Hui Su, Xiaoyu Shen, Rongzhi Zhang, Fei Sun, Peng- of the 62nd Annual Meeting of the Association for
+wei Hu, Cheng Niu, and Jie Zhou. 2019. Improving Computational Linguistics (Volume 1: Long Papers),
+multi-turn dialogue modelling with utterance rewriter. ACL 2024, Bangkok, Thailand, August 11-16, 2024,
+In Proceedings of the 57th Conference of the Associ- pages 1979-1998. Association for Computational
+ation for Computational Linguistics, ACL 2019, Flo- Linguistics.
+rence, Italy, July 28- August 2, 2019, Volume 1: Long
+Papers, pages 22-31. Association for Computational © Shu-Wen Yang, Po-Han Chi, Yung-Sung Chuang,
+Linguistics. Cheng-I Jeff Lai, Kushal Lakhotia, Yist Y. Lin,
+
+Andy T. Liu, Jiatong Shi, Xuankai Chang, Guan-Ting
+
+Abdul Karim Taha. 1983. Types of syntactic ambiguity Lin, Tzu-Hsien Huang, Wei-Cheng Tseng, Ko-tik
+in english. International Review of Applied Linguis- Lee, Da-Rong Liu, Zili Huang, Shuyan Dong, Shang-
+tics in Language Teaching. Wen Li, Shinji Watanabe, Abdelrahman Mohamed,
+
+. . . and Hung-yi Lee. 2021. SUPERB: speech processing
+
+Chris van der Lee, Albert Gatt, Emiel van Miltenburg, universal performance benchmark. In 22nd Annual
+Sander Wubben, and Emiel Krahmer. 2019. Best Conference of the International Speech Communica-
+practices for the human evaluation of automatically tion Association, Interspeech 2021, Brno, Czechia,
+generated text. In Proceedings of the 12th Interna- August 30 - September 3, 2021, pages 1194-1198.
+tional Conference on Natural Language Generation, ISCA.
+
+INLG.
+
+Bin Wang, Xunlong Zou, Geyu Lin, Shuo Sun, Zhuohan Zehui Yang, Yin “ae an Suny an ae Lingx-
+Liu, Wenyu Zhang, Zhengyuan Liu, AiTi Aw, and Ths > Pon eng Tha, ' Le Xie uw i Qingaing
+Nancy F. Chen. 2024a. Audiobench: A universal Y 1 E027. Oven ang, WE i, an oe nck
+benchmark for audio large language models. arXiv an. - Open source magicdata-rame: “A Tic
+Preprint, abs/2406.16020. annotated mandarin conversational(ramc) speech
+
+, dataset. In 23rd Annual Conference of the Inter-
+
+Xiong Wang, Yangze Li, Chaoyou Fu, Yunhang Shen, national Speech Communication Association, Inter-
+Freeze-omni: A smart and low latency speech-to- pages 1736-1740. ISCA.
+speech dialogue model with frozen LLM. arXiv ; i,
+Preprint, abs/2411.00774. FU Yu. 2017. A formal syntactic study of np-ellipsis
+
+in mandarin chinese. Journal of Foreign Languages,
+
+Chengwei Xiao, Jiaqi Ye, Rui Maximo Esteves, and 40(1):13-23.
+
+Chunming Rong. 2016. Using spearman’s correla- an ; ; .
+
+tion coefficients for exploratory data analysis on big _ Jiahui Yu, Chung-Cheng Chiu, Bo Li, Shuo-Yiin Chang,
+
+dataset. Concurr. Comput. Pract. Exp., 28(14):3866- Tara N. Sainath, Yanzhang He, Arun Narayanan, Wei
+
+3878. Han, Anmol Gulati, Yonghui Wu, and Ruoming Pang.
+2021. Fastemit: Low-latency streaming ASR with
+
+Yuankun Xie, Haonan Cheng, Yutian Wang, and Long sequence-level emission regularization. In IEEE In-
+Ye. 2024. Domain generalization via aggregation and ternational Conference on Acoustics, Speech and Sig-
+separation for audio deepfake detection. IEEE Trans. nal Processing, ICASSP 2021, Toronto, ON, Canada,
+Inf. Forensics Secur., 19:344-358. June 6-11, 2021, pages 6004-6008. IEEE.
+
+Jin Xu, Zhifang Guo, Jinzheng He, Hangrui Hu, Ting Aohan Zeng, Zhengxiao Du, Mingdao Liu, Kedong
+He, Shuai Bai, Keqin Chen, Jialin Wang, Yang Fan, Wang, Shengmin Jiang, Lei Zhao, Yuxiao Dong, and
+Kai Dang, Bin Zhang, Xiong Wang, Yunfei Chu, and Jie Tang. 2024. Glm-4-voice: Towards intelligent
+Junyang Lin. 2025. Qwen2.5-omni technical report. and human-like end-to-end spoken chatbot. arXiv
+arXiv Preprint, abs/2503.20215. Preprint, abs/2412.02612.
+
+Junhao Xu, Zhenlin Liang, Yi Liu, Yichao Hu, Jian Zjrong Zhang and Min Chu. 2002. A statistical ap-
+Li, Yajun Zheng, Meng Cai, and Hua Wang. 2024. proach for grapheme-to-phoneme conversion in chi-
+Mooer: Llm-based speech recognition and transla- nese. JOURNAL OF CHINESE INFORMATION
+tion models from moore threads. arXiv Preprint, PROCESSING, 16(3):40-46.
+abs/2408.05101.
+
+Malcah Yaeger-Dror. 2007. Cabank english callfriend Qi Minlie Hane. 2020. Ctosswon A lowe oh and
+northern us corpus. nese cross-domain task-oriented dialogue dataset.
+
+Malcah Yaeger-Dror and Alan Beaudrie. 2007. Cabank Trans. Assoc. Comput. Linguistics, 8:28 1-295.
+english callfriend southern us corpus.
+
+A Appendix
+
+Qian Yang, Jin Xu, Wenrui Liu, Yunfei Chu, Ziyue
+Jiang, Xiaohuan Zhou, Yichong Leng, Yuanjun Ly, A.1_ Deatils of Dataset Design
+Zhou Zhao, Chang Zhou, and Jingren Zhou. 2024. a a
+Air-bench: Benchmarking large audio-language mod- | Based on our empirical study, we optimize the
+els via generative comprehension. In Proceedings data construction process and introduce criteria to
+
+12
+
+
+--- Page 13 ---
+
+ensure the quality of the dataset (Section 3.2). The | prompts are changed in different characteristics
+specific filtering criteria are as follows: and different languages. For pauses, stresses, and
+Phonological Ambiguity: The intended meaning _intonations, the evaluation involves inputting the
+of the instances is ambiguous, caused by phono- meaning of the ambiguous sentence and assess-
+logical features including heteronym, heterograph, ing whether the SDM produces these phonological
+stress, intonation, pause, and tone-only difference. features appropriately. For heteronyms and sylla-
+Semantic Ambiguity: The sentence contains lex- bles with different tones, the evaluation involves
+ical or syntactic ambiguities. More specifically, | inputting sentences with incorrect pronunciations
+lexical ambiguity means it contains polysemous and assessing whether the SDM can correct them
+words, while syntactic ambiguity means the phrase _ based on context.
+or sentence can be parsed in more than one way . oe
+grammatically. A.1.2. Semantic Ambiguities
+Omission: The instance omits part of the utter- This subset of Cam-data examines the ability of SDM
+ance, and the omission must be inferred from the —_ t© process semantic ambiguities. We first identify
+surrounding context or common knowledge. More _ the types of semantic ambiguities to collect data
+specifically, the omission can be the word: subject, from relevant literature (Rodd, 2018; Taha, 1983;
+verb, or object, commonly understood by speakers. Dai, 2021; Lasheiky, 2024). Subsequently, we man-
+Coreference: The instance uses pronouns (e.g., he,  Ually gather data from various websites, includ-
+she, that) or phrases (e.g., the former, the boy) to ing ambiguous sentences and their interpretations.
+refer to specific entities mentioned in the dialogue. The data are then organized using a standardized
+Multi-turn Interaction: The instance includes at Prompt, instructing the SDM to provide interpre-
+least five turns with speaker alternation, and seman- _ tations of the ambiguous sentences. Finally, the
+tic dependencies are across dialogue turns. data are converted from text to audio and checked
+The dataset design process for each phenomenon manually for quality.
+is described in detail below. The Chinese dataset encompasses ambiguities
+arising from unclear pronominal reference, pol-
+A.1.1 Phonological Ambiguities ysemy, unclear modification scope, unclear part
+Understanding _ In the Chinese subset, ambigui- of speech, and unclear subject-object relationship.
+ties arise from four types of characteristics: pause, | 1° ensure optimal audio quality, the first two in-
+heteronym, heterograph, and syllable with differ- stances are enhanced with human-voiced record-
+ent tones. In the English subset, ambiguities result i188, and the remaining are generated by TTS. The
+from four types of characteristics: heterograph, English dataset includes lexical ambiguities stem-
+pause, stress, and intonation. During the manual ™ing from unclear parts of speech and polysemy,
+review of the TTS-generated audio, we find that 8 well as syntactic ambiguities resulting from un-
+the audio quality in the Chinese dataset is poor for clear pronominal reference and unclear modifica-
+the pause and heteronym characteristics, and in the | "0M Scope.
+English dataset for the pause and stress characteris- A1.3 Omission
+tics. Consequently, these four parts of the data are
+re-recorded manually. The final bilingual dataset This section of the dataset examines SDM’s abil-
+contains ambiguous questions with audio and text ty to understand comprehension difficulties in
+modalities, and the corresponding textual reference dialogues caused by the omission phenomenon.
+answers. The form of the other dataset is also the The Chinese dataset is based on the RISAWOZ
+same. dataset (Quan et al., 2020), a text dataset specifi-
+cally designed to study coreference and omission
+Generating In addition, we develop data that phenomena. The selected portion of the RISAWOZ
+tests SDM’s ability to generate dialogues with pho- _—_ dataset contains multi-turn dialogues with 1, 3, or
+netic characteristics. This data is derived from the 5 sentences, and provides annotations for omis-
+understanding phonological ambiguities dataset. sion and coreference in each dialogue. We retain
+An exception is heterographs, which are not in- — the segments of each multi-turn dialogue from the
+cluded in the generation evaluation, as the refer- beginning up to the point where omission occurs
+ence audio for homophones remains the same. The —and add prompts to query SDM to construct the
+ambiguous sentences remain unchanged, but the _—_ dataset. The English portion is manually extracted
+13
+
+
+--- Page 14 ---
+
+from relevant literature (Yu, 2017; Shepherd, 2011), tinct queries: first, to verify the presence of the
+and data containing the omission phenomenon is —_coreference phenomenon, and second, to deliver
+constructed with corresponding prompts to query the outcomes following coreference resolution.
+SDM. Unlike the Chinese dataset, which is in the . .
+form of multi-turn dialogues, the English dataset is A.1.5  Multi-turn Interaction
+in the form of a single sentence. To evaluate the model’s ability to track conversation
+
+For both the Chinese and English datasets, refer- history, we ensured that the assessment of SDM is
+ence answers that supplement the omitted content conducted in a multi-turn conversational format.
+are provided to enable comparison with SDM’s re- The criteria for collecting data are that the dia-
+sponses. We construct two questions in the prompt logues must be multi-turn. The Chinese dataset
+for the data: The first question asks the SDM to de- _ 18 based on the CrossWoz dataset (Zhu et al., 2020),
+termine whether there is an omission phenomenon which covers multiple domains including tourist
+in the input audio, and the second question in- attractions, hotels, restaurants, subways, and taxis.
+forms the SDM of the existence of an omission The English dataset is derived from the DailyDi-
+phenomenon in the input and requests the SDM to _alog dataset (Li et al., 2017), which is artificially
+complete the omitted content. The two questions Constructed with minimal noise and encompasses a
+are independent of each other. To prevent overlap variety of everyday conversational scenarios. Since
+with the ambiguous contexts dataset, we exclude | our method of evaluating SDM involves posing the
+the omission phenomenon that would cause ambi- _ first question in the dialogue, we ensured that the
+guity during data selection. first sentence of each dialogue is a question when
+
+filtering out the dataset. Defining a single input
+
+A.1.4 Coreference to the SDM and its corresponding response as one
+This section of the dataset assesses SDM’s abil- _ turn of dialogue, the Chinese dataset features dia-
+ity to comprehend difficulties in dialogues arising | logues with a maximum of 16 turns and an average
+from the coreference phenomenon. The Chinese of 9.68 turns, whereas the English dataset has a
+dataset is based on the RISAWOZ dataset (Quan maximum of 9 turns and an average of 6.21 turns.
+et al., 2020) and employs a similar methodology In the dataset, only the content input by the user
+to the omission section, resulting in multi-turn dia- | to SDM is provided, while the responses of SDM
+logue data instances, each comprising 1,3,or5sen- are generated by the SDM being evaluated. This
+tences. The dataset includes reference answers that subset of Coon-data examines SDM’s ability to re-
+resolve coreference by replacing pronouns with | member the content of multi-turn dialogues and to
+their referents, thereby eliminating the coreference utilize the conversation history to generate current
+phenomenon, to serve as a standard for comparing responses when processing dialogues. Therefore,
+SDM’s responses. after the dialogue concludes, we revisit the first
+
+The English dataset is constructed based on the —_ question in the dialogue and request that SDM re-
+Winograd Schema Challenge dataset (Kocijan et al., | spond to that question again. If the final response
+2020). Each data instance comprises a sentence and = provided by SDM is consistent with the initial re-
+a multiple-choice question targeting the referent sponse and the intervening question-and-answer
+of a pronoun, with two potential answers provided. content, it is considered to have good capability
+The dataset also includes the correct answer to each to process multi-turn interaction. During the eval-
+coreference question. The referents of these pro- _ uation process, if the SDM being evaluated only
+nouns are easily confused, necessitating a deep _— provides single-turn dialogue capability, we con-
+understanding of the sentence’s meaning as well _catenate the previous question-and-answer pairs
+as robust commonsense knowledge and reasoning _ to manually construct the conversation history for
+capacity to determine the correct answer. To ensure _—_ each input.
+the dataset’s quality and clarity regarding the pro-
+nouns in question, we filter out instances where the A.2 Detailed Structure and Exemplars of
+pronoun appears more than once in the sentence. Dataset
+
+Consistent with the omission dataset, to avoid The annotation details for each phenomenon are as
+overlap with ambiguous contexts, we exclude coref- follows:
+erence phenomena that could introduce ambiguity. | Phonological Ambiguity: Different meanings are
+We then task the SDM with addressing two dis- annotated for each sentence, along with the correct
+
+14
+
+
+--- Page 15 ---
+
+phonological features, including pronunciation, in-
+tonation, stress position, and pause position.
+Semantic Ambiguity: Semantic ambiguity is di-
+vided into lexical and syntactic ambiguity. For
+lexical ambiguity, different meanings of the same
+word are annotated. For syntactic ambiguity, differ-
+ent interpretations of the same semantic structure
+are annotated.
+
+Omission: The omitted parts are annotated based
+on context and common sense.
+
+Coreference: The word or phrase referred to by the
+pronoun is annotated based on context and common
+sense.
+
+Multi-turn Interaction: Multi-turn dialogues do
+not require annotation, as the reference answer is
+determined by the SDM’s output.
+
+To provide a more detailed illustration of the
+contents of each subset within the dataset, Figure 6
+- 9 have been presented. The gray text denotes
+the invariant segments integral to the dataset’s con-
+struction, immutable irrespective of variations in
+the data samples. The underlined blue-highlighted
+segments indicate the focal areas examined by the
+SDM, while the non-underlined blue-highlighted
+portions distinguish the roles of different partici-
+pants in multi-turn dialogues.
+
+A.3 Correlation Analysis
+
+To further illustrate the correlation between LLMs
+
+and human evaluations, Table 4 presents three cor-
+
+relation coefficients, while Table 5 shows their cor-
+
+responding p - values.
+
+A.4_ Detailed Evaluation Results for
+DeepSeek-R1 and GPT-4o0
+
+To illustrate the experimental results of differ-
+
+ent SDMs on the C°, evaluated separately by
+
+DeepSeek-R1 and GPT-40, Table 6 and Table 7
+
+present the detailed results corresponding to those
+
+summarized in Table 2.
+
+To present the radar charts of evaluation results
+for different SDMs on the Chinese and English
+sections of C3, evaluated respectively by DeepSeek-
+R1 and GPT-40, we include Figure 10 - 13 , which
+correspond to the summaries shown in Figure 4
+and Figure 5.
+
+To illustrate the experimental results of different
+SDMs on the omission and coreference sections,
+evaluated respectively by DeepSeek-R1 and GPT-
+4o, Table 8 and Table 9 are presented, correspond-
+ing to the summary in Table 3.
+
+15
+
+
+--- Page 16 ---
+
+Category | Data instance Reference answer
+Here is a sentence: He is your teacher? \_ The intended
+Generation | meaning is: ls he your teacher?‘ Please read it out with | He is your teacher? 1
+the correct intonation.
+The sentence below is hard to understand: The phrase "a nice man" means a
+| am a nice man. | always help others and spread person who is pleasant, kind, and
+Heterograph; = ———<“C—s—CSs : wee "
+kindness. considerate. This is different from “an
+What is meaning of the phrase ‘a nice man’? ice man".
+The sentence below is hard to understand: Rising intonation indicates a
+You're going to the party? 1 question: ‘Are you going to the party?
+Could you tell me what it means? 5"
+aS ESE
+The sentence below with pause is hard to understand: .
+. with glasses’ is an additional
+He saw the man / with glasses. i. 4
+. description, meaning 'He saw the
+Could you tell me what it means? . :
+man, and he was wearing glasses.
+aS)
+Emphasis on ‘can’ indicates a strong
+understand:
+Stress . assertion of ability, possibly in
+| can help you. \ qi
+— . response to doubt: ‘I can help you!
+Could you tell me what it means?
+The sentence below contains ambiguity: o.,
+; . Ambiguity in ‘darkness’: (1) 'In the
+Lexical They exchanged addresses in darkness. oa ' ,
+absence of light’ or (2) ‘Secretly’.
+Please tell me how to understand it.
+ES
+The sentence below contains ambiguity: an
+than he loves his wife;
+Syntactic | Mr. Smith loves music more than his wife. . .
+— 2. Mr. Smith loves music more
+Please tell me how to understand it.
+than his wife does.
+Figure 6: The figure delineates the structure and exemplars of the English Ambiguous subset within the dataset.
+Category Data instance Reference answer
+TARMIFPR-TSFNREPERIR: BRB bei BIL
+Heteronym | FAME, RPAIFSRANSRS: SRCEOHRF | SRA bei SILFARRE,
+& BESLARRE. HAEANZERHXE.
+5 FRA—TA DURRANI: RMERRAIZ. 1K
+2 P, _—_ KPERKA, HZ.
+& OSS | NELFARSTAUNRRE: BONER AN, (OIF, meee
+Syllable with | THOU FPRDREFERIR: KLALAERMKESRE | KALAERMABEARN, EA
+different tones | 3, ZATS@WARHO. AANA S RK. | TSP ARMO.
+VRB —MCS? RRA PARRA, BR | -BRawid, SRN; OF
+Heteronym Su GARE: MRE bei BILFARME, KA | PEBMLAME, RATA,
+TURES bei B/LFARRE. XAal.
+VRB? RAAB RARE, eH .
+THAR MRR SIA, 18
+Heterograph | AAA: WARE MMMM, ABER can BENEAEED
+RBURS. mes
+BLE MU? BRAGS ARR, RBH | MARSA, 5A5 Baz
+BUSA: INKRMRMASASA, WARE. NEM | REN SASAZHA; 5AS5SA
+M5A5 Aa, ARB. MARE Hs 5 AS BASRA.
+Sulettawitt DLaRBR—MC? RRA PARRA, BH | PENPSNLeCHNeh Rete
+SEG SUSBNORE: RABABSERDSI, SREMS [GE RATE, MUA BIER
+different tones a a
+STfF. A.
+VRB? RAAB RARE, eH
+BuUGBNRE: BRNBARSSOSS), BRWSA | SRSR, BROS.
+ESD ESD,
+Figure 7: The figure delineates the structure and exemplars of the Chinese Ambiguous subset within the dataset.
+Table 4: Correlation coefficients between LLM evaluation results and human assessment results
+Model Pearson Spearman’ Kendall Language
+DeepSeek-R1 0.8969 0.8969 0.8969 Chinese
+GPT-40 0.8886 0.8886 0.8886 Chinese
+DeepSeek-R1 0.8739 0.8739 0.8739 English
+GPT-40 0.8940 0.8940 0.8940 English
+Table 5: p-values for correlation coefficients
+Model Pearson p-value Spearman p-value Kendall p-value Language
+DeepSeek-R1 <1o71 <1o7t < 107°" Chinese
+GPT-4o0 < 1071 < 1071 < 10~°° Chinese
+DeepSeek-R1 < 107737 < 107737 < 10716 English
+GPT-4o0 < 107764 < 107764 < 10-1? English
+16
+
+
+--- Page 17 ---
+
+Category Data instance | Reference answer
+Please listen carefully to the following sentence, after the
+sentence ends, | will ask you some questions: Yes.
+Your advice made me happy but Tom angry.
+Is there any omission of content in the sentence?
+Please listen carefully to the following sentence, after the
+sentence ends, | will ask you some questions: Your advice made me
+Your advice made me happy but Tom angry. happy but your advice
+Some content has been omitted in the sentence, please fill made Tom angry.
+in the omitted parts and provide the complete sentence.
+Please listen carefully to the following sentence, after the
+sentence ends, | will ask you some questions:
+The city councilmen refused the demonstrators a permit Yes, there's a pronoun
+because they feared violence. used in the sentence.
+Are there any instances of pronouns being used to refer to
+nouns or noun phrases in the sentences above?
+The city councilmen refused the demonstrators a permit
+because they feared violence. ; |
+— Oyo) . , The city councilmen.
+What does the word ‘they’ refer to: The city councilmen or
+The demonstrators?
+A: Do you have any plan to buy a house in this city? | don't have personal
+B: | don't have personal plans or interests, so | wouldn't be plans, but | can
+buying a house. provide information or
+we help find resources
+A: Do you have any plan to buy a house in this city? If this related to buying a
+question has been raised before, please directly provide the | house in the city if
+previous answer. you need it.
+Figure 8: The figure delineates the structure and exemplars of the English Context-Dependency subset within the
+dataset.
+Category Data instance Reference answer
+KA -ESRASERNMRUT, hie, PSR:
+Rin: “NafitmetA? ”
+Zik: “BABS ERENAGA. ” FE.
+Rin: “Sax? ”
+BdTeNka—OP, ZBFERRMR?
+KA -ESRASERNMRUT, hie, PSR:
+Rin: “NafitmetA? ”
+Zit: “BARS oRBWAA. * TaLItRSaA
+Rik: “2BANB? ” IS?
+FARRER -OPFERRMAR, thARARHAA, An
+BRAARHS EN eeiA a.
+KA -ESRASERNMRUT, hie, PSR:
+Bik: “MY, RRGSLA-MSR, weRS—TBAWASM? * | FE.
+BOER —Ot, SAFHEM AE AANRHMR?
+KA -ESRASERNMRUT, hie, PSR: iY, RPA=Z
+Bik: “Mi, RRASLA-WSR, wWERS—TRAWASM A? "| AMAR, i
+FAROE NRE—OP, FEE tRANAHWAR, BRA | RS—-TRASN
+ECHNAASatid, Buta ReRaN Tea. KAM I?
+Rik: RRR, TAREE SAA? HEMABSR
+Zik: HERABERS, PAIRHSABE, Tika |S, KBSIRR
+BCA Bz. 22hHaZ-,
+bees FEI ACER EEN
+it: REI, TAREE -SR AI? MRZAS | LAD RNtF
+Ziad, WaRAnZHNAR. WA.
+Figure 9: The figure delineates the structure and exemplars of the Chinese Context-Dependency subset within the
+dataset.
+17
+
+
+--- Page 18 ---
+
+Table 6: Accuracy (%) of different SDMs on the Chinese (“zh”) or English (“en”) dialogue data subset of C?
+(DeepSeek-R1).
+Category Freeze-Omni_ GLM-4-Voice ee Kimi-Audio ai MoE Moshi Qwen?s Step-Audio VITA-Audio Overall
+zh en zh en zh en zh en en zh en en zh en zh en zh en zh en
+Phonological 16.22 6.90 18.92 20.69 29.73 44.83 18.92 44.83 17.24 18.92 20.69 10.34 27.03 37.93 21.62 27.59 8.11 27.59 19.93 25.86
+Semantic 1.69 11.76 169 11.76 4.24 68.63 2.54 19.61 9.80 2.54 37.25 7.84 5.93 21.57 5.93 17.65 2.54 17.65 3.39 22.35
+Cam-data 8.96 9.33 10.31 16.23 16.98 56.73 10.73 32.22 13.52 10.73 28.97 9.09 16.48 29.75 13.78 22.62 5.33 22.62 11.66 24.11
+Omission 429 7.84 4.29 6.86 45.71 16.67 27.14 12.75 6.86 32.86 7.84 4.90 25.71 14.71 17.14 11.76 5.71 7.84 20.36 9.80
+Coreference 13.33 48.15 20.00 67.96 55.00 89.81 40.00 85.56 55.00 28.33 35.74 29.81 50.00 65.74 53.33 55.74 33.33 73.70 36.67 60.72
+Multi-turn 7.89 32.35 10.53 58.82 10.53 47.06 / / 47.06 60.53 38.24 / 84.21 97.06 5.26 32.35 52.63 52.94 33.08 50.74
+Ccon-data 8.50 29.45 11.60 44.55 37.08 51.18 33.57 49.15 36.31 40.57 27.27 17.36 53.31 59.17 25.25 33.29 30.56 44.83 30.06 39.26
+Overall 8.68 21.40 11.09 33.22 29.04 53.40 22.15 40.68 27.19 28.64 27.95 13.23 38.58 47.40 20.66 29.02 20.47 35.94 22.41 32.94
+Table 7: Accuracy (%) of different SDMs on the Chinese (“zh”) or English (“en”) dialogue data subset of C?
+(GPT-4o0).
+Category Freeze-Omni_ GLM-4-Voice ee Kimi-Audio ai MoE Moshi Qwen?s Step-Audio VITA-Audio Overall
+zh en zh en zh en zh en en zh en en zh en zh en zh en zh en
+Phonological 16.22 10.34 18.92 34.48 29.73 62.07 21.62 48.28 13.79 21.62 17.24 10.34 27.03 58.62 24.32 31.03 8.11 34.48 20.95 32.07
+Semantic 169 11.76 3.39 19.61 7.63 72.55 5.93 39.22 15.69 1.69 54.90 11.76 7.63 43.14 4.24 25.49 4.24 19.61 4.56 31.37
+Cam-data 8.96 11.05 11.15 27.05 18.68 67.31 13.78 43.75 14.74 11.66 36.07 11.05 17.33 50.88 14.28 28.26 6.17 27.05 12.75 31.72
+Omission 429 5.88 7.14 5.88 42.86 15.69 31.43 7.84 4.90 31.43 1.96 0.98 30.00 15.69 18.57 9.80 7.14 7.84 21.61 7.65
+Coreference 8.33 46.30 13.33 70.00 53.33 92.41 40.00 89.26 58.89 36.67 36.30 19.44 61.67 70.56 48.33 58.89 33.33 75.93 36.88 61.80
+Multi-turn 15.79 55.88 10.53 58.82 15.79 47.06 / / 64.71 65.79 44.12 / 81.58 94.12 10.53 50.00 73.68 67.65 39.10 60.29
+Ccon-data 9.47 36.02 10.33 44.90 37.33 51.72 35.71 48.55 42.83 44.63 27.46 10.21 57.75 60.12 25.81 39.56 38.05 50.47 32.39 41.19
+Overall 9.26 26.03 10.66 37.76 29.87 57.95 24.75 46.15 31.60 31.44 30.90 10.63 41.58 56.42 21.20 35.04 25.30 41.10 24.26 37.36
+Table 8: Accuracy (%) of omission and coreference phenomena (GPT-40).
+ors Freeze- GLM-4- GPT-40- Kimi- LLaMA- MooER- . Qwen2.5- Step- VITA-
+Phenomenon Ability Lang @mni Voice. Audio-Prev. Audio Omni Omni ™S4i “Omni Audio Audio
+Detection 22 857.—14.29 $2.86 57.14 / 60.00 / 51.43 31.43 8.57
+. en —_72.84 3.92 11.76 784 5.88 1.96 1.96 13.73 5.88 7.84
+Omission
+Completi zh ~—0..00 0.00 2.86 5.71 / 2.86 / 8.57 5.71 5.71
+omprenion en 3.92 7.84 19.61 784 3.92 196 0.00 1765 13.73 7.84
+Detecti zh = 16.67 —-26.67 63.33 56.67 / 60.00 / 93.33 66.67 53.33
+erection en 52.22 84.44 95.93 98.52 78.89 2444 25.56 71.11 65.56 87.78
+Coreference
+Resolution 22-000 0.00 43.33 23.33 / 13.33 / 30.00 30.00 13.33
+‘ en 40.37 55.56 $8.89 80.00 38.89 48.15 13.33 70.00 52.22 64.07
+Table 9: Accuracy (%) of omission and coreference phenomena (DeepSeek-R1).
+ors Freeze- GLM-4- GPT-40- Kimi- LLaMA- MooER- . Qwen2.5- Step- VITA-
+Phenomenon Ability Lang @mni Voice. Audio-Prev. Audio Omni Omni ™S4i “Omni Audio Audio
+Detection 22-857 5.71 $2.86 48.57 / 62.86 / 45.71 34.29 8.57
+_ en ‘9.80 5.88 15.69 17.65 7.84 11.76 5.88 9.80 9.80 5.88
+Omission
+Completion 22 (0.00 2.86 8.57 5.71 / 2.86 / 5.71 0.00 2.86
+P en 5.88 7.84 17.65 784 5.88 3.92 3.92 1961 13.73 9.80
+Detection 22 2333. 40.00 63.33 63.33 / 56.67 / 80.00 73.33 60.00
+en 62.96 83.33 94.81 95.56 78.15 2741 45.19 70.00 61.11 87.41
+Coreference
+Resoluti zh 3.33 0.00 46.67 16.67 / 0.00 / 20.00 33.33 6.67
+esommon en —- 33.33. 52.59 84.81 75.56 31.85 44.07 1444 61.48 50.37 60.00
+18
+
+
+--- Page 19 ---
+
+coreference
+ee coreference
+LY — oS ee
+multi-turn | > ; “ NN
+interaction 4 Mmulti-turn \
+/ i interaction \
+/ ZA o.8\" / \1.0
+/ - 0.6 \ / ) 0.8 \
+| j 0.4 \ / y \ 06\  \
+\ / \ /
+\ \ /
+phonological .
+phonological
+semantic a ;
+semantic
+== LLaMA-Omni —— F -Omni
+ConiAudio. Moen mn === Kimi-Audio =——= Freeze-Omni
+—— VITA-Audio Qwen2.5-Omni == VITA-Audio =—— Qwen2.5-Omni
+~— GLM-4Voice © — Step-Audio 77 GIM4Volce — —— Step-Audio
+MooER-Omni GPT-40-Audio-Preview ~ = MooER-Omni = —— GPT-4o-Audio-Preview
+. Loe : Figure 12: Radar charts depicting the experimental re-
+Figure 10: Radar charts depicting the experimental re- uh s of each SDM on the Chinese, ction f the dataset
+sults of each SDM on the English portion of the dataset, : P ,
+: assessed using DeepSeek-R1.
+assessed using DeepSeek-R1.
+coreference
+—_— coreference
+multi-turn ~ a >
+interaction Mmulti-turn IN
+/ GES interaction .
+/ GF 0.8\° / \1.0
+/ % 0.6 \ / 0.8 \
+| ] 0.4 \ / 0.6 \
+0.2 | . / y/ \0.4 \
+| Nd omission Me | omission
+\ / \ ; /
+\ / \ /
+phonological |
+. phonological
+semantic a ;
+semantic
+== LLaMA-Omni —— F -Omni
+ConiAudio. Moen mn === Kimi-Audio =——= Freeze-Omni
+~~ ViTAAudio Qwen2.5-Omni == VITA-Audio =—— Qwen2.5-Omni
+—= GLM-4-Voice | — Step-Audio ~~ GLM-4Voice — ——~ Step-Audio
+MooER-Omni GPT-40-Audio-Preview ~= MooER-Omni = —— GPT-4o-Audio-Preview
+Figure 11: Radar charts depicting the experimental re- eure eR Sa ele the ©xP' erimental te
+sults of each SDM on the English portion of the dataset, : P ,
+assessed using GPT-4o. assessed using GPT-4o.
+19

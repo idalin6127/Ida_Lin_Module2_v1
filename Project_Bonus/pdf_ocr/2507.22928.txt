@@ -1,0 +1,910 @@
+
+
+--- Page 1 ---
+
+How does Chain of Thought Think?
+Mechanistic Interpretability of Chain-of-Thought Reasoning with Sparse
+Autoencoding
+Xi Chen, Aske Plaat, Niki van Stein
+Leiden University
+Abstract sparsity, SAEs help resolve polysemanticity and disentan-
+q Chain-of-thought (CoT) prompting boosts Large Language gle overlapping internal representations, producing monose-
+S Models accuracy on multi-step tasks, yet whether the gen- mantic features that can be directly probed and causally ma-
+N erated “thoughts” reflect the true internal reasoning process nipulated. Furthermore, compared to component-level acti-
+_ is unresolved. We present the first feature-level causal study vation patching, which can be coarse-grained and ambigu-
+5 of CoT faithfulness. Combining sparse autoencoders with ous, feature-level interventions via SAEs provide potentially
+— activation patching, we extract monosemantic features from more targeted and semantically meaningful control over
+= Py ON ane arian va Co oven OsMse math model behavior (Geiger et al. 2024; Marks et al. 2024).
+problems under COl and plain (noCo rompting. sSwap- : : :
+NX ping a small set of CoT-reasoning features into a noCoT fe hain-of- Though t (Cor) prompung mp locke Ae P wL
+— run raises answer log-probabilities significantly in the 2.8B 5029), H. on complex, Mu ee ne whethe ‘c ‘( el eta :
+—) model, but has no reliable effect in 70M, revealing a clear ‘ ‘): owever, if remains unclear w et er Lot reasoning
+scale threshold. CoT also leads to significantly higher activa- is faithful: whether the intermediate reasoning steps faith-
+UO tion sparsity and feature interpretability scores in the larger fully reflect the model’s true internal decision-making pro-
+Hh model, signalling more modular internal computation. For cess, or merely serve as plausible surface-level scaffolding.
+O example, the model’s confidence in generating correct an- There is little feature-level, causally grounded analysis of
+— swers improves from 1.2 to 4.3. We introduce patch-curves reasoning faithfulness in LLMs, especially for math word
+_ and random-feature patching baselines, showing that useful problems requiring multi-step reasoning.
+CoT information is not only present in the top-K patches but : :
+> widely distributed. Overall, our results indicate that CoT can To address th € question whether CoT enhances faithful-
+oe) induce more interpretable internal structures in high-capacity ness of reasoning, we combine SAE and activation patch-
+N LLMs, validating its role as a structured prompting method. ing, to analyze the semantic features underlying LLM rea-
+2) soning. By (1) training separate SAEs on CoT and NoCoT
+* activations to extract dictionary features, and (2) performing
+N : Introduction a causal intervention by patching activations to swap these
+tC While Large Language Models (LLMs) have shown excep- features between reasoning conditions. To further investi-
+S tional performance in reasoning tasks (Wei et al. 2022), their gate the semantic alignment of these internal features, we
+a) internal decision-making often remains a black box, making also perform a lightweight interpretation that maps selected
+N it hard for people to understand how the models reach their features to natural language descriptions. We go beyond at-
+> conclusions. ; oo, ; tributional and symbolic methods to gain deeper insight into
+aap _ In response to this challenge, mechanistic interpretabil- CoT reasoning. (Code at: https://github.com/sekirodie1000/
+< ity (MI) has emerged as a powerful alternative to traditional cot_faithfulness). We make the following contributions (Fig-
+attributional methods (Chuang et al. 2024) and symbolic ap- ure 1):
+OS proaches (Xu et al. 2024; Li et al. 2024). Instead of rely-
+ing on external proxies, MI investigates how specific fea- ¢ We introduce a feature-level causal intervention frame-
+tures, neurons, or internal circuits contribute to reasoning. work to mechanistically evaluate the faithfulness of CoT
+However, truly *looking inside” LLMs remains challenging: prompting in LLMs.
+classic neuron-level analyses are limited by polysemanticity
+(Bricken et al. 2023) and superposition (Elhage et al. 2022), * We propose a log-probability-based evaluation proce-
+while circuit-level mapping often requires intensive manual dure, enabling the systematic assessment of feature-level
+effort, posing significant challenges for scaling to modern causal impacts in multi-step mathematical reasoning.
+architectures (Nanda et al. 2023). . e We demonstrate on challenging math reasoning bench-
+A promising approach in this area is the use of sparse au- :
+toencoders (SAEs) (Cunningham et al. 2023). By enforcing marks that CoT induces sparser and more causally effec-
+, , tive internal features, and thus indeed enhances faithful
+Copyright © 2026, Association for the Advancement of Artificial reasoning, but only in sufficiently large models.
+Intelligence (www.aaai.org). All rights reserved.
+
+
+--- Page 2 ---
+
+SAE Activation Patching
+e CAP LLM-exp- =
+Hin 5 Seite plained —> ——
+Prom pt H le $s c~e— ) Features owen
+4 e 4 Activation Semantic
+e A e Sparsity Interpretation
+C-) e e
+le Top-K V Sparser activations
+e fe ]
+Chain-of-Thought / OQ 4 Renita V Causal boost
+Prompt Oo] fe a Y Better interpretability
+© Patch Curve Analysis Scale Matters
+Figure 1: Workflow of the approach: After SAE, we do Activation patching, Feature Interpretation, and Activation Sparsity
+Analysis. All three confirm that CoT improves faithfulness of reasoning
+Related Work Faithfulness and Causal Interpretability Faithfulness is
+. defined as the degree to which an explanation reflects the
+We present related work on (1) CoT, (2) SAE and interpre- model’s true decision-making process (Agarwal, Tanneru,
+tation, (3) faithfulness and causal interpretability. and Lakkaraju 2024). Several studies have proposed the use
+R . Cot T ine is effecti . of counterfactual interventions to measure LLM faithful-
+easoning and Co CoT prompting is e ective at im- ness, such as CT/CCT frameworks (Atanasova et al. 2023;
+proving performance on comp lex tasks such as arithmetic Siegel et al. 2024) and causal mediation analysis (Paul
+and syinbolc reasoning (Wet et al. neo Ki al oe. et al. 2024). They emphasize the causal relationship between
+eTO-s ot Co _Snows that phrases like “Let's think step by model explanations and reasoning. Matton et al. (2025) in-
+step” can elicit coherent reasoning (Kojima et al. 2022). troduce interventions at the semantic concept level, elevating
+However, concerns remain: models sometimes reach cor- faithfulness analysis to a higher abstraction level.
+rect answers despite incorrect intermediate steps (Yee et al. Cc Lanalvsi fl h ar hine (M
+2024), raising doubts about the faithfulness of CoT chains. ausa’ analysis tools, such as activation patching ( eng
+We choose GSM8K as a challenging benchmark for evalu- et al. 2022), test the impact of interventions on internal acti-
+ating CoT reasoning (Cobbe et al. 2021). GSM8K features vations. Unlike correlational measures they give direct evi-
+complex problem structures, the answers often span multiple dence of causal influence. Interchange interventions (Geiger
+tokens, demanding high precision and logical coherence. If et al. 2021) and ablation find resp onsible components In
+CoT truly reflects the model’s internal problem-solving pro- model circuits, and recent small-scale studies were able to
+cess, then the relevant causal features should still be identi- fully Teverse-engineere transformer layers, confirming cir-
+fiable even in these more challenging scenarios cuit functions by patching and ablation (Nanda et al. 2023).
+Current approaches for evaluating the causality of CoT
+Sparse Autoencoder and Interpretation Recent work in reasoning remain limited. Some studies attempt to intervene
+MI uses SAEs to address superposition and polysemanticity in the model's internal activation space to quantify the con-
+in network representations (Cunningham et al. 2023). Max tribution of different parts of the reasoning chain to the fi-
+activation set analysis (Bills et al. 2023) and probing clas- nal answer, making some progress in measuring faithful-
+sifiers (Belinkov 2022) are limited by either scale or range ness (Zhang and Nanda 2023; Yeo, Satapathy, and Cambria
+of labels they use. By learning an overcomplete set of la- 2024). However, because reasoning in LLMs is highly paral-
+tent directions with a sparsity constraint, SAEs can break lel and redundant, most current interventions operate at the
+down dense model activations into monosemantic and inter- layer or component level, which makes it challenging to pin-
+pretable features (Bricken et al. 2023; Braun et al. 2024). point the specific features or causal mechanisms Tespons!-
+Crucially, SAE-derived features are not only interpretable ble for model outputs. Backup circuits (a self-repair mecha-
+but also causally manipulable. By intervening on these fea- nism) further complicate attribution (Dutta et al. 2024).
+ture activations we can steer model behavior. Cunningham To address these challenges, recent work has introduced
+et al. (2023) used activation patching at the feature level and feature-level interventions: interpretable feature directions
+found that replacing or removing certain SAE features led are first extracted (e.g., via SAEs), and then directly manip-
+to much larger changes in the model’s outputs than PCA. ulated. Geiger et al. (2024) argue that using learned feature
+Similarly, Bricken et al. (2023) used logit attribution to mea- subspaces enables finer tracking and control of model rea-
+sure feature importance and showed that individual learned soning. Marks et al. (2024) further construct sparse causal
+features make discernible contributions to the model. With circuits at the feature level, showing that a small number of
+8
+SAE, interventions at the feature level, targeting meaningful key features can reconstruct complex behaviors. Makelov,
+and sparse features, and give more precise control of model Lange, and Nanda (2023) note that interventions in the fea-
+behavior than changes made at the neuron or layer level. ture subspace can sometimes lead to interpretability illu-
+
+
+--- Page 3 ---
+
+sions, where changes in model output not necessarily orig- features with clear semantic meaning. This approach builds
+inate from the intended features. Wu et al. (2024) argue on prior advances in neuron interpretability; for example,
+that this phenomenon reflects the inherent property of dis- Cunningham et al. (2023) showed that training sparse dic-
+tributed representations in neural networks, and does not tionaries over activations can yield semantically meaningful
+prevent patching or ablation methods from revealing effec- features that support direct intervention. Extending this line
+tive structures in complex tasks. We further combine SAE of work, our study is the first to apply SAE-based feature
+feature space, activation patching, and CoT prompting to an- extraction in the context of CoT prompting.
+alyze the causal mechanisms in multi-step mathematical rea-
+soning. By using methods such as Top-K patch curves, we Causal Intervention
+provide a detailed characterization of the cumulative contri- For causal intervention, we analyze the causal impact of fea-
+bution of key features, advancing feature-level causal inter- tures under different reasoning conditions using the activa-
+pretation toward higher resolution and interpretability. tion patching method. While activation patching has been
+Our work goes beyond prior external and attributional ap- widely adopted in neural network interpretability research
+proaches by directly probing LLM internal representations (Heimersheim and Nanda 2024), this work is the first to sys-
+with mechanistic interpretability. We combine SAE-based tematically integrate it with the SAE feature space to evalu-
+feature extraction and activation patching to causally test ate the faithfulness of CoT reasoning. By combining SAEs,
+whether CoT-elicited features enhance faithfulness, filling a activation patching, and CoT prompting, we construct a
+key gap left by existing methods. feature-level causal analysis framework that enables system-
+atic evaluation and interpretation of reasoning faithfulness.
+Methodology This approach addresses limitations in prior work. Specifi-
+To evaluate whether CoT improves the internal faithfulness cally, prior work either focused on neurons or layers (Dutta
+of LLM reasoning, we use a feature-level causal analysis et al. 2024), or was limited to single-step reasoning (Hanna,
+framework: (1) feature extraction, (2) causal intervention, Liu, and Variengien 2023). In contrast, our method provides
+(3) structural analysis, and (4) semantic interpretation. The a new tool for analyzing causal mechanisms in multi-step
+framework uses SAEs to extract semantically meaningful reasoning tasks.
+sparse features from model hidden states. We then apply ac- Concretely, for the same math problem prompted under
+tivation patching to exchange selected features between CoT both CoT and NoCoT conditions, we extract hidden acti-
+and NoCoT conditions, allowing us to examine their causal vations Xcor and Xnocor, and obtain their sparse feature
+impact on model outputs. To assess whether CoT prompts representations hoor and hyecor using the SAE encoder.
+induce more focused and structured computation, we com- Given a feature subset S, we construct a patched feature vec-
+pare activation sparsity across conditions. Finally, we gen- tor by replacing the values of hy ocor with those from hcor
+erate natural language descriptions for SAE features and on the selected subset:
+compute explanation scores to evaluate their semantic inter-
+pretability. This approach enables systematic, feature-level - _
+causal evaluation of reasoning faithfulness. We now describe Hpaten[S] = heor|S], Bpaten[S] = bnocor|SI-
+the four components of our method. This patched feature vector hyaicn is then decoded back
+Feature Extraction into activation space and forwarded through the remaining
+. layers of the model to obtain a new output.
+For feature extraction, we use sparse autoencoders to extract To quantify the causal effect of the patched features, we
+salient latent features from the model's hidden representa- calculate the change in log-probability assigned to the cor-
+tions x € R input by learning a sparse dictionary of activa- rect answer before and after patching:
+tion directions. Specifically, the SAE consists of an encoder
+fenc(x) = h that maps the high-dimensional activation x A log P = log Pyatchea(answer) —log Phasetine (answer).
+to a sparse feature vector h € R*, and a decoder gaec(h)
+that reconstructs the original input. To enforce sparsity, we A significant increase in confidence after inserting CoT
+include an L1 regularization term in the loss function. The features indicates that these features play a key causal role
+total objective is: in the reasoning process.
+To assess the cumulative effect of individual features,
+Ltotal = Lrecon + Aljhlla we perform patch curve analysis: features are ranked by
+where L,¢con iS the reconstruction loss and X controls the the absolute difference |hcor — hnocor|, and the Top-K
+sparsity level. features are gradually patched in. We compute A log P at
+We collect a large number of residual activations under each step, yielding a curve that tracks how reasoning con-
+both CoT and NoCoT prompting conditions, and train two fidence changes as more features are introduced. To control
+separate SAE models to obtain distinct feature dictionaries for the selection bias of Top-K features, we also introduce
+Door and Dyocor. Each input x is encoded into a sparse a Random-K baseline, where K features are randomly sam-
+vector h, where the nonzero dimensions indicate which se- pled from the full feature set at each step for patching. By
+mantic features are activated and their respective strengths. comparing the patch curves of Top-K and Random-K, we as-
+By extracting features with SAEs, we transform complex sess whether the causal effects are concentrated in the most
+high-dimensional activations into a small number of latent differentiated features or distributed more broadly.
+
+
+--- Page 4 ---
+
+Although both activation patching and SAEs are exist- snippets and using a language model to generate and simu-
+ing tools, this is the first study to combine them for an- late natural language descriptions (as in (Bills et al. 2023)).
+alyzing CoT reasoning faithfulness in mathematical tasks. The explanation’s quality is evaluated by correlating pre-
+Prior work often operated in raw activation or neuron space, dicted and true activation sequences, yielding an interpre-
+where overlapping and polysemantic representations make tation score. We compare the distribution of interpretation
+interpretation difficult (Marks et al. 2024). By applying acti- scores under CoT and NoCoT, using both statistical tests and
+vation patching in the SAE-derived feature space, we enable box plots.
+higher-resolution and more semantically targeted interven- In our framework, the semantic interpretation module
+tions. Together with log-probability-based evaluation, this builds on prior work that uses LLMs to automatically gen-
+framework provides a precise, interpretable method for as- erate feature-level semantic labels. However, we apply this
+sessing reasoning faithfulness in complex multi-step reason- technique to a novel comparative setting, analyzing differ-
+ing tasks. ences in semantic consistency between internal features un-
+
+der CoT and NoCoT prompting. This perspective has not
+Structural Analysis been systematically explored before. By combining expla-
+For structural analysis, we quantify activation sparsity to nation scores with results from explanation scores, causal
+compare the internal computation focus under CoT and No- patching, and activation sparsity, we gain a more compre-
+CoT conditions. Activation sparsity measures the proportion hensive view of whether CoT prompts guide the model to
+of units in a model’s hidden state that are inactive (close to learn more meaningful intermediate representations, thereby
+zero) for a given input. enabling a systematic evaluation of CoT faithfulness.
+
+Let ¢ © R?*¢ denote the activations at layer | for a
+sequence of length T' and hidden size d. The global sparsity Experiment Setup
+for a threshold ¢ is: We selected two pretrained language models released by
+
+EleutherAI, Pythia-70M (6 layers, 512 hidden, 8 heads, FFN
+1 2d size 2048) and Pythia-2.8B (32 layers, 2560 hidden, 32
+Sparsity(e) =1-=_—S°SU1 [let > ( heads, FFN size 10240), both trained on the Pile and us-
+Ted t=1 j=1 ing the same vocabulary and tokenizer. We used the public
+
+: co. : — Pythia vO weights and performed only post-hoc analysis.
+where J-] is the indicator function that returns | if its ar- As our benchmarks we used GSMBK, containing grade-
+gument is true and 0 otherwise, and ¢ is a small positive school level math word problems. All analyses were con-
+threshold. . . . ducted on the training split. Two input formats were used:
+
+To enable efficient comp utation, esp ecially for | arge mod- CoT (three fixed few-shot examples, each with detailed step-
+els, we divide the sequence into N non-overlapping chunks by-step solutions) and NoCoT (only the current problem).
+of S1Ze C = T/N. For the i-th chunk, the chunk-wise spar- Prompts were hardcoded and identical across the dataset.
+sity is defined as: Only the question was used as model input, with no ground-
+
+truth answer provided during inference; ground-truth was
+
+1 a () used only for evaluation.
+ChunkSparsity; = 1 — ned S- Sol [let > ( To avoid bias, both formats were processed using the
+Os echunk: j=1 same pipeline, with a max input length of 256 tokens. Acti-
+
+Here, chunk; refers to the set of time steps belonging to vations were extracted from the residual stream of layer 2 at
+the i-th chunk. the final token position. For both models, the training data
+
+After calculating sparsity for all chunks, we aggregate for SAEs under CoT and NoCoT was identical except for
+these results to obtain the global sparsity distribution across the input format. .
+the entire dataset. This chunk-based computation is purely SAEs were trained sep arately for each model and prompt
+technical, enabling efficient processing without changing the setting, with dictionary ratios of 4 and 8 representing lower
+underlying global sparsity definition. and higher sparsity. Multiple SAE variants were trained per
+
+To our knowledge, while sparse activations are often con- model/layer, with a representative subset chosen for down-
+sidered a signal of improved interpretability and modular- stream analysis. . ;
+ity (Cunningham et al. 2023), few studies have examined For activation patching, we used two feature selection
+this in the context of CoT reasoning. Through a systematic schemes:
+comparison of activation sparsity under CoT and NoCoT 1. Top-K: the Ksparse features with the largest absolute ac-
+prompting, our study is the first to reveal how prompting tivation difference | ni _ nr,
+strategies influence the internal activation structure of the ; ;
+model—offering important insights into how CoT prompts 2. Random-K: a control variant that patches K features uni-
+reshape internal computation. formly sampled from the full dictionary.
+
+. . For distributional analyses, we fix K = 20. For patch-
+Semantic Interpretation curve experiments, we vary K € 2,4,8, 16,32, 64, 128,
+For semantic interpretation, we assign each SAE feature an capping at 128 features. Up to 1000 problem pairs per con-
+interpretable explanation by collecting highly activating text dition were evaluated.
+
+
+--- Page 5 ---
+
+All model operations used HuggingFace Transformers aco a
+and TransformerLens. Feature interpretation was performed 250 ee
+using GPT-3.5-turbo on top-activating contexts. We used a 200 Le
+single NVIDIA A100 GPU, 18 CPU cores, and 90GB of 3 37
+RAM. Full implementation and hyperparameter details are . %
+provided in the Appendix. ° “30-20 -100« O10 20 30 i50 “12.5 -10.0 -75 -5.0 -25 00 25 5.0
+Results Figure 3: Distribution of log-probability changes after patching
+. the top 20 CoT features into NoCoT runs under dictionary ratio 4.
+We analyze CoT and NoCoT reasoning in LLMs on the Left: Pythia-70M; Right: Pythia-2.8B. While 2.8B shows a strong
+SoMSK dataset, evaluating feats me retability, causal positive shift indicating consistent benefit from CoT features, 70M
+muence, an activation sparsity. results are reported tor shows highly variable effects, including large performance drops,
+Pythia-70M and Pythia-2.8B. suggesting unstable or less effective feature transfer.
+Effect of CoT on Feature Interpretability
+We first compared the explanation scores of features learned Causal Effects of CoT Features via Activation
+under CoT versus NoCoT prompting. Figure 2 shows the Patching
+score distributions for Pythia~-70M and Pythia-2.8B under a We next examine the causal role of learned sparse features
+dictionary sparsity ratio of 4. Table 1 summarizes the cor- through controlled activation patching. Specifically, we in-
+responding statistical results. For Pythia-70M, the average ject the top-K most salient sparse features from a CoT for-
+explanation score under CoT was 0.018, compared to 0.016 ward pass into a NoCoT pass, and vice versa, to assess their
+under NoCoT, a slight improvement. The box plot in Fig- impact on output log-probabilities for the correct answer.
+ure 2 further shows that features under NoCoT performed In Pythia-2.8B, CoT-to-NoCoT patching consistently im-
+slightly better in terms of interpretability: the median score proves performance, while NoCoT-to-CoT patching has
+is higher and outliers are more positive. A t-test confirms minimal effect. Figures 3 and 4 show that log-probability
+this, yielding a t-value of 0.082 and a p-value of 0.935, deltas after CoT patching are predominantly positive. In
+suggesting that CoT may slightly hinder interpretability in contrast, the same patching in Pythia-70M yields highly
+smaller models. For Pythia-2.8B, the average explanation variable, often symmetric distributions, with both large gains
+score under CoT was 0.056, higher than —0.013 for NoCoT. and losses, indicating that CoT features do not reliably trans-
+As shown in Figure 2, features activated by CoT prompts fer in the smaller model and can disrupt original inference.
+display a broader distribution, with some reaching values When varying the number of patched features K, the
+around 0.6. This suggests that CoT elicits semantically co- patching curves (Figures 5 and 6) reveal that in Pythia-2.8B,
+herent internal features in larger models. The t-test shows injecting CoT features immediately yields a strong gain
+this difference is statistically significant (t = 2.96, p = 0.004). that gradually saturates, while in Pythia-70M, CoT patching
+leads to no gain or even performance drops. Notably, un-
+> °° : i °° ; der higher sparsity (dictionary ratio = 8), these trends are
+8 oa S oa : even more pronounced: Pythia-2.8B’s CoT curve exceeds
+< 03 ° : ¢ 03 : +3.2 at K=2, then stabilizes; Pythia-70M shows persistent
+Fa °e ° ° ‘8 oe : ° declines, indicating CoT features do not provide robust ben-
+Boo Boo — efit in small models.
+Cot NoCoT CoT NoCoT 300 175
+250 150
+Figure 2: Comparison of feature explanation scores under CoT E100
+and NoCoT prompts. Left: Pythia-70M; Right: Pythia-2.8B. The 8 199 8 a
+2.8B model shows higher explanation scores under CoT, indicating 50 25
+stronger causal features are learned in the larger model when CoT ee a) ME ES Tomo) CAGE
+prompting is applied. Each plot is based on 50 features per condi-
+tion. Figure 4: Distribution of log-probability changes after patching
+the top 20 CoT features into NoCoT runs under dictionary ratio 8.
+In summary, while CoT is not sufficient for logically faith- Left: Pythia-70M; Right: Pythia-2.8B. Compared to ratio 4, the dis-
+ful reasonin chains in LLMs. it serves as an effective struc- tributions are similar: 2.8B continues to show consistent improve-
+7 > . ments, while 70M remains less robust, exhibiting high variance and
+tural prompt in larger models, nudging them toward more se- .
+mantically coherent internal features. In smaller models, the frequent negative effects.
+effect remains minimal. These findings are consistent with
+our activation patching experiments, where CoT-elicited fea- Crucially, random-K controlled experiments reveal that,
+tures in larger models demonstrated causal influence on out- in Pythia-2.8B, randomly sampling K CoT-activated fea-
+put behavior. tures often outperforms selecting the Top-K by activation.
+
+
+--- Page 6 ---
+
+Model CoT Mean CoTStd NoCoT Mean NoCoT Std ¢-stat p-value
+
+Pythia-70M 0.018 0.125 0.016 0.116 0.082 0.935
+
+Pythia-2.8B 0.056 0.147 -0.013 0.071 2.96 0.004
+Table 1: Statistical comparison of feature explanation scores under CoT and NoCoT prompts. Results are shown for Pythia-70M
+and Pythia-2.8B, including mean, standard deviation, and T-test statistics.
+
+EleutherAl/pythia-70m-deduped Top-K vs Random-K Patch Curve EleutherAl/pythia-2.8b Top-K vs Random-K Patch Curve EleutherAl/pythia-70m Top-K vs Random-k Patch Curve EleutherAl/pythia-2.8b Top-K vs Random- Patch Curve
+Figure 5: Top-k and Random-K patching performance un- Figure 6: Top-K and Random-K patching performance under dic-
+der dictionary ratio 4. Left: Pythia-70M; Right: Pythia-2.8B. tionary ratio 8. Left: Pythia-70M; Right: Pythia-2.8B. For 2.8B,
+CoT—+NoCoT patching shows the effect of patching CoT features CoT-—+NoCoT patching consistently improves performance, with
+into NoCoT, while NoCoT—+CoT patching shows the reverse. In diminishing returns as KK increases. NoCoT—CoT patching grad-
+2.8B, patching CoT features yields consistent performance gains, ually degrades the CoT run, suggesting CoT features are causally
+highlighting their causal importance. In contrast, for 70M, patching significant and sparse. In contrast, for 70M, patching CoT features
+CoT features leads to a substantial and monotonic performance de- into NoCoT runs still causes a net performance drop, though less
+cline, suggesting that CoT-induced features are ineffective or even sharply than under ratio 4. Interestingly, NoCoT—>CoT patching
+harmful in the smaller model (p < 0.001). shows mild improvement (p < 0.001).
+
+l= NoCoT a lm NoCoT
+
+For example, the model’s confidence in generating correct 8000 i= Cot 10000 mm CoT
+answers improves from 1.2 to 4.3. This suggests that useful e000 8000 a
+information from CoT prompts is widely distributed among 6000 ||
+moderately activated features, rather than concentrated in a cua 4000
+few top directions. The Top-K strategy may overfit to local 2000 | 000
+peaks, missing supportive features that random selection in- 3 oll
+cludes, resulting in more stable and comprehensive positive 0 1000 2000 30004000 0 800 1000 15002000
+
+# of activated neurons # of activated neurons
+effects.
+
+This distributed effect is not observed in Pythia-70M, Figure 7: Sparsity comparison of residual activations under CoT
+where both random and Top-K patching fail to consistently and NoCoT prompts. Left: Pythia-70M; Right: Pythia-2.8B. In
+improve performance. This suggests that in large models, both models, CoT leads to significantly sparser residual activa-
+the causal signal from CoT is not limited to the most acti- tions, with most neurons remaining near zero and only a small sub-
+vated features, but is spread across many, making random set strongly activated. This sparsity effect is markedly more pro-
+selection more effective than simply taking the strongest ac- nounced in the 2.8B model, indicating enhanced activation selec-
+tivations. The next section further explains this phenomenon tivity and structured feature usage at larger scale.
+by analyzing the structure and sparsity of feature activations.
+
+Activation Sparsity under CoT and NoCoT resentations and count the number of activated neurons per
+Following the causal intervention experiments, we now turn SAE feature. Figures 8 and 9 show that under CoT, each
+to the structural properties of internal activations. We focus SAE feature tends to activate only a small number of neu-
+on sparsity—how CoT and NoCoT prompts affect the dis- rons, while under NoCoT, features often activate a broader
+tribution and density of activated neurons and SAE features set. In the 2.8B model, many CoT features are supported
+across model sizes. by only a handful of neurons, indicating a more pronounced
+
+Figure 7 shows that CoT prompts lead to significantly structured sparsity.
+sparser residual activations compared to NoCoT. In the No- Interestingly, this structured sparsity in CoT-induced rep-
+CoT condition, more neurons exhibit moderate to high ac- resentations also helps explain the surprising result from our
+tivation; under CoT, most neurons are near zero, with only patching experiments: in the 2.8B model, randomly sam-
+a few strongly activated. This effect is markedly more pro- pled CoT features consistently outperform top-ranked ones
+nounced in the 2.8B model, where CoT activations are al- when patched into NoCoT trajectories. At first glance, this
+most entirely low except for a small subset. seems counterintuitive—why would random features yield
+
+To further analyze this, we use SAE to extract feature rep- better performance than those with the highest activation?
+
+
+--- Page 7 ---
+
+First we studied if CoT encourages the model to learn
+g 250 00 internal features that are more semantically consistent and
+§ 200 a i B too 23, easier to interpret. CoT prompts substantially indeed im-
+ET ‘ eT it prove the semantic coherence and interpretability of inter-
+8 50 b & 3 400 7 fo} nal features, but only in sufficiently large models. In Pythia-
+& ° Peele g 700 Teste 2.8B, features learned under CoT display higher explanation
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 Foo 01 02.03 0.4 05 0607 08 09 10 scores and semantic consistency; in 70M the effect is small.
+Threshold Threshold
+Next we with activation patching if CoT enhances the
+Figure 8: Activated neuron counts per SAE feature under NoCoT causal relevance of internal features. Activation patching ex-
+prompting, across thresholds from 0.0 to 1.0. Left: Pythia-70M; periments reveal a clear scale-dependent effect: in the large
+Right: Pythia-2.8B. The large model (2.8B) activates significantly model, injecting random sets of CoT features into NoCoT
+more neurons per feature at each threshold, indicating denser fea- forward passes significantly boosts output log-probabilities,
+ture composition compared to the small model. demonstrating a strong causal influence. In contrast, similar
+interventions in the small model fail to improve, and some-
+y 250 8 ai times even degrade, performance.
+8 700 = & ve ll ] Finally we studied if CoT can promote sparser feature ac-
+on ' % 600 | | tivations, a property commonly associated with enhanced in-
+8 «o , : 5 s00 ] ] i | f terpretability. CoT prompts induce much sparser activation
+£ } = Sbeee £ .“ patterns, especially in the 2.8B model, where both residual
+for a small subset. This structured sparsity enables more fo-
+Figure 9: Activated neuron counts per SAE feature under CoT cused semantic allocation and explains the effectiveness of
+prompting. Left: Pythia-70M; Right: Pythia-2.8B. Compared to random feature patching.
+NoCoT, CoT prompts yield substantially sparser activations in
+both models, with 2.8B showing stronger sparsity and higher inter-
+feature variance. Limitation and Future Work
+This study is limited in several aspects. First, our activation
+As shown earlier, CoT prompting not only increases global patching targets only the residual activation of the final to-
+activation sparsity, but also leads to higher feature-level vari- ken and does not trace causal effects through the reasoning
+ability in the large model. Under CoT, most neurons have process; this is fundamentally due to the static, snapshot-
+their activations suppressed close to zero, with only a small based nature of the SAE framework, which is incompat-
+number strongly activated, and the number of neurons in- ible with token-level or path-level causal tracing methods
+volved in different features varies greatly. (Goldowsky-Dill et al. 2023; Zhang and Nanda 2023). Sec-
+This structured sparsity” means that the useful informa- ond, our interpretation module relies on OpenAI’s LLM-
+tion activated by CoT prompts is not concentrated in a few based scoring (Agarwal, Tanneru, and Lakkaraju 2024),
+highly activated features, but is more widely spread across which offers an indirect perspective and does not ground ex-
+many moderately activated ones. The Top-K strategy may planations in specific neurons or heads, nor validate them
+overfit to local peaks and miss supportive features, while with causal interventions (Geiger et al. 2023). Third, experi-
+random sampling is more likely to include these overlooked ments are restricted to Pythia-2.8B and smaller variants; we
+features, leading to more stable and comprehensive positive did not include larger models such as LLaMA-7B, and our
+effects in patching. findings may not generalize (Shojaee et al. 2025; Demircan
+Overall, these results show that CoT prompting not et al. 2024). Fourth, SAE-based feature analysis introduces
+only improves reasoning performance but also reshapes the biases and may miss distributed or entangled representations
+model’s internal activation patterns. In both 70M and 2.8B, (Dooms and Wilhelm 2025; Karvonen et al. 2024; Bereska
+CoT leads to fewer neurons being activated overall, espe- and Gavves 2024). Not all interpretable SAE features have
+cially in the large model. At the SAE feature level, there is causal effects (Menon et al. 2024).
+greater variation in how many neurons are engaged by each For future work, we suggest conducting token-level and
+feature, suggesting that CoT encourages semantic resource path-based causal analysis, ideally in combination with
+allocation and lat ent disentanglement. This trend is espe- SAE-based feature decomposition, such as stepwise inter-
+cially p rominent 1n 2.8B, enabling random feature patching ventions and path patching (Goldowsky-Dill et al. 2023). It
+to be surprisingly effective. is important to develop activation-grounded and causally-
+. . validated explanation methods, including probing, cluster-
+Discussion ing, and patching (Geiger et al. 2023; Tighidet et al. 2024;
+Using mechanistic interpretability, we investigate whether Bills et al. 2023). Further research should scale this frame-
+CoT prompting improves the faithfulness of the reasoning work to larger models and diverse architectures, and explore
+processes within LLMs. Our experiments and analysis ad- subspace patching and automated circuit discovery tools for
+dress the following three research questions: more precise mechanistic analysis.
+
+
+--- Page 8 ---
+
+Conclusion Demircan, C.; Saanum, T.; Jagadish, A. K.; Binz, M.; and
+This study combined sparse autoencoding, activation patch- pohulz, E. 2024. SP arse autoencoders reveal temp oral dlif-
+ing, and automated feature interpretation to probe the in- erence learning in large language models. arXiv preprint
+ternal faithfulness of CoT reasoning in LLMs. Our find- arXiv:2410.01280.
+ings show that CoT prompts, especially in larger models, Dooms, T.; and Wilhelm, D. 2025. Tokenized SAEs:
+induce more semantically coherent, causally effective, and Disentangling SAE Reconstructions. arXiv preprint
+sparser internal features. However, these effects are minimal arXiv:2502.17332.
+in small models. While limitations remain, this work high- Dutta, S.; Singh, J.; Chakrabarti, S.; and Chakraborty, T.
+lights how CoT not only improves output but also reshapes 2024. How to think step-by-step: A mechanistic under-
+internal reasoning processes, offering new insight into the standing of chain-of-thought reasoning. arXiv preprint
+mechanisms underlying LLM reasoning. arXiv:2402. 18312.
+
+Elhage, N.; Hume, T.; Olsson, C.; Schiefer, N.; Henighan,
+T.; Kravec, S.; Hatfield-Dodds, Z.; Lasenby, R.; Drain, D.;
+
+References Chen, C.; et al. 2022. Toy models of superposition. arXiv
+Agarwal, C.; Tanneru, S. H.; and Lakkaraju, H. 2024. preprint arXiv:2209.10652.
+Faithfulness vs. plausibility: On the (un) reliability of ex- Geiger, A.; Ibeling, D.; Zur, A.; Chaudhary, M.; Chauhan,
+planations from large language models. arXiv preprint S.; Huang, J.; Arora, A.; Wu, Z.; Goodman, N.; Potts,
+arXiv:2402.04614. C.; et al. 2023. Causal abstraction: A theoretical foun-
+Atanasova, P: Camburu, O.-M.: Lioma, C.; Lukasiewicz, dation for mechanistic interpretability. arXiv preprint
+T.; Simonsen, J. G.; and Augenstein, I. 2023. Faithful- arXiv:2301.04709.
+ness tests for natural language explanations. arXiv preprint Geiger, A.; Lu, H.; Icard, T.; and Potts, C. 2021. Causal
+arXiv:2305.18029. abstractions of neural networks. Advances in Neural Infor-
+Belinkov, Y. 2022. Probing classifiers: Promises, shortcom- mation Processing Systems, 34: 9574-9586.
+ings, and advances. Computational Linguistics, 48(1): 207— Geiger, A.; Wu, Z.; Potts, C.; Icard, T.; and Goodman,
+219. N. 2024. Finding alignments between interpretable causal
+Bereska, L.; and Gavves, E. 2024. Mechanistic In- learnine and Reasoning. ne a7 PML In Causal
+terpretability for AI Safety-A Review. arXiv preprint
+arXiv:2404. 14082. Goldowsky-Dill, N.; MacLeod, C.; Sato, L.; and Arora, A.
+Bills, S.; Cammarata, N.; Mossing, D.; Tillman, H.; Gao, 2023. Localizing model behavior with path patching. arXiv
+L.; Goh, G.; Sutskever, I.; Leike, J.; Wu, J.; and Saunders, preprint arXiv:2304.05969.
+W. 2023. Language models can explain neurons in lan- Hanna, M.; Liu, O.; and Variengien, A. 2023. How does
+guage models. https://openaipublic.blob.core.windows.net/ GPT-2 compute greater-than?: Interpreting mathematical
+neuron-explainer/paper/index.html. abilities in a pre-trained language model. Advances in Neu-
+Braun, D.; Taylor, J.; Goldowsky-Dill, N.; and Sharkey, L. ral Information Processing Systems, 36: 76033-76060.
+2024. Identifying functionally important features with end- Heimersheim, S.; and Nanda, N. 2024. How to use and inter-
+to-end sparse dictionary learning. Advances in Neural Infor- pret activation patching. arXiv preprint arXiv:2404.15255.
+mation Processing Systems, 37: 107286—-107325. Karvonen, A.; Rager, C.; Marks, S.; and Nanda, N. 2024.
+Bricken, T.; Templeton, A.; Batson, J.; Chen, B.; Jermyn, Evaluating Sparse Autoencoders on Targeted Concept Era-
+A.; Conerly, T.; Turner, N.; Anil, C.; Denison, C.; Askell, sure Tasks. arXiv preprint arXiv:2411.18895.
+A.; et al. 2023. Towards monosemanticity: Decomposing Kojima, T.; Gu, S. S.; Reid, M.; Matsuo, Y.; and Iwasawa,
+language models with dictionary learning. Transformer Cir- Y. 2022. Large language models are zero-shot reason-
+cuits Thread, 2. ers. Advances in neural information processing systems, 35:
+Chuang, Y.-N.; Wang, G.; Chang, C.-Y.; Tang, R.; Zhong, S.; 22199-22213.
+Yang, F.; Du, M.; Cai, X.; and Hu, X. 2024. FaithLM: To- Li, Q.; Li, J.; Liu, T.; Zeng, Y.; Cheng, M.; Huang, W.; and
+wards faithful explanations for large language models. arXiv Liu, Q. 2024. Leveraging LLMs for Hypothetical Deduction
+preprint arXiv:2402.04678. in Logical Inference: A Neuro-Symbolic Approach. arXiv
+Cobbe, K.; Kosaraju, V.; Bavarian, M.; Chen, M.; Jun, H.; preprint arXiv:2410.21779.
+Kaiser, L.; Plappert, M.; Tworek, J.; Hilton, J.; Nakano, Makelov, A.; Lange, G.; and Nanda, N. 2023. Is this
+R.; Hesse, C.; and Schulman, J. 2021. Training Ver- the subspace you are looking for? an interpretability il-
+ifiers to Solve Math Word Problems. = arXiv preprint lusion for subspace activation patching. arXiv preprint
+arXiv:2110.14168. arXiv:2311.17030.
+Cunningham, H.; Ewart, A.; Riggs, L.; Huben, R.; and Marks, S.; Rager, C.; Michaud, E. J.; Belinkov, Y.; Bau, D.;
+Sharkey, L. 2023. Sparse autoencoders find highly in- and Mueller, A. 2024. Sparse feature circuits: Discovering
+terpretable features in language models. arXiv preprint and editing interpretable causal graphs in language models.
+arXiv:2309.08600. arXiv preprint arXiv:2403. 19647.
+
+
+--- Page 9 ---
+
+Matton, K.; Ness, R. O.; Guttag, J.; and Kiciman, E. 2025. Appendix to: How does Chain of Thought
+Walk the talk? Measuring the faithfulness of large language Think?
+model explanations. arXiv preprint arXiv:2504.14150. Mechanistic Interpretability of
+Meng, K.; Bau, D:; Andonian, AS and Belinkov, Y. 2022. Chain-of-Thought Reasoning with Sparse
+Locating and editing factual associations in gpt. Advances Aut di
+in neural information processing systems, 35: 17359-17372. utoencoding
+Menon, A.; Shrivastava, M.; Krueger, D.; and Lubana, E. S. The main paper provides an essential summary, of our
+: woes . perimental results, shortened due to space restrictions. We
+2024. Analyzing (In) Abilities of SAEs via Formal Lan- : : Paar rager :
+Xj at arXiv:2410.11767 believe the main contribution lies in our analysis and there-
+BUAEES. APA Preprint GrAL- : , fore, in this appendix we provide 6 pages with more details
+Nanda, N.; Chan, L.; Lieberum, T.; Smith, J.; and Steinhardt, of our results, as well as links to code and configuration files,
+J. 2023. Progress measures for grokking via mechanistic in- for reproducibility. For readability and continuity, some pas-
+terpretability, 2023. URL https://arxiv. org/abs/2301.05217. sages from the main paper are repeated. We also maintain
+Paul, D.; West, R.; Bosselut, A.; and Faltings, B. 2024. figures from the main paper but much larger.
+Making reasoning matter: Measuring and improving faith- . .
+fulness of chain-of-thought reasoning. arXiv preprint Experimental Setup and Implementation
+arXiv:2402. 13950. Details
+Plaat, A.; Wong, A.; Verberne, S.; Broekens, J.; van Stein, In this study, we selected two pretrained language models re-
+N.; and Back, T. 2024. Reasoning with large language mod- leased by EleutherAI, Pythia-70M and Pythia-2.8B, as our
+els, a survey. arXiv preprint arXiv:2407.11511. primary subjects of analysis. Pythia-70M is a small model
+: our er ; ; with 6 Transformer layers, 512 hidden dimensions, and 8
+Shojaee, P.; Mirzadeh, I; Alizadeh, K.; Horton, M.; Ben- attention heads, with a feedforward hidden size of approxi-
+gio, S.; and Farajtabar, M. 2025. The Illusion of Thinking: mately 2048. In contrast, Pythia-2.8B is a large-scale model
+Understanding the Strengths and Limitations of Reasoning with 32 layers, a model width of 2560, 32 attention heads,
+Models via the Lens of Problem Complexity. and a feedforward size of roughly 10240. Both models share
+Siegel, N. Y.; Camburu, O.-M.; Heess, N.; and Perez-Ortiz, the same vocabulary and tokenizer, and are trained on the
+M. 2024. The probabilities also matter: A more faithful Pile dataset. We used the publicly available weights from
+metric for faithfulness of free-text explanations in large lan- the Pythia vO release, and all experiments were conducted
+guage models. arXiv preprint arXiv:2404.03189. on these frozen models, purely for post-hoc analysis and in-
+Lo. . . . . tervention.
+Tighidet, Z.; Mogini, A.; Mei, J.; Piwowarski, B.; and Gal- We employed the GSM8K dataset as the benchmark for
+linari, P. 2024. Probing Language Models on Their Knowl- : : yeas
+doe S Xi : Xiv-2410.05817 evaluating the reasoning capabilities of the language mod-
+cage Source. arAtv preprint arAty. . . els. GSM8K contains grade-school level math word prob-
+Wei, J.; Wang, X.; Schuurmans, D.; Bosma, M.; Xia, F; lems, each comprising a natural language question (typically
+Chi, E.; Le, Q. V.; Zhou, D.; et al. 2022. Chain-of- One to two sentences) and a final numerical answer (Cobbe
+thought prompting elicits reasoning in large language mod- et al. 2021). All our analyses and activation collection ex-
+els. Advances in neural information processing systems, 35: periments were conducted on the training split, as it includes
+24824-24837. ground-truth answers, while the test split remains hidden.
+Wu, Z.; Geiger, A.; Huang, J.; Arora, A.; Icard, T.; Potts, To investigate the effects of CoT prompting on model be-
+havior, we created two distinct input formats for each prob-
+C.; and Goodman, N. D. 2024. A reply to makelov : . :
+a oe ae oe . lem: one following the CoT format, and the other following
+et al.(2023)’s” interpretability illusion” arguments. arXiv . .
+reprint arXiv:2401.12631 a NoCoT format. The CoT input consists of a fixed few-
+Prep v : , shot prompt followed by the current problem. The prompt
+Xu, J.; Fei, H.; Pan, L.; Liu, Q.; Lee, M.-L.; and Hsu, W. contains three representative examples, each with a detailed
+2024. Faithful logical reasoning via symbolic chain-of- step-by-step solution, followed by the current question pre-
+thought. arXiv preprint arXiv:2405. 18357. fixed withQ: ... \nA:. These examples are fixed across
+Yee. E.: Li. A. Tans. C.: Jung. Y. H.: Paturi. R.: and Bergen the dataset, functioning as a hardcoded prompt template
+7 ee Edy Dey 1ANS, ey UNE, BT ape? TEEN rather than a dynamic in-context learning setup. In contrast,
+L. 2024. Dissociation of faithful and unfaithful reasoning in : . :
+. . - the NoCoT input includes only the current problem with no
+lms. arXiv preprint arXiv:2405.15092. examples or step-by-step guidance
+Yeo, W. J.; Satapathy, R.; and Cambria, E. 2024. Towards Importantly, we only used the question portion of each
+faithful natural language explanations: A study using acti- example as model input, without providing the ground truth
+vation patching in large language models. arXiv preprint answer. During inference, the model must generate a solu-
+arXiv:2410.14155. tion based solely on the given problem (and prompt, if appli-
+Zhang, F.; and Nanda, N. 2023. Towards best practices of cable). Ground truth labels were used only for downstream
+activation patching in language models: Metrics and meth- evaluation. Additionally, we avoided input truncation by to-
+ods. arXiv preprint arXiv:2309.16042. kenizing the full problem statement, subject only to a max-
+imum input length (e.g., 256 tokens). For activation record-
+
+
+--- Page 10 ---
+
+ing, we ensured that both CoT and NoCoT samples were formance, while NoCoT-to-CoT patching has minimal ef-
+handled using the same formatting pipeline to avoid intro- fect. As shown in Figures 10(b) and 11(b), this trend holds
+ducing bias. across both dictionary sparsity ratios of 4 and 8. In each case,
+For training the SAE and conducting activation-based the log-probability deltas after patching are predominantly
+comparisons, we applied the two input formats to the full positive, and the distribution is skewed to the right. This in-
+GSMBK training set. That is, the amount of training data dicates that features activated under CoT conditions retain
+used in both CoT and NoCoT settings was identical, with the significant causal efficacy even when transferred to NoCoT
+only difference being the input formatting. This controlled inputs, effectively *nudging” the model toward more accu-
+setup enables a fair comparison across reasoning modes, rate answers.
+particularly in terms of residual activation sparsity, causal In contrast, the same patching operation in the smaller
+response to interventions, and structure of learned features. Pythia-7OM model (Figures 10(a)) and 13(a) produces
+All model loading, tokenization, inference, and interme- highly unstable results. The effect distribution is nearly sym-
+diate activation extraction were implemented using the Hug- metric around zero, with positive and negative examples oc-
+gingFace Transformers library and the TransformerLens in- curring at roughly equal frequencies, and with extreme val-
+terpretability toolkit. All experiments were performed on ues (e.g., A log-prob reaching +30) prominently observed.
+compute nodes equipped with a single NVIDIA A100 GPU, This suggests that CoT features do not reliably transfer
+18 CPU cores, and 90GB of RAM. We extracted activations within the smaller model and may even interfere with the
+from the residual stream of layer 2 in both models. For each original inference trajectory in some cases.
+forward pass, we recorded the activation at the final token When comparing across dictionary sparsity levels, the
+position, which served as the input for feature extraction and pattern remains consistent: both sparsity ratios yield reliable
+patching experiments. positive transfer effects in Pythia-2.8B, while Pythia-70M
+To control for dictionary sparsity and feature capacity, we consistently shows no stable trend. This supports the view
+trained SAE models with different dictionary ratios, specif- that the observed differences are not artifacts of a particu-
+ically 4 and 8, representing lower and higher sparsity set- lar setup, but instead reflect a broader, capacity-dependent
+tings, respectively. For each model and layer, multiple SAE phenomenon—namely, that the causal utility of CoT-derived
+variants were trained, and a representative subset was se- features is scale-sensitive and more robust in larger models.
+lected for downstream interpretation and intervention exper- To more precisely characterize the relationship between
+iments. patching performance and the number of patched features
+During patching and evaluation, we considered two K, we plot patching curves as shown in Figures 12 and 13.
+feature-selection schemes: We begin with the Pythia-70M model, focusing on the dif-
+1. Top-K: the K’sparse features with the largest absolute ac- ference between the two patching directions: CoT —> No-
+or . (1) (1) CoT and NoCoT — CoT.
+tivation difference |h 4’ — hy’. Under the dictionary sparsity ratio of 4 (Figure 12(a)), in-
+2. Random-K: a control variant that patches K features uni- jecting CoT features into NoCoT trajectories (orange curve)
+formly sampled from the full dictionary. yields no performance gain. In fact, the curve declines
+For distributional analyses, we fix AK = 20. For patch- steadily after A’ > 4, eventually dropping to around —8 log-
+curve experiments, we vary K € 2,4,8,16,32,64, 128, prob. This suggests that CoT-activated features may exhibit
+capping the number of patched features per sample at 128 to distributional mismatch or representational conflict in the
+balance signal strength and computational cost. We evaluate small model, effectively disrupting the original information
+up to 1000 problem pairs per condition to ensure statistical processing flow. Conversely, the NoCoT — CoT patching
+power while maintaining feasibility. (blue curve) also leads to a decline in performance, though
+This experimental design allows us to systematically ana- the drop is slightly less steep—indicating that the CoT mode
+lyze the behavior of internal features under explicit reason- may offer some robustness against perturbations.
+ing conditions, and to uncover how semantic representations Under the higher sparsity setting (dictionary ratio = 8),
+are structured and recombined within the sparse activation the patching behavior of Pythia-70M continues the trend ob-
+space of pretrained language models. served earlier, though the curves appear smoother (see Fig-
+ure 13(a)). In the CoT — NoCoT direction, the patching
+Extended Analysis of Results curve remains consistently below zero, indicating that fea-
+. . as tures extracted from CoT inputs fail to provide performance
+Causal Effects of CoT Features via Activation gains when injected into NoCoT contexts. In fact, they in-
+Patching troduce a degree of disruption to the model’s reasoning pro-
+We examine the causal role of learned sparse features cess. Although the negative impact is numerically less se-
+through a controlled activation patching experiment. Specif- vere compared to the ratio 4 condition (with a minimum
+ically, we keep the model parameters fixed and inject the drop of about —3, as opposed to —6 to —-8), the direction of
+top-K most salient sparse features from a CoT forward pass the effect remains unchanged. This suggests that even un-
+into a NoCoT pass, and vice versa, in order to assess their der a more relaxed sparsity configuration, the small model is
+impact on the log-probability assigned to the correct answer. still unable to consistently benefit from the transfer of CoT
+In the Pythia-2.8B model, we observe a clear directional features.
+asymmetry: CoT-to-NoCoT patching tends to improve per- In contrast, the NoCoT — CoT direction reveals a frag-
+
+
+--- Page 11 ---
+
+300 175
+250 150
+125
+200 #100
+c c
+O O
+100 50
+50 25
+0 0
+“30-20-10 0 810 ©2030 -15.0 -12.5 -10.0 -7.5 -5.0 -25 0.0 25 5.0
+(a) Pythia70m (b) Pythia2.8b
+Figure 10: Distribution of log-probability changes after patching the top 20 CoT features into NoCoT runs under dictionary
+ratio 4. Left: Pythia-70M; Right: Pythia-2.8B. While 2.8B shows a strong positive shift indicating consistent benefit from CoT
+features, 70M shows highly variable effects, including large performance drops, suggesting unstable or less effective feature
+transfer.
+300 175
+250 150
+42 200 125
+5 150 5 100
+& @ 75
+100 50
+50 25
+0 0
+Os 10.0 -75 -5.0 -25 0.0 25 50
+(a) Pythia70m (b) Pythia2.8b
+Figure 11: Distribution of log-probability changes after patching the top 20 CoT features into NoCoT runs under dictionary ratio
+8. Left: Pythia-70M; Right: Pythia-2.8B. Compared to ratio 4, the distributions are similar: 2.8B continues to show consistent
+improvements, while 70M remains less robust, exhibiting high variance and frequent negative effects.
+ile advantage of the CoT setting. At kK = 2, the patching ability, weak directional signal, and susceptibility to disrup-
+yields a performance boost of approximately +3, suggesting tion.
+that the first few injected features play a meaningful role in In contrast, the 2.8B model exhibits a markedly different
+supporting CoT-style reasoning. However, this advantage di- behavior.
+minishes rapidly as more NoCoT features are injected, even- , : ;
+tually stabilizing around +1 near K = 128. This trend im- Under dictionary ratio 4 (Figure 12(b)), the orange curve
+plies that in small models, CoT-related performance gains (CoT — NoCoT) jumps immediately at J’ ~ 2, reaching a
+may not be driven by a small set of dominant features, but gain of over +2.5 log-prob, then slowly declines to around
+rather distributed across a broader range of components—or +1 -8— indicating that the top few CoT features carry strong
+that the individual utility of each feature is diluted. As a re- causal weight. In the reverse direction, the blue curve (No-
+sult, once these features are partially replaced or perturbed, CoT — CoT) remains largely flat, showing that replacing
+their original advantage becomes difficult to preserve. features from the CoT pathway has little to no benefit and
+; ; may even introduce slight interference.
+Moreover, more random patching experiments also show At a higher sparsity level (ratio 8, Figure 13(b)), this pat-
+negative or unstable results. This further supports the idea
+: : tern becomes even more pronounced. The orange curve sur-
+that CoT-activated features in small models do not transfer . .
+. passes +3.2 at kK = 2. As K increases, performance slightly
+well and may cause problems when added to NoCoT trajec- . wy: .
+tori declines and then stabilizes at approximately +2.4, reveal-
+OMIES. ing a classic ’saturation” effect. Meanwhile, the blue curve
+Taken together, these observations indicate that Pythia- gradually rises, indicating that NoCoT — CoT patching pro-
+70M does not successfully encode CoT features with consis- gressively erodes CoT-mode performance. The 2.8B model
+tent or robust causal influence. Its activation space is more shows clear performance improvement when transferring
+dispersed, and post-patching performance shows high vari- from CoT to NoCoT, and significant effects can be observed
+
+
+--- Page 12 ---
+
+EleutherAl/pythia-70m-deduped Top-K vs Random-K Patch Curve EleutherAl/pythia-2.8b Top-K vs Random-K Patch Curve
+—— COoTNoCoT (Top-K) | a
+4 — NoCoT=CoT (Top-k)
+3 --- NoCoT>CoT (Random-k)
+a? aaa 3
+qa qa
+-6 —— CoTNoCoT (Top-K) 1 NT TTT Teer rrr Tre eereren
+Gar necor random
+-8 --- NoCoT>CoT (Random-K) —_—. Fe
+2 2 2 27 2 2 2 27
+K (patched features) K (patched features)
+(a) Pythia70m (b) Pythia2.8b
+Figure 12: Top-k and Random-/k patching performance under dictionary ratio 4. Left: Pythia-70M; Right: Pythia-2.8B.
+CoT—NoCoT patching shows the effect of patching CoT features into NoCoT, while NoCoT—>CoT patching shows the re-
+verse. In 2.8B, patching CoT features yields consistent performance gains, highlighting their causal importance. In contrast, for
+70M, patching CoT features leads to a substantial and monotonic performance decline, suggesting that CoT-induced features
+are ineffective or even harmful in the smaller model (p < 0.001).
+even with a small number of injected features. Together, these results support our central hypothesis:
+
+However, after adding Random-K controlled experiments, CoT prompting induces a distributed and causally meaning-
+we find that the performance gains are not due to a specific ful internal structure, particularly in LLMs where such fea-
+set of ”Top-K strong features.” Instead, in the CoT — No- tures are more pronounced and reliably transferable.
+
+CoT direction, randomly selecting K CoT-activated features
+
+often leads to better performance than using the Top-K fea- Activation Sparsity under CoT and NoCoT
+
+tures. This suggests that the useful information activated by Following the causal intervention experiments, we now turn
+CoT prompts is not concentrated in a few highly activated to the structural properties of internal activations. In partic-
+features, but is more widely spread across many moderately ular, we focus on sparsity—how CoT and NoCoT prompts
+activated ones. The Top-K strategy, which only focuses on affect the distribution and density of activated neurons and
+activation strength, may overfit to local peaks and miss other SAE features. Sparsity is widely associated with inter-
+supportive features that actually play a causal role. In con- pretability and generalization, and may offer additional in-
+trast, random sampling is more likely to include these over- sights into the mechanistic impact of CoT.
+
+looked features, leading to more stable and comprehensive As shown in Figures 14, we compare the global distribu-
+positive effects. We will further explain this phenomenon tion of residual activations under CoT and NoCoT prompt-
+through an analysis of feature sparsity structure in Section . ing conditions for the 70M and 2.8B models. The results
+
+Overall, the activation patching experiments confirm that reveal that CoT prompts lead to significantly sparser resid-
+CoT-triggered features exhibit clear causal efficacy in large ual activations compared to NoCoT prompts. Specifically, in
+models: injecting even a small number of CoT-activated the NoCoT condition, activation values are distributed more
+sparse features significantly improves model output qual- broadly, indicating that more neurons exhibit moderate to
+ity. Interestingly, we find that randomly selected features of- high activation. In contrast, under CoT prompting, most neu-
+ten outperform top-ranked ones, suggesting that the causal ron activations are concentrated in a very low range, with
+signal is not concentrated in a few dominant directions but only a few neurons showing strong activation. This spar-
+rather distributed across a broader feature space. In con- sity trend appears in both the smaller 70M model and the
+trast, the CoT-activated features in small models are more larger 2.8B model, but is more pronounced in the latter. No-
+scattered and fragile, lacking stable transferability and in tably, in the 2.8B model, the activation distribution under
+some cases even introducing interference. All patching ef- NoCoT has a heavier tail—more neurons exhibit high acti-
+fects achieved statistical significance (p < 0.001), confirm- vation—whereas under CoT, activations are almost entirely
+ing these patterns reflect systematic differences rather than low, with only a small subset strongly activated, highlighting
+random variation. a sharper sparsity effect.
+
+Moreover, we observe that the sparsity ratio affects how To further analyze this difference, we apply SAE to ex-
+information is distributed across features. Under higher spar- tract feature representations from the residual activations,
+sity (ratio 4), performance gains tend to occur in more abrupt as described in the Methods section, and count the number
+jumps” but are also more susceptible to outliers. In con- of significantly activated neurons per SAE feature. Figures
+trast, with lower sparsity (ratio 8), performance changes are 15(a) and 16(a) show the neuron activation distributions per
+smoother, suggesting more stable and cumulatively effective SAE feature under NoCoT and CoT conditions for the 70M
+information transmission. model. A comparison of the two reveals that under CoT, each
+
+
+--- Page 13 ---
+
+EleutherAl/pythia-70m Top-K vs Random-K Patch Curve EleutherAl/pythia-2.8b Top-K vs Random-K Patch Curve
+3 —— CoTNoCoT (Top-K) SSE em —= COTNOCOT (Top-K)
+—— NoCoT-CoT (Top-K) 4 — NoCoT-CoT (Top-K)
+2 —N === COT->NoCoT (Random-K) === CoT->NoCoT (Random-k)
+--- NoCoT-CoT (Random-K) 2 --- NoCoT-CoT (Random-k)
+1 SESE 3
+cj B82
+Jd -} a a a
+—2 = ————— 1 eeeEEcEEo——EE——EEEETEee
+-3
+2 2 2 27 2 2 2 27
+K (patched features) K (patched features)
+(a) Pythia70m (b) Pythia2.8b
+Figure 13: Top- and Random-K patching performance under dictionary ratio 8. Left: Pythia-70M; Right: Pythia-2.8B. For
+2.8B, CoT—NoCoT patching consistently improves performance, with diminishing returns as K increases. NoCoT—+-CoT
+patching gradually degrades the CoT run, suggesting CoT features are causally significant and sparse. In contrast, for 70M,
+patching CoT features into NoCoT runs still causes a net performance drop, though less sharply than under ratio 4. Interestingly,
+NoCoT->CoT patching shows mild improvement (p < 0.001).
+SAE feature tends to activate only a small number of neu- model. However, this change is not limited to fewer acti-
+rons, whereas under NoCoT, the same features often activate vations: at the SAE feature level, we observe significantly
+a broader set of neurons. In other words, NoCoT features are greater variation in how many neurons are engaged by each
+associated with more widespread neuron activations, while feature. This suggests that CoT encourages semantic re-
+CoT features are more concentrated and rely on a smaller source allocation, where some features are represented by
+subset of neurons. This suggests that CoT leads to sparser highly selective neurons and others mobilize a larger popu-
+internal representations in the 70M model, with each feature lation for more complex reasoning. The trend is especially
+being encoded by a more compact neuronal subspace. prominent in the 2.8B model, indicating that larger models
+A similar pattern is observed in the larger 2.8B model, are not only more sensitive to sparsification, but also more
+but to a greater extent. Figures 15(b) and 16(b) show the capable of implementing structured sparsity. We argue that
+SAE feature activation patterns under NoCoT and CoT con- this may serve as an indirect mitigation of the superposition
+ditions, respectively. Under NoCoT, each feature still acti- problem: by compressing activations and increasing feature
+vates a relatively large number of neurons, while under CoT, separation, CoT prompts induce a form of latent disentangle-
+only a very small subset is strongly activated per feature. ment. Although this “unsupervised disentanglement” is not
+Compared to the 70M model, the 2.8B model shows more explicitly optimized during training, it emerges as a byprod-
+extreme sparsity: many features are supported by only a uct of semantic prompting and plays a critical role in making
+handful of neurons, emphasizing that larger models exhibit a internal representations more interpretable and causally ef-
+more pronounced sparsity trend under CoT and may encode fective.
+CoT-related features more efficiently. Interestingly, this structured sparsity in CoT-induced rep-
+This phenomenon may seem paradoxical: the CoT ac- resentations also helps explain the surprising result from our
+tivations in 2.8B are globally the sparsest (Figure 14(b)), patching experiments: in the 2.8B model, randomly sampled
+yet the variance in the number of activated neurons per CoT features consistently outperform top-ranked ones when
+feature is higher (Figure 16(b)). We interpret this as evi- patched into NoCoT trajectories. At first glance, this seems
+dence of a more refined form of structured sparsity in larger counterintuitive—why would unranked features yield better
+models. Rather than uniformly suppressing all features, the performance than those with highest activation?
+large model under CoT appears to allocate representational As shown earlier, CoT prompting not only makes the
+resources more strategically: some features are highly fo- overall activation in both models more sparse, but also leads
+cused, requiring only a few neurons, while others are more to stronger sparsity and higher feature-level variability in the
+complex and involve broader neuronal collaboration. This larger model. Specifically, in the Pythia-2.8B model, under
+increasing divergence in feature-level activation may under- CoT conditions, most neurons have their activation values
+lie the superior performance of 2.8B on multi-step reasoning suppressed close to zero, with only a small number being
+tasks. strongly activated. At the same time, the number of neu-
+Together, these experiments show that CoT prompting not rons involved in different features varies much more. This
+only improves reasoning performance but also reshapes the means that CoT prompts in the large model lead to a form of
+internal activation patterns of the model. In both 70M and *structured sparsity”: the model does not suppress all fea-
+2.8B, CoT results in fewer neurons being activated over- tures equally, but allocates its limited representational re-
+all, indicating greater global sparsity—especially in the 2.8B sources more strategically. Some features are highly con-
+
+
+--- Page 14 ---
+
+12000
+= NoCoT = NoCoT
+8000 ~ CoT 10000 Mmm CoT
+6000 8000
+| 6000
+4000) | —
+| 4000
+2000 2000
+0 1000 2000 3000 4000 0 500 1000 1500 2000
+# of activated neurons # of activated neurons
+(a) Pythia70m (b) Pythia2.8b
+Figure 14: Sparsity comparison of residual activations under CoT and NoCoT prompts. In both models, CoT leads to signif-
+icantly sparser residual activations, with most neurons remaining near zero and only a small subset strongly activated. This
+sparsity effect is markedly more pronounced in the 2.8B model, indicating enhanced activation selectivity and structured fea-
+ture usage at larger scale.
+250 &
+3 q 1200 = I
+ke}
+fe 200 @ 1000. = °
+5 © f
+ies g 2 800 - 8,
+2 100 " ® 600 7 eg
+S ~ B = ° e
+S60 L ace +.
+a) ss & Zz 200 =
+0
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 hia 0.0 01 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+Threshold Threshold
+(a) Pythia70m (b) Pythia2.8b
+Figure 15: Activated neuron counts per SAE feature under NoCoT prompting, across thresholds from 0.0 to 1.0. The large model
+(2.8B) activates significantly more neurons per feature at each threshold, indicating denser feature composition compared to
+the small model.
+centrated and can be represented with only a few neurons, explains why, in the 2.8B model, the Random-K strategy
+while others, which are more complex, recruit a wider set of achieves better CoT —> NoCoT transfer performance than
+neurons to represent them. the Top-K strategy: random sampling covers a richer subset
+. , of features and avoids focusing too narrowly on local activa-
+In other words, CoT-related information in the 2.8B tion peaks, allowing it to capture more useful signals.
+model is not carried by just a few strongly activated fea-
+tures, but is spread across combinations of many features. In contrast, this phenomenon does not appear in the 70M
+Therefore, simply selecting the Top-K features based on the model. One possible reason is that the difference in feature
+highest activation values may only cover local peaks in the distributions between CoT and NoCoT conditions is much
+CoT-related semantics, while missing many moderately ac- smaller compared to the larger model. In the small model,
+tivated but still important supporting features. These over- CoT prompting does increase activation sparsity to some ex-
+looked features also play a key role in final reasoning, but are tent, but the overall feature activation patterns remain similar
+not included in the Top-K set. In contrast, when K features to those under NoCoT. For example, in Pythia-70M, each
+are selected randomly, without relying on a fixed ranking sparse feature under CoT typically activates only a small
+by activation strength, there is a higher chance of including number of neurons, while the same feature under NoCoT
+these useful but less prominent features. This helps provide a might activate a wider set of neurons. However, this feature-
+more complete injection of causal information overall. This level sparsification is much weaker than what is observed
+
+
+--- Page 15 ---
+
+250 & 1200 =
+ke}
+2 B 1000
+@ 200 © il
+© 150 is)
+pe ; ® 600 | j i
+2 100 a)
+5 f ; S 400 | i
+> 50 5
+ea...9™ i
+t+ =O tt 0)
+0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0 0.0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0
+Threshold Threshold
+(a) Pythia70m (b) Pythia2.8b
+Figure 16: Activated neuron counts per SAE feature under CoT prompting. Compared to NoCoT, CoT prompts yield substan-
+tially sparser activations in both models, with 2.8B showing stronger sparsity and higher inter-feature variance.
+in the 2.8B model. More importantly, the limited capacity
+of the 70M model makes it difficult to develop new inter-
+nal structures or feature organization patterns in response
+to CoT prompts. As discussed earlier, CoT does not signifi-
+cantly improve the interpretability or consistency of features
+in the 70M model. As a result, there are not many additional
+useful features emerging under CoT that the model can take
+advantage of. Both Top-K and Random-K strategies end up
+inserting features that are similarly noisy or irrelevant to the
+model, which naturally leads to no clear difference in perfor-
+mance or consistent gains. This also aligns with our earlier
+conclusion: smaller models, due to their limited represen-
+tational power, are less capable of capturing and using the
+structured reasoning signals introduced by CoT prompting,
+and show very limited improvements in the causal relevance
+of their internal activations.
+These results connect the earlier patching experiments
+with the structural analysis in this section. They show that
+CoT prompts create sparse, disentangled, and compositional
+representations in larger models, making it easier to replace
+features and maintain reasoning quality. In contrast, small
+models lack this structure, which limits their ability to ben-
+efit from CoT-style prompting. This supports the main idea
+that model size is critical for making CoT-induced features
+causally effective and well-organized.
+Code and Reproducibility
+To support reproducibility, we provide the code, configu-
+ration files, and experiment instructions in an anonymous
+GitHub repository:
+https://github.com/sekirodie 1000/cot_faithfulness

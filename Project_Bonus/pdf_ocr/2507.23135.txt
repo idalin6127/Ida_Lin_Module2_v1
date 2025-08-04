@@ -1,0 +1,640 @@
+
+
+--- Page 1 ---
+
+ISO-BENCH: Benchmarking Multimodal Causal Reasoning in
+Visual-Language Models through Procedural Plans
+Ananya Sadana Yash Kumar Lal Jiawei Zhou
+Stony Brook University Stony Brook University Stony Brook University
+ananya.sadana@stonybrook.edu ylal@stonybrook.edu jiawei.zhoul@stonybrook. edu
+Abstract C7 aaats te By
+W— Understanding causal relationships across m bape = Ge > )
+NI modalities is a core challenge for multimodal ‘i Step 4 ea ——
+ap) models operating in real-world environments. MBn. :
+N We introduce ISO-BENCH, a benchmark for - Make Chicken Parmesan oetuce of grated parmesan andl panko
+— evaluating whether models can infer causal de- Sia Blige tehcnaniss tagzania aes)
+= pendencies between visual observations and EI epi iraittanacsacNeg pa ie
+procedural text. Each example presents an im- Step 7: Make rosemary and herb garnish :
+S age of a task step and a text snippet from a plan, . ey
+with the goal of deciding whether the visual Must the step | > ~ baal |
+— step occurs before or after the referenced text L n hee < a ||
+—] step. Evaluation results on ten frontier vision- Sas after Step 7?
+UO language models show underwhelming perfor- 7 The gamishean be,
+Hh mance: the best zero-shot F1 is only 0.57, and _petingeatetsin the ven Suche nak
+YL, chain-of-thought reasoning yields only mod-
+est gains (up to 0.62 F1), largely behind hu- Figure 1: An example plan, visual states, and their
+— mans (0.98 F1). Our analysis further highlights causal reasoning. To determine whether the step in the
+> concrete directions for improving causal under- top image must occur before Step 4, one must recognize
+a standing in multimodal models. it as coating chicken cutlets and infer that frying de-
+— pends on it. In contrast, the bottom image shows cutlets
+oa) 1 Introduction being placed in the oven—a step independent of Step 7
+N . . . i (garnish preparation), which can occur in parallel.
+~ Complex visual reasoning is critical for advanc-
+oO ing multimodal intelligence, particularly in tasks
+a) involving planning and execution in the physical _ different modalities. This line of inquiry forms
+N world. In such contexts, visual information plays a — the foundation for more advanced reasoning capa-
+. = central role in how humans interpret, follow, and _ bilities, including video understanding, grounded
+< carry out plans. For instance, assembling furniture = world modeling, and embodied AI, where agents
+=| with a manual or cooking from a recipe requires must interpret visual states to execute plans.
+understanding the logical and temporal structure While existing benchmarks in visual intelligence
+of the plan, grounding visual observations within — often focus on image or video question answering
+this structure, and reasoning about current and next (Yue et al., 2024; Fu et al., 2025; Fang et al., 2024),
+steps by integrating information across modalities. they typically lack the procedural and temporal
+As vision-language models (VLMs) continue to _ structure needed for physical planning. In contrast,
+improve, a key question emerges: can these models _ plan reasoning benchmarks are usually text-only
+perceive and reason about multimodal plans that (Valmeekam et al., 2023a; Lin et al., 2020), focus-
+unfold in real-world visual contexts? In this work, ing on state changes (Bosselut et al., 2018) or action
+we focus on a specific and challenging aspect of | sequences (Donatelli et al., 2021). Yet real-world
+this problem—causal reasoning across modalities. — plans often rely on visual context and demand rea-
+Given a plan in text and a visual observation (e.g., soning across modalities. Inferring dependencies
+an image showing the status of a task in Figure 1), in such settings requires not only perception and
+we investigate whether a model can understand the — grounding, but also understanding causal relations
+causal relationship between steps conveyed through __ like preconditions and effects between steps.
+1
+
+
+--- Page 2 ---
+
+To address this gap, we introduce ISO-BENCH — and TOMATO (Shangguan et al., 2024) evaluates
+(Image-State Ordering Benchmark), a new eval- temporal reasoning from videos. COMKitchens
+uation set to study whether models can reason (Maedaetal., 2024) and MM-ReS (Pan et al., 2020)
+about causal relationships across modalities in provide datasets with structured workflow annota-
+procedural plans. Built from two instructional — tions. However, these benchmarks do not directly
+video datasets—YouCook2 (Zhou et al., 2018) and —_ assess causal reasoning across modalities. ISO-
+CrossTask (Zhukov et al., 2019)—we manually BENCH fills this gap by testing whether models
+construct and annotate a diverse set of examples can integrate visual and textual information to infer
+spanning domains like cooking, car maintenance, _ temporal dependencies within instructional plans.
+crafting, and woodworking. Each example includes .
+
+a text snippet, an image depicting a step, andaques- 3 Benchmark Construction
+tion asking whether the mage step OCCUTS before Understanding and following instructional plans re-
+or after the textual steps—directly probing multi- . Pe
+. quires the ability to comprehend both textual steps
+modal causal understanding. . .
+. and corresponding visual states, as well as the de-
+
+We evaluate 10 state-of-the-art multimodal mod- ;
+
+; pendencies between them. We focus on tempo-
+els, both open-source and proprietary, on ISO- ral and causal dependencies across modalities: if
+BENCH’. Surprisingly, even the strongest models the effects of one step satisfy the preconditions of
+perform near chance. Reasoning-based chain-of- another, the former must occur before the latter.
+thought (Wei et al., 2022) yields only marginal R “ ar ‘
+
+; a ‘ ; ; ecognizing such dependencies involves reasoning
+gains, despite its effectiveness in other reasoning : vs : :
+
+over actions shown in images and inferring precon-
+tasks (Camburu et al., 2018; Kumar and Talukdar, ws
+502 " , i bl : ditions, causes, sub-goals, and effects.
+
+020). These rita and a nota © sh an ha To construct ISO-BENCH, we repurpose two in-
+rent ee capadl lues and’ p Fler nf whe a structional video datasets, YouCook2 (Zhou et al.,
+causa! reasoning as a concrete challenge tor tuture 2018) and CrossTask (Zhukov et al., 2019), cover-
+research. . wo. . .
+
+ing domains like cooking, woodworking, and more.
+2 Related Work From each annotated step in the videos, we extract
+
+a single frame at the midpoint. For each video and
+Prior work on plan understanding has examined var- _ plan, we create text snippets by selecting the first
+ious aspects such as entity state tracking (Bosselut oF last k € {2,3, 4} steps of a plan and pair it with
+et al., 2018; Henaff et al., 2017), action prediction an image from another step in the same plan. When
+(Lin et al., 2020; Donatelli et al., 2021), and next- _ the image comes from a later step, we frame the
+step inference (Zellers et al., 2019; Zhang et al., | question as: Must the step in the image happen af-
+2020). XPAD (Dalvi et al., 2019) focuses on scien- er the snippet? Conversely, if the image is from an
+tific processes with action-dependency prediction, earlier step, we ask whether it must happen before.
+while PizzaCommonsense (Diallo et al., 2024) en- Each (snippet, image) pair is annotated with a
+riches cooking plans with fine-grained intermediate binary yes/no label indicating whether there is a
+steps. PlanBench (Valmeekam et al., 2023b) and _—_ causal dependence between the image step and any
+NaturalPlan (Zheng et al., 2024) explore classical Step in the text. This yields two types of instances:
+and constraint-based planning, showing that LLMs _—_ DEP, where such a dependence exists (ground truth
+often struggle to produce valid action sequences. is “yes”), and NONDEP, where no causal relation-
+
+Several benchmarks evaluate models’ ability to Ship is present (ground truth is “no”).
+reason about procedural dependencies, but primar- ISO-BENCH contains 764 examples, roughly
+ily in the text modality. For example, CAT-BENCH _ evenly split between the two types. The task chal-
+(Lal et al., 2024) and Kiddon et al. (2015) focus on lenges models to decide whether the visual step
+dependency prediction in cooking recipes, while | occurs before or after the textual steps, probing
+CREPE (Zhang et al., 2023) probes comparative __ their ability to reason about cross-modal procedu-
+causal judgments in procedures. ral dependencies. Evaluation is based on per-class
+
+On the multimodal side, RecipeQA (Yagcioglu _ Precision, recall, and F1 score. Dataset statistics ap-
+et al., 2018) aligns text with illustrative images, Pear in Table 2 (Appendix D), and data processing
+Oe details are in Appendices B and C.
+
+'ISO-BENCH is available at https: //huggingface.co/ a
+datasets/StonyBrookNLP/ISO-Bench >Please find more detailed related work in Appendix A.
+
+2
+
+
+--- Page 3 ---
+
+DEP NONDEP MACRO AVG
+P R F P R F P R F
+DeepSeek-VL2 E>A 0.57 0.07 0.12 0.50 0.95 0.66 0.54 0.51 0.39
+P A 0.52 0.04 0.07 0.50 0.97 0.66 0.51 0.50 0.36
+Llava-1.5 E>A 0.51 056 053 0.51 045 047 O51 0.50 0.50
+, A 0.50 0.96 0.66 0.54 0.05 0.09 0.52 0.51 0.52
+Qwen2.5-VL EA 0.53 0.37 043 0.56 0.26 0.35 0.54 0.31 0.39
+‘ A 0.56 0.50 0.53 0.54 0.59 0.57 0.55 0.55 0.55
+PaliGemma2 E>A 0.51 0.24 0.33 0.50 0.77 0.61 0.50 0.50 0.47
+A 0.57 0.17 0.26 0.57 0.87 0.64 0.54 0.52 0.53
+Llama-3.2 E>A 051 0.71 059 0.58 O13 0.22 054 042 0.41
+, A 0.44 0.01 0.02 0.50 0.99 0.66 0.47 0.50 0.34
+4o-mini E>A 0.54 0.79 0.64 0.61 0.33 0.42 0.57 0.56 0.53
+A 0.53 0.85 0.65 0.62 0.24 0.34 0.57 0.55 0.50
+4o E>A 0.58 0.67 0.63 0.61 0.52 0.56 0.60 0.60 0.59
+A 0.56 0.72 0.63 0.61 0.43 0.50 0.58 0.58 0.57
+Sonnet EA 0.54 0.76 0.63 0.60 0.35 0.44 0.57 0.56 0.54
+A 0.55 0.65 0.60 0.58 0.27 0.37 0.57 046 0.48
+03 E-A 0.61 0.61 0.62 0.62 0.61 0.61 0.62 0.62 0.62
+04-mini E>A 0.58 0.73 0.65 0.63 0.46 0.54 0.61 0.60 0.59
+Human* - 0.97 0.98 0.98 0.98 0.97 0.97 0.98 0.98 0.98
+Table 1: Performance of all models on when just providing an answer A and when also explaining that answer
+E->A. We report per-label as well as weighted macro average precision, recall and FI score. We report human
+baseline numbers calculated on a subset of 200 random instances of ISO-BENCH.
+4 Benchmarking Models on ISO-BENCH augmented reasoning (E-+A), where models are
+. prompted to generate an explanation before answer-
+We benchmark the performance of a variety of state- . .
+ing. Full model details, prompts, and evaluation
+of-the-art models on ISO-BENCH. . . .
+setup are provided in Appendices F and H.
+4.1 Models and Setup 4.2. Results
+eG 10 different vision tangas mows Table 1 presents the performance of all the models
+Y A i“ P Sey Ln 3 5 1B V; © Tet "in different settings for ISO-BENCH. We present
+hf (Llavan1 . 5), Llama-3.2- ‘ston Instruct per-class (DEP and NONDEP) precision, recall and
+(Llama-3.2), Qwen2.5-VL-32B (Qwen2.5-VL), .
+
+. ; : F1 score as well as macro average metrics. Humans
+paligemma2-10b-mix-448 (PaliGemma2) and ‘ly abl f hi k. and achi
+deepseek-VL2-small  (DeepSeek-VL2) and are easily able to perform this task, and achieve
+
+P . . P a very high F1 score on ISO-BENCH. We make two
+proprietary models include gpt-40-mini-2024- : .
+
+—_ main observations on model performance.
+
+07-18 (40-mini),  gpt-40-2024-11-20 (40),
+claude-3-5-sonnet-20241022 (Sonnet), OpenAI Most VLMs perform poorly on ISO-BENCH.
+03-2025-04-16 (03) and o4-mini-2025-04-16 | We observe that most models perform poorly on
+(04-mini), covering a range of model sizes and __ the task (A rows in Table 1), with overall F1 scores
+capabilities. As described in Appendix E, we also only ranging from ~0.3-0.5. Only one model (out
+establish how well humans can perform this task. of eight) stands out: 40 (0.57 F1). On the contrary,
+
+We test models under two zero-shot settings: (i) | humans perform near perfectly, achieving 0.98 F1.
+direct answer generation (A), and (ii) explanation- Models are clearly better at judging when there is
+
+3
+
+
+--- Page 4 ---
+
+0.08 @ Before @ After
+@ Close @® Far 0.6
+2 0.06 oe = -
+c 0.04 0.04 0.04 8
+5 0.02 - “02
+(a) 0.02
+0.00 0.0
+claude-3-5-sonnet —_gpt-4o-mini gpt-4o claude-3-5-sonnet gpt-4o-mini gpt-4o
+Figure 2: Difference in performance of models between Figure 3: Performance of models (A) split by temporal
+(E-—>A) and (A) settings split by the distance between ___ relation type (before and after) in the question.
+the steps being asked about in the question.
+tance between the step in the image (step;) and the
+a dependence between the step in the image andthe _ nearest step in the text snippet (step;) is less than 3
+steps in the text snippet. Interestingly, we observe —(|j —7| < 3), and distant otherwise. Figure 2 shows
+that most models have high precision but low recall __ the difference in F1 score between explaining then
+for NONDEP. Models can reliably identify only answering (E—+A) and just answering (A) with dif-
+some of the NONDEP dependencies. Contrastingly, ferent models as a function of step distance. As
+the best performing models attain high recall and __ step distance increases, it should become harder to
+low precision on DEP, indicating a bias towards __ reason about whether there is a connection between
+assessing most data points as having a dependence. _ them. Explanations should provide larger gains for
+. . . larger distance over smaller distance. Surprisingly,
+Generating explanations only helps marginally. this does not hold true for GPT models.
+The E—A rows in Table 1 represent results where
+models, given the image and text snippet, first per- 5.2 Understanding Directional Dependencies
+form step-by-step reasoning and then generate a ext, we study how models handle questions about
+decision on whether there is a dependence between —gitrorent aspects of the same pair of steps. Typi-
+the snippet and the image. Results show that rea- cally, reasoning about whether a step must happen
+soning leads to improvements (~0.02-0.06) for before another requires reasoning about precondi-
+closed-source models, and for DeepSeek-VL2 and tions and causes, while understanding whether a
+Llama~3.2, but gains are rather small. o4-mini, step must happen after another requires understand-
+trained to analyze and do reasoning over images, ing the effects of any performed actions. Figure 3
+achieves the highest performance (0.62 F1 FespeC- shows model performance (A setting) for these
+tively). For other open-source models, there 1s a questions. Most models are slightly better at rea-
+notable drop in performance (~0.02-0.16) indicat- soning about the effects of steps. We hypothesize
+ing a weakness in their CoT abilities. We hypothe- that this is because effects in plans may be more im-
+size that this is due to the limitations of instruction —_wediate and hence, would be easier to understand.
+tuning in vision-language modeling where models
+are mainly finetuned to describe or analyze images, 5.3 Error Analysis
+not produce reasoning chains across modalities. To better understand model failures, we sample
+5 Analysis and analyze 100 explanations generated by 4o and
+03 (E-A) where the model produces an incorrect
+We analyze the performance of the best models by answer. We identify 4 major types of errors:
+different attributes of the questions and prompts. * Causal Reasoning (62%) — Models fail to un-
+5.1 Reasoning as a function of Step Distance derstand that the step in the image describes
+; ; either a precondition or an effect of (one of)
+We study how the distance between the step in the the steps in the text snippet.
+image and the closest step in the snippet impacts
+model (here, 40-mini, 40, Sonnet) performance. ¢ Grounding (16%) — Often, models misidentify
+A question is said to be about close steps if the dis- the step described in the image with another
+4
+
+
+--- Page 5 ---
+
+one not asked about in the question. procedural text: a challenge dataset and models for
+process paragraph comprehension. In Proceedings
+* Action Progression (14%) — Models misunder- of the 2018 Conference of the North American Chap-
+stand an action in progress in the image and ter of the Association for Computational Linguistics:
+. . Human Language Technologies, Volume I (Long Pa-
+assume that the action in question has already pers), pages 1595-1604, New Orleans, Louisiana.
+been completed when producing their answer. Association for Computational Linguistics.
+* Perception (8%) — Models incorrectly identify Bhavana Dalvi, Niket Tandon, Antoine Bosselut, Wen-
+items in the image leading to wrong reason- tau Yih, and Peter Clark. 2019. Everything happens
+. for a reason: Discovering the purpose of actions in
+ing. procedural text. In Proceedings of the 2019 Confer-
+ence on Empirical Methods in Natural Language Pro-
+6 Conclusion cessing and the 9th International Joint Conference
+on Natural Language Processing (EMNLP-IJCNLP),
+We introduce ISO-BENCH, a new benchmark to pages 4496-4505, Hong Kong, China. Association
+test whether multimodal models can reason about for Computational Linguistics.
+causal dependencies across visual and textual steps Aissatou Diallo, Antonis Bikakis, Luke Dickens, An-
+in procedural plans. Despite strong general capabil- thony Hunter, and Rob Miller. 2024. PizzaCom-
+ities, current VLMs perform poorly here, with only monSense: A dataset for commonsense reasoning
+marginal gains from explanation-based prompting. about intermediate steps in cooking recipes. In Find-
+Our work highlights a specific gap in multimodal ings of the Association for Computational Linguistics:
+° : i EMNLP 2024, pages 12482-12496, Miami, Florida,
+causal reasoning and point to clear opportunities to USA. Association for Computational Linguistics.
+advance model understanding of real-world plans.
+Lucia Donatelli, Theresa Schmidt, Debanjali Biswas,
+Limitations Arne Kohn, Fangzhou Zhai, and Alexander Koller.
+2021. Aligning actions across recipe graphs. In Pro-
+Our work only investigates English-language docu- ceedings of the 2021 Conference on Empirical Meth-
+ore ar ods in Natural Language Processing, pages 6930-
+ments (plans) and this limits the generalizability of 6942, Online and Punta Cana, Dominican Republic.
+our findings to other languages. Association for Computational Linguistics.
+We benchmark a reasonably diverse set of . . .
+Xinyu Fang, Kangrui Mao, Haodong Duan, Xiangyu
+VLMs. Currently, we cover several model fam- Zhao, Yining Li, Dahua Lin, and Kai Chen. 2024.
+ilies and models of varying sizes. However, due Mmbench-video: A long-form multi-shot benchmark
+to the current fast-paced landscape of VLM de- for holistic video understanding. Advances in Neural
+velopment, we are unable to cover all available Information Processing Systems, 37:89098-89 124.
+VLMs. We will continue to evaluate more VLMs Chaoyou Fu, Yuhan Dai, Yongdong Luo, Lei Li,
+on ISO-BENCH. Shuhuai Ren, Renrui Zhang, Zihan Wang, Chenyu
+Due to difficulty in creating data, we were unable Zhou, Yunhang Shen, Mengdan Zhang, et al. 2025.
+eq . Video-mme: The first-ever comprehensive evaluation
+to create a “dev” set which could serve as a source b : Le :
+
+: — enchmark of multi-modal Ilms in video analysis.
+of examples for few-shot experiments. Similarly, In Proceedings of the Computer Vision and Pattern
+we are unable to perform fine-tuning or adapter Recognition Conference, pages 24108-24118.
+based exp eriments on ISQ-BENCH. We leave this Mikael Henaff, Jason Weston, Arthur Szlam, Antoine
+exploration to future work. Bordes, and Yann LeCun. 2017. Tracking the world
+
+state with recurrent entity networks. ICLR.
+References Chloé Kiddon, Ganesa Thandavam Ponnuraj, Luke
+Zettlemoyer, and Yejin Choi. 2015. Mise en place:
+Antoine Bosselut, Omer Levy, Ari Holtzman, Corin Unsupervised interpretation of instructional recipes.
+Ennis, Dieter Fox, and Yejin Choi. 2018. Simulating In Proceedings of the 2015 Conference on Empiri-
+action dynamics with neural process networks. ICLR. cal Methods in Natural Language Processing, pages
+982-992, Lisbon, Portugal. Association for Compu-
+Oana-Maria Camburu, Tim Rocktischel, Thomas tational Linguistics.
+Lukasiewicz, and Phil Blunsom. 2018. e-snli: Natu-
+ral language inference with natural language explana- | Sawan Kumar and Partha Talukdar. 2020. NILE : Natu-
+tions. In Advances in Neural Information Processing ral language inference with faithful natural language
+Systems, volume 31. Curran Associates, Inc. explanations. In Proceedings of the 58th Annual
+Meeting of the Association for Computational Lin-
+Bhavana Dalvi, Lifu Huang, Niket Tandon, Wen-tau guistics, pages 8730-8742, Online. Association for
+Yih, and Peter Clark. 2018. Tracking state changes in Computational Linguistics.
+5
+
+
+--- Page 6 ---
+
+Saksham Lal, Mizuki Morita, Yingya Li, Roberto Rossi, Karthik Valmeekam, Kartik Talamadupula, and San-
+and Peter Lane. 2024. CaT-Bench: Benchmark- jay Srivastava. 2023b. PlanBench: An extensible
+ing language-model understanding of causal and benchmark for evaluating large language models on
+temporal dependencies in plans. arXiv preprint, planning and reasoning about change. In NeurIPS
+arXiv:2406. 15823. To appear in EMNLP 2024. Datasets & Benchmarks Track.
+
+Angela Lin, Sudha Rao, Asli Celikyilmaz, Elnaz Nouri, Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten
+Chris Brockett, Debadeepta Dey, and Bill Dolan. Bosma, brian ichter, Fei Xia, Ed H. Chi, Quoc V Le,
+2020. A recipe for creating multimodal aligned and Denny Zhou. 2022. Chain of thought prompt-
+datasets for sequential tasks. In Proceedings of the ing elicits reasoning in large language models. In
+58th Annual Meeting of the Association for Compu- Advances in Neural Information Processing Systems.
+tational Linguistics, pages 4871-4884, Online. Asso- . . .
+ciation for G omputati nae Linguistics. Te-Lin Wu, Alex Spangher, Pegah Alipoormolabashi,
+
+Marjorie Freedman, Ralph Weischedel, and Nanyun
+
+Haotian Liu, Chunyuan Li, Qingyang Wu, Yin Li, Jason Peng. 2022. Understanding multimodal procedural
+Baldridge, and H. Sebastian Seung. 2023. LLaVA- knowledge by sequencing multimodal instructional
+1.5: Visual instruction tuning for large language-and- manuals. In Proceedings of the 60th Annual Meet-
+vision assistants. In Advances in Neural Information ing of the Association for Computational Linguistics
+Processing Systems (NeurIPS). (Volume 1: Long Papers), pages 4525-4542, Dublin,
+
+Ireland. Association for Computational Linguistics.
+
+Koki Maeda, Tosho Hirasawa, Atsushi Hashimoto, Jun . . .
+Harashima, Leszek Rybicki, Yusuke Fukasawa, and Semih Yagcioglu, Aykut Erdem, Erkut Erdem, and Nazli
+Yoshitaka Ushiku. 2024. Com kitchens: An unedited Ikizler-Cinbis. 2018. RecipeQA: A challenge dataset
+overhead-view video dataset as a vision-language for multimodal comprehension of cooking TECIPES.
+benchmark. In Proceedings of the European Confer- In Proceedings of the 2018 Conference on Empirical
+ence on Computer Vision. Methods in Natural Language Processing (EMNLP),
+
+pages 1358-1368.
+quence to sequence learning for event prediction. In nd S ob He 3018. Vi ‘I hon. _.
+Proceedings of the Eighth International Joint Con- ane rane Won wane. 7 aS coc’ ©
+. plausible alternatives: An evaluation of image-based
+ference on Natural Language Processing (Volume 2: commonsense causal reasoning. In Proceedings of
+Short Papers), pages 37-42, Taipei, Taiwan. Asian .
+Federation of Natural Lancuage Processine. the Eleventh International Conference on Language
+guag 8 Resources and Evaluation (LREC 2018), Miyazaki,
+
+Liang-Ming Pan, Jingjing Chen, Jianlong Wu, Shaoteng RA Language Resources Association
+Liu, Chong-Wah Ngo, Min-Yen Kan, Yugang Jiang, .
+and Tat-Seng Chua. 2020. Multi-modal cooking Xiang Yue, Yuansheng Ni, Kai Zhang, Tianyu Zheng,
+workflow construction for food recipes. In Proceed- Ruogqi Liu, Ge Zhang, Samuel Stevens, Dongfu Jiang,
+ings of the 28th ACM International Conference on Weiming Ren, Yuxuan Sun, et al. 2024. Mmmu: A
+Multimedia, MM 20, page 1132-1 141, New York, massive multi-discipline multimodal understanding
+NY, USA. Association for Computing Machinery. and reasoning benchmark for expert agi. In Pro-
+
+Paolo Pareti, Benoit Testu, Ryutaro Ichise, Ewan Klein, Vinton nd Bauern Recoanttion peace 95 See pa
+and Adam Barker. 2014. Integrating know-how into , :
+the linked data cloud. In International Conference Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali
+on Knowledge Engineering and Knowledge Manage- Farhadi, and Yejin Choi. 2019. HellaSwag: Cana ma-
+ment, pages 385-396. Springer. chine really finish your sentence? In Proceedings of
+
+; ; the 57th Annual Meeting of the Association for Com-
+
+Jae Sung Park, Ilia Kulikov, Chandra Bhagavatula, and putational Linguistics, pages 4791-4800, Florence,
+Yejin Choi. 2020. Visualcomet: Reasoning about Italy. Association for Computational Linguistics.
+the dynamic context of a still image. In European
+Conference on Computer Vision (ECCV). Hongming Zhang, Muhao Chen, Haoyu Wang, Yangqiu
+
+Song, and Dan Roth. 2020. Analogous process struc-
+
+Ziyao Shangguan, Jiarui Qiu, Andrei Barbu, David ture induction for sub-event sequence prediction. In
+Fouhey, and Song-Chang Huang. 2024. TOMATO: Proceedings of the 2020 Conference on Empirical
+Assessing visual temporal reasoning capabilities in Methods in Natural Language Processing (EMNLP),
+multimodal foundation models. arXiv preprint, pages 1541-1550, Online. Association for Computa-
+
+Karthik Valmeekam, Matthew Marquez, Alberto Olmo, Li Zhang, Hainiu Xu, Yue Yang, Shuyan Zhou, Weiqiu
+Sarath Sreedharan, and Subbarao Kambhampati. You, Manni Arora, and Chris Callison-Burch. 2023.
+2023a. Planbench: An extensible benchmark for eval- Causal reasoning of entities and events in procedural
+uating large language models on planning and rea- texts. In Findings of the Association for Compu-
+soning about change. Preprint, arXiv:2206.10498. tational Linguistics: EACL 2023, pages 415-431,
+
+6
+
+
+--- Page 7 ---
+
+Dubrovnik, Croatia. Association for Computational
+Linguistics.
+
+Zheyuan Zhang, Fengyuan Hu, Jayjun Lee, Freda Shi,
+Parisa Kordjamshidi, Joyce Chai, and Ziqiao Ma.
+2025. Do vision-language models represent space
+and how? evaluating spatial frame of reference under
+ambiguities. In The Thirteenth International Confer-
+ence on Learning Representations.
+
+Huaixiu Steven Zheng, Neel Kant, Rui Wang, Peter J.
+Liu, Julian Michael, and Mohit Iyyer. 2024. Natu-
+ralPlan: Benchmarking LLMs on natural-language
+planning. arXiv preprint, arXiv:2406.04520.
+
+Luowei Zhou, Chenliang Xu, Jason J. Corso, Richard
+Socher, and Caiming Xiong. 2018. Towards auto-
+matic learning of procedures from web instructional
+videos. In Proceedings of the IEEE/CVF Conference
+on Computer Vision and Pattern Recognition (CVPR),
+pages 5832-5840. Introduces the YouCook2 dataset.
+
+Dimitri Zhukov, Jean-Baptiste Alayrac, Ramazan Gok-
+berk Cinbis, David Fouhey, Ivan Laptev, and Josef
+Sivic. 2019. Cross-task weakly supervised learning
+from instructional videos. In CVPR.
+
+7
+
+
+--- Page 8 ---
+
+A Detailed Related Work sess VLMs’ spatial reasoning capabilities of along
+the lines of frames of references.
+Plan understanding tasks span testing knowledge Existing datasets evaluate different aspects of
+and reasoning about multiple aspects such as entity —_ plans, but only a few focus on assessing whether
+states (Bosselut et al., 2018; Henaffet al.,2017),ac- models understand temporal ordering constraints
+tions (Pareti et al., 2014; Lin et al., 2020; Donatelli on the steps of an instructional plan. However,
+et al., 2021), next events (Nguyen et al., 2017; all these benchmarks only consider plans written
+Zellers et al., 2019; Zhang et al., 2020) and more. in text. ISO-BENCH is created to test using and
+XPAD (Dalvi et al., 2019) extend ProPara (Dalvi _ integrating visual and textual understanding capa-
+et al., 2018), originally focused on understanding _ pijlities required to understand plans.
+scientific processes, by adding the new task of ex-
+plaining actions by predicting their dependencies. Bp Processing YouCook2
+PizzaCommonsense (Diallo et al., 2024) contains
+commonsense knowledge about intermediate and = YouCook2 (Zhou et al., 2018) contains 2,000 cook-
+implicit steps for cooking recipes, providing ex- ing videos with clean stepwise captions and gives
+plicit input/output pairs of each action with fine- us YouTube links plus the exact time spans and
+grained annotations. PlanBench (Valmeekam et al., step-by-step instructions for each recipe. We start
+2023b) focuses on classical AI planning domains, _ by taking every span, jumping to its midpoint, and
+such as BlocksWorld, and shows that LLMs failto | saving one JPEG frame; that leaves us with a clean
+produce valid, executable action sequences. Natu- _ image for every recipe step.
+ralPlan (Zheng et al., 2024) evaluate real-world con- After we extracted a JPEG for every recipe step,
+straint optimization based planning tasks. CREPE we built a labeled pool of text-image pairs. We
+(Zhang et al., 2023) measures how well LLMs un- filter for videos with atleast 5 steps. For each such
+derstand the comparative likelihood of two events __ video it randomly picked an integer k between 2
+occurring in a procedure. CAT-BENCH (Lal etal., and 4. If the task was “before”, the text snippet is
+2024) and Kiddon et al. (2015) explore predicting formed from the last k steps of the recipe; if the
+dependencies in cooking recipes. Most work has _ task was “after’’, the snippet uses the first k steps.
+evaluated how well models understand aspects of | We define two candidate frame groups: (1) Positive
+plans described only in a single (text) modality. pool — frames whose step comes just outside the
+VCOPA (Yeo et al., 2018) posit the task of snippet, within three steps: For the “before” task
+identifying the correct next step given a premise _ these are the steps that immediately precede the
+step, with all the steps described in images. Vi- snippet (i.e., recipe positions total-k-3 ... total-
+sualComet (Park et al., 2020) present actions in k-1). For the “after” task they are the steps that
+stories as images along with summaries of what immediately follow the snippet (k ... k+2). These
+happened before and after, and show that integra- frames genuinely belong before or after the snippet,
+tion between visual and textual commonsense rea- _ SO pairing them with the snippet should be logically
+soning is required to holistically reason about ac- _ correct. (2) Negative pool — frames taken inside the
+tions. RecipeQA (Yagcioglu et al., 2018) align snippet itself (for “before”, positions inside the last
+text instructions in cooking recipes with images k steps; for “after”, positions inside the first k steps).
+corresponding to the central action in each step. | Because they come from the same span that forms
+TOMATO (Shangguan et al., 2024) evaluates how __ the snippet, showing them separately violates the
+multimodal foundational models perform temporal required temporal relation and therefore constitutes
+reasoning about continuous actions in videos. Pan _an incorrect match.
+et al. (2020) build MM-ReS, the first large-scale We built a Streamlit app to annotate each text-
+dataset for cooking workflow construction, consist- image pair with a gold label. The app shows
+ing of 9,850 recipes with human-labeled workflow _ the snippet, the frame, and whether the sample is
+graphs. Similarly, the COMKitchens (Maeda et al., | tagged POS (the frame should come just before or
+2024) dataset provides cooking videos annotated after the snippet, as specified) or NEG (the frame is
+with a structured visual action graph. Wu et al. taken from inside the snippet and therefore should
+(2022) test whether models can correctly sequence —_ not match the requested relation). We look at the
+images of misordered actions described in instruc- __ pair: if the frame truly matches (for a POS) or truly
+tion manuals. COMFORT (Zhang et al., 2025) as- _ conflicts (for a NEG), we click Accept; otherwise
+8
+
+
+--- Page 9 ---
+
+we click Reject. We provide a screenshot of the gpt-40-2024-11-20 accepts as input any com-
+annotation app in Figure 4. bination of text, audio, image, and video and gen-
+erates any combination of text, audio, and image
+C_ Processing CrossTask outputs. It is especially better at vision and audio
+understanding compared to existing models.
+Starting from the 18 primary tasks, we capped our-
+selves at ten annotated clips per task (180 videos  8Pt-40-mini-2024-@7-18 has a context win-
+total). For every step span in each clip we jumped dow of 128K tokens, supports up to 16K output
+to the midpoint and saved one JPEG, giving usa _ tokens per request. It surpasses other small mod-
+clean image for every unique step. els released to that date on academic benchmarks
+We perform the same procedure on data from —_ @¢TSs both textual intelligence and multimodal rea-
+CrossTask as we did in Appendix B. soning, and supports the same range of languages
+Using 180 videos we ended up with 139 2 4°
+human-vetted instances: 72 “before” and 67 “af- Gy ayde-3-5-sonnet-20241022 sets new indus-
+ter’, spanning 73 dependent/positive and 66 non- try benchmarks for graduate-level reasoning
+dependent/negative examples. (GPQA), undergraduate-level knowledge (MMLU),
+and coding proficiency (HumanEval). It shows
+D Dataset Statistics marked improvement in grasping nuance, humor,
+and complex instructions, and is exceptional at writ-
+“Relation DEP NONDEP ISO-BENCH ing high-quality content with a natural, relatable
+Before 187 185 372
+After 196 196 392 03-2025-04-16 excels at solving complex math,
+TT coding, and scientific challenges while demonstrat-
+Total 383 381 764 ing strong visual perception and analysis. It uses
+. ; ; tools in its chains of thought to augment its capabili-
+Table 2: ISO-BENCH Statistics with data points SPan- ties; for example, cropping or transforming images
+ning 480 different instructional plan videos. Each data a ° ; ,
+point contains a text snippet of the plan, an image de- searching the web, or using Python to analyze data
+scription of a step not in the snippet, a binary question during the thought process.
+and answer about the causal dependence between them. Lo. . .
+04-mini-2025-04-16 is a smaller model opti-
+mized for fast, cost-efficient reasoning—it achieves
+remarkable performance for its size and cost, par-
+E Human Baseline for ISO-BENCH ticularly in math, coding, and visual tasks. It is
+To establish how well humans perform on this task, the best-performing benchmarked model on AIME
+we presented the goal of the plan, the plan snippet 2024 and 2025. It p erforms esp ecially strongly
+. at visual tasks like analyzing images, charts, and
+and the image of a step and asked one annotator to .
+. . graphics.
+answer the associated question. We randomly sam-
+pled 200 data points from ISO-BENCH for this,and = ]Java-1.5-7b-hf (Liu et al., 2023) is an open-
+we use the same task formulation that we use with —_ source chatbot trained by fine-tuning LLaMA/Vi-
+models. The last row in Table 1 presents the per-  cuna on GPT-generated multimodal instruction-
+class as well as macro average precision, recall and —_ folowing data. It is an auto-regressive language
+F1 scores for humans. This establishes a possible — model, based on the transformer architecture. It
+upper bound for the ISO-BENCH task. We findthat — combines a frozen CLIP/Vicuna vision encoder
+humans are able to identify implicit causal depen- —_ with a 7B-parameter language backbone, and is
+dencies between steps represented across modali- _jnstruction-tuned on about 600k image-text pairs
+ties fairly easily. In fact, they rarely make mistakes. —_ and is open-source.
+F Benchmarking Models Llama-3.2-11B-Vision-Instruct is the 11B
+version of the Llama 3.2-Vision set of multimodal
+We provide details of each model we evaluate on | LLMs which have been instruction tuned for im-
+ISO-BENCH. age reasoning. It is built on top of the pretrained
+9
+
+
+--- Page 10 ---
+
+Annotation Verification Instructions
+For each candidate pair:
+1. POS samples should show a step that truly comes before (or after) the snippet, as labeled.
+2. NEG samples should show a step inside the snippet window, contradicting the requested relation.
+3. Ifthe image correctly matches the snippet and label, click @ Accept.
+4. Otherwise, click Reject to skip this item.
+Candidate 1 / 372 i ——————=—
+croque monsieur bz ~ a >a a
+Sample type: y el
+Text snippet: ng - - > a3 4 € a> : ‘ :
+pour the sauce on a piece of ham on each bread and pour some shredded cheese on the ham — an: 2 — ©
+bake the bread in an oven until the cheese melt —
+Temporal relation requested: before = -: AN
+@ Accept (looks correct) Reject (skip / wrong)
+Figure 4: Screenshot with instructions provided to annotators from whom we collected gold labels for ISO-BENCH.
+Llama 3.1 text only LLM by combining a seper- _ using an improved high-resoultion vision encoder
+ately trained vision adapter module. Usingacombi- _ for better visual comprehension and an optimized
+nation of supervised fine-tuning and reinforcement — language model backbone for training and test time
+learning from human feedback, the model has been _ efficiency. It is trained on a data that boosts per-
+optimized to do a variety of vision tasks like image formance and gives new capabilities to the model
+recognition, reasoning, captioning, and question such as precise visual grounding.
+answering on images.
+_ G Model Setup
+Qwen2.5-VL-32B-Instruct is a 32 billion pa-
+rameter vision language model. It is created on Python was the main scripting language for data
+top of the Qwen-2.5 7 billion language model by __ collection and experimentation. For experiments
+following the ViT architecture. It has been exten- _ using closed source models, we used OpenAI? and
+sively instruction tuned on (image,text) tuples to Anthropic*t APIs. The total cost for OpenAI was
+so that the model understands all things visual, is |§ ~ 75 USD and ~ 20 USD for Claude. The open-
+agentic, can comprehend long videos and events, | source experiments were conducted on 4 A6000
+can do visual localization, and generate structured GPUs, each having 48 GB. The total GPU hours
+outputs. for all the experiments was ~15. The models were
+. . ; downloaded from Huggingface and hosted for in-
+paligemma2-1@b-mix-448 checkpoints are fine- ference using Huggingface transformers module
+tuned on a diverse set of tasks and are ready to use and vLLM. We use greedy decoding and temper-
+out of the box while pt checkp oints are pre-trained ature set to 0.0 when the option is available. We
+and intended for further fine-tuning. These tasks 4 GitHub Co-Pilot to h elp with writing code but
+include short and long captioning, op tical character verify it manually before running any experiments.
+recognition, question answering, object detection
+and segmentation, and more. The model is avail- xy Prompts Used
+able in the bfloat16 format for research purposes
+only. For each ISO instance, we provide the following
+; ay: prompt:
+deepseek-vl2-small_ is a 16 billion parame-
+ters mixture-of-experts vision language model. It ear: {Goal Name}
+an:
+has shown been to demonstrate enhanced perfor- — ¢step_1}
+mance across multiple tasks like visual question {step_2}
+answering, optical character recognition, documen- °° *
+t/table/chart understanding, and visual grounding. 3https://openai .com/api/pricing/
+It improves upon its predecessor, DeepSeek-VL, by “https: //://www. anthropic.com/pricing
+10
+
+
+--- Page 11 ---
+
+QUESTION: {Does this image show a step that must
+come <before|after> the <first|last> step in the
+plan?}
+
+The prompt mirrors the reasoning process we
+want the model to follow. The GOAL line primes top-
+ical knowledge about the dish (e.g., Indian curries
+usually add tomatoes after onions). The Recipe
+excerpt gives an ordered context without reveal-
+ing the full plan, so the model must place the image
+relative to these steps—exactly the causal infer-
+ence ISO is designed to test. Finally, an explicit
+QUESTION asks about before or after, limiting the
+required output to a binary choice and removing
+ambiguity about expected format.
+
+We test two modes:
+
+1. Answer-Only: We append “Answer only with
+YES or NO.” and use the first “YES” or “NO”
+as the prediction.
+
+2. Explain-Then-Answer: We request
+a short chain-of-thought enclosed by
+<think>...</think>, then a final answer
+enclosed by <answer>YES</answer> or
+<answer>NO</answer>. We evaluate only
+the final tag, similar to CoT prompting.
+
+The image is provided via the model’s vision in-
+
+terface alongside this prompt. We limit generation
+to 120 tokens, which suffices for both reasoning
+and answer.
+Metric. Since each instance is a binary question,
+we report accuracy, precision, recall, and FI on
+the subset of responses containing an unambiguous
+“YES” or “NO.”?
+
+>We discard outputs lacking either token.
+
+11

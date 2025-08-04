@@ -1,0 +1,1021 @@
+
+
+--- Page 1 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular
+Biomarker Data with LLMs
+Sophie Kearney* Zixuan Wen Duy Duong-Tran
+Shu Yang" Bojian Hou United States Naval Academy
+University of Pennsylvania University of Pennsylvania Annapolis, MD, USA
+Philadelphia, PA, USA Philadelphia, PA, USA duongtra@usna.edu
+sophie.kearney@pennmedicine.upenn.edu zxwen@sas.upenn.edu
+yangsh@pennmedicine.upenn.edu houbo@pennmedicine.upenn.edu
+Tianlong Chen Jason Moore Marylyn Ritchie
+Vay University of North Carolina at Cedars Sinai Medical Center Li Shen*
+N Chapel Hill West Hollywood, CA, USA University of Pennsylvania
+ns) Chapel Hill, NC, USA Jason.Moore@csmc.edu Philadelphia, PA, USA
+“ tianlong@cs.unc.edu marylyn@pennmedicine.upenn.edu
+5 lishen@pennmedicine.upenn.edu
+oor)
+— Abstract CCS Concepts
+(om) Early and accurate diagnosis of Alzheimer’s disease (AD), a com- + Computer systems organization — Neural networks; + Applied
+plex neurodegenerative disorder, requires analysis of heterogeneous computing — Health informatics; «Computing methodolo-
+mn biomarkers (e.g., neuroimaging, genetic risk factors, cognitive tests, gies — Transfer learning; Model development and analysis;
+= and cerebrospinal fluid proteins) typically represented in a tabu- Natural language processing.
+UO lar format. With flexible few-shot reasoning, multimodal integra-
+Hh tion, and natural-language-based interpretability, large language Keywords
+YL, models (LLMs) offer unprecedented opportunities for prediction Alzheimer’s Disease Biomarkers, Tabular Prediction, Large Lan-
+with structured biomedical data. We propose a novel framework guage Models, AI and Machine Learning in Healthcare
+— called TAP-GPT, Tabular Alzheimer’s Prediction GPT, that adapts ACM Reference Format:
+> TableGPT2, a multimodal tabular-specialized LLM originally de- Sophie K Shu Y. , i Wen. Boiian Hou. Duy D oT
+; : : . ae phie Kearney, Shu Yang, Zixuan Wen, Bojian Hou, Duy Duong-Tran,
+C~ veloped for business intelligence tasks, for AD diagnosis using Tianlong Chen, Jason Moore, Marylyn Ritchie, and Li Shen. 2018. Enabling
+N structured biomarker data with small sample sizes. Our approach Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with
+N constructs few-shot tabular prompts using in-context learning ex- LLMs. In Proceedings of Make sure to enter the correct conference title from
+joe) amples from structured biomedical data and finetunes TableGPT2 your rights confirmation email (Conference acronym ’XX). ACM, New York,
+N using the parameter-efficient qLoRA adaption for a clinical binary NY, USA, 15 pages. https://doiorg/XXXXXXX.XXXXXXX
+_ classification task of AD or cognitively normal (CN). The TAP-GPT
+op) framework harnesses the powerful tabular understanding ability of 1 Introduction
+«~ TableGPT2 and the encoded prior knowledge of LLMs to outperform Alzheimer’s disease (AD) is a neurodegenerative disease with a com-
+N more advanced general-purp ose LLMs and a tabular foundation plex etiology and is the sixth leading cause of death in the United
+> model (TFM) developed for prediction tasks. To our knowledge, this States. Globally, AD is the single most common form of dementia
+a is the first application of LLMs to the prediction task using tabular and accounts for over two-thirds of all 55 million dementia cases,
+< biomarker data, P aving the way for future LLM-driven multi-agent according to World Health Organization!; and the projected num-
+=| frameworks in biomedical informatics. ber of AD and AD-related dementia cases could surge to more than
+100 million by 2050 [20, 21]. AD, to date, is highly prevalent and has
+“These authors contributed equally to this research. no effective pharmacologic treatment alternatives for a cure; more-
++ Correspondence over, post-treatment relapse remains stubbornly elevated. Recently,
+an increasing number of studies have demonstrated that early de-
+tection and diagnosis could result in proactive treatment and a
+Permission to make digital or hard copies of all or part of this work for personal or significant slow-down in AD progression. Diverse AD biomarkers
+on the first page. Copyrights for components of this work owned by others than the unprecedented opportunities for early diagnosis [12, 13]. For exam-
+author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or ple, Quantitative templates for the progression of AD (QT-PAD)?,
+republish, to post on servers or to redistribute to lists, requires prior specific permission the AD Modeling Challenge from ADNI, gathers a list of 16 clini-
+and/or a fee. Request permissions from permissions@acm.org.
+Conference acronym 'XX, Woodstock, NY cal, cognitive, and imaging biomarkers, such as cerebrospinal fluid
+© 2018 Copyright held by the owner/author(s). Publication rights licensed to ACM. —E
+ACM ISBN 978-1-4503-XXXX-X/2018/06 ‘https://www.who.int/news-room/fact-sheets/detail/dementia
+https://doi.org/XXXXXXX.XXXXXXX 2www.pidcs.org/qt-pad-challenge
+
+
+--- Page 2 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+(CSF) tau protein level, whole brain volume, as well as age, gender, ICL to approximate machine learning algorithms such as logistic
+education covariates. However, unlike text or imaging data, such regression and neural networks [19, 35]. TabPFN’s single forward-
+biomarker data are naturally stored in a table format with columns pass classification, enabled by prior-fitting on 100 million synthetic
+representing each marker and rows representing each subject. The datasets encoding diverse causal structures, yields impressive accu-
+table often comprises of heterogeneous data types and is also miss- racy on par with state-of-the-art methods. In fact, TabPFN can often
+ing order or locality information, which presents unique challenges outperform gradient-boosted tree ensembles on small tables with
+for developing predictive models compared to the rich information many outliers or missing values, needing as little as 50% of the data
+provided in text or image data [6, 18]. to match the accuracy of conventional models. Subsequent work
+Most existing AI models developed to handle AD biomarkers has extended this paradigm: a retrieval-augmented finetuning strat-
+can be categorized into machine learning or classic deep neural egy was proposed to adapt TabPFN to larger or more complex tasks
+networks with limited knowledge of understanding AD [2, 17, 22]. by fetching nearest-neighbor subsets of data and finetuning the
+Traditional machine learning pipelines, e.g. ensembles of decision model on them [24]. This approach achieved impressive results on
+trees, have remained dominant for tabular biomedical data in gen- a 95-dataset benchmark, even outperforming tuned XGBoost mod-
+eral because they are robust to small data, whereas deep learning els and substantially boosting TabPFN’s base performance. Mean-
+models often struggle to capture such tabular patterns [6, 18]. How- while, researchers have also explored lighter-weight alternatives to
+ever, these conventional models offer limited flexibility in combin- full model training. For example, Wu and Hou [29] introduced an
+ing modalities and do not leverage any prior biomedical knowledge efficient retrieval-based method that uses a frozen LLM’s embed-
+beyond the training data. This motivates exploration of foundation ding capabilities to perform k-nearest-neighbor prediction in the
+models for tabular data that can perform few-shot reasoning and in- LLM latent space. By avoiding any model finetuning and leverag-
+corporate broad prior knowledge, potentially improving prediction ing only the target dataset and the LLM’s pretrained knowledge,
+from biomedical tables. The recent advancements of Transformer- their method achieved surprisingly strong tabular prediction per-
+based large language models open up new opportunities for han- formance. These progress underscore a growing consensus that
+dling tabular data [1, 5]. pretrained on extensive text corpora, LLMs both LLMs and specialized tabular transformers can be harnessed
+exhibit emergent and versatile abilities in a range of tasks related for table data tasks through careful design.
+to tabular data, including tabular data generation, table understand- However, none of the above approaches have been applied to
+ing, tabular prediction, and reasoning, etc. based on recent studies heterogeneous biomedical tabular data such as AD biomarkers,
+[7, 8, 14, 16, 25, 34]. Especially, studies suggest that large language which pose unique challenges of multimodal feature integration
+models can be repurposed for tabular tasks by appropriate prompt- and often times limited sample sizes (e.g. typically only a few hun-
+ing or finetuning. Unlike vanilla transformers trained purely on dred patients in research cohorts). Moreover, since interpretability
+text, which cannot directly input large tables or generalize well is critical in clinical settings, LLMs may offer advantages by pro-
+to tabular formats, new frameworks have emerged to bridge this ducing natural language rationales for their predictions. Here, we
+gap. TableGPT [31] introduced a unified approach combining tables aim to fill this gap by leveraging the recent tabular-focused LLM
+with natural language and functional commands, enabling GPT- advancements for AD diagnosis. In this work, we propose TAP-GPT:
+style decoders to interpret and manipulate tables through natural Tabular Alzheimer’s Prediction GPT, a novel framework that adapts
+language instructions. It developed a dedicated table encoder that the TableGPT2 multimodal LLM to the task of classifying AD vs
+lets an LLM access an entire table as a compact vector, overcom- cognitively normal (CN) individuals from biomarker tables. We
+ing token-length limitations and capturing schema-level context. formulate the problem in a tabular few-shot in-context learning
+Building on top of this, TableGPT2 [23] scaled up with pretraining paradigm: the model is prompted with a small number of example
+on 593K tables and 2.36M table-question examples, and a novel subjects with biomarkers (including features from neuroimaging,
+schema-aware table encoder integrated into a 7B-72B parameter genotyping, etc.) along with their diagnoses, and asked to predict
+QWen2.5 decoder [11]. This large-scale multimodal LLM achieves the diagnosis for a new subject, all presented in a single table. To
+remarkable accuracy gains (~35-49% improvement over base LLMs) adapt TableGPT2 to this completely new task, we apply a parameter-
+on several table-related business intelligence tasks, confirming the efficient finetuning (qLoRA) [4] using a small training set available.
+value of specialized tabular pretraining. Meanwhile, benchmarks The resulting TAP-GPT framework combines the powerful table
+like TableBench [30] evaluated LLM reasoning on complex Table comprehension and reasoning abilities of TableGPT2 with prior
+QA tasks and found that LLMs still perform worse than human- medical knowledge encoded in the backbone LLM’s weights. Our
+level on challenging multi-step reasoning with real-world tables. experiments show that TAP-GPT achieves promising performance,
+These studies highlight both the promise of LLMs for structured compared to both general-purpose LLMs (which lack tabular spe-
+data and the remaining gap in fully capturing real-world tabular cialization) and the tabular foundation model TabPFN on the AD
+complexity. classification task. This work represents, to our knowledge, the
+Moreover, beyond LLM-based approaches, tabular foundation first application of LLMs to tabular biomarker data in biomedicine,
+models specialized for small to medium-sized datasets have been demonstrating the potential of finetuned table-language models to
+developed. Notably, TabPFN [9, 10] is a transformer model that tackle structured prediction with limited data in biomedical domain.
+performs in-context learning (ICL) on tabular inputs: given a small By uniting few-shot LLM reasoning with multimodal biomarker
+training set in a table, it instantly predicts labels for new samples integration, the proposed TAP-GPT paves the way for future LLM-
+without any gradient updates. ICL first emerged in large language driven multi-agent systems in AD diagnosis and general health
+models [3], yet later studies revealed that transformers can use informatics.
+
+
+--- Page 3 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+Our paper makes the following key contributions: TableGPT2 [23], a multimodal LLM designed for tabular data. To
+(1) We propose TAP-GPT, a novel framework for few-shot tabu- be specific, we follow the above paradigm to construct an input
+
+lar classification on complex, multimodal AD biomarker data table T of size m X n, where m = k +1 rows and n = d columns,
+that leverages LLM’s powerful language ability and encoded comprising the k in-context examples from Djcy and the single
+table-specific knowledge through our domain-aware adapta- test sample x;es. However, the prediction is then generated by the
+tion strategy. As far as we are aware, this study represents model conditioned on this entire table and a task-specific instruction
+the first use of LLMs on tabular biomarker datasets, opening I, through standard next token prediction in a causal LLM:
+new avenues for LLM-powered frameworks. -
+= TAP-GPT(T, I 2
+(2) We demonstrate that TAP-GPT achieves promising perfor- Ytest (7.0) (2)
+mance on the challenging task of few-shot tabular predic- To predict Yes¢ in Eqn 2, there are methods that rely on sim-
+tion for AD diagnosis using the public QT-PAD benchmark ple serialization to convert the data T into a plain text sequence
+dataset, comparable or even outperforming more advanced and then directly prompts pretrained LLMs [8, 14]. For example, a
+generic LLMs and tabular foundation model approaches. serialization component Serialize(x’, y’, F) can take the column
+(3) We provide a comprehensive analysis of TAP-GPT that cov- names F and convert each row in the table to a textual descrip-
+ers different ablations settings and the interpretability anal- tion like “Thef, biomarker of the person is x}. ..."; then a LLM can
+ysis of the proposed framework, shedding lights on future simply take the serialized text as input to generate the prediction,
+development of agentic/multi-agents approach built on tab- ie. Grest = LLM(Serialize(x’, y’, F)). However, such methods lose
+ular LLMs. the structural information in the original table and can also be
+We will make our code and framework publicly available to the token-inefficient for large tables [8].
+
+research community to facilitate further research and application Unlike these methods, our proposed TAP-GPT framework em-
+
+of data-efficient learning in AD diagnosis and other biomedical ploys TableGPT2’s encoder-decoder model architecture with a ded-
+
+applications. icated semantic table encoder and a LLM decoder. The encoder
+processes the input table T to generate compact, structure-aware
+
+2 Methods column embeddings C(T) € R?xk’xd" (where k’ is the number of
+
+We start this section by introducing our few-shot and in-context learnable queries and d’ is the LLM’s embedding dimension), which
+
+learning notions in the context of tabular prediction task fol- are then integrated with the textual instruction J and processed
+
+lowing previous works [9, 10, 23, 24, 29, 31], as they are slightly by the LLM decoder QWen2.5 [11]. Our TAP-GPT framework 1s
+different from the normal non-tabular scenario with LLMs. derived by supervised finetuning the decoder of the pretrained
+Formally, let our biomarkers dataset be a table D = {(x!, y‘)}¥ TableGPT2 on our specific AD diagnosis task, using the parameter-
+consisting of N labeled subject samples. Each sample i is repre- efficient qLoRA method [4]. The finetuning objective is to minimize
+sented by a feature vector xi = (xi _ x!) c Rd containing d the cross-entropy loss between the model’s prediction jrain and
+. . v1 “a i the true label yzrain for all constructed training tables, as shown in
+
+biomarkers, and a corresponding clinical diagnosis label y’ € {0, 1}. : . . . .
+
+. . Figure 1. In the following subsections, we provide more details for
+
+Here, 0 for CN and 1 for AD as in our QT-PAD dataset (more details :
+
+: : : : the data, framework and experimental setup.
+
+in the next section). It can be easily generalized to tabular regres-
+
+sion or multiclass classification. The table columns, or features,
+
+. . 2.1 Datasets
+
+are described by a set of natural language names for biomarkers
+
+F = {fi,..., fy}. The goal of our tabular prediction task is to learn Data used in the preparation of this article is obtained from the
+
+a model that, given a new subject’s feature vector xpesp € Rd along Alzheimer’s Disease Neuroimaging Initiative (ADNI) database 3
+
+with contextual examples together in the form of a table, can accu- (27, 28). The ADNI was launched im 2003 asa public-p rivate part-
+
+rately predict the corresponding label yest € {0,1}. An overview nership led by Principal Investigator Michael W. Weiner, MD. The
+is provided in Figure 1. primary goal of ADNI has been to test whether serial MRI, PET,
+
+In the few-shot setting, the model makes this prediction condi- other biological markers, and clinical and neuropsychological as-
+tioned on a small set of k labeled examples in the context. This set, sessment can be combined to measure the Progression of mild cog-
+
+Dict = (x1 ,,y/~,)}.., is provided as rows in a table to guide nitive impairment (MCI) and early AD. All participants provided
+
+ICL? “ICL” j=1 written informed consent, and study protocols were approved by
+the model’s inference. This tabular ICL process enables the model Logs —_ pgs :
+
+to approximate p(yrest|*resr, Dict) without updating its weights each participating site’s Institutional Review Board (IRB). Up-to-
+
+PP test testy ICL . date information about the ADNI is available at www.adni-info.org.
+
+during inference [19]. In the paradigm of tabular foundation model . .
+
+. nd : The data used in this study are a subset of the ADNI 1/Go/2
+
+TabPEN [9, 10], the training objective for a model with parame- . . ae
+
+; eo, ; “4: cohorts, the QT-PAD project data. A QT-PAD is a quantitative
+
+ters qg is to minimize the negative log-likelihood over many such . : . .
+diction tasks d f trainine distributi ; template of multimodal biomarkers to describe the progression of
+
+Prediction tasks Grawn trom a taming Cistrpulon p: AD and is used to predict the presence of AD in patients.
+
+L£ = E(Dycx,Drese)~p 10990 (Ytest Xtest, DicL)] (1) The QT-PAD features include positron emission tomography
+(PET) measures (FDG PET and Amyloid PET), cerebrospinal fluid
+where Dtest is the singleton set to test containing only one element measures (CSF ABETA, CSF TAU, CSF PTau), structural MRI-derived
+
+(Xtest, Ytest)- measures from FreeSurfer (FS WholeBrain, FS Hippocampus, FS
+Our proposed framework, TAP-GPT, adapts this paradigm with
+
+novel modifications by leveraging the specialized architecture of $http://adni.loni.usc.edu
+
+
+--- Page 4 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+oo Backprop
+Table constructed for training
+QT-PAD Biomarker Tabular Data poceeeeeeeeeeesy
+in LLMTEM Xict VICL AGE SEX FDG CSF_TAU(pgiml) ..._ Diagnosis Finetune : im ;
+ESN | a cS 73 Male 142 su2. ON |erapeanuar YQ |
+@ 0 Ww ee = & Target subject fr 76 Male 1.21 a7, ab. | Predtion Ayo
+oa e qh Wea. AD | model training) rain rain — 141 305.4... x es Labels
+a LrrC—~——C Se ; H le ;
+a = ay aaa a NE constructed for testing
+78 M 1.38 315.0 AD Labeled subjects Arena pene: eee the lastrow has | el
+73M 130 284300. ? o> 71 Female. 136 22 ap | {tse-reesoning) BY ie
+Figure 1: Overview of the TAP-GPT framework. As illustrated in the QT-PAD Biomarker Tabular Data, we split the AD and
+control subjects into pools for ICL (green color), training (blue color), and testing (yellow color), from which we construct tables
+used in the downstream tasks (finetuning and inference). CN: cognitively normal. AD: Alzheimer’s disease. ICL: in context
+learning. LLM: large language model. TFM: tabular foundation model.
+Entorhinal, FS Ventricles, FD MidTemp, FS Fusiform) and covari- (2) Zero-Shot Serialized This prompt format contains a sin-
+ates age, APOE4 status, gender, and years of education. Cognitive gle unlabeled natural language description of a patient’s
+scores (Alzheimer’s Disease Assessment Scale—Cognitive Subscale features.
+(ADAS13), Clinical Dementia Rating Sum of Boxes (CDRSB), Mini- (3) Few-Shot Tabular For each unlabeled target sample, k la-
+Mental State Examination (MMSE), Functional Activities Question- beled rows are randomly drawn from the corresponding ICL
+naire (FAQ), and Rey Auditory Verbal Learning Test learning score pool as examples. These k rows are displayed in a table above
+(RAVLT.learning)) were excluded because they are highly collinear the target sample, which is the final row and is without a
+with diagnostic outcomes. By excluding these scores, we aimed to label.
+evaluate model performance on a more challenging and realistic (4) Few-Shot Serialized Similar to the few-shot tabular format,
+task. but each patient’s information is serialized into natural lan-
+Samples with missing values or any diagnosis besides cognitively guage. The k in-context examples have labels and the one
+normal or AD were excluded, leaving 333 samples with 237 CN and target sample does not.
+96 AD patients. All experiments are conducted on this dataset for Tabular prompts are displayed with the head() function from the
+the binary classification task of CN or AD patients. pandas library with the target sample in the last row with an ’X’ as a
+To support ICL with tabular LLMs, we create a data splitting label. For serialized prompts, the target sample’s diagnosis sentence
+strategy using separate pools of data to draw ICL samples for table is omitted. Examples of each prompt format can be found in the
+construction. From the 333 samples, approximately 20% (67 samples) Appendix A. These four prompt formats test the impact of exposure
+were allocated to the test set, 10% (33 samples) to the validation set, to similar patient information (zero-shot vs. few-shot context) and
+and 40% (125) to the training set. We reserve three non-overlapping data structure (serialized vs. tabular).
+pools of approximately 10% (36 samples) for prompt construction:
+test set ICL pool, validation set ICL pool, and training set ICL pool.
+The ICL pools are never using in testing, training, or validation 2.2 TAP-GPT framework
+directly, they are only used for table construction as ICL examples.
+These splits are tested with six different seeds for robustness of TAP-GPT is a domain-adapted tabular LLM repurposes TableGPT2,
+model evaluation. which is originally optimized for business-intelligence table com-
+We designed four different prompt formats for the binary clas- prehension tasks, to a completely new structured clinical prediction
+sification task to test model performance with different contexts task for AD. It finetunes TableGPT2 on AD biomarkers data in a
+and representations of data. Each task format involves generating structured table format with supervised labels, adapting the model
+a prompt with patient-level data and asking the model to predict from general tabular understanding to AD-specific tabular predic-
+if a patient is cognitively normal or has AD. The prompt formats tion. Here, we evaluate if task-specific finetuning for improves
+vary with two dimensions: context length (zero-shot or few shot), performance beyond state-of-the-art methods for tabular few-shot
+and format (tabular or serialized). Each format is beneath a natural tabular prediction while providing the reasoning capabilities of
+language prompt requesting a classification for that test sample. an LLM. As an overview of the TAP-GPT framework shown in
+(1) Zero-Shot Tabular This prompt format contains a single Figure 1, we first extract training and testing samples from the
+unlabeled row in a tabular input (one target sample). No QT-PAD biomarker table, coupling each sample with few-shot ex-
+additional patients are included in the context. amples from the ICL pool. Then, for each sample, we construct a
+table containing the sample and its ICL examples, and we use these
+tables to finetune TableGPT2 and subsequently conduct inference
+
+
+--- Page 5 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+(or reasoning) with the resulting model. More details are described Zero Shot Serialized
+in the following paragraphs. Predict whether the patient has Alzheimer's disease or does not:
+(zero-shot tabular, zero-shot serialized, few-shot tabular, and few- re rn ies he has a cerebral spinal fluid (CSF) tau measure of
+shot serialized) using the qLloRA method. qLoRA is an efficient
+finetuning approach using low-rank adaptation techniques that
+enable efficient parameter updates without modifying the full model
+weights. Finetuning for each task was conducted with the training
+set and few-shot prompts were generated with the corresponding
+training ICL pool. Six random seeds (36, 73, 105, 314, 564, and 777)
+were used for robustness. For each task, the model was finetuned pens oe onan
+to predict the correct label, Alzheimer’s Disease (1) or Cognitively Predict whether the last ert has ected disease or See bee
+A 78-year old woman arrives for Alzheimer's Disease (AD) diagnosis and is|
+Normal (0). We used a fixed-prompt structure across all samples not diagnosed with AD. Her fluorodeoxyglucose (FDG) PET scan show ...
+with the diagnosis label always appearing in the same place after 73-year old man arrives for Alzheimer's Disease (AD) diagnosis and is
+the input. not diagnosed with AD. His fluorodeoxyglucose (FDG) PET scan show ...
+. . . . 5 A 70-year old woman arrives for Alzheimer's Disease (AD) diagnosis and
+Finetuning was performed using HuggingFace’s transformers is diagnosed with AD. Her fluorodeoxyglucose (FDG) PET scan show ...
+and peft libraries with quantized model weights from bitsandbytes A 76-year old man arrives for Alzheimer's Disease (AD) diagnosis and is
+(4-bit precision) on each prompt format for each seed. During in- asuenneuaiue His uuduneniLunimevaae a sal sil a
+. . A 78-year old man arrives for Alzheimer's Disease (AD) diagnosis,
+ference, a custom logits processor constrained the model’s output predict their diagnosis. His fluorodeoxyglucose (FDG) PET scan show ...
+space to only "0" or "1" for the binary classification task.
+While we finetuned TableGPT2-7B for each prompt format, the
+primary focus is the few-shot tabular format to augment TableGPT2
+for a tabular prediction task to enable in-context tabular predic-
+tion with a limited number of examples. Comparing this setting
+to serialized prompts and zero-shot contexts isolates the impact of
+structured data and finetuning on model performance.
+In this work, we only finetune TableGPT2’s LLM decoder, build
+on Qwen2.5, keeping the tabular encoder fixed because the available
+pretrained TableGPT2 only exposes the decoder for downstream BP & &
+adaptation. While this limits the model’s capacity to update tabular (a) vy; Sy Chess wo)
+representations, the encoder’s general-purpose table representa- TableGPT2 QWen GPT-4-l-mini TabPFN =‘ TAP-GPT
+tions can be used while tailoring the LLM with domain knowledge
+of this clinical prediction task. Figure 2: Different prompt formats and models in our experi-
+mental setup. The prompts are utilized to feed subject data to
+2.3 Experimental setup the language models, except for TabPFN which directly takes
+tabular input from CSV files. We show serialized formats in
+We designed a series of experiments to evaluate the performance of red color and tabular formats in blue, which are used consis-
+TAP-GPT and baseline models on a clinical classification task under tently in the subsequent figures as well. For each model, the
+varying prompt formats and model types, as shown in Figure 2. All fire icon denotes model parameters are finetuned, whereas
+experiments were repeated across six random seeds (36, 73, 105, the snowflake icon denotes parameters remain frozen.
+314, 564, and 777) and evaluation was performed on the test set
+using the four different prompt formats. The few-shot prompts
+were generated with k random samples from the test ICL pool, as Finetuned TableGPT2 was chosen for all few-shot prompts. We also
+described in the Data section. All models were evaluated on the explored larger k values, but those experiments were limited by the
+same binary classification task using standardized input features GPU memory constraints for larger table sizes.
+and the same test set. Only the prompt format and model type To benchmark the performance of TAP-GPT, we compared model
+varied across experiments. Performance was primarily measured performance on all four prompt formats across a diverse set of
+with AUROC but also evaluated with AUPRC, accuracy, and F1 baseline models commonly used for tabular prediction tasks and
+score. general-purpose LLMs. The unfinetuned version of TableGPT2 is
+To select an appropriate number of k in-context examples for used to see the impact of task-specific finetuning. To assess the im-
+the few-shot prompts, we conducted a k-ablation analysis using the portance of TableGPT’s tabular specialization, we tested Qwen2.5-
+validation set. TAP-GPT (finetuned TableGPT2-7B) models were 7B-Instruct, the LLM backbone used in TableGPT2, and Qwen3-8B,
+trained separately on the training samples for the tabular few-shot a more recent general-purpose LLM from the same series. As a
+prompt format for each k € 2,4,6,8, 10,12, 16,20 across the six sanity check, we included OpenAI’s GPT-4-1-mini, a significantly
+seeds. For each configuration, model performance was evaluated more capable LLM, to benchmark the upper bound of zero- and
+with AUROC on the validation set. The k with the highest consistent few-shot performance on this task with general-purpose LLMs.
+performance across all seeds on the few-shot tabular task with To assess the impact of finetuning TableGPT2’s LLM backbone
+
+
+--- Page 6 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+1.00
+obo a.
+j ij ob
+0.75 og 073
+0.64 0.66 0.65 063 0.64 0.66
+© i i ose Fe onsoks ii 9
+9 0.50 ae 0.50 060 0.50 i 0.50)
+z
+0.00
+Qwen2.5 Finetuned  Qwen3 TableGPT2 TAP-GPT GPT-4-1- Qwen2.5 Finetuned Qwen3 TableGPT2 TAP-GPT GPT-4-1- TabPFN
+Qwen2.5 mini Qwen2.5 mini
+Model
+Format [i na {9 seriaized [i tabular
+Figure 3: Model performance measured by test AUROC for AD diagnosis prediction across all models for the prompt context
+zero-shot and few-shot (k = 8). Bars show mean AUROC and error bars show standard deviation across six seeds. TAP-GPT
+showed the highest performance in the tabular few-shot context (mean AUROC 0.8863 (STD=0.0585)), outperforming the
+tabular foundation model TabPFN (mean AUROC 0.7781 (STD=0.0654)) and general-purpose LLMs.
+without tabular specialization, we finetuned Qwen2.5-7B-Instruct. both the serialized (mean AUROC 0.8197 (STD=0.1114)) and tab-
+TabPEN, a state-of-the-art tabular foundation model, was included ular settings (mean AUROC 0.6588 (STD=0.1630)). This suggests
+to represent non-LLM tabular prediction and was tested only on that finetuning a general-purpose LLM provides sufficient domain
+the few-shot task with tabular data. knowledge for this clinical prediction task without structural cues
+Hyperparameter tuning was performed using Optuna to maxi- from tabular formatting. Finetuning TableGPT also improved per-
+mize AUROC on the validation set. Finetuned TableGPT2-7B mod- formance over its unfinetuned counterpart to a similar extent as
+els were tuned over key parameters including LoRA rank, dropout Qwenz.5, indicating that in this low-context format, performance
+rate, learning rate, batch size, weight decay, maximum number of gains are likely driven by the underlying LLM backbone rather than
+steps, and type of learning rate scheduler. The objective function tabular prediction specialization.
+maximized validation AUROC and the best hyperparameter config- In the few-shot tabular context shown in Figure 3, TAP-GPT has
+urations were chosen for consistent good performance across the the strongest performance (mean AUROC 0.8863 (STD=0.0585)),
+six seeds for each model. benefiting from pairing the tabular-aware architecture of TableGPT
+All experiments were conducted on a high-performance comput- with domain- and task-specific knowledge from finetuning. As
+ing cluster using a single NVIDIA A100 GPU with 80 GB of GPU expected, TabPFN performs well in this context (mean AUROC
+memory and 160 GB of system memory. Each job was allocated 4 0.7781 (STD=0.0654)), despite being built for larger tables. TAP-GPT
+CPU cores and 1 node, with experiments run under a SLURM job performs significantly stronger than TabPFN on the tabular few-
+scheduler. shot task (p-value=0.03035). GPT-4-1-mini performs well across
+both formats in this context, which suggests that updating the
+backbone of TAP-GPT with more capable base models could further
+improve prediction performance. Most models underperform in the
+3 Results i ; eran «ts
+serialized formatting, often collapsing into single-class predictions,
+3.1 Overall Model Performance possibly due to prompt complexity or length.
+TAP-GPT performance was evaluated on the test set across four To assess whether TAP-GPT significantly outperforms TabPFN
+prompt formats (zero-shot tabular, zero-shot serialized, few-shot in the few-shot tabular setting, we first tested the normality of the
+tabular, and few-shot serialized) and compared to Qwen2.5-7B- test AUROC differences across six random seeds using the Shapiro-
+Instruct, Finetuned Qwen2.5-7B-Instruct Qwen3.0-8B, TableGPT2, Wilk test. The result (W = 0.899, p = 0.368) does not reject the null
+ChatGPT 4-1-mini, and TabPEN. hypothesis of normality, justifying the use of a paired t-test. The
+As shown in Figure 3 and Table 1, all models performed better in paired t-test shows that TAP-GPT achieves significantly higher
+the serialized setting compared to the tabular setting for the zero- AUROC scores than TabPFN (t = -2.993, p = 0.030), with a mean
+shot context, suggesting that models cannot extract meaningful improvement of 0.108 and a 95% confidence interval of [-0.201,
+structural information from a single-row input. Finetuned Qwen2.5 ~0.015], indicating consistent performance gains across seeds.
+shows the strongest performance across all zero-shot contexts in
+
+
+--- Page 7 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+Table 1: AUROC and Accuracy performance metrics for each model for each prompt format. TAP-GPT (bold fonts) demonstrates
+the strongest performance on the Tabular Few-Shot (k=8) prompt format.
+Qwen2.5 0.6428 0.0461 0.6741 0.0447
+Finetuned Qwen2.5 0.8197 0.1114 0.8632 0.0740
+Serialized Qwen3 0.6513 0.0471 0.6940 0.0409
+TableGPT2 0.6307 0.0747 0.6492 0.0617
+GPT-4-1-mini 0.7278 0.0226 0.7960 0.0225
+TAP-GPT 0.7672 0.1375 0.8258 0.0753
+Qwen2.5 0.5255 0.0254 0.7263 0.0154
+Zero-Shot ‘
+Finetuned Qwen2.5 0.6588 0.1630 0.8035 0.0893
+Qwen3 0.5573 0.0260 0.7263 0.0278
+TableGPT2 0.5000 0.0000 0.2836 0.0000
+Tabular ..
+GPT-4-1-mini 0.6618 0.0544 0.7015 0.0433
+TAP-GPT 0.6391 0.1217 0.7562 0.0692
+Qwen2.5 0.5855 0.0333 0.7288 0.0220
+Finetuned Qwen2.5 0.5000 0.0000 0.7164 0.0000
+Serialized Qwen3 0.5500 0.0347 0.6741 0.0476
+TableGPT2 0.6075 0.1230 0.6691 0.0996
+GPT-4-1-mini 0.8505 0.0451 0.8010 0.0548
+TAP-GPT 0.5000 0.0000 0.7164 0.0000
+Qwen2.5 0.4970 0.0434 0.6741 0.0405
+Few-Shot (k=8) Finetuned Qwen2.5 0.7284 0.1228 0.8234 0.0690
+Qwen3 0.5532 0.0494 0.7015 0.0490
+TableGPT2 0.5892 0.0621 0.5746 0.0564
+Tabular ..
+GPT-4-1-mini 0.8174 0.0403 0.7612 0.0481
+TabPFN 0.7781 0.0654 0.8365 0.0493
+TAP-GPT 0.8863 0.0585 0.9055 0.0488
+3.2 Ablations 3.3 Interpretability Analysis
+3.2.1. K-Ablation Analysis. To determine the optimal k in the few- A critical requirement for the clinical adoption of any predictive
+shot in-context-learning context, we conducted an ablation study on model is interpretability, the ability to understand the rationale
+the models TAP-GPT, TableGPT2, and TabPFN for a set of different behind its decisions. While tabular foundation models like TabPFN
+ks {2, 4, 6, 8, 10, 12, 16, 20} (Figure 4). We restricted the upper limit demonstrate strong predictive performance, their nature as purely
+to 20 due to GPU memory constraints. TabPFN showed steadily structural foundation models means they cannot provide innate
+increasing performance with higher k, consistent with its design natural language explanations for their predictions. This black box
+for larger tabular input. TableGPT2 performance was relatively characteristic could be a significant barrier in biomedical domains.
+steady across k. TAP-GPT showed the highest mean AUROC at In contrast, a unique strength of our LLM-based TAP-GPT frame-
+k = 10 (0.8265, SD=0.1192), but k = 8 produced nearly equivalent work is its capacity to generate human-readable reasoning for its
+performance (0.8226, SD=0.05195) with substantially lower variance. tabular predictions, like AD diagnosis here, a feature crucial for
+For this reason, k = 8 was chosen for all few-shot experiments to building interpretability and for future integration into trustworthy
+ensure more consistent performance across random seeds. multi-agent systems (ongoing work).
+To explore this capability, we conducted a case study using a
+minimal Chain-of-Thought (CoT) prompting [26] to explore the
+3.2.2. Zero-Shot Application to Few-Shot. To evaluate if TableGPT reasoning ability of TAP-GPT. By simply modifying the instruction
+could generalize from a simpler context, zero-shot, to a more com- and appending the standard “Let’s think step-by-step” CoT string
+plex context, few-shot, we tested the model finetuned on only zero- to encourage the model’s response, we prompted the finetuned
+shot prompts directly on the few-shot prompts. Finetuning on a TAP-GPT model to output not just a 0/1 prediction, but also the
+simpler task could reduce computational complexity and isolate reasoning process that led to it. This was done without providing
+the impact of in-context examples at the time of inference. How- complex reasoning examples in the prompt, allowing us to assess
+ever, the zero-shot finetuned TableGPT underperformed on the the model’s emergent reasoning abilities after our finetuning on
+few-shot tabular prompts (mean AUROC of 0.58) compared to TAP- domain-specific, small data.
+GPT, TableGPT finetuned on few-shot prompts (mean AUROC of
+0.88). These results indicate that alignment of prompt formatting CoT Reasoning Case Study. We analyzed the model’s generated ra-
+for finetuning and inference is critical. tionales for predictions on the test set. Two examples (manually
+
+
+--- Page 8 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+disease... The patient is male and has APOE4, which increases the
+risk. The CSF_ABETA level is low (740.4), and the CSF_TAU and
+4.00 CSF_PTAU levels are relatively high (332.0 and 31.58, respectively),
+4 indicating a higher risk... Based on the high risk factors (APOE4, low
+0.78 a CSF_ABETA, high CSF_TAU and CSF_PTAU), it is likely that this
+0.50 otf Q patient has Alzheimer’s disease.” This explanation aligns with estab-
+0.25 x lished AD pathology, where amyloid plaque accumulation in the
+0.00 brain leads to lower CSF Af levels, and neuronal injury leads to
+1.00 .° higher CSF Tau and p-Tau levels. This ability to articulate a step-by-
+© 0.75 SS Se oe 4 step diagnostic logic based on multiple biomarkers is a significant
+
+O ay advantage over non-linguistic models like TabPFN.
+a 0.0 a In the second case (Appendix B, Example 2), the model also made
+< 0.25 = a correct prediction with step-by-step reasoning. However, by pro-
+0.00 viding the reasoning process, we can spot flaws in the model’s
+1.00 7" ? t understanding, i.e.: “Patients with Alzheimer’s disease (Alzheimers-
+0.75 ———— = Disease = 1) tend to have higher values for CSF_ABETA, CSF_TAU,
+0.504 ¢ 6 r 5 and CSF_PTAU.” This statement incorrectly generalizes the ele-
+0.25 3 vated pattern for Tau and p-Tau to Abeta, contradicting the known
+biomarker signature of AD. This error suggests that the model, in
+0.00 some cases, may oversimplify patterns from the in-context exam-
+
+2 4 6 8 10 12 16 20 : : ae «ps . »
+
+k ples, adopting a naive heuristic that “higher is worse” for all CSF
+biomarkers. Moreover, this highlights that the reasoning process
+can reveal the limits of the model and shed light on potential solu-
+
+Figure 4: k ablation analysis across TableGPT2, TabPEN, and tions. Maybe the biomedical knowledge encoded in the model is
+TAP-GPT. TAP-GPT performs best on k = 8 with the least incorrect, or maybe the model is too sensitive to the data distribu-
+variance across seeds. Each model is evaluated across six tion of the few-shot examples provided in the prompt. However,
+seeds on the validation data set. a black-box model may never reveal such limits, since the final
+prediction is correct. The reasoning ability from TAP-GPT allows
+transparent interpretability analysis through the model’s own ex-
++00 planation, providing important insights for further improvements,
+: such as implementing strategies for selecting balanced and repre-
+0.75 obs sentative ICL examples, more finetuning or retrieval argumentation
+Q ii obe with AD specific materials [15, 32] to revise the knowledge, etc.
+& 0.50 me In general, although TableGPT2 uses QWen2.5-base-7B as its
+< backbone model, which is not a reasoning model itself, with CoT
+0.28 prompting fed to our finetuned TAP-GPT, we can provide detailed
+0.00 reasoning to the tabular prediction results for AD diagnosis. This
+TAPGPT Zoro Shot is an unique strength over TabPFN and other tabular foundation
+Finetuned TableGPT models (with no language reasoning ability) in particular. It sup-
+Model plies a promising feature for future biomedical tasks and open up
+Format Seriaized [IJ Tabuir possibility for potential multi-agent system design.
+Figure 5: Evaluation of TableGPT2 finetuned on zero-shot
+prompts used on few-shot prompts. Performance drops sig- . .
+nificantly, indicating that the finetuned model does not gen- 4 Discussion
+eralize well across prompt formats. Foundation models for text and images have revolutionized AI
+research, and there is a growing realization that tabular data, the
+backbone of clinical and scientific datasets, deserves a similar focus.
+fabricated patient data closely emulating real data) provided in Ap- This work demonstrates the ability of finetuning a tabular LLM
+pendix B illustrate both the CoT prompt and the reasoning process model for a clinical prediction task to outperform general-purpose
+to showcase TAP-GPT’s interpretability. LLMs and a tabular foundation model on a few-shot tabular clinical
+In a representative true positive case (Appendix B, Example prediction task. TAP-GPT benefits from the the structured setting
+1), TAP-GPT correctly predicted a diagnosis of AD (label 1) and with enough examples to reveal structural patterns across rows and
+generated a clinically relevant rationale. The model’s reasoning columns as well as the domain-specific knowledge obtained from
+correctly identified key risk factors from the patient’s data, stat- finetuning.
+ing: “generally, higher values for CSF_ABETA and lower values for Our work pioneers the application of a tabular LLM to the chal-
+CSF_TAU and CSF_PTAU are associated with lower risk of Alzheimer’s lenging task of AD diagnosis based on tabular biomarker data in
+
+
+--- Page 9 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+a data-scarce setting. Our proposed TAP-GPT framework success- model arrives at a conclusion, whether that is domain-relevant
+fully adapts TableGPT2 model originally designed for business correlations or task-aligned patterns that could be misaligned with
+intelligence into a powerful tool for few-shot AD tabular prediction. domain knowledge. This interpretability directly supports our third
+The results show that by combining a tabular-aware architecture contribution and lays the groundwork for more sophisticated, trust-
+with domain-specific finetuning, TAP-GPT achieves promising per- worthy AI, such as the multi-agent diagnostic systems we envision
+formance for the task. Our in-depth experiments demonstrate the for future work. Having said that, the CoT reasoning is an emergent
+clear synergy between the different components introduced in capability from finetuning and can sometimes produce clinically
+the TAP-GPT framework. As shown in Figure 3, neither the origi- inaccurate statements. We would like to continue work in this area
+nal TableGPTZ2 nor the finetuned general-purpose LLM (Qwen2.5- to further understand the reasoning capabilities of TAP-GPT on
+Instruct) could match the performance of TAP-GPT in the crucial tabular data to further improve our clinical predictions and provide
+few-shot tabular setting. This provides insights that simply having useful insights.
+a tabular architecture or domain knowledge alone is insufficient; Even without tabular-specific architecture, OpenAI’s GPT-4-1-
+their integration is likely the key for the improved capability. mini was able to achieve strong performance without finetuning.
+An important finding of this study is TAP-GPT’s ability to com- This indicates the emergent capability of current general-purpose
+pete with TabPFN in the low-shot realm that is very common in LLMs of tabular understanding and prediction with high-capacity
+biomedical research. TabPFN, a leading tabular foundation model, pretraining. Future directions for this framework could include
+represents the new generation of techniques for tabular data, an manually decoupling the architecture of TableGPT2 to replace the
+area deep learning approaches have traditionally struggled with, current LLM decoder, Qwen2.5, with a more modern LLM that
+and introduces a paradigm shift from classic tree-based approaches. already has some tabular understanding capacities. However, the
+Our relatively simple approach performs comparatively with TabPFN current architecture of TableGPT2 is not open-source, so this limits
+in lower-shot contexts, as seen in Figure 4, particularly in the 2- our ability to modify parts of its structure. Manually recreating
+10 range. This suggests that TAP-GPT performs well with inter- TableGPT’s architecture, potentially using TabPFN’s tabular en-
+pretability when labeled data are limited, a common context in the coder and a general-purpose LLM like OpenAI’s GPT-4-1-mini or
+biomedical domain. At larger ks, the current framework of TAP- Meta’s Llama-3-8, could be a future step to further specialize a
+GPT may be limited by context and prompt complexity. TabPFN tabular LLM for clinical prediction tasks.
+shows improvement over k, which is expected as it is a more so- Our current dataset contains information relating to the ATN
+phisticated, dedicated foundation model built for tabular prediction (Amyloid, Tau, and Neurodegeneration) framework of AD diagnosis,
+tasks that can handle up to 10,000 ICL examples [10]. However, it but we would like to expand to incorporate additional biomarkers
+is worth emphasizing that, TAP-GPT, inheriting from TableGPT2, like genetic data or imaging data to create a more robust multi-
+is essentially a multimodal method, connecting a tabular encoder modal analysis. Multimodal integration could improve prediction
+to a large language model decoder. Similar to vision-language mod- performance but also reveal latent interactions in disease progres-
+els [33], the table and language representations are connected in sion and prediction. Systematic ablation or attribution-based analy-
+the latent embedding space through training, allowing TAP-GPT ses could help identify which data types drive model predictions
+to leverage not only the structural patterns within the table but in different contexts, aiding interpretability of results. Addition-
+also the powerful language ability encoded in its LLM backbone. In ally, expanding to more difficult tasks like future prediction of
+contrast, TabPFN, although pretrained on millions of tables for few- AD or differentiation between cognitively normal, mild cognitive
+shot ICL on small to medium-sized tabular data, relies solely on the impairment, and AD could further distinguish the capabilities of
+tabular structure from the input data, without any language modal- TAP-GPT.
+ity/ability. Therefore, it does not have the rich semantic knowledge One promising advantage of LLM-based prediction models is
+from textual data encoded in LLMs like Qwen that may already their potential for handling missingness. Traditional machine learn-
+have prior knowledge related to AD that can help low-shots predic- ing methods or TFMs require imputation if missing values occur,
+tions, such as familiarity with the biomarker names, etc. This may which can mislead prediction. Because LLMs operate over text-like
+partially explain why TAP-GPT performs comparably or in some serialized inputs, missingness can be implicitly represented by the
+cases even better than TabPFN in the lower-shot settings. absence of a value, rather than forcing the model to reason over
+Moreover, the potential for prediction with interpretability re- artificially filled-in data. The LLM could learn context-dependent
+sults through CoT reasoning provides a unique advantage of TAP- patterns of missingness and use it to infer as an informative sig-
+GPT over traditional machine learning models or foundation models nal, which could further enhance prediction. Accurate handling
+like TabPFN. As demonstrated in our interpretability analysis (Sec- of missingness is critical in clinical tasks, where data is frequently
+tion 3.3), with minimal CoT prompting, finetuned TAP-GPT can incomplete or irregular and accurate diagnosis is critical. This is
+generate step-by-step rationales for its predictions. Revealing the a future area of analysis for TAP-GPT and other general-purpose
+reasoning that led to a particular conclusion could highlight correct LLMs on this task.
+and incorrect assumptions that could be adjusted to improve future Lastly, this work lays the foundation for developing LLM-driven
+predictions for more transparent decision-making in high-stakes multi-agent AD diagnostic systems. We envision a framework
+domains like clinical prediction. It could also reveal patterns lead- where TAP-GPT acts as a specialized biomarker agent, generat-
+ing to a clinical prediction that have not been prioritized yet. The ing some initial diagnosis and rationale. This output could then
+reasoning we observe arises from general-purpose pretraining and be passed to another independent neuroimaging agent, or an EHR
+task-specific finetuning, so it is important to understand why the
+
+
+--- Page 10 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+agent etc., which could leverage additional information and knowl- [13] C. R. Jack, D. A. Bennett, et al. 2018. NIA-AA Research Framework: Toward
+edge to cross-validate the clinical reasoning. Such a collaborative a biological definition of Alzheimer’s disease. Alzheimer’s and Dementia 14, 4
+i : oe : (2018), 535-562. doi:10.1016/j.jalz.2018.02.018
+system could mitigate the risk of flawed individual judgments and [14] Joseph Lee, Shu Yang, Jae Young Baik, Xiaoxi Liu, Zhen Tan, Dawei Li, Zixuan
+represents a potential step towards building more reliable and trust- Wen, Bojian How Duy Duong Tran, Tianlong Chen, “ al. 20s. Knowledge:
+. . . . riven feature selection and engineering for genotype data with large language
+worthy Alin AD diagnosis and other fields. This work serves as a models. AMIA Summits on Translational Science Proceedings 2025 (2028), 250.
+successful proof-of-concept and provides the foundation for adapt- [15] Dawei Li, Shu Yang, Zhen Tan, Jae Young Baik, Sunkwon Yun, Joseph Lee, Aaron
+ing emerging tabular LLMs to solve these critical problems. Chacko, Bojian Hou, Duy Duong-Tran, Ying Ding, et al. 2024. DALK: Dynamic
+Co-Augmentation of LLMs and KG to answer Alzheimer’s Disease Questions
+. with Scientific Literature. arXiv preprint arXiv:2405.04819 (2024).
+5 Conclusion [16] Tianhao Li, Sandesh Shetty, Advaith Kamath, Ajay Jaiswal, Xiaoqian Jiang, Ying
+. we Ding, and Yejin Kim. 2024. CancerGPT for few shot drug pair syner; rediction
+This work demonstrates the promising strength of TAP-GPT on using large retrained language models. NPJ Digital Medicine 7, 1 (2024), 40.
+tabular few-shot prompts for predicting Alzheimer’s Disease in [17] Eugene Lin, Chieh-Hsin Lin, and Hsien-Yuan Lane. 2021. Deep learning with
+patients using clinical biomarkers from the ATN framework. TAP- neuroimaging and genomics in Alzheimer’s disease. International journal of
+“ee molecular sciences 22, 15 (2021), 7911.
+GPT expands the capabilities of TableGPT2 beyond tabular under- [18] Duncan McElfresh, Sujay Khandagale, Jonathan Valverde, Vishak Prasad C,
+standing into tabular prediction. TAP-GPT outperforms TabPEN, a Ganesh Ramakrishnan, Micah Goldblum, and Colin White. 2024. When do neural
+tabular foundation model, and general-purpose LLMs in this low- nets outperform boosted trees on tabular data? Advances in Neural Information
+> Processing Systems 36 (2024), 76336-76369.
+shot context, leveraging structural information and task-specific [19] Samuel Miller, Noah Hollmann, Sebastian Pineda Arango, Josif Grabocka, and
+finetuning. Beyond performance, TAP-GPT offers interpretability Frank Hutter. ve mess can do bayesian inference. arXiv preprint
+so : soa: : : so: : arXiv:2112.10510 (2021).
+In its reasoning for predictions, which could aid clinical implemen- [20] Emma Nichols et al. 2022. Estimation of the global prevalence of dementia in
+tation and offer use in multi-agent frameworks. Our results indicate 2019 and forecasted prevalence in 2050: an analysis for the Global Burden of
+. _ Disease Study 2019. The Lancet Public Health 7, 2 (2022), e105-e125.
+the mp ortance of Pp romp t context (zero-shot vs few shot, tabular vs. [21] Martin Prince, Renata Bryce, Emiliano Albanese, Anders Wimo, Wagner Ribeiro,
+serialized) on LLM prediction performance. Our framework serves and Cleusa P. Ferri. 2013. The global prevalence of dementia: A systematic review
+as a step to apply LLMs to tabular biomarker data to support fu- and metaanalysis. Alzheimer’s & Dementia 9, 1 (2013), 63-75.e2.
+t linical dicti task di ti int Iti- t [22] Li Shen and Paul M. Thompson. 2020. Brain Imaging Genomics: Integrated
+ure chnicat prediction tasks and incorporation into multi-agen Analysis and Machine Learning. Proc. IEEE 108, 1 (2020), 125-162. doi:10.1109/
+frameworks. JPROC.2019.2947272
+[23] Aofeng Su, Aowen Wang, Chao Ye, Chen Zhou, Ga Zhang, Gang Chen,
+References Guangcheng Zhu, Haobo Wang, Haokai Xu, Hao Chen, et al. 2024. Tablegpt2:
+A large multimodal model with tabular data integration. arXiv preprint
+[1] Gilbert Badaro, Mohammed Saeed, and Paolo Papotti. 2023. Transformers for arXiv:2411.02059 (2024).
+Tabular Data Representation: A Survey of Models and Applications. Transactions [24] Valentin Thomas, Junwei Ma, Rasa Hosseinzadeh, Keyvan Golestan, Guangwei
+of the Association for Computational Linguistics 11 (2023), 227-249. Yu, Maks Volkovs, and Anthony L Caterini. 2024. Retrieval & fine-tuning for
+[2] Jingxuan Bao, Brian N. Lee, Junhao Wen, Mansu Kim, Shizhuo Mu, Shu Yang, in-context tabular models. Advances in Neural Information Processing Systems
+Christos Davatzikos, Qi Long, Marylyn D. Ritchie, and Li Shen. 2024. Employing 37 (2024), 108439-108467.
+Informatics Strategies in Alzheimer Disease Research: A Review from Genetics, [25] Zilong Wang, Hao Zhang, Chun-Liang Li, Julian Martin Eisenschlos, Vincent
+Multiomics, and Biomarkers to Clinical Outcomes. Annual Review of Biomedical Perot, Zifeng Wang, Lesly Miculicich, Yasuhisa Fujii, Jingbo Shang, Chen-Yu
+Data Science (2024). doi:10.1146/annurev- biodatasci- 102423-121021 Lee, et al. 2024. Chain-of-Table: Evolving Tables in the Reasoning Chain for
+[3] Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared D Kaplan, Table Understanding. In The Twelfth International Conference on Learning
+Prafulla Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Representations.
+Askell, et al. 2020. Language models are few-shot learners. Advances in neural [26] Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Fei Xia, Ed Chi,
+information processing systems 33 (2020), 1877-1901. Quoc V Le, Denny Zhou, et al. 2022. Chain-of-thought prompting elicits reasoning
+[4] Tim Dettmers, Artidoro Pagnoni, Ari Holtzman, and Luke Zettlemoyer. 2023. in large language models. Advances in neural information processing systems
+Qlora: Efficient finetuning of quantized Ilms. Advances in neural information 35 (2022), 24824-24837.
+processing systems 36 (2023), 10088-10115. [27] Michael W Weiner, Dallas P Veitch, Paul S Aisen, Laurel A Beckett, Nigel J Cairns,
+[5] Xi Fang, Weijie Xu, Fiona Anting Tan, Ziqing Hu, Jiani Zhang, Yanjun Qi, Srini- Robert C Green, Danielle Harvey, Clifford R Jack, William Jagust, Enchi Liu,
+vasan H. Sengamedu, and Christos Faloutsos. 2024. Large Language Models et al. 2013. The Alzheimer’s Disease Neuroimaging Initiative: a review of papers
+(LLMs) on Tabular Data: Prediction, Generation, and Understanding - A Survey. published since its inception. Alzheimer’s & Dementia 9, 5 (2013), e111-e194.
+Transactions on Machine Learning Research (2024). [28] Michael W Weiner, klas P Veitch, Paul S Aisen, Laurel A Beckett, Nigel J Cairns,
+[6] Léo Grinsztajn, Edouard Oyallon, and Gaél Varoquaux. 2022. Why do tree-based Robert C Green, Danielle Harvey, Clifford R Jack Jr, William Jagust, John C Morris,
+models still outperform deep learning on typical tabular data? Advances in et al. 2017. Recent publications from the Alzheimer’s Disease Neuroimaging
+neural information processing systems 35 (2022), 507-520. Initiative: Reviewing progress toward improved AD clinical trials. Alzheimer’s
+[7] Sungwon Han, Jinsung Yoon, Sercan O Arik, and Tomas Pfister. 2024. Large & Dementia 13, 4 (2017), e1-e85.
+Language Models Can Automatically Engineer Features for Few-Shot Tabular [29] Jie Wu and Mengshu Hou. 2025. An Efficient Retrieval-Based Method for Tabular
+Learning. In Forty-first International Conference on Machine Learning. Prediction with LLM. In Proceedings of the 31st International Conference on
+[8] Stefan Hegselmann, Alejandro Buendia, Hunter Lang, Monica Agrawal, Xiaoyi Computational Linguistics. 9917-9925.
+Jiang, and David Sontag. 2023. Tabllm: Few-shot classification of tabular data with [30] Xianjie Wu, Jian Yang, Linzheng Chai, Ge Zhang, Jiaheng Liu, Xeron Du, Di
+large language models. In International Conference on Artificial Intelligence and Liang, Daixin Shu, Xianfu Cheng, Tianzhen Sun, et al. 2025. Tablebench: A com-
+Statistics. PMLR, 5549-5581. prehensive and complex benchmark for table question answering. In Proceedings
+[9] Noah Hollmann, Samuel Miller, Katharina Eggensperger, and Frank Hutter. 2022. of the AAAI Conference on Artificial Intelligence, Vol. 39. 25497-25506.
+Tabpfn: A transformer that solves small tabular classification problems in a [31] Liangyu Zha, Junlin Zhou, Liyao Li, Rui Wang, Qingyi Huang, Saisai Yang,
+second. arXiv preprint arXiv:2207.01848 (2022). Jing Yuan, Changbao Su, Xiang Li, Aofeng Su, et al. 2023. Tablegpt: Towards
+[10] Noah Hollmann, Samuel Miiller, Lennart Purucker, Arjun Krishnakumar, Max unifying tables, nature language and commands into one gpt. arXiv preprint
+Korfer, Shi Bin Hoo, Robin Tibor Schirrmeister, and Frank Hutter. 2025. Accurate arXiv:2307.08674 (2023).
+predictions on small data with a tabular foundation model. Nature 637, 8045 [32] Marcus Zhan, Kun Zhao, Guodong Liu, and Haoteng Tang. 2025. A General Para-
+(2025), 319-326. digm for Fine-Tuning Large Language Models in Alzheimer’s Disease Diagnosis.
+{11] Binyuan Hui, Jian Yang, Zeyu Cui, Jiaxi Yang, Dayiheng Liu, Lei Zhang, Tianyu In Proceedings of the AAAI Symposium Series, Vol. 5. 37-42.
+Liu, Jiajun Zhang, Bowen Yu, Keming Lu, et al. 2024. Qwen2. 5-coder technical [33] Jingyi Zhang, Jiaxing Huang, Sheng Jin, and Shijian Lu. 2024. Vision-language
+report. arXiv preprint arXiv:2409.12186 (2024). models for vision tasks: A survey. IEEE Transactions on Pattern Analysis and
+[12] C.R.Jack, D. A. Bennett, et al. 2016. A/T/N: An unbiased descriptive classification Machine Intelligence (2024).
+scheme for Alzheimer disease biomarkers. Neurology 87, 5 (2016), 539-547. [34] Tianping Zhang, Shaowen Wang, Shuicheng Yan, Li Jian, and Qian Liu. 2023.
+doi:10.1212/WNL.0000000000002923 Generative Table Pre-training Empowers Models for Tabular Prediction. In
+
+
+--- Page 11 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+Proceedings of the 2023 Conference on Empirical Methods in Natural Language
+Processing. 14836-14854.
+[35] Hattie Zhou, Arwen Bradley, Etai Littwin, Noam Razin, Omid Saremi, Josh
+Susskind, Samy Bengio, and Preetum Nakkiran. 2023. What algorithms can trans-
+formers learn? a study in length generalization. arXiv preprint arXiv:2310.16028
+(2023).
+
+
+--- Page 12 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+
+A Prompt Formats for AD Prediction
+
+Below, we provide example prompt-output pairs for each prompt format: zero-shot tabular, zero-shot serialized, few-shot tabular, and
+
+few-shot serialized. All patient data shown in these examples is entirely fabricated.
+
+Zero-Shot Tabular. Prompt:
+
+Below is an instruction that describes a task, paired with an input that provides further context. Write
+a response that appropriately completes the request.
+
+### Instruction: Below is a table of patient records. Each column contains features related to Alzheimer'
+s disease. Based on the information, predict whether the patient in the last row has Alzheimer's
+disease (1) or does not (0). Respond only with 1 or 0.
+
+### Input:
+
+AGE GENDER EDUCATION APOE4 FDG AV45 CSF_ABETA(pg/ml) CSF_TAU(pg/ml) CSF_PTAU(pg/ml) WholeBrain
+Hippocampus Entorhinal Ventricles MidTemp Fusiform
+
+73 Female 11 0 1.131 1.4311 1163.2 305.2 29.48 978382 6728 3278 31733 21383 18321
+
+### Response:
+
+Expected Model Output: 0
+
+Zero-Shot Serialized. Prompt:
+
+Below is an instruction that describes a task, paired with an input that provides further context. Write
+a response that appropriately completes the request.
+
+### Instruction: Below is a table of patient records. Each column contains features related to Alzheimer'
+s disease. Based on the information, predict whether the patient in the last row has Alzheimer's
+disease (1) or does not (0). Respond only with 1 or 0.
+
+### Input:
+
+A 73-year-old woman arrives for Alzheimer's Disease (AD) diagnosis. She has received 11 years of
+education, and she carries 0 copies of the APOE4 genetic variant. She received clinical examinations
+including cerebrospinal fluid (CSF) analysis, positron emission tomography (PET) imaging, and brain
+magnetic resonance imaging (MRI) imaging. For beta-amyloid pathology, she has an amyloid PET measure
+of 1.4311 and a CSF A-beta42 measure of 1163.2 pg/ml. For tau pathology, she has a CSF tau measure of
+
+305.2 pg/ml and a CSF phosphorylated tau measure of 29.48 pg/ml. For MRI neuroimaging scans, she has
+whole brain volume of 978382, hippocampus region volume of 6728, entorhinal volume of 3278,
+ventricles volume of 31733, middle temporal lobe volume of 21383, and fusiform gyrus volume of 18321.
+In addition, her fluorodeoxyglucose (FDG) PET scan show an FDG measure of 1.131.
+### Response:
+Expected Model Output: 0
+
+Few-Shot Tabular. Prompt:
+
+Below is an instruction that describes a task, paired with an input that provides further context. Write
+a response that appropriately completes the request.
+
+### Instruction: Below is a table of patient records. Each column contains features related to Alzheimer'
+s disease. The last row is missing a value in the 'AlzheimersDisease' column. Based on the patterns
+in the other rows, predict whether the patient in the last row has Alzheimer's disease (1) or does
+not (0). Respond only with 1 or 0.
+
+### Input:
+
+AGE GENDER EDUCATION APOE4 FDG AV45 CSF_ABETA(pg/ml) CSF_TAU(pg/ml) CSF_PTAU (pg/ml) WholeBrain
+Hippocampus Entorhinal Ventricles MidTemp Fusiform AlzheimersDisease
+
+74 Female 12 1 1.4271 0.8999 1821.2 425.8 38.21 9052812 6788 3743 28326 26737 10474 1
+64 Male 14 0 0.8377 0.9868 1555.0 168.2 12.44 1479873 8940 3546 26458 27277 25435 0
+59 Female 20 1 1.9326 1.4429 637.0 280.2 18.33 1043476 9374 4344 36277 13452 15366 0
+70 Female 18 2 1.6361 1.3294 1113.4 400.6 23.73 1135319 8747 3967 27978 15263 15436 0
+73 Female 12 1 1.0631 1.0242 1800.0 502.2 48.13 988354 7252 3700 20665 16543 18425 1
+60 Male 14 1 1.2367 1.1111 992.2 183.8 12.70 1242152 8630 4355 45372 35421 26453 0
+
+75 Male 12 0 1.3745 1.8312 721.4 502.2 53.37 1006782 5834 3005 48327 14325 24352 1
+
+73 Female 9 2 0.9327 1.8421 1004.2 487.6 48.42 893277 5032 2477 27652 15234 10043 1
+73 Female 11 0 1.1313 1.4311 1163.2 305.2 29.48 978382 6728 3278 31733 21383 18321 xX
+
+### Response:
+Expected Model Output: 0
+
+
+--- Page 13 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+
+Few-Shot Serialized. Prompt:
+
+Below is an instruction that describes a task, paired with an input that provides further context. Write
+a response that appropriately completes the request.
+
+### Instruction: Below is a serialization of patient records. Each record contains features related to
+Alzheimer's disease. The last patient has a missing Alzheimer's diagnosis. Based on the patterns in
+the other records, predict whether the patient in the last record has Alzheimer's disease (1) or does
+
+not (0). Respond only with 1 or 0.
+
+### Input:
+
+A 74-year-old woman arrives for Alzheimer's Disease (AD) diagnosis and is diagnosed with Alzheimer's
+disease. She has received 12 years of education, and she carries 1 copy of the APOE4 genetic variant.
+
+She received clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission
+tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid
+pathology, she has an amyloid PET measure of 0.8999 and a CSF A-beta42 measure of 1821.2 pg/ml. For
+tau pathology, she has a CSF tau measure of 425.8 pg/ml and a CSF phosphorylated tau measure of 38.21
+
+pg/ml. For MRI neuroimaging scans, she has whole brain volume of 9052812, hippocampus region volume
+of 6788, entorhinal volume of 3743, ventricles volume of 28326, middle temporal lobe volume of 26737,
+
+and fusiform gyrus volume of 10474. In addition, her fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 1.4271.
+
+A 64-year-old man arrives for Alzheimer's Disease (AD) diagnosis and is not diagnosed with Alzheimer's
+disease. He has received 14 years of education, and he carries 0 copies of the APOE4 genetic variant.
+
+He received clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission
+tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid
+pathology, he has an amyloid PET measure of 0.9868 and a CSF A-beta42 measure of 1555.0 pg/ml. For
+tau pathology, he has a CSF tau measure of 168.2 pg/ml and a CSF phosphorylated tau measure of 12.44
+pg/ml. For MRI neuroimaging scans, he has whole brain volume of 1479873, hippocampus region volume of
+
+8940, entorhinal volume of 3546, ventricles volume of 26458, middle temporal lobe volume of 27277,
+and fusiform gyrus volume of 25435. In addition, his fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 0.8377.
+
+A 59-year-old woman arrives for Alzheimer's Disease (AD) diagnosis and is not diagnosed with Alzheimer's
+disease. She has received 20 years of education, and she carries 1 copy of the APOE4 genetic variant.
+
+She received clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission
+tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid
+pathology, she has an amyloid PET measure of 1.4429 and a CSF A-beta42 measure of 637.0 pg/ml. For
+tau pathology, she has a CSF tau measure of 280.2 pg/ml and a CSF phosphorylated tau measure of 18.33
+
+pg/ml. For MRI neuroimaging scans, she has whole brain volume of 1043476, hippocampus region volume
+of 9374, entorhinal volume of 4344, ventricles volume of 36277, middle temporal lobe volume of 13452,
+
+and fusiform gyrus volume of 15366. In addition, her fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 1.9326.
+
+A 70-year-old woman arrives for Alzheimer's Disease (AD) diagnosis and is not diagnosed with Alzheimer's
+disease. She has received 18 years of education, and she carries 2 copies of the APOE4 genetic
+variant. She received clinical examinations including cerebrospinal fluid (CSF) analysis, positron
+emission tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-
+amyloid pathology, she has an amyloid PET measure of 1.3294 and a CSF A-beta42 measure of 1113.4 pg/
+ml. For tau pathology, she has a CSF tau measure of 400.6 pg/ml and a CSF phosphorylated tau measure
+of 23.73 pg/ml. For MRI neuroimaging scans, she has whole brain volume of 1135319, hippocampus region
+
+volume of 8747, entorhinal volume of 3967, ventricles volume of 27978, middle temporal lobe volume
+of 15263, and fusiform gyrus volume of 15436. In addition, her fluorodeoxyglucose (FDG) PET scan
+shows an FDG measure of 1.6361.
+
+A 73-year-old woman arrives for Alzheimer's Disease (AD) diagnosis and is diagnosed with Alzheimer's
+disease. She has received 12 years of education, and she carries 1 copy of the APOE4 genetic variant.
+
+She received clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission
+tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid
+pathology, she has an amyloid PET measure of 1.0242 and a CSF A-beta42 measure of 1800.0 pg/ml. For
+tau pathology, she has a CSF tau measure of 502.2 pg/ml and a CSF phosphorylated tau measure of 48.13
+
+pg/ml. For MRI neuroimaging scans, she has whole brain volume of 988354, hippocampus region volume
+of 7252, entorhinal volume of 3700, ventricles volume of 20665, middle temporal lobe volume of 16543,
+
+and fusiform gyrus volume of 18425. In addition, her fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 1.0631.
+
+
+--- Page 14 ---
+
+Conference acronym ’XX, June 03-05, 2018, Woodstock, NY Trovato et al.
+
+A 60-year-old man arrives for Alzheimers Disease (AD) diagnosis and is not diagnosed with Alzheimer's
+disease. He has received 14 years of education, and he carries 1 copy of the APOE4 genetic variant.
+He received clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission
+tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid
+pathology, he has an amyloid PET measure of 1.1111 and a CSF A-beta42 measure of 992.2 pg/ml. For tau
+
+pathology, he has a CSF tau measure of 183.8 pg/ml and a CSF phosphorylated tau measure of 12.70 pg/
+ml. For MRI neuroimaging scans, he has whole brain volume of 1242152, hippocampus region volume of
+8630, entorhinal volume of 4355, ventricles volume of 45372, middle temporal lobe volume of 35421,
+and fusiform gyrus volume of 26453. In addition, his fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 1.2367.
+
+A 75-year-old man arrives for Alzheimer's Disease (AD) diagnosis and is diagnosed with Alzheimer's
+
+disease. He has received 12 years of education, and he carries 0 copies of the APOE4 genetic variant.
+He received clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission
+tomography (PET) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid
+pathology, he has an amyloid PET measure of 1.8312 and a CSF A-beta42 measure of 721.4 pg/ml. For tau
+pathology, he has a CSF tau measure of 502.2 pg/ml and a CSF phosphorylated tau measure of 53.37 pg/
+ml. For MRI neuroimaging scans, he has whole brain volume of 1006782, hippocampus region volume of
+5834, entorhinal volume of 3005, ventricles volume of 48327, middle temporal lobe volume of 14325,
+and fusiform gyrus volume of 24352. In addition, his fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 1.3745.
+
+A 73-year-old woman arrives for Alzheimer's Disease (AD) diagnosis, predict their diagnosis. She has
+received 9 years of education, and she carries 2 copies of the APOE4 genetic variant. She received
+clinical examinations including cerebrospinal fluid (CSF) analysis, positron emission tomography (PET
+) imaging, and brain magnetic resonance imaging (MRI) imaging. For beta-amyloid pathology, she has an
+
+amyloid PET measure of 1.8421 and a CSF A-beta42 measure of 1004.2 pg/ml. For tau pathology, she has
+a CSF tau measure of 487.6 pg/ml and a CSF phosphorylated tau measure of 48.42 pg/ml. For MRI
+neuroimaging scans, she has whole brain volume of 893277, hippocampus region volume of 5032,
+entorhinal volume of 2477, ventricles volume of 27652, middle temporal lobe volume of 15234, and
+fusiform gyrus volume of 10043. In addition, her fluorodeoxyglucose (FDG) PET scan shows an FDG
+measure of 0.9327.
+### Response:
+Expected Model Output: 0
+
+B_ Details of Reasoning Analysis
+
+Here, we present the reasoning prompt used in our interpretability analysis of TAP-GPT, designed with minimal CoT to limit confoundings,
+
+along with two representative examples (few-shot ICL k=8, 16) for tabular AD prediction. All patient data shown in these examples is entirely
+
+fabricated.
+
+Simple CoT Reasoning added to Few-Shot Tabular case. Prompt:
+
+Below is an instruction that describes a task, paired with an input that provides further context. Write
+a response that appropriately completes the request.
+
+### Instruction: Below is a table of patient records. Each column contains features related to Alzheimer'
+s disease. The last row is missing a value in the 'AlzheimersDisease' column. Based on the patterns
+in the other rows, predict whether the patient in the last row has Alzheimer's disease (1) or does
+not (0). Respond with your reasoning and the prediction answer (1 or 0).
+
+### Input: <Same format as the Few-Shot Tabular case in Section A>
+
+### Response: Let's think step-by-step
+
+Example 1 Output with Reasoning (Correct). K=8:
+
+To predict whether the patient in the last row has Alzheimer's disease, we need to analyze the patterns
+in the other rows.
+
+1. **AGEx*: The ages range from 61 to 79 years.
+
+2. **GENDER**: Predominantly female, but there are also males.
+
+3. **EDUCATION**: Education levels vary from 8 to 20 years.
+
+4. *xAPOE4**: Some patients have APOE4 (1), while others do not (0).
+
+5. *«*FDGx*, **AV45**x, **CSF_ABETAx*, **CSF_TAU**, **CSF_PTAU*«, x*WholeBrainx+, **xHippocampus**, *x
+Entorhinalx*x, **Ventricles**, **MidTemp*x, **Fusiform*«*: These values vary across patients, but
+generally, higher values for CSF_ABETA and lower values for CSF_TAU and CSF_PTAU are associated with
+lower risk of Alzheimer's disease.
+
+
+--- Page 15 ---
+
+Enabling Few-Shot Alzheimer’s Disease Diagnosis on Tabular Biomarker Data with LLMs Conference acronym ’XX, June 03-05, 2018, Woodstock, NY
+
+Given the last row:
+
+<Details ignored here>
+
+xxReasoning«*:
+
+— The patient is male and has APOE4, which increases the risk.
+
+— The CSF_ABETA level is low (740.4), and the CSF_TAU and CSF_PTAU levels are relatively high (332.0 and
+31.58, respectively), indicating a higher risk.
+
+—- Other biomarkers like FDG and AV45 are within a range that might suggest some cognitive impairment but
+not necessarily Alzheimer's disease.
+
+xxPredictionx»*:
+
+Based on the high risk factors (APOE4, low CSF_ABETA, high CSF_TAU and CSF_PTAU), it is likely that this
+patient has Alzheimer's disease.
+
+xxAnswer: lx
+
+True Label: 1
+
+Example 2 Output with Reasoning (Flawed). K=16:
+
+To predict whether the patient in the last row has Alzheimer's disease (1) or does not (0), we need to
+analyze the patterns in the other rows. Here are the steps:
+
+1. *x*Agexx: The age range is from 65 to 87 years.
+
+2. **xGenderx*: Predominantly female, but there are also males.
+
+3. **Education**: Varies from 10 to 20 years.
+
+4. *xAPOE4**: Most patients have APOE4 (1), but some do not (0).
+
+5. **FDG**: Values range from 0.9259 to 1.5015.
+
+6. **AV45x**: Values range from 1.0074 to 1.5009.
+
+7. **CSF_ABETA**: Values range from 466.2 to 1701.0 pg/ml.
+
+8. **CSF_TAU*x*: Values range from 10.85 to 421.6 pg/ml.
+
+9. **CSF_PTAU**: Values range from 10.85 to 42.01 pg/ml.
+
+<More details ignored here>
+
+xxObservations«*:
+
+- Patients with Alzheimer's disease (AlzheimersDisease = 1) tend to have higher values for CSF_ABETA,
+CSF_TAU, and CSF_PTAU.
+
+- Patients without Alzheimer's disease (AlzheimersDisease = 0) tend to have lower values for these
+biomarkers.
+
+— The presence of APOE4 (APOE4 = 1) is common among patients with Alzheimer's disease.
+
+*xPrediction**:
+
+Given the last row's data:
+
+— CSF_ABETA: 465.8 pg/ml (lower than many with Alzheimer's)
+
+— CSF_TAU: 247.2 pg/ml (lower than many with Alzheimer's)
+
+— CSF_PTAU: 25.07 pg/ml (lower than many with Alzheimer's)
+
+— APOE4: O (not present)
+
+Based on these observations, the patient in the last row is less likely to have Alzheimer's disease.
+
+xxPrediction Answerxx: 0
+
+True Label: 0
+
+Received 7 June 2025

@@ -1,0 +1,773 @@
+
+
+--- Page 1 ---
+
+Uncovering the Fragility of Trustworthy LLMs through Chinese
+Textual Ambiguity
+Xinwei Wu" Xinyu Ji Ruohan Li
+Hongyu Liu* Boeing Chalmers University of Technology
+Haojie Lit Gothenburg, Sweden Gothenburg, Sweden
+Chalmers University of Technology
+Gothenburg, Sweden
+Yule Chen Yigeng Zhang’
+wW— Chalmers University of Technology Salesforce
+N Gothenburg, Sweden Burlington, USA
+—_)
+CN Abstract ACM Reference Format:
+—_ In this work, we study a critical research problem regarding the Xinwei Wu, Hongyu Liu, Haojie Li, Xinyu Ji, Ruohan Li, Yule Chen, and Yi-
+=) trustworthiness of large language models (LLMs): how LLMs be- geng Zhang. 2025. Uncovering the Fragility of Trustworthy LLMs through
+= h. h teri bi tive text. with ti Chinese Textual Ambiguity. In Proceedings of KDD workshop on Evalua-
+=> 1 oe wien “Chine a eal ae hie, te Wee a ae a thn wk tion and Trustworthiness of Agentic and Generative AI Models (Agentic &
+ar focus on Chinese textual ambiguity. We created a benchmar’ GenAI Evaluation Workshop KDD’25). ACM, New York, NY, USA, 11 pages.
+(oe) dataset by collecting and generating ambiguous sentences with https://doi.org/KXXXXXX.XXXXXXX
+context and their corresponding disambiguated pairs, representing
+=) multiple possible interpretations. These annotated examples are sys- 1. Introduction
+tematically categorized into 3 main categories and 9 subcategories. del have d d 1
+O Through experiments, we discovered significant fragility in LLMs Large Language Mo © s (LLMs) ave temonstrate strong language
+7p) when handling ambiguity, revealing behavior that differs substan- understanding capabilities and are widely deployed across a range
+O tially from humans. Specifically, LLMs cannot reliably distinguish of real-world applications [21, 29, 36]. They are used to process
+Led . . : complex instructions in multi-turn dialogues and are integrated
+ambiguous text from unambiguous text, show overconfidence in complex 8 FAL a
+4 interpreting ambiguous text as having a single meaning rather than into various systems as agents or comp onents ° Wworsnows-
+> multiple meanings, and exhibit overthinking when attempting to However, LLMs still exhibit inherent limitations in trustworthiness,
+— understand the various possible meanings. Our findings highlight such as hallucinations [2, 15], misunderstanding [22], and misalign-
+N a fundamental limitation in current LLMs that has significant im- ment [9] that are particularly critical in safety-sensitive scenar-
+— plications for their deployment in real-world applications where 108. Researchers have also invested significant effort i Improving
+faa) lincuisti bicuity j lline fori d h alignment, developing guardrails [1], and enhancing uncertainty
+inguistic ambiguity is common, calling for improved approaches 4 dime [13.32 UI liabl FLLM
+N to handle uncertainty in language understanding. The dataset and understan ng [13, 32] to enable more re ta c use 0 : S- ;
+~ code are publicly available at this GitHub repository!. In practical use cases, people typically interact with LLMs via
+>) chat interfaces using written text in a conversational or spoken
+Vay CCS Concepts style, where ambiguity frequently arises. For example, in an LLM-
+N P based e-commerce shopper agent, the instruction return the phone
+* + Computing methodologies — Language resources. and computer accessories I purchased last month is ambiguous: it
+. = could mean returning the phone and the computer’s accessories, or
+< Keywords the accessories for both the phone and the computer. In such cases,
+. Large Language Models, AI Trustworthiness, Ambiguity Detection the agent should be able to use appropriate means to resolve the
+fae} ambiguity instead of proceeding with one possible interpretation,
+—————__. ; which may lead to unintended outcomes.
++ Comeaponding author Emat yzhanate ‘etate In this work, we focus specifically on examining how LLMs be-
+'https://github.com/ictup/LLM-Chinese-Textual-Disambiguation have when faced with linguistic ambiguity, a core aspect of human
+language understanding. We present a new benchmark for ambigu-
+a ity detection and interpretation in Chinese text. The dataset was
+Permission to make digital or hard copies of all or part of this work for personal or y tated b ti Ch, k dinclud bieuity t
+classroom use is granted without fee provided that copies are not made or distributed annotated Dy native Inese speakers and includes ambiguity type
+for profit or commercial advantage and that copies bear this notice and the full citation classification. It contains 900 ambiguous sentences sourced from
+on the first page. Copyrights for components of this work owned by others than the real-world contexts spanning a variety of everyday scenarios. Each
+author(s) must be honored. Abstracting with credit is permitted. To copy otherwise, or . . . . . .
+republish, to post on servers or to redistribute to lists, requires prior specific permission ambiguous sentence is annotated with all plausible interpretations
+and/or a fee. Request permissions from permissions@acm.org. and a corresponding set of disambiguated sentences, where each
+Agentic & GenAl Evaluation Workshop KDD 25, Toronto, ON, Canada rewritten sentence clearly reflects one of the possible meanings.
+© 2025 Copyright held by the owner/author(s). Publication rights licensed to ACM. : re . :
+ACM ISBN 978-1-4503-XXXX-X/2025/08 We categorize ambiguity into three types: lexical, syntactic, and
+https://doi.org/KXXXXXX.XXXXXXX semantic-pragmatic.
+
+
+--- Page 2 ---
+
+Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada Wu et al.
+We conducted extensive experiments to investigate how LLMs and offer a new perspective on LLM evaluation. Through the lens of
+handle ambiguity and found that they often exhibit fragile behav- these tasks, we aim to investigate the following research questions:
+ior in such scenarios. Our initial observation is that LLMs tend to .
+confidently commit to one possible interpretation of an ambiguous ° RQL To what extent does an LLM differ from human anno-
+sentence, which diverges from how humans typically respond to tators in identifying ambiguous narratives? .
+ambiguity. Furthermore, when explicitly asked to disambiguate, ° RQ2: How does an LLM p erform when ae laining the mean-
+the models often assert with overconfidence that the sentence is ing of a sentence that contains ambiguity’ .
+ambiguous, even when it may not be. In some cases, the models ° RQ3: How does an LLM interpret the meaning ofa sentence
+demonstrate signs of overthinking when prompted to explain am- when it is explicitly informed that the sentence is ambigu-
+biguous content, producing unnecessarily complex or speculative ous:
+explanations.
+Our analysis spans a range of open-weight LLMs, including both 2.2 Dataset creation
+standard and reasoning models, from small to large scales. We In this work, we employ human annotators to construct ambiguous
+P erformed a series of exp eriments involving p romp t engineering sentences along with their corresponding disambiguated versions.
+and retrieval-augmented generation (RAG) across different model Annotators are also asked to provide all plausible interpretations of
+families and sizes. The results show that even state-of-the-art open- each ambiguous sentence. The sentence construction is grounded
+weight models such as DeepSeek-R1 display fragile behavior when in real-world scenarios and everyday contexts, and the data are
+confronted with ambiguity. Our contributions lie in several dimen- sourced through original writing, commonly used spoken expres-
+sions: sions, online searches, and Al-assisted generation. The quality of
+° The study sheds light on the semantic boundaries of LLMs the annotations is assessed by the annotators. All annotators are
+. . . ; . . , native Chinese speakers with qualifications sufficient for admission
+demonstrating that disambiguation remains a major chal- : : : : :
+lenge to graduate-level programs in science and engineering. We include
+ee: . . . only sentences that remain highly ambiguous and cannot be easily
+e This study provides a meaningful new perspective for evalu- . . _
+. . disambiguated based on human annotators’ judgments.
+ating the trustworthiness of LLMs and related systems. : : ;
+. After sentence collection and annotation, we further categorize
+e In the discourse of NLP research, we present and open-source oe : : : :
+a new benchmark for ambiguity detection and understand- ambiguity into three main levels: lexical, syntactic, and semantic-
+. . . . pragmatic, following established studies in Chinese linguistics.
+ing. Meanwhile, we conduct extensive experiments and anal- oO : a :
+. ; . Within the lexical category, we further distinguish homonymy,
+yses to investigate how LLMs behave when faced with am- a a : :
+. . polysemy, and part-of-speech ambiguity. Within syntactic ambigu-
+biguous sentences. Furthermore, we propose a solution to . . . oo.
+. . . ity, we include both structural and syntax—semantics ambiguity. For
+improve the robustness of LLMs in such scenarios. : : : ;
+semantic-pragmatic ambiguity, we identify four subtypes: speec
+tic-pragmat biguity, dentify f btypes: speech
+This work serves as a call for the community to pay closer at- act ambiguity, conversational implicature, deixis ambiguity, and so-
+tention to the fragility of LLMs in the face of ambiguity, and a ciocultural ambiguity. The ambiguity categories and label statistics
+message of caution for industry applications concerned with the are presented in Table 1 with examples.
+trustworthiness of LLM-based AI systems to help prevent poten-
+tially catastrophic consequences. 3 Experiment and result
+To evaluate the performance of different models on our three de-
+2 Chinese textual ambiguity benchmark for signed experimental tasks, we selected eight representative large
+LLMs language models, covering a range of scales and architectural char-
+. . acteristics:
+2.1 Task introduction
+Ambiguity is ubiquitous and inevitable in human language, yet wen3 Series Models: This includes Qwen3-4B, Qwen3-14B, Qwen3-
+guily q guage, y'
+large language models (LLMs) rely on natural language instruc- 32B, and Qwen3-235B-A22B, corresponding to 4B, 14B, 32B, and
+tions to interface with users. Given this, understanding how LLMs 235B parameters, respectively. Among them, Qwen3-235B-A22B
+behave with ambiguity is essential. In this work, we focus on two is specifically optimized for reasoning-intensive tasks and shows
+core tasks: ambiguity detection and ambiguity interpretation. In the outstanding performance in complex reasoning scenarios [41].
+context of NLP, the first task evaluates whether an LLM can identify
+if a sentence is ambiguous, formulated as a binary classification Gemmaz2 Series Models: Developed by Google, these instruction-
+roblem. The second examines whether an LLM can capture latent tuned models include Gemma2-2B-it, Gemma2-9B-it, and Gemma2-
+P Pp
+ambiguity and generate all plausible interpretations, framed as a 27B-it, with 2B, 9B, and 27B parameters, respectively. These models
+conditional generation task. To support this study, we introduce excel in instruction following and dialogue tasks [35].
+a new human-annotated benchmark for ambiguity detection and
+interpretation in Chinese. While we acknowledge that human lan- DeepSeek-R1 Model: A large-scale model with 671B parameters,
+guage lacks precision and annotations may not represent absolute deeply optimized for reasoning tasks, showing strong capabilities
+ground truth, our goal is to analyze the behavior of LLMs in the in mathematical reasoning and logical analysis [12].
+face of ambiguity, highlight discrepancies with human judgments,
+
+
+--- Page 3 ---
+
+Uncovering the Fragility of Trustworthy LLMs through Chinese Textual Ambiguity Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada
+Table 1: Categorization of Chinese ambiguity into lexical, syntactic, and semantic-pragmatic levels, each with multiple English
+interpretations based on contextual usage. Each category and sub-category is accompanied by its corresponding statistics.
+Polysemy (152) 75cm, AeA: Shee, | “Let’s keep this in mind and settle the bill
+Lexical (218) SLATE” later” / “Let’s keep this in mind — I'll get
+even with you later” (“S¢/kk” can mean set-
+tling payment or seeking revenge)
+Homonymy (27) /NMRSEFE AEE, FRNORCK ER 4 | Xiao Ming walked in the park and admired
+He. how beautiful the cuckoo was on the branch.
+/ ... admired how beautiful the azalea was
+on the branch. (“#L8” can mean a bird or a
+flower)
+Part-of-Speech (39) Pe OR SIR, AIX TT VIKA | The police arrived and found that the door
+‘Bie didn’t have a lock. / ... found that the door
+hadn’t been locked. (“#i{” as noun vs. verb)
+Syntactic (327) Structural Ambiguity (261) ee Rawise, Seta Fila mi: | Upon receiving the emergency notice, the
+REAR AR » leader briefly announced: “We need to or-
+ganize the personnel.” / “We need the staff
+responsible for organization” (“2424 A it”
+can be verb-object or compound noun)
+Syntax-Semantics (66) CULfER IPS: RRM RNA! The daughter wrote in her diary: “I hate
+NEE that she cannot tolerate my harshness.” / “I
+hate her harshness and intolerance toward
+me.” (ambiguity in scope of negation and
+attribution)
+Speech Act (101) Ts BP aA A: “ores ff PE | “Can you close the window?” (literal inquiry
+dow.” (polite indirect request)
+Conversational Implicature (82) | FANT A APE, “NEU: "PMiTA] | At dinner, someone suggested drinking.
+Hip." Xiao Wang said, “You really understand me.”
+(literal agreement) / “You really don’t un-
+derstand me at all” (ironic/sarcastic impli-
+cation)
+Deixis Ambiguity (51) ES ERE RATA: ESE FPJI A) | Dr. Wang suddenly interjected: “Actually, it
+FENWR - was his father who had the surgery.” / “Actu-
+ally, his father was the one who performed
+the surgery” (“FF J)” can mean to undergo
+or to perform surgery)
+Sociocultural Ambiguity (123) Hoe IY oy 28 7, XA SKF FF HE | During a blind date, the matchmaker said,
+SE “Their child is very well-behaved.” (praise)
+/ “Their child is overly obedient and lacks
+personality” (implied criticism — “75&” has
+dual connotations in social contexts)
+
+To ensure reproducibility and comparability, we split the dataset sentence may be ambiguous. The second is the explicit ambigu-
+into training, development, and test sets in a 70/15/15 ratio, using ity prompt condition (Prompted Disambiguation), where the
+stratified sampling based on ambiguity subcategories to ensure prompt explicitly states that the input sentence contains ambiguity.
+consistent distribution of ambiguity types across subsets. All input
+texts were pre-processed for standardization, including removing
+extra spaces and unifying punctuation formats, to ensure input 3.1 Experimental Tasks
+consistency. Model outputs were also post-processed, including
+formatting, answer extraction, and consistency checks. All tasks Based on the aforementioned research questions and task formaliza-
+used the same data split strategy to guarantee the comparability of tion, we adopted a structured experimental design and completed
+experimental results. three experimental tasks, systematically addressing the three core
+
+In order to investigate the models’ ability to identify and under- issues in Chinese ambiguity processing: ambiguity detection, ambi-
+stand potential ambiguity, we design two experimental conditions. guity understanding, and end-to-end detection and understanding.
+The first is the non-explicit prompt condition (Direct Interpreta- For evaluation, we used accuracy, precision, recall, and F1 score as
+tion), where the prompt does not explicitly indicate that the input the main metrics. Given the imbalanced distribution of ambiguous
+
+sentences in real-world corpora, we placed particular emphasis on
+F1 score and recall. We constructed a multi-dimensional, multi-level
+
+
+--- Page 4 ---
+
+Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada Wu et al.
+evaluation framework to comprehensively reflect the performance for determining whether a sentence is ambiguous, as natural lan-
+of different methods on Chinese ambiguity processing tasks. guage is inherently ambiguous and human interpretations can vary
+significantly. This limitation should be acknowledged when inter-
+3.1.1. Ambiguity Detection Task. The core goal of the ambiguity preting the results.
+detection task is to perform binary classification on a given Chinese
+sentence, i.e., to determine whether the sentence contains ambiguity. 3.2 Detection Methods
+In this task, the provided sentences may or may not be ambiguous, The detection methods include both transformer-based text clas-
+and the model needs to make its own judgment and respond with sifiers and large language model prompting. By observing the
+yes’ or no’. This task forms the foundation of the entire ambiguity changes in model performance under different prompting strate-
+processing pipeline. The evaluation is based on standard binary gies, we analyze how the design of prompts affects the model’s
+classification metrics, including accuracy, precision, recall, and F1 ability to handle ambiguity.
+score.
+; Table 2: Ambiguity detection performance across different
+3.1.2 Ambiguity Understanding Task. The ambiguity understand- LLMs. Bolded scores represent the best performance, and
+ing task is a further extension based on ambiguity detection, re- underlined scores indicate the second-best results. t These
+quiring the model to, given a Chinese sentence (with or without models are optimized for reasoning tasks and have reasoning
+ambiguity), complete three sub-tasks: ambiguity source localization, explicitly enabled.
+multiple interpretation generation, and disambiguated sentence
+generation. Specifically, the model needs to identify words, phrases, “Model Params Accuracy Precision Recall Macro-F1_
+or syntactic structures that may cause ambiguity and mark their BERT-ft 109M 94.70 94.16 39.58 91.81
+positions; then, based on these sources, generate all reasonable and 2B 46.06 49.60 49.57 45.77
+semantically coherent interpretations (if ambiguity exists, at least Gemma2 an 38.19 52.24 51.18 35.85
+two different interpretations should be provided); finally, for each SST
+interpretation, generate a corresponding disambiguated sentence Qwen3 14B 58.95 54.63 54.91 54.65
+by adding context, replacing words, or adjusting structure to elimi- 32B 55.85 56.66 57.58 54.79
+. : : “y: “Owentt 925R-AD9OR A262 &GAOQT 5201 #44202
+nate ambiguity. To comprehensively evaluate model capability, we Qwen3 235B-A22B 43.68 54.97 53.91 43.08
+designed two experimental conditions: (1) directly prompting the DeepSeek-R1* _671B-A37B___ 65.63 62.41 63.48 62.62
+model to explain possible meanings without indicating whether
+ambiguity exists, to assess the model’s overall detection and under- 3.2.1. Pretrained Transformer-based Text Classifier. Transformer-
+tanding ability; (2) explicitly indicating that the sent tai ~
+. ons nee : _ (2) oo the v ‘i Pe, i 1 i sen ie con ton based pre-trained language models, such as BERT [8], RoBERTa
+amorgur’y, Fo focus on the moder § uncerstanaug an gen eraon [23], and XLNet [42], have demonstrated strong performance across
+ability. This task places higher demands on the model’s linguistic a wide ranve of text classification tasks. Given their effecti
+. ; ; ves . ge of text classification tasks. Given their effectiveness
+analysis, understanding, and generation capabilities. Evaluation in sentence-level modeling [37, 46, 47] and passage-level discrimina-
+t match (EM ll, and set F1 t th lity of . . . re ;
+uses exact mane ( . ), recall, ane se © assess me quay © tion [5, 16] in applied classification scenarios, we adopt Transformer-
+generated interpretations, effectively reflecting model performance based classifiers as our foundation. As a baseline, we used the pre-
+in multi-interpretati tion. ; -
+ma mumaranter pretation generanon trained language model hf 1/chinese-roberta-wwm-ext [7] as the
+classifier backbone. This model is based on the RoBERTa architec-
+3.1.3. End-to-End Detecti d Understanding Task. The end-to- . . . —
+nartorend we ec ron and nders an ng as : € ene ° ture and has been specifically optimized for Chinese, achieving
+end task represents the highest level of ambiguity processing. Given strong performance in various NLP tasks. We further fine-tune the
+t the model must first perf biguity detecti : ; ae ge «pin
+a Faw sentence, Me Moder Must AES’ perform amuigury cerecwon model with a binary classification objective to distinguish between
+and ambiguity type recognition, then combine the detection re- . ;
+: : : ; ambiguous and unambiguous sentences.
+sults with other prompting strategies (such as chain-of-thought, We added a classification head to the model and fine-tuned it for
+RAG, etc.) to form composite prompts, guiding the large model binary classification. Regarding feature engineering, in addition to
+to complete ambiguity understanding and disambiguation, and y NSE 8 8 &
+
+. Lae : . .. textual input, we incorporated linguistic features such as sentence
+automatically output multiple interpretations and disambiguated length, POS tag sequences, and syntactic tree depth to enhance
+sentences. The detection results at each stage serve as prompt con- the model’s sensitivity to Chinese ambiguity. These features were
+ditions for subsequent reasoning, with all steps integrated into a fused with the main model output via additional embedding layers.
+single pipeline, achieving fully automated processing from raw To systematically evaluate the performance of LLMs on ambigu-
+input to final output without human intervention. This setup not
+
+P one Ls . P ity detection, we designed a series of experiments to investigate the
+only closely simulates real-world application scenarios, but also . .
+
+y i : ; - . impact of model scale and prompting strategy on task performance.
+
+greatly increases task complexity. Evaluation uses joint metrics,
+comprehensively considering detection accuracy and understand- 3.2.2 Large Language Model Prompt Learning. Given the strong
+ing quality, providing a quantitative assessment of overall task erformance of large language models in complex reasoning tasks,
+
+§ quality, p gaq P g guag P g
+performance. we designed six different prompting strategies to systematically
+
+We clarify that all accuracy-related metrics are used solely to evaluate their effectiveness in ambiguity detection:
+measure alignment with human annotations, rather than to define (1) Direct Prompting: In the most basic method, the model re-
+any absolute ground truth. We do not claim an objective standard ceives the input sentence and directly answers yes or no to indicate
+
+
+--- Page 5 ---
+
+Uncovering the Fragility of Trustworthy LLMs through Chinese Textual Ambiguity Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada
+Table 3: Macro-F1 performance on ambiguity detection using different prompting strategies. Bolded scores represent the
+best performing model under each method, while underlined scores indicate the best performing method for each model. t
+Reasoning-enabled models.
+Model Params Direct Prompt Few-shot Knowledge CoIT CoT+FS RAG+FS
+2B 45.77 39.58 40.40 34.50 31.95 46.69
+Gemma2 9B 35.85 32.09 38.75 37.32 41.74 92.95,
+27B 43.14 40.75 42.65 36.32 44.61 96.12
+4B 50.24 43.02 50.95 46.86 47.71 38.05,
+Qwen3 14B 54.65 53.81 52.11 42.24 52.51 60.83.
+32B 54.79 55.23 55.00 44.20 55.72 69.57
+Qwen3 235B-A22B 43.08 55.46 57.68 53.25 59.35 74.41
+DeepSeek-R1* 671B-A37B 62.62 63.94 62.63 55.20 65.16 87.01
+Table 4: Performance on ambiguity meaning understanding task. Models are evaluated in two settings: Direct Interpretation
+(without disambiguation prompt) and Prompted Disambiguation (with explicit disambiguation prompt). Metrics include Set F1,
+Recall, and Exact Match (EM). A Set F1/ A Recall shows the improvement from prompting. t Reasoning-enabled models.
+Nodel Params Difference
+A Set F1/ A Recall
+2B 0.00 26.65 40.49 | 0.00 27.21 41.18 0.69 / 0.55
+Gemma2 9B 0.00 30.33 44.71 | 0.00 29.78 43.92 -0.78 / -0.55
+4B 0.00 31.99 46.86 | 0.00 32.17 47.16 0.29 / 0.18
+Qwen3 14B 0.00 33.64 48.87 | 0.00 31.62 46.27 -2.59 / -2.02
+32B 0.00 32.17 47.16 | 0.00 31.07 45.88 -1.27 / -1.10
+Qwen3 235B-A22B | 0.00 36.40 51.67 | 0.00 37.32 52.65 0.98 / 0.92
+whether there is ambiguity. The prompt template is concise and (6) RAG and Few-shot Combined Prompting: Our approach
+avoids introducing bias. For example: “Please determine whether employs a RAG and few-shot prompting strategy that pre-retrieves
+the following sentence contains ambiguity. Just answer ‘yes’ or ‘no’: relevant examples to construct prompt templates for guiding model
+[sentence]" reasoning. This strategy aims to address two key issues in model
+(2) Few-shot Prompting: To leverage in-context learning, we in- understanding through the guidance of semantically similar exam-
+clude three carefully selected examples in the prompt that cover ples, thereby improving model comprehension quality: first, the
+both ambiguous and unambiguous sentences. These examples rep- tendency to select a single possible interpretation rather than all
+resent different types of ambiguity, helping the model understand reasonable ones; second, the problem of over-interpretation and
+the task requirements. Selection follows the principles of represen- false reasoning when sufficient context is lacking.
+tativeness and diversity.
+(3) Knowledge-enhanced Prompting: We incorporate linguistic Table 2 demonstrates that a fine-tuned BERT model can reliably
+background knowledge about Chinese ambiguity into the prompt, distinguish ambiguous sentences from unambiguous ones with high
+including definitions and characteristics of lexical, syntactic, and accuracy. These results establish a strong baseline for ambiguity
+semantic ambiguity. This approach aims to enhance the model’s detection and indicate that incorporating a lightweight classifier
+theoretical understanding and improve detection accuracy and may be a practical and effective enhancement in meaning-sensitive
+consistency. applications, particularly in settings where computational efficiency
+(4) Chain-of-Thought Prompting: Inspired by chain-of-thought is a priority. In contrast, despite their strong reasoning capabilities,
+reasoning, we require the model to perform step-by-step analysis the reasoning LLMs exhibit poor performance in ambiguity detec-
+before making a final judgment. The model first analyzes the sen- tion, frequently misclassifying clear, unambiguous sentences (as
+tence structure, then identifies possible ambiguity points, and finally determined by human annotators) as ambiguous. This tendency
+provides reasoning and a conclusion, improving interpretability. to over-predict ambiguity weakens their practical reliability in
+(5) Chain-of-Thought and Few-shot Combined Prompting: meaning-sensitive tasks.
+This method combines the advantages of chain-of-thought rea- Through experiments, as shown in Table 3, we observed that
+soning and few-shot learning, providing examples with detailed the effectiveness of prompting strategies in Chinese ambiguity de-
+analytical processes and requiring the model to follow similar rea- tection heavily relies on models’ intrinsic reasoning capabilities
+soning patterns for new sentences.
+
+
+--- Page 6 ---
+
+Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada Wu et al.
+Table 5: Set F1 performance on ambiguity meaning understanding under different prompting strategies. Each model is evaluated
+in two settings: Direct Interpretation (no disambiguation prompt) and Prompted Disambiguation (with disambiguation prompt).
+Methods include Direct prompt, Few-shot(FS), Knowledge+Prompt, Chain-of-Thought (CoT), CoT + Few-shot, and RAG-based
+Few-shot. Bolded scores represent the best performing model under each method, while underlined scores indicate the best
+performing method for each model. t Reasoning-enabled models.
+Model Params Prompted Disambiguation (Set F1)
+Direct Few-shot Knowledge CoT CoT+FS RAG-FS
+2B 41.18 47.83 49.31 50.14 48.04 55.15
+Gemma2 9B 44.71 48.99 52.07 49.93 48.68 58.46 43.92 50.76 52.58 52.78 53.57 62.50
+27B 46.37 50.45 54.74 51.07 50.26 61.47 45.69 53.96 55.03 53.57 52.26 63.97
+4B 47.16 55.13 53.76 53.17 52.77 59.93
+Qwen3 14B 48.87 52.97 54.06 51.21 53.26 61.03 46.27 55.70 56.84 54.35 56.46 63.60
+32B 47.16 55.13 54.74 51.86 53.96 65.07 45.88 55.51 56.53 56.17 56.54 67.65
+Qwen3 235B-A22B | 51.67 58.33 59.61 54.74 59.25 63.70 52.65 57.96 61.40 59.43 59.12 61.76
+Perplexity Across Sentence Context Types for Qwen3 Models as metrics. The results indicate that models perform poorly on
+; = aymecnoa this task, and the inclusion of an ambiguity prompt does not yield
+ESI (b) w/ ambigious context consistent or reliable improvements. Given the prohibitive cost
+; ——————— of human evaluation at scale, especially for tens of thousands of
+meaning-level sentence comparisons, we employ strong reasoning
+ee models to approximate this process by comparing the predicted and
+5 reference meaning sets and outputting the number of overlapping
+° meanings, which is then used to compute the evaluation metrics.
+p The performance gap between the Direct Interpretation and the
+Prompted Disambiguation frameworks in Table 5 reveals the signifi-
+1 cant impact of instruction framing on model comprehension. Under
+& Re e & the Prompted Disambiguation framework, models consistently out-
+Quien Models performed those using Direct Interpretation across all prompting
+strategies, demonstrating that explicit ambiguity-specific prompt-
+Figure 1: Perplexity scores of Qwen3 models for ambiguous ing enhances models’ sensitivity to multi-interpretation scenarios.
+sentences across three context types. When similar context is These findings provide a theoretical basis for optimizing large lan-
+given for a sentence, no matter ambiguous or disambiguated, guage models in Chinese ambiguity understanding tasks and reveal
+there is no observed significant difference in perplexity. differential sensitivity to prompting strategies across models of
+varying scales.
+
+. . Through evaluations on three tasks: ambiguity detection, am-
+and parameter scale. For small-to-medium models, the Chain-of- biguity understanding, and end-to-end assessment, as shown in
+Thought (CoT) method demonstrated limited effectiveness. How- Table 3 and Table 5, we observe that model performance improves
+ever, performance improved significantly when supplemented with with increased parameter size in both ambiguity detection and
+few-shot examples. This suggests that small-to-medium models meaning understanding. Reasoning models often perform better
+lack the necessary reasoning capacity to leverage CoT strategies across different prompting methods. We also find that the RAG
+effectively; instead, they better grasp task fundamentals through method enhances sensitivity to Chinese ambiguity, especially for
+concrete examples, thereby substantially enhancing their ability to medium-sized non-reasoning models, by helping them identify
+detect ambiguity. We also found that specialized reasoning mod- multiple interpretations using relevant examples. Moreover, larger
+els (eg. Qwen3 and DeepSeek-R1) excelled actOss all prompting models benefit more from RAG, suggesting that reasoning ability
+strategies and could more effectively unlock their potential us- plays a key role in handling ambiguity. Specifically, in the ambigu-
+ing the CoT+FS strategy to achieve peak performance. In contrast, ity detection task, due to its relative simplicity, the RAG strategy
+non-reasoning-specialized models relied more heavily on exter- shows significant improvements across all models; in ambiguity
+nal knowledge frameworks provided by Few-shot and Knowledge understanding and end-to-end evaluation, due to the increased
+strategies, with their internal reasoning processes offering limited task complexity, the improvement effects of the RAG strategy have
+guidance. . . . upper limits, primarily constrained by the models’ inherent rea-
+
+Table 4 presents a comprehensive evaluation comparing two soning capabilities. As shown in Table 5, RAG provides modest
+strategies: Direct Interpretation (asking for the meaning directly) improvements for non-reasoning models, while showing limited
+and Promp ted Disambiguation (asking for the meaning with an enhancement for models with strong reasoning capabilities (such
+explicit cue that the sentence is ambiguous). The evaluation is as DeepSeek-R1). This occurs because strong reasoning models rely
+conducted by comparing the predicted set of meanings with the more on internal logic rather than external prompts, and are more
+gold-standard set, using exact match, recall, and set-level F1 score
+
+
+--- Page 7 ---
+
+Uncovering the Fragility of Trustworthy LLMs through Chinese Textual Ambiguity Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada
+
+10 Original v.s. Disambiguated Ambiguity Probabilities For each sample in the benchmark, we measure a triplet of PPL
+
+? y Roe. da scores: (a) the PPL of the ambiguous sentence without preceding
+os ; Nh MA ehh, oe MAT or following context; (b) the PPL of the ambiguous sentence with
+eS Th il ‘ I \ hy lg Pia bai | ambiguous context; (c) the PPL of the ambiguous sentence with
+2 al (h NX! | | } ! i \A In BATA disambiguated context. We filter out samples whose (b) and (c)
+8 hilt WY | |} | versions differ substantially in length, ensuring that the PPL scores
+= * M4 Vy y are more comparable.
+z oni me! et The results are shown in Figure 1. We observe that sentences with
+f context generally have lower perplexity than those without context.
+°? Context Type However, when the provided context is similar in both length and
+— Oiearrbipastld semantic meaning, regardless of whether they are ambiguous or dis-
+00 O >0 40 60 80 100 ambiguated, there is no significant difference in perplexity between
+Sample Index them. This observation suggests that PPL scores may not serve as
+a reliable signal for LLMs’ ambiguity understanding ability. We
+Figure 2: Comparison of ambiguity probabilities (the prob- also note that larger models tend to have lower perplexity scores,
+ability that Qwen3-8B model answers YES relative to NO to suggesting that they are more confident in their understanding of
+the question Is the sentence ambiguous or not?) between am- those ambiguous sentences.
+biguous sentences and their disambiguated versions. The As part of analyzing the decoding dynamics of Qwen3 models un-
+disambiguation does not consistently reduce the model’s per- der conditioned inputs, we evaluate their token-level log-probability
+ceived ambiguity. assignments on pairs of ambiguous and disambiguated sentences.
+For each sentence, we explicitly ask whether it is ambiguous to
+assess the model’s inherent sensitivity to ambiguity. Based on prior
+sensitive to retrieval noise. Although high-quality retrieval still has assumptions, we hypothesized that ambiguous sentences would
+positive effects, low-quality retrieval may have negative impacts, elicit higher probabilities for a YES response compared to their
+exhibiting diminishing marginal returns. For medium-scale models, disambiguated counterparts. However, as shown in Figure 2, no
+RAG provides additional reasoning pathways that compensate for clear or consistent pattern was observed. This result suggests that
+their insufficient reasoning capabilities, while these models have log-probabilities may not serve as a reliable signal for detecting
+sufficient capacity to process rich examples, making them the opti- ambiguity, cross-validating our earlier observation that large lan-
+mal range for RAG strategy application. Small models have limited guage models exhibit limited awareness of linguistic ambiguity in
+capacity and difficulty fully utilizing complex examples, potentially Chinese text.
+being overwhelmed by excessive information.
+; ; ; 4.2 Probing Ambiguity via Clarification
+4 Analysis and Discussion Questioning
+4.1  Perplexity Analysis To further investigate the model’s robustness against Chinese tex-
+A language model’s perplexity (PPL) on a sequence of tokens is tual ambiguity, we propose an evaluation method inspired by Nat-
+calculated by averaging the log probability values of its predictions ural Language Inference (NLI) framing.
+for each token in the sequence. Perplexity is a statistical metric Every premise contains an ambiguous expression with two possi-
+that assesses a language model’s ability to predict a text sequence, ble interpretations (A and B). Then, three hypotheses are generated:
+reflecting the model’s uncertainty in assigning probabilities to up- Entailment: is inferable from the premise with interpretation A.
+coming tokens. While PPL is more considered as a measure that Neutral: Remains ambiguous, committing to neither A nor B. Con-
+evaluates how well LLMs model text patterns, we also assume that tradiction: Supports Interpretation B and logically contradicts A
+it measures LLMs’ ability to understand text. [22].
+
+Since PPL scores are strongly affected by the model’s training Figure 3 illustrates the step-by-step process by which an LLM
+data, they cannot be directly compared between different models addresses semantic ambiguity in an NLI scenario. When given an
+or across different datasets. Nevertheless, if all models share the ambiguous premise, the model may fail to make a definitive infer-
+same training data, the PPL scores become more comparable. In this ence judgment. It generates a clarification question to explicitly
+case, differences in perplexity can more reliably reflect variations resolve the ambiguity. Once the user provides a disambiguating
+in text understanding. Inspired by this, researchers developed log- answer, the model determines the inference relation: entailment,
+probability-based methods to classify potentially deceptive articles contradiction, or neutral. This process provides a way to evalu-
+[20, 48] and check AI-generated content [25, 40]. ate whether the model has correctly identified and understood the
+
+In this study, we compare the PPL scores of a set of Qwen3 models ambiguity. By leveraging joint reasoning to identify the minimal
+on our benchmark to evaluate their relative certainty and predic- conditions needed for clarification or decision-making, our anal-
+tive performance. Since all these models share the same training ysis method is also conceptually similar with existing work on
+data and vocabulary, the perplexity values are directly comparable explanation through factual and counterfactual analysis [6].
+to some degree. This comparison can provide insights into how Figure 4 illustrates a case where the LLM correctly detects ambi-
+confidently each model handles the benchmark’s input sequences. guity, but misidentifies the source of ambiguity. Instead of focusing
+
+
+--- Page 8 ---
+
+Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada Wu et al.
+Premise:
+“SASS BEN RI STE Output Relation:
+RPRRARI RA FLEE LCT Hypothesis: Certain—» Entailment, Neutral,
+thane na cc the GAL EE PBR TERN Contradiction
+nt ‘eced t ALAR, HRALHSTR
+contract, was ort ere to FLARE.
+holuyuan Treding Company Zhang was ordered to LuM Judgment
+for economic losses and compensate Haoluyuan Clarification Question:
+litigation fees of more than Trading Company for “Bieha'= FR eA
+3,000 yuan. economic losses, and in JRAAMIRUBAHETAT,
+Ambiguity: AExDEIC PO) aaclition, fo Pay over 3,000 AOURARAS TR? User Answer: SRA AST Output Relation:
+AREA. yuan in litigation costs.” Uncertain—»] Does the “over 3,000 yuan” RIEe utpu . etation:
+Scope of the quantified refer to the total amount Only the litigation costs. Entailment
+phrase is unclear. of both economic losses
+and litigation costs, or only
+to the litigation costs?”
+Figure 3: Example workflow for resolving ambiguity through clarification questions.
+Premise: Hypothesis: Clarification Question:
+LTT hE-HE, RT." IMKITT NEBR, BH NKR RALS— ESR
+MIT DE-SR, ST. MTT NEB, BAR a SeaEeHANE? —
+After Zhang punched Wang, a temn RT. = ; . Not a good clarification
+he cried. After Xiao Zhang punched LLM Judgment. Uncertain—>| Is Zhang's reason for crying question
+Ambiguity: iI Xiao Wang, he cried out of eto ae fechas
+Syntactic Ambiguity guilt or regret. aie Hesealee. iad
+Figure 4: Illustration of an LLM’s failure to generate an effective clarification question. The model incorrectly focuses on
+emotional reasoning (guilt or regret) rather than resolving the core syntactic ambiguity.
+on the syntactic uncertainty (i.e., who cried), the model assumes the to capture fine-grained semantic nuances. Nevertheless, ambigu-
+ambiguity regarding the reason for crying. As a result, it generates ity remains a fundamental linguistic phenomenon that cannot be
+a clarification question that is misaligned with human intuition and entirely overcome and has garnered significant attention from the
+fails to resolve the key ambiguity. research community. [22] presents an early work identifying limita-
+tions of LLMs in ambiguity understanding, and proposes AMBIENT,
+5 Related Work an English benchmark of ambiguous sentences. [31] specifically
+Disambiguation has been an extensively studied research topic investigated ambiguity handling in questions to enhance LLM per-
+in NLP, as ambiguity is inherently present in human language formance when confronted with ambiguous inputs. [18] explored
+and communication. Traditional machine learning-based NLP ap- improvements in LLM ambiguity handling for open-world question
+proaches have primarily focused on word sense disambiguation answering through simple prompt rewriting and context augmen-
+[4, 27], employing knowledge-based methods, vector-based 1-nn tation. [24] examined ambiguity detection mechanisms in LLMs.
+classifiers, token taggers, and sequence taggers to resolve lexical CLAMBER [44] addresses ambiguity challenges in query inten-
+ambiguity. Ambiguity detection has also been thoroughly explored tion understanding and information clarification requirements for
+in the literature. [11] developed a taxonomy for classifying ambi- LLMs in retrieval tasks. Although these studies focus on enhancing
+guity and created POS-based and rule-based tools to detect ambi- LLM performance in specific applications, they do not examine
+guity in requirement documents. [10] trained word embeddings on the fundamental language understanding behaviors of LLMs when
+domain-specific corpora and compared cross-domain term repre- processing ambiguous content. In this work, we use Chinese as a
+sentations to automatically identify semantic ambiguities. Large case study to investigate how LLMs encounter and handle ambigu-
+Language Models (LLMs) demonstrate exceptional capabilities in ity with specific scenes, thereby providing meaningful insights for
+natural language understanding and reasoning tasks. Compared to future research on ambiguity processing in LLMs.
+early transformer models, LLMs exhibit superior performance and .
+flexibility in comprehending and solving multiple-choice questions 6 Conclusion
+across diverse subjects including history, science, and mathematics, In this work, we examine the fragility of large language models
+as demonstrated on benchmarks such as MMLU [14], MMLU-Pro (LLMs) when handling textual ambiguity through Chinese oral in-
+[38], GPQA [30], and AIME [3]. LLMs also excel across multiple put. We created a benchmark consisting of 900 ambiguous sentences
+dimensions of language understanding, including commonsense with context across 9 categories, paired with corresponding disam-
+reasoning [19] and interpretation of abstract concepts [45], and biguation sentences. Our findings reveal that state-of-the-art open-
+they even extend beyond the natural language domain, support- weight LLMs still struggle with ambiguity detection and understand-
+ing tasks such as coding [49], recommendation [39], forecasting, ing. Specifically, we observe three key issues. First, LLMs exhibit
+and anomaly detection [33]. However, existing reviews [17, 43] overconfidence when classifying sentences as ambiguous in detec-
+indicate that although LLMs demonstrate strong performance in tion tasks. Second, LLMs fail to effectively identify possible alterna-
+language understanding tasks, they remain limited in their ability tive meanings from ambiguous statements. Third, when explicitly
+
+
+--- Page 9 ---
+
+Uncovering the Fragility of Trustworthy LLMs through Chinese Textual Ambiguity Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada
+
+prompted to understand ambiguous meanings, LLMs tend to over- arXiv:2302. 13425 (2023).
+
+think and generate meanings that are far-fetched compared to hu- [14] Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn
+. . . . Song, and Jacob Steinhardt. 2020. Measuring massive multitask language under-
+
+man interpretation. Our comprehensive experiments and analyses standing. arXiv preprint arXiv:2009.03300 (2020).
+
+demonstrate several important findings. Models with more parame- [15] Lei Huang, Weijiang Yu, Weitao Ma, Weihong Zhong, Zhangyin Feng, Haotian
+
+ters perform better on these tasks, and reasoning-enhanced models Wang, Qianglong Chen, Weihua Peng, Xiaocheng Feng, Bing Qin, et al. 2025. A
+
+survey on hallucination in large language models: Principles, taxonomy, chal-
+
+show improved performance in both detection and understanding. lenges, and open questions. ACM Transactions on Information Systems 43, 2 (2025),
+
+Most notably, adding examples through retrieval-augmented gener- 1-55.
+
+: : : : [16] Tianyi Huang, Zeqiu Xu, Peiyang Yu, Jingyuan Yi, and Xiaochuan Xu. 2025. A
+ation (RAG) proves to be the most effective app roach for Improving hybrid transformer model for fake news detection: Leveraging Bayesian opti-
+both detection and understanding tasks. We also analyzed model mization and bidirectional recurrent unit. 2025 8th International Symposium on
+behavior by examining perplexity differences between ambiguous Big Data and Applied Statistics (ISBDAS 2025) (2025). .
+
+. . wae . [17] Tianyi Huang, Jingyuan Yi, Peiyang Yu, and Xiaochuan Xu. 2025. Unmasking
+and disambiguated sentences. Additionally, we explored ambigu- digital falsehoods: A comparative analysis of LLM-based misinformation detec-
+ity through probing techniques using clarification questions with tion strategies. In 2025 8th International Conference on Advanced Algorithms and
+case studies. This work provides a novel perspective on LLM trust- Control Engineering (ICAACE). IEEE, 2470-2476.
+
+. [18] Aryan Keluskar, Amrita Bhattacharjee, and Huan Liu. 2024. Do LLMs Understand
+worthiness and serves as a call for the community to address this Ambiguity in Text? A Case Study in Open-world Question Answering. In 2024
+inherent issue in LLMs and exercise caution in practical applica- IEEE International Conference on Big Data (BigData). IEEE, 7485-7490.
+
+: : : [19] Stefanie Krause and Frieder Stolzenburg. 2023. Commonsense reasoning and
+tions. For future work, we plan to conduct fine-grained analysis explainable artificial intelligence using large language models. In European Con-
+within different categories of ambiguity and develop lightweight, ference on Artificial Intelligence. Springer, 302-319.
+effective methods to mitigate these problems. [20] Nayeon Lee, Yejin Bang, Andrea Madotto, and Pascale Fung. 2021. Towards
+
+Few-shot Fact-Checking via Perplexity. In Proceedings of the 2021 Conference
+of the North American Chapter of the Association for Computational Linguistics:
+Human Language Technologies. 1971-1981.
+Acknowledgements [21] Yinheng Li, Shaofei Wang, Han Ding, and Hang Chen. 2023. Large language
+We thank the anonymous reviewers for their valuable comments models in finance: A survey. In Proceedings of the fourth ACM international
+and suggestions conference on AI in finance. 374-382.
+. [22] Alisa Liu, Zhaofeng Wu, Julian Michael, Alane Suhr, Peter West, Alexander Koller,
+Swabha Swayamdipta, Noah A Smith, and Yejin Choi. 2023. We’re Afraid Lan-
+guage Models Aren’t Modeling Ambiguity. In Proceedings of the 2023 Conference
+References on Empirical Methods in Natural Language Processing. 790-807.
+
+[1] Suriya Ganesh Ayyamperumal and Limin Ge. 2024. Current state of LLM Risks [23] Yinhan Liu, Myle Ott, Naman Goyal, Jingfei Du, Mandar Joshi, Danqi Chen, Omer
+and AI Guardrails. arXiv preprint arXiv:2406.12934 (2024). Levy, Mike Lewis, Luke Zettlemoyer, and Veselin Stoyanov. 2019. Roberta: A
+
+[2] Razvan Azamfirei, Sapna R Kudchadkar, and James Fackler. 2023. Large language robustly optimized bert pretraining approach. arXiv preprint arXiv:1907.11692
+models and the perils of their hallucinations. Critical Care 27, 1 (2023), 120. (2019).
+
+[3] Mislav Balunovié, Jasper Dekoninck, Ivo Petrov, Nikola Jovanovié, and Martin [24] Behrang Mehrparvar and Sandro Pezzelle. 2024. Detecting and Translating Lan-
+Vechev. 2025. Matharena: Evaluating llms on uncontaminated math competitions. guage Ambiguity with Multilingual LLMs. In Proceedings of the Fourth Workshop
+arXiv preprint arXiv:2505.23281 (2025). on Multilingual Representation Learning (MRL 2024). 310-323.
+
+[4] Michele Bevilacqua, Tommaso Pasini, Alessandro Raganato, and Roberto Navigli. [25] Eric Mitchell, Yoonho Lee, Alexander Khazatsky, Christopher D Manning, and
+2021. Recent trends in word sense disambiguation: A survey. In International joint Chelsea Finn. 2023. Detectgpt: Zero-shot machine-generated text detection using
+conference on artificial intelligence. International Joint Conference on Artificial probability curvature. In International Conference on Machine Learning. PMLR,
+Intelligence, Inc, 4330-4338. 24950-24962.
+
+[5] Wei-Cheng Chang, Hsiang-Fu Yu, Kai Zhong, Yiming Yang, and Inderjit S Dhillon. [26] Lingbo Mo, Boshi Wang, Muhao Chen, and Huan Sun. 2024. How Trustworthy are
+2020. Taming pretrained transformers for extreme multi-label text classification. Open-Source LLMs? An Assessment under Malicious Demonstrations Shows their
+In Proceedings of the 26th ACM SIGKDD international conference on knowledge Vulnerabilities. In Proceedings of the 2024 Conference of the North American Chapter
+discovery & data mining. 3163-3171. of the Association for Computational Linguistics: Human Language Technologies
+
+[6] Ziheng Chen, Jin Huang, Fabrizio Silvestri, Yongfeng Zhang, Hongshik Ahn, (Volume 1: Long Papers), Kevin Duh, Helena Gomez, and Steven Bethard (Eds.).
+and Gabriele Tolomei. [n.d.]. Joint Factual and Counterfactual Explanations Association for Computational Linguistics, Mexico City, Mexico, 2775-2792.
+for Top-k GNN-based Recommendations. ACM Transactions on Recommender doi:10.18653/v1/2024.naacl-long.152
+Systems ([n. d.]). [27] Roberto Navigli. 2009. Word sense disambiguation: A survey. ACM computing
+
+[7] Yiming Cui, Wanxiang Che, Ting Liu, Bing Qin, Shijin Wang, and Guoping Hu. surveys (CSUR) 41, 2 (2009), 1-69.
+
+2020. Revisiting Pre-Trained Models for Chinese Natural Language Processing. [28] Wenjie Qu, Yuguang Zhou, Yongji Wu, Tingsong Xiao, Binhang Yuan, Yiming Li,
+In Proceedings of the 2020 Conference on Empirical Methods in Natural Language and Jiaheng Zhang. 2025. Prompt inversion attack against collaborative inference
+Processing: Findings. Association for Computational Linguistics, Online, 657-668. of large language models. In 2025 IEEE Symposium on Security and Privacy (SP).
+https://www.aclweb.org/anthology/2020.findings-emnlp.58 IEEE, 1695-1712.
+
+[8] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. 2019. Bert: [29] Mohaimenul Azam Khan Raiaan, Md Saddam Hossain Mukta, Kaniz Fatema,
+Pre-training of deep bidirectional transformers for language understanding. In Nur Mohammad Fahad, Sadman Sakib, Most Marufatul Jannat Mim, Jubaer Ah-
+Proceedings of the 2019 conference of the North American chapter of the association mad, Mohammed Eunus Ali, and Sami Azam. 2024. A review on large language
+for computational linguistics: human language technologies, volume 1 (long and models: Architectures, applications, taxonomies, open issues and challenges.
+short papers). 4171-4186. IEEE access 12 (2024), 26839-26874.
+
+[9] Leonard Dung. 2023. Current cases of AI misalignment and their implications [30] David Rein, Betty Li Hou, Asa Cooper Stickland, Jackson Petty, Richard Yuanzhe
+for future risks. Synthese 202, 5 (2023), 138. Pang, Julien Dirani, Julian Michael, and Samuel R Bowman. 2024. Gpqa: A
+
+[10] Alessio Ferrari and Andrea Esuli. 2019. An NLP approach for cross-domain am- graduate-level google-proof q&a benchmark. In First Conference on Language
+biguity detection in requirements engineering. Automated Software Engineering Modeling.
+26, 3 (2019), 559-598. [31] Zhengyan Shi, Giuseppe Castellucci, Simone Filice, Saar Kuzi, Elad Kravi, Eugene
+[11] Benedikt Gleich, Oliver Creighton, and Leonid Kof. 2010. Ambiguity detection: Agichtein, Oleg Rokhlenko, and Shervin Malmasi. 2025. Ambiguity Detection and
+Towards a tool explaining ambiguity sources. In Requirements Engineering: Foun- Uncertainty Calibration for Question Answering with Large Language Models. In
+dation for Software Quality: 16th International Working Conference, REFSQ 2010, Proceedings of the 5th Workshop on Trustworthy NLP (TrustNLP 2025), Trista Cao,
+Essen, Germany, June 30-July 2, 2010. Proceedings 16. Springer, 218-232. Anubrata Das, Tharindu Kumarage, Yixin Wan, Satyapriya Krishna, Ninareh
+[12] Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin Mehrabi, Jwala Dhamala, Anil Ramakrishna, Aram Galystan, Anoop Kumar,
+Xu, Qihao Zhu, Shirong Ma, Peiyi Wang, Xiao Bi, et al. 2025. Deepseek-r1: Rahul Gupta, and Kai-Wei Chang (Eds.). Association for Computational Linguis-
+Incentivizing reasoning capability in Ilms via reinforcement learning. arXiv tics, Albuquerque, New Mexico, 41-55. doi:10.18653/v1/2025.trustnlp-main.4
+preprint arXiv:2501.12948 (2025). [32] Ola Shorinwa, Zhiting Mei, Justin Lidard, Allen Z Ren, and Anirudha Majum-
+[13] Wenchong He, Zhe Jiang, Tingsong Xiao, Zelin Xu, and Yukun Li. 2023. A dar. [n.d.]. A survey on uncertainty quantification of large language models:
+survey on uncertainty quantification methods for deep learning. arXiv preprint Taxonomy, open research challenges, and future directions. Comput. Surveys
+
+
+--- Page 10 ---
+
+Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada Wu et al.
+({n. 4). A Implementation details
+
+[33] Jing Su, Chufeng Jiang, Xin Jin, Yuxin Qiao, Tingsong Xiao, Hongda Ma, Rong . . . .
+
+Wei, Zhi Jing, Jiajun Xu, and Junhong Lin. 2024. Large language models for A.1 Choice of Ambiguity Detection Model
+forecasting and anomaly detection: A systematic literature review. arXiv preprint . . . . .
+a odoe 10350 (2024). ¥ Prep To better handle this Chinese-specific task, we consider using lan-
+
+[34] Yu Sun, Shuohuan Wang, Yukun Li, Shikun Feng, Xuyi Chen, Han Zhang, Xin guage models that are pretrained on Chinese corpora and tasks
+Tian, Danxiang Zhu, Hao Tian, and Hua Wu. 2019. Ernie: Enhanced representa- [7, 34, 50]. Among them, we select hfl/chinese-roberta-wwm
+tion through knowledge integration. arXiv preprint arXiv:1904.09223 (2019). . . .
+
+[35] Gemma Team, Morgane Riviere, Shreya Pathak, Pier Giuseppe Sessa, Cassidy -ext [7], a ROBERTa-based model specifically designed for Chinese.
+Hardin, Surya Bhupatiraju, Léonard Hussenot, Thomas Mesnard, Bobak Shahriari, Unlike standard BERT models that apply subword-level masking,
+Alexandre Ramé, et al. 2024. Gemma 2: Improving open language models at a . . . :
+practical size. arXiv preprint arXiv:2408.00118 (2024). this model adopts whole word masking (WWM), meaning that
+
+[36] Arun James Thirunavukarasu, Darren Shu Jeng Ting, Kabilan Elangovan, Laura it masks entire Chinese words during pretraining. Since Chinese
+Gutierrez, Ting Fang Tan, and Daniel Shu Wei Ting. 2023. Large language models words often consist of multiple characters, WWM enables the model
+in medicine. Nature medicine 29, 8 (2023), 1930-1940. 1 ingful d-level : hi
+
+[37] Hao Tian, Can Gao, Xinyan Xiao, Hao Liu, Bolei He, Hua Wu, Haifeng Wang, to learn more meaningful word-level representations. This property
+and Feng Wu. 2020. SKEP: Sentiment Knowledge Enhanced Pre-training for is particularly beneficial for identifying sentence-level ambiguity,
+Sentiment Analysis. In Proceedings of the 58th Annual Meeting of the Association where subtle differences in phrasing can lead to different interpre-
+for Computational Linguistics. 4067-4076. .
+
+[38] Yubo Wang, Xueguang Ma, Ge Zhang, Yuansheng Ni, Abhranil Chandra, tations.
+
+Shiguang Guo, Weiming Ren, Aaran Arulraj, Xuan He, Ziyan Jiang, et al. 2024.
+
+Mmlu-pro: A more robust and challenging multi-task language understanding
+
+benchmark. In The Thirty-eight Conference on Neural Information Processing A.2 Detection Model Training Procedure
+Systems Datasets and Benchmarks Track. .
+
+[39] Likang Wu, Zhi Zheng, Zhaopeng Qiu, Hao Wang, Hongchao Gu, Tingjia Shen, To fine-tune the model for our task, we use the training set of the
+Chuan Qin, Chen Zhu, Hengshu Zhu, Qi Liu, et al. 2024. A survey on large manually annotated samples from the dataset. Each ambiguous
+language models for recommendation. World Wide Web 27, 5 (2024), 60. t : ired with t di bi ted : that
+
+[40] Zhenyu Xu and Victor S Sheng. 2024. Detecting Al-generated code assignments sentence 1s paired with Two disambiguated versions that preserve
+using perplexity of large language models. In Proceedings of the aaai conference the original meaning while removing the ambiguity. Ambiguous
+on artificial intelligence, Vol. 38. 23155~23162. , , and disambiguated sentences are labeled as 1 and 0, respectively.
+
+[41] An Yang, Anfeng Li, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, . . . oy
+Bowen Yu, Chang Gao, Chengen Huang, Chenxu Ly, et al. 2025. Qwen3 technical This structure provides a semantic contrast between positive and
+report. arXiv preprint arXiv:2505.09388 (2025). negative examples.
+
+[42] Zhilin Yang, Zihang Dai, Yiming Yang, Jaime Carbonell, Russ R Salakhutdinov, To enhance the input representation, we added linguistic features
+and Quoc V Le. 2019. XInet: Generalized autoregressive pretraining for language .
+understanding. Advances in neural information processing systems 32 (2019). to each sentence. Specifically, we appended a word-segmented
+
+[43] Jingyuan Yi, Zeqiu Xu, Tianyi Huang, and Peiyang Yu. 2025. Challenges and version of the sentence using jieba and the corresponding part-of-
+innovations in LLM-Powered fake news detection: A synthesis of approaches h (POS) t The final i tf t tains both lexical and
+and future directions. In Proceedings of the 2025 2nd International Conference on speec : ags. e nn. mpu ormat contains or exica!l an
+Generative Artificial Intelligence and Information Security. 87-93. syntactic cues, aiding the model in better understanding structural
+
+[44] Tong Zhang, Peixin Qin, Yang Deng, Chen Huang, Wenqiang Lei, Junhong Liu, aspects of Chinese that are often associated with ambiguity.
+Dingnan Jin, Hongru Liang, and Tat-Seng Chua. 2024. CLAMBER: A Benchmark oo. . . .
+of Identifying and Clarifying Ambiguous Information Needs in Large Language For training, the model configuration included a learning rate
+Models. In Proceedings of the 62nd Annual Meeting of the Association for Computa- of 2e-5, a batch size of 16, 5 training epochs, Adam optimizer, and
+tional Linguistics (Volume 1: Long Papers), Lun-Wei Ku, Andre Martins, and Vivek . . .
+
+Srikumar (Eds.). Association for Computational Linguistics, Bangkok, Thailand, a linear learning rate decay schedule. Early stop ping was used to
+10746-10766. doi:10.18653/v1/2024.acl-long.578 prevent overfitting, halting training if validation performance did
+[45] pigeng Zhang, Fabio Gonzalez, and eco the 2024 } 2024. Interpreting forme not improve for 3 consecutive epochs. We set a random seed for
+rom Educational Stories. In Proceedings of the 2024 Joint International Conference 1:4: :
+on Computational Linguistics, Language Resources and Evaluation (LREC-COLING reproducibility and used CUDA to accelerate the computation. We
+2024), Nicoletta Calzolari, Min-Yen Kan, Veronique Hoste, Alessandro Lenci, applied gradient clipping (with max_norm=1. Q) to avoid exploding
+Sakriani Sakti, and Nianwen Xue (Eds.). ELRA and ICCL, Torino, Italia, 9190- gradients, and used a linear learning rate scheduler with warm-up
+9203. https://aclanthology.org/2024.lrec-main.805/ h 1 : impl d based h
+
+[46] Yigeng Zhang, Mahsa Shafaei, Fabio Gonzalez, and Thamar Solorio. 2021. From steps. The early stopping strategy was implemented based on the
+None to Severe: Predicting Severity in Movie Scripts. In Findings of the Association validation F1 score, with a patience of three epochs.
+for Computational Linguistics: EMNLP 2021. 3951-3956. : : _
+
+[47] Yigeng Zhang, Mahsa Shafaei, Fabio Gonzalez, and Thamar Solorio. 2024. Positive To reduce P erformance variance and ump Tove robustness, strat
+and Risky Message Assessment for Music Products. In Proceedings of the 2024 fied K-fold cross-validation was used during training. Additionally,
+Joint International Conference on Computational Linguistics, Language Resources we applied automated hyperparameter tuning using the Optuna
+and Evaluation (LREC-COLING 2024), Nicoletta Calzolari, Min-Yen Kan, Veronique f k. Th h icluded batch si 1 : t d
+Hoste, Alessandro Lenci, Sakriani Sakti, and Nianwen Xue (Eds.). ELRA and ICCL, Tamew or . € search space inclu i atch size, learning rate, an
+Torino, Italia, 12893-12905. https://aclanthology.org/2024.lrec-main.1129/ weight decay, and each configuration was evaluated based on the
+
+[48] Yigeng Zhang, Fan Yang, Yifan Zhang, and Arjun Mukherjee. 2020. Birds of a cross-validation F1 score. This approach allowed us to identify a
+Feather Flock Together: Satirical News Detection via Language Model Differen- . . . Lo. .
+tiation. In . International Conference on Social Computing, Behavioral-Cultural better combination of parameters with minimal manual tuning.
+Modeling & Prediction and Behavior Representation in Modeling and Simulation.
+
+[49] Ziyin Zhang, Chaoyu Chen, Bingchang Liu, Cong Liao, Zi Gong, Hang Yu, Jianguo .
+
+Li, and Rui Wang. 2023. Unifying the perspectives of nlp and software engineering: A.3 Choice of LLMs
+A survey on language models for code. arXiv preprint arXiv:2311.07989 (2023). . . .
+
+[50] Zhengyan Zhang, Xu Han, Hao Zhou, Pei Ke, Yuxian Gu, Deming Ye, Yujia Qin, In this work, we focus exclusively on open-weight LLMs for our
+Yusheng Su, Haozhe Ji, Jian Guan, et al. 2021. CPM: A large-scale generative experiments. While proprietary models have demonstrated strong
+Chinese pre-trained language model. AI Open 2 (2021), 93-99. language understanding capabilities, their APIs and chat interfaces
+
+function as black boxes, making it unclear whether additional com-
+ponents beyond the model weights influence the outputs. This lack
+of transparency may affect experimental validity and reduce repro-
+ducibility. Therefore, we selected open-weight models Gemma 2,
+
+
+--- Page 11 ---
+
+Uncovering the Fragility of Trustworthy LLMs through Chinese Textual Ambiguity Agentic & GenAl Evaluation Workshop KDD’25, August 4, 2025, Toronto, ON, Canada
+
+Qwen 3, and DeepSeek R1 for our study, with Qwen and DeepSeek Xinwei Wu, Hongyu Liu, and Haojie Li contributed equally to
+
+R1 in particular being developed by Chinese researchers and show- this work and share first authorship.
+
+ing strong performance on tasks in Chinese. Using open-weight Xinyu Ji contributed to the creation of the benchmark dataset
+
+models for benchmarking is also a reasonable practice in the re- and conducted evaluations of ambiguity detection and ambiguity
+
+search community [26, 28]. understanding across multiple large language models. All contribu-
+
+tions were made in a personal capacity and do not reflect the views
+
+Xinwei Wu contributed to the creation of the benchmark dataset Ruohan Li contributed to the creation of the benchmark dataset
+
+and conducted experiments on ambiguity detection and ambiguity and conducted an evaluation via clarification questioning.
+
+understanding across multiple large language models. Yule Chen conducted the perplexity analysis and contributed to
+Hongyu Liu contributed to a portion of the benchmark dataset the creation of the benchmark dataset.
+
+development and conducted comparative experiments with result Yigeng Zhang provided overall supervision and mentored the
+
+evaluation for Retrieval-Augmented Generation (RAG) methodol- team across all stages of the project. Yigeng Zhang participated
+
+ogy in Chinese ambiguity processing. in this project as a volunteer mentor supporting early-stage re-
+Haojie Li contributed to the creation of the benchmark dataset searchers. All contributions were made in his personal capacity and
+
+and implemented the full pipeline for data processing and disam- do not represent the views of his employer.
+
+biguation, including data cleaning, feature engineering, model train-
+
+ing and optimization, and experimental evaluation.

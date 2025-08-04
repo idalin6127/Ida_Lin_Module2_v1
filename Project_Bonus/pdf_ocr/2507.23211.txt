@@ -1,0 +1,489 @@
+
+
+--- Page 1 ---
+
+Failures Are the Stepping Stones to Success: Enhancing
+Few-Shot In-Context Learning by Leveraging Negative
+Samples
+Yunhao Liang?! 210009—0002—8104—0903] Ruixuan Ying? [0009—0008—9597—599X] Takuya
+Taniguchi? 0000—0001—9865— 1351] and Zhe Cyj!:2[0000—0002—9708—2000]
+' Chengdu Institute of Computer Applications, Chinese Academy of Sciences, Chengdu 610041, China
+? University of Chinese Academy of Sciences, Beijing 101408, China
+Vey 3 Institute of Multidisciplinary Research for Advanced Materials (IMRAM), Tohoku University Sendai
+N 980-8577, Japan
+liangyunhao22@mails.ucas.ac.cn, ying.ruixuan.s5@dc.tohoku.ac.jp
+—_) g g j
+N
+—
+= Abstract. Large Language Models exhibit powerful few-shot in-context learning (ICL) ca-
+pabilities, but the performance is highly sensitive to provided examples. Recent research has
+= focused on retrieving corresponding examples for each input query, not only enhancing the
+efficiency and scalability of the learning process but also mitigating inherent biases in man-
+—= ual example selection. However, these studies have primarily emphasized leveraging Positive
+—] samples while overlooking the additional information within Negative samples for contextual
+UO learning. We propose a novel method that utilizes Negative samples to better select Positive
+. sample examples, thereby enhancing the performance of few-shot ICL. Initially, we construct
+3 Positive and Negative sample corpora based on Zero-Shot-Cot. Then, during inference, we
+Ll employ a semantic similarity-based approach to select the most similar examples from both
+the Positive and Negative corpora for a given query. Subsequently, we further retrieve Posi-
+rr tive examples from the Positive sample corpus based on semantic similarity to the Negative
+> examples, then concatenating them with the previously selected Positive examples to serve as
+— ICL demonstrations. Experimental results demonstrate that our approach surpasses methods
+fon solely relying on the most similar positive examples for context, validating that the addi-
+xa\ tional information in negative samples aids in enhancing ICL performance through improved
+N Positive sample selection.
+Ss Keywords: Prompt Engineering - Negative Samples - In-Context-Learning.
+WY
+N 1 Introduction
+aa
+>< Large language models (LLMs) are characterized by their massive parameter sizes and extensive
+ro training data, which enable them to encapsulate rich and profound knowledge [24]19[29]. They have
+S exhibited significant performance across diverse applications and reasoning tasks such as question
+answering, code generation, and mathematical reasoning [26/13/14]. Prompting learning methods
+such as in-context learning [19] and chain-of-thought [25]5] have been introduced to empower
+LLM to undertake few-shot or even zero-shot learning, facilitating adaptation to new scenarios
+with minimal or absent annotated data. Few-shot In-Context Learning (ICL), initially introduced
+alongside the emergence of GPT-3, stands as a novel paradigm in the era of LLMs. It denotes the
+model’s capability to assimilate insights from a few contextual exemplars: furnishing the model
+with specific instances (referred to as demonstrations.) of a particular task alongside the questions
+
+
+--- Page 2 ---
+
+2 Yunhao Liang, Ruixuan Ying, Takuya Taniguchi, and Zhe Cui
+
+to be examined, the model can furnish answers to the test questions grounded on the provided
+examples. LLMs can execute various intricate reasoning tasks through ICL. Furthermore, the entire
+process circumvents the necessity of updating model parameters; solely forward inference is con-
+ducted, resulting in a substantial reduction in the overhead associated with adapting large models
+to novel tasks. However, the efficacy of ICL is markedly sensitive to the configuration of examples,
+encompassing prompt templates, the curation of contextual examples, and the sequencing of exam-
+ples 28]. Exploring methodologies to more effectively harness, the wealth of knowledge ingrained
+in LLMs through pre-training via ICL represents a burgeoning area of research.
+
+Prior studies have explored a number of different techniques for selecting examples to construct
+few-shot ICL demonstrations based on similarity retrieval, as well as selecting the most complex
+or representative samples from the training set for inference [16J22[15). However, these studies
+primarily focused on similarity metrics or retrieval methods to identify the best examples for prompt
+demonstrations, all of which were positive examples from the corpus. To the best of our knowledge,
+no study has investigated how to leverage additional valuable information from negative examples
+to aid in constructing few-shot prompt demonstrations. Negative samples, while often perceived as
+worthless as they fail to yield the correct answer, actually harbor valuable information, as addressed
+later.
+
+Drawing inspiration from the human learning process, as we progress in our academic journey,
+we often confront similar exercises, some of which we answer correctly while others lead to errors. By
+focusing on rectifying errors in exercises, as cataloged in our error logs, we can enhance our learn-
+ing process. In instances where we consistently falter in a particular problem category, additional
+practice with similar problems proves advantageous. Thus, we propose a method for constructing
+few-shot ICL demonstrations using negative samples. Our proposed method comprises two stages:
+corpus construction and demonstration construction for test queries. To ensure the retrieval of suf-
+ficiently similar examples for each test query, we initially cluster the dataset and randomly select
+half of the data from each cluster as the initial corpus. Subsequently, the model performs inference
+on these data, and based on whether the predicted results match the true labels, we categorize them
+into positive and negative samples and add them to the positive and negative corpora, respectively.
+The second stage involves constructing demonstrations for test query questions, also consisting of
+two steps. Firstly, we retrieve similar positive and negative examples from the positive and negative
+corpora for the test query, respectively. Then, we retrieve new similar positive examples for nega-
+tive samples from the positive corpus. Combining these positive examples acquired from both two
+retrieval steps yields our final demonstration. We believe that the new positive examples retrieved
+based on negative samples can be viewed as implicit error correction data, eliminating the need for
+explicit utilization of stronger LLM like GPT-4 for error correction [3]. Experimental results across
+three inference tasks on seven datasets demonstrate the efficacy of our method in utilizing nega-
+tive samples to enhance few-shot ICL performance. To summarize, our work makes the following
+contributions:
+
+— We introduce a two-stage framework that utilizes negative samples to enhance few-shot ICL
+performance.
+
+— Experimental results across multiple inference tasks and datasets demonstrate the efficacy of
+the proposed method. Furthermore, the results also prove that in-context learning can benefit
+from negative samples.
+
+
+--- Page 3 ---
+
+Title Suppressed Due to Excessive Length 3
+2 Method
+Our proposed method consists of two stages. The first stage involves the construction of the corpus.
+The second stage leverages the corpus and utilizes the retrieved nega-tive sample instances to assist
+in the selection of positive sample instances during the construction of prompt demonstrations.
+2.1 Retrieval corpora construction
+In order to guarantee the availability of sufficiently similar instances for each test query question,
+the process of constructing the retrieval corpus began by conducting k-means clustering on the
+entire dataset. Subsequently, half of the samples from each cluster were randomly allocated to the
+training set Drain, while the other half formed the test set D,est. To create the positive and
+negative corpora for semantic similarity retrieval, Zero-Shot-CoT [9] is utilized to facilitate LLM in
+conducting inference on the training set. Samples were classified into positive or negative categories
+based on the agreement between their predicted results and the gold answer, and then appended to
+%
+the corresponding positive and negative corpora. The process of constructing the corpus is illustrated
+in figure [I]
+Full Dataset Inference-———————_. ———————Inference
+LLN
+Clustering
+7 | 7, . 7 7 Ww ic i rr?
+Custer | K-means Clustering | “stern | csc hci Ries oor eodiia aes) A Late duek sop by step et, we ad the numberof seashells Tim
+a \OO/ Bmcteaeairaney relied lacteieeUiromielemolnneliestiowlas tome) Eg) totiro meni Sally ive) GEV + 1 = co Kas ws
+—_— dollars - 74 dollars = 12 dollars. Therefore, Tom made 12 dollars subtract the number of cracked seashells from the total number
+Cabiing enaterUissteTs Wiediece sere (Sc ral toca Re ter ret sere a GLarTRere STIS
+amp “S lecting ealakeithelestetior of each words in "Nicky Eden James Matt" and ou Tekesthe ast ters ot cada wale tl Hila Rane Wii Palas
+A: Let's think step by step. Sure, let's break it down: Nicky - y Eden - n Gola itihleats ny cigp Site, eb bigels[i cleuae Mile -@ Rei =@
+Parneeiial Ist Ceci thor tacethentNetocttetsh Reve roret Vishal - | Patrick - k Putting them together, we get "elk". \nTherefore,
+% cluster 1 eee % cluster n the answer is ynst. Hipensuarlsals . 1
+oO Oo O O Postive Examples Negative Examples
+Random select half data from each cluster to form corpora | |
+= Positive Corpora Negative Corpora
+initial corpora — tl
+Fig. 1. The process of corpus construction.
+2.2 Negative samples enhance demonstrations construction
+Figure] illustrates the procedure of utilizing negative samples to support the construction of few-
+shot ICL demonstrations, leveraging the established positive and negative corpora. For the given
+
+
+--- Page 4 ---
+
+4 Yunhao Liang, Ruixuan Ying, Takuya Taniguchi, and Zhe Cui
+input query q, the final demonstration we present contains k examples. Our approach to constructing
+demonstrations with the aid of negative samples encompasses the subsequent two steps. To begin
+with, we retrieve k/2 positive examples Examplepos and k/2 negative examples Exampleneg from
+respective positive and negative corpora based on semantic similarity. Subsequently, we utilize
+negative samples to assist in the selection of positive examples. Specifically, for each retrieved
+negative example Bxampleineg,)(i = 0,1...k/2), we further search the positive corpus to find
+the most semantically similar positive sample Example (pos—new,)(i = 0,1...k/2). Ultimately, we
+concatenate these positive samples obtained through negative sample retrieval with the positive
+samples retrieved based on the query q to create the final demonstrations for the few-shot In-
+Context-Learning prompt.
+Prompt Demonstrations
+Q: James likes to check the coin return of the vending machine Q: She ane oct ara rn oe ce Te cents pare spent ss
+A: Let's think step by step. he bought 3 bags of chips at 40 cents each, he spent 3 * 40 = 120 cents on chips. Next, let's
+figure out how much money George had left after buying the chips. Since he spent $5, which is
+equal to 500 cents, and had 1% of his money left, he had 500 * 0.01 = 5 cents left. Now, let's
+subtract the money spent on chips from the total money spent to find out how much he spent
+‘on candy bars. 500 - 120 = 380 cents spent on candy bars. Finally, let's divide the money spent
+_ _ ‘on candy bars by the cost of each candy bar to find out how many candy bars he bought. 380 /
+= Ye 75 = 5.07 candy bars. Since George cannot buy a fraction of a candy bar, we can conclude that
+EAI\ Semantic Similarity Retrieval — — George bought 5 candy bars. Therefore, the answer (arabic numerals) is 5.
+=H—| = New Positive Examples Facilitated by Negative Example
+| = il \ Q: Rachel bought 23 cookies and Janet gave her 42 cookies. The other day her brother ate 44 of
+~| those cookies. How many cookies are left for Rachel?
+F ‘A: Let's think step by step.First, Rachel bought 23 cookies and Janet gave her 42 cookies, so
+Negative Corpora / Leverage Negative Positive Corpora TSC Roeicos a ica taithe sea cattes ec aD
+| Example to Retrieve eee oe (eatenwnracts\oa
+New Positive Example} | Tset Question
+Q: James likes to check the coin return of the vending machine for change. One day he finds a
+Qi ine vending
+Q: The vending machines sell chips for SuleisSit alscteD yas
+4@ cents and candy bars for 75 cents.
+George spent $5 and got 3 bags of chips
+and had 1% of his money left. How many
+candy bars did he buy? ?
+Negative Example Demonstrations
+Q: Suzanne sold 80 cookies for $1 each _ Construction
+and 69 cupcakes for $4 each. She gave New Positive Example LM
+her two sisters $10 each for helping Q: Rachel bought 23 cookies and Janet
+her. How much money does she have left gave her 42 cookies. The other day her J
+from her earnings? brother ate 44 of those cookies. How ‘Answer
+many cookies are left for Rachel? First, let's calculate the value of each coin:
+‘A quarter is worth 25 cents.- A nickel is worth 5 cents.
+Adime is worth 10 cents.
+Next, let's calculate the total value of the coins James found:
+The quarter is worth 25 cents. The two nickels are worth 2 * 5 = 10 cents.
+The 7 dimes are worth 7 * 10 = 70 cents.
+‘Adding all the values together, James has 25 + 10 + 70 = 105 cents.
+Therefore, James has 105 cents in total. Therefore, the answer (in cents) is 105.
+Fig. 2. The process of constructing demonstrations with the aid of negative samples.
+3. Experiments And Results
+3.1 Experimental Setup
+Tasks and Datasets. Our proposed approach was assessed across seven benchmark datasets,
+corresponding to three different reasoning tasks: arithmetic reasoning, common sense reasoning,
+and symbolic reasoning. The datasets AddSub [8], GSM8K [6], SingleEq [10], and SVAMP [18]
+were utilized for the arithmetic reasoning tasks. The tasks of commonsense reasoning employed the
+CommonsenseQA and StrategyQA [7] datasets. The Last Letter Concatenation dataset
+was the only one used for symbolic reasoning tasks, refraining from using the Coin-Flip due to its
+oversimplification and inability to effectively evaluate our method.
+
+
+--- Page 5 ---
+
+Title Suppressed Due to Excessive Length 5
+Implementation Details. We utilized GPT-3.5-Turbo as the LLM for evaluating our proposed
+approach and comparison methods, which was accessed through OpenAlI’s paid API. Due to Ope-
+nAl’s pricing policy, the number of prompt demonstrations k was simply set to 2. For each test
+question, we initially retrieved f examples from both positive and negative sample corpora. Sub-
+sequently, for each negative sample example, we retrieved the most semantically similar positive
+sample example from the positive sample corpus. These two sets of positive sample examples were
+concatenated to form the demonstration for few-shot ICL. The number of clusters used during
+corpus construction varied depending on the number of samples included in each dataset: AddSub
+(4), SingleEq (4), Last Letter Concatenation (4), GSM8K (8), CommonsenseQA (8), SVAMP (6),
+and StrategyQA (10). For the sentence embedding model, we use Sentence-BERT [20] for encoding
+both query questions and candidate sentences contained within the corpus.
+Baselines. We compared our proposed method against the following baseline methods: Few-Shot-
+CoT, Similarty-Based Few-Shot CoT, Contrastive Few-Shot CoT, and Random Few-Shot-CoT.
+For Few-Shot-CoT, we followed the setup of previous work [9], where we simply appended "Let’s
+think step by step." after the question as a CoT trigger and used their proposed answer cleaning
+technique to extract the final predicted output answer. For Similarty-Based Few-Shot CoT, we
+retrieved k semantically similar examples from the positive sample corpus for each test question
+and concatenated them to serve as prompt demonstrations. For Contrastive Few-Shot CoT, we
+retrieved k;/2 most similar samples from both the positive and negative sample corpora and inserted
+them into the instruction template "Below is a positive example and a negative example. Learn
+from the positive example and avoid making the mistakes in the negative example. Here is the
+positive example: [positive example], And here is the negative example: [negative example|" as
+prompt demonstrations. For Random Few-Shot-CoT, we randomly selected two examples from the
+positive sample corpus to serve as demonstrations.
+3.2 Results
+Performance of our proposed method. Table[Iillustrates that our proposed approach, which
+utilizes negative samples to select better positive examples for prompt instances, consistently
+achieves superior performance compared to all baseline methods across all seven datasets, encompass-
+ing three distinct reasoning tasks. Our method consists of two variants. The first, (1 pos+1 pos-new),
+involves retrieving a positive example and a negative example from the positive and negative sample
+corpora, respectively. Based on the negative exam-ple, we then retrieve the most similar new posi-
+tive example from the positive sample corpus. These two positive examples serve as the instances.
+The second variant, (2 pos-new), involves initially retrieving the two most similar negative sample
+instances to the current test question from the negative sample corpus. We then retrieve the most
+similar positive sample instance for each of these two negative sample instanc-es from the positive
+sample corpus. These two new positive sample instances serve as the demonstration.
+Optimal selection of negative sample quantities and their applicability across various
+tasks. To discern the best count of negative samples to be used in our prompting approach, we
+undertook a quantitative analysis. The goal was to determine the number of most similar nega-
+tive samples that should be incorporated into the prompt demonstration to assist in locating the
+most similar positive examples. We selected a representative dataset for each of the three reason-
+ing tasks to conduct experiments. For mathematical reasoning problems, we used AddSub. For
+
+
+--- Page 6 ---
+
+6 Yunhao Liang, Ruixuan Ying, Takuya Taniguchi, and Zhe Cui
+Table 1. Accuracy on seven datasets from three categories of reasoning tasks.
+
+P| Raab [SMR [ SingloFg|SVA MP [ CommonSense StrateayQA [last Letter
+
+Zero-Shot-CoT 85.5 78.3 93.7 81.8 73.6 66.1 41.8
+
+Similarity Few-Shot}83.0 73.1 92.1 81.8 75.6 63.1 67.7
+
+Contrastive CoT 83.0 71.7 92.1 77.6 71.5 61.8 67.7
+
+Ours(1 pos-new) [87.6 |78.6 |94.8 83.7 75.2 66.0 76.5
+
+Ours(2 pos-new) 83.6 77.4 94.1 84.1 75.9 67.2 83.3
+common sense reasoning, we chose CommonsenseQA. As for symbolic reasoning, we used Last
+Letter Concatenation. We denote the total number of demonstration examples as total, the count
+of positive sample examples as m, and the count of negative sample examples (i.e., new positive
+sample examples retrieved based on negative samples) as n. The sum of the positive sample ex-
+amples and the negative sample examples equals the total number of demonstration examples (i.e.
+m-+n=total). We chose a total of 6 examples, conducting experiments for combinations ranging
+from (m=0,n=6) to (m=6,n=0). The results of these experiments are presented in Table 2. From
+the results, we can observe that our method, which combines the most similar positive examples
+and the positive examples most semantically like the negative examples, improves accuracy com-
+pared to using only the most similar positive examples or only the positive examples most similar
+to the negative examples. However, using too many negative examples can lead to a performance
+decline (as seen in Last Letter when using 4 and 6 negative examples, which caused a decrease in
+accuracy). We attribute this to semantic drift, where additional negatives may be only weakly re-
+lated to the query, pulling the second-stage retrieval toward less relevant positives. Interestingly, we
+observe that employing only newly retrieved positive examples via negative sample retrieval yields
+the most promising performance in CommonSenseQA. This corroborates our earlier observation
+that demonstrations composed exclusively of positives retrieved via negative examples outperform
+mixtures of traditional and negatively-anchored positives, suggesting that commonsense reasoning
+benefits more from dense, error-driven corrective signals than from balanced coverage. The anal-
+ysis of the table suggests that for arithmetic and symbolic reasoning tasks, the optimal number
+of negative samples to use is two, whereas for commonsense reasoning problems, employing exclu-
+sively newly retrieved positive examples through negative sample retrieval results in the highest
+performance. We hypothesize that this discrepancy stems from the nature of the required knowl-
+edge: arithmetic and symbolic tasks demand a small, explicit correction of procedural steps, so
+a limited injection of error-driven positives prevents over-correction; in contrast, the open-ended,
+associative nature of commonsense questions benefits from a denser set of error-driven positives
+that collectively tighten the decision boundary around less sharply defined concepts. Furthermore,
+our approach demonstrates excellent applicability across the three reasoning tasks, as evidenced by
+substantial performance improvements observed across these three representative tasks.
+4 Related Work
+Retrieve similar examples as demonstrations. Rather than employing a static prompt, recent
+work has shifted to dynamic retrieval of task-specific exemplars at inference time. [I] focus on
+machine-translation tasks and show that jointly optimizing lexical and semantic similarity yields
+
+
+--- Page 7 ---
+
+Title Suppressed Due to Excessive Length 7
+Table 2. The proper number of negative examples and suitable reasoning task.
+
+m=0, n=6 85.1 79.6 80.0
+
+m=1, n=5 85.1 482.4 75.2
+
+m=2, n=4 87.5 79.2 77.0
+
+m=3, n=3 86.5 {82.1 77.2
+
+m=4, n=2 88.6 83.7 75.8
+
+m=5, n=1 90.1 83.3 76.8
+
+m=6, n=0 84.0 82.1 78.3
+demonstrably better translations than either metric alone. [27] go beyond single-sentence retrieval
+and propose compositional exemplars that are assembled from multiple, smaller snippets so that
+the final demonstration covers the full structural pattern of the query; this is the first study to
+treat demonstration construction as a combinatorial search problem. introduce a continual
+memory bank that stores user feedback and incrementally re-indexes retrieved examples, enabling
+the retriever itself to evolve with new error signals. present Memory-of-Thoughts (MoT), which
+first “pre-thinks” a set of candidate reasoning chains, then recalls the most relevant chains via a
+lightweight non-parametric memory, effectively decoupling generation and retrieval of rationales.
+Despite these advances, these work exclusively retrieve positive (correct) examples and optimize
+similarity metrics or memory structures. Our method is the first to use negative (incorrect) examples
+as semantic anchors to mine additional positive demonstrations, thereby shifting the focus from
+“finding the closest correct pattern” to “correcting the closest incorrect pattern.”
+Learning from negative samples. According to [42], there is a proposition regarding whether
+the reasoning prowess of LLMs can be augmented through a reverse learning approach, wherein
+learning occurs from the model’s errors. The concept of learning from errors is remi-niscent of the
+learning methodologies observed in human students. Upon encounter-ing difficulties in problem-
+solving, individuals engage in error analysis to understand their mistakes and rectify them. Im-
+plementing this paradigm of learning from past mistakes holds promise for enhancing the model’s
+reasoning prowess.
+
+Recent investigations have uncovered that models fine-tuned on positive and negative samples
+separately show a limited overlap in accurately addressed cases [12]. This observation highlights
+the presence of crucial additional information within neg-ative samples, which is lacking in positive
+samples. They introduce a technique aimed at harnessing negative sample data to extract intricate
+reasoning capabilities, thereby enhancing the inference prowess of language models through Negative
+Assistant Training (NAT) and Negative Calibrated Enhancement (NCE). Furthermore, they present
+the Adaptive Self-Consistency (ASC) method, leveraging negative samples to refine the model’s
+inference mechanism.
+
+5 Conclusion
+
+LLMs have exhibited exceptional natural language understanding and inference capabilities, with
+context learning being one of their prominent abilities. Previous research has predominantly de-
+pended on fixed, manually curated examples or random examples. More recent research has shifted
+
+
+--- Page 8 ---
+
+8 Yunhao Liang, Ruixuan Ying, Takuya Taniguchi, and Zhe Cui
+
+focus towards using examples similar to the test question for few-shot demonstrations, yet these
+methods often neglect the potential valuable information embedded in negative samples. In this
+work, we investigate how to harness negative samples (i.e., examples where the model is prone to
+making errors) to aid in selecting positive sample examples for constructing more effective prompt
+demonstrations, with the goal of enhancing the LLM’s context learning performance. We introduce
+an intuitive method: for each test question, we initially retrieve positive and negative examples from
+their respective corpora based on semantic similarity. Subsequently, we retrieve the most similar
+posi-tive example from the positive corpus based on the negative examples and concate-nate the
+two positive examples retrieved through these steps to form the final demon-stration.
+
+Our motivation is to view the negative sample example corpus as a collection of incorrect
+answers. Given that these types of negative samples are likely to be an-swered incorrectly, we seek
+to practice these specific areas, i.e., mock questions. By combining the genuine example retrieved
+first with the positive example retrieved based on the negative sample secondly, we aim to not
+only practice questions that the model is already proficient at, but also focus on questions that are
+prone to errors. We conducted experiments on seven datasets spanning three reasoning tasks. The
+results demonstrate that our proposed method significantly surpasses the comparison methods,
+attesting to the effectiveness of our approach. By utilizing negative sam-ples, we can construct
+superior prompt examples and enhance context learning per-formance. Additionally, we performed
+a quantitative experimental analysis on one selected dataset from each of the three reasoning tasks
+to determine the optimal number of negative samples to use. Our approach of leveraging negative
+samples marks progress in the development of more effective context examples. We believe that this
+iterative approach of constructing retrieval corpora could serve as a versatile framework.
+References
+
+1. Agrawal, S., Zhou, C., Lewis, M., Zettlemoyer, L., Ghazvininejad, M.: In-context examples selection
+for machine translation. arXiv preprint arXiv:2212.02437 (2022)
+
+2. An, S., Ma, Z., Cai, S., Lin, Z., Zheng, N., Lou, J.G., Chen, W.: Can Ilms learn from mistakes? an
+empirical study on reasoning tasks. In: Findings of the Association for Computational Linguistics:
+EMNLP 2024. pp. 833-854 (2024)
+
+3. An, S., Ma, Z., Lin, Z., Zheng, N., Lou, J.G., Chen, W.: Learning from mistakes makes Ilm better
+reasoner (2023). arXiv preprint arXiv:2310.20689
+
+4. An, S., Ma, Z., Lin, Z., Zheng, N., Lou, J.G., Chen, W.: Learning from mistakes makes llm better
+reasoner. arXiv preprint arXiv:2310.20689 (2023)
+
+5. Chen, W., Ma, X., Wang, X., Cohen, W.W.: Program of thoughts prompting: Disentangling computa-
+tion from reasoning for numerical reasoning tasks. arXiv preprint arXiv:2211.12588 (2022)
+
+6. Cobbe, K., Kosaraju, V., Bavarian, M., Chen, M., Jun, H., Kaiser, L., Plappert, M., Tworek, J., Hilton,
+J., Nakano, R., et al.: Training verifiers to solve math word problems. arXiv preprint arXiv:2110.14168
+(2021)
+
+7. Geva, M., Khashabi, D., Segal, E., Khot, T., Roth, D., Berant, J.: Did aristotle use a laptop? a question
+answering benchmark with implicit reasoning strategies. Transactions of the Association for Computa-
+tional Linguistics 9, 346-361 (2021)
+
+8. Hosseini, M.J., Hajishirzi, H., Etzioni, O., Kushman, N.: Learning to solve arithmetic word problems
+with verb categorization. In: Proceedings of the 2014 conference on empirical methods in natural lan-
+guage processing (EMNLP). pp. 523-533 (2014)
+
+9. Kojima, T., Gu, S.S., Reid, M., Matsuo, Y., Iwasawa, Y.: Large language models are zero-shot reasoners.
+Advances in neural information processing systems 35, 22199-22213 (2022)
+
+
+--- Page 9 ---
+
+Title Suppressed Due to Excessive Length 9
+
+10. Koncel-Kedziorski, R., Hajishirzi, H., Sabharwal, A., Etzioni, O., Ang, S.D.: Parsing algebraic word
+problems into equations. Transactions of the Association for Computational Linguistics 3, 585-597
+(2015)
+
+11. Li, X., Qiu, X.: Mot: Pre-thinking and recalling enable chatgpt to self-improve with memory-of-thoughts.
+CoRR (2023)
+
+12. Li, Y., Yuan, P., Feng, S., Pan, B., Sun, B., Wang, X., Wang, H., Li, K.: Turning dust into gold:
+Distilling complex reasoning capabilities from Ilms by leveraging negative data. In: Proceedings of the
+AAAI Conference on Artificial Intelligence. vol. 38, pp. 18591-18599 (2024)
+
+13. Liang, Y., Gan, C., Ying, R., Cui, Z.: Exploring behavior-driven development for code generation. In:
+International Conference on Intelligent Computing. pp. 41-51. Springer (2025)
+
+14. Liang, Y., Ying, R., Taniguchi, T., Gan, C., Cui, Z.: Recode: Leveraging reliable self-generated tests
+and fine-grained execution feedback to enhance Ilm-based code generation. In: International Conference
+on Intelligent Computing. pp. 510-521. Springer (2025)
+
+15. Lu, Y., Bartolo, M., Moore, A., Riedel, S., Stenetorp, P.: Fantastically ordered prompts and where to
+find them: Overcoming few-shot prompt order sensitivity. arXiv preprint arXiv:2104.08786 (2021)
+
+16. Luo, M., Xu, X., Dai, Z., Pasupat, P., Kazemi, M., Baral, C., Imbrasaite, V., Zhao, V.Y.: Dr. icl:
+Demonstration-retrieved in-context learning. arXiv preprint arXiv:2305.14128 (2023)
+
+17. Mishra, B.D., Tafjord, O., Clark, P.: Towards teachable reasoning systems: Using a dynamic memory
+of user feedback for continual system improvement. arXiv preprint arXiv:2204.13074 (2022)
+
+18. Patel, A., Bhattamishra, S., Goyal, N.: Are nlp models really able to solve simple math word problems?
+arXiv preprint arXiv:2103.07191 (2021)
+
+19. Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., Sutskever, I., et al.: Language models are
+unsupervised multitask learners. OpenAI blog 1(8), 9 (2019)
+
+20. Reimers, N., Gurevych, I.: Sentence-bert: Sentence embeddings using siamese bert-networks. arXiv
+preprint arXiv:1908.10084 (2019)
+
+21. Reynolds, L., McDonell, K.: Prompt programming for large language models: Beyond the few-shot
+paradigm. In: Extended abstracts of the 2021 CHI conference on human factors in computing systems.
+pp. 1-7 (2021)
+
+22. Rubin, O., Herzig, J., Berant, J.: Learning to retrieve prompts for in-context learning. arXiv preprint
+arXiv:2112.08633 (2021)
+
+23. Talmor, A., Herzig, J., Lourie, N., Berant, J.: Commonsenseqa: A question answering challenge targeting
+commonsense knowledge. arXiv preprint arXiv:1811.00937 (2018)
+
+24. Touvron, H., Lavril, T., Izacard, G., Martinet, X., Lachaux, M.A., Lacroix, T., Roziére, B., Goyal, N.,
+Hambro, E., Azhar, F., et al.: Llama: Open and efficient foundation language models. arXiv preprint
+ar Xiv:2302.13971 (2023)
+
+25. Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E., Narang, S., Chowdhery, A., Zhou, D.: Self-
+consistency improves chain of thought reasoning in language models. arXiv preprint arXiv:2203.11171
+(2022)
+
+26. Yang, J., Jin, H., Tang, R., Han, X., Feng, Q., Jiang, H., Zhong, S., Yin, B., Hu, X.: Harnessing the
+power of Ilms in practice: A survey on chatgpt and beyond. ACM Transactions on Knowledge Discovery
+from Data 18(6), 1-32 (2024)
+
+27. Ye, J.. Wu, Z., Feng, J., Yu, T., Kong, L.: Compositional exemplars for in-context learning. In: Inter-
+national Conference on Machine Learning. pp. 39818-39833. PMLR (2023)
+
+28. Ye, X., Durrett, G.: The unreliability of explanations in few-shot prompting for textual reasoning.
+Advances in neural information processing systems 35, 30378-30392 (2022)
+
+29. Zhao, W.X., Zhou, K., Li, J., Tang, T., Wang, X., Hou, Y., Min, Y., Zhang, B., Zhang, J., Dong, Z.,
+et al.: A survey of large language models. arXiv preprint arXiv:2303.18223 1(2) (2023)

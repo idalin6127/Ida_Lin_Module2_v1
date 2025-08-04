@@ -1,0 +1,282 @@
+
+
+--- Page 1 ---
+
+Context-aware Rotary Position Embedding
+Ali Veisi Delaram Fartoot Hamidreza Amirzadeh
+Axiom Lab
+{ali.veisi, h.amirzadeh, d.fartoot}@axiomlab.org
+Abstract is the self-attention mechanism, which enables
+the model to dynamically capture relationships be-
+Positional encoding is a vital component of tween elements in a sequence, regardless of their
+
+oO Transformer architectures, enabling models to distance. However, unlike traditional sequence
+
+N incorporate sequence order into self-attention
+
+ap) . vy . models such as Recurrent Neural Networks (RNNs)
+
+ql mechanisms. Rotary Positional Embeddings Sherstinsky. 2020 Cc lutional N IN
+
+= (RoPE) have become a widely adopted solution (Sherstinsky, ) or onvolutional Neural Net-
+5 due to their compatibility with relative position works (CNNs) (Gehring et al., 2017), transformers
+mr) encoding and computational efficiency. How- lack an inherent sense of order or position (Yun
+
+S ever, RoPE relies on static, input-independent et al., 2019). This makes positional encoding a
+
+ea) sinusoidal frequency patterns, limiting its abil- crucial component, as it injects position-related in-
+
+— ity to model context-sensitive relationships. formation into the model to enable sequence-aware
+
+= In this work, we propose CARoPE (Context- processing
+
+Aware Rotary Positional Embedding), a novel : ; .
+
+O generalization of RoPE that dynamically gen- Over the years, several strategies for positional
+3 erates head-specific frequency patterns condi- encoding have been proposed. These include fixed
+
+LJ tioned on token embeddings. This design intro- sinusoidal embeddings (Vaswani, 2017), learnable
+
+— duces token- and context-sensitive positional absolute position embeddings (Devlin et al., 2019),
+> representations while preserving RoPE’s effi- relative position encodings (Press et al., 2021; Raf-
+
+SA coments inpat-dependent pla se chifte using a fel et al., 2020), and rotary positional embeddings
+
+=) bounded transformation of token embeddings (RoPE) (Suet al., 2024). Among these, RoPE has
+
+oa) and integrates them into the rotary mechanism become one of the most widely adopted approaches
+
+(~ on the FineWeb-Edu-10B dataset using GPT-2 ity to encode relative positions through rotation-
+
+- variants trained on next-token prediction tasks. based transformations.
+
+CN Experimental results show that CARoPE con- RoPE works by rotating the query and key vec-
+ee sistently outperforms RoPE and other common wap: . . .
+> i . ; rae tors within the multi-head attention mechanism
+
+ey positional encoding baselines, achieving sig- . : . ;
+
+S< nificantly lower perplexity, even at longer con- using fixed sinusoidal frequencies. Although effec-
+rm text lengths. Additionally, CARoPE enables tive, RoPE still relies on predefined static frequency
+S faster training throughput without sacrificing patterns that are uniform across different inputs and
+
+model stability. These findings demonstrate attention heads. As a result, it remains position-
+that CARoPE offers a scalable, expressive, and dependent but not token- or context-dependent, lim-
+efficient upgrade to existing positional encod- iting its expressiveness in modeling more nuanced
+ing strategies in Transformer models.
+sequence structures.
+1 Introduction In this work, we propose CAROoPE (Context-
+Aware Rotary Positional Embedding), a novel en-
+Transformer architectures have revolutionized the hancement of RoPE that introduces dynamic, input-
+field of deep learning (Vaswani, 2017), achieving dependent frequency values for each attention head.
+state-of-the-art performance across a wide range By making frequency generation sensitive to the
+of tasks in natural language processing (Devlin input content, CARoPE enables the model to adap-
+et al., 2019; Liu, 2019; Chowdhery et al., 2023; _ tively encode positional information in a way that
+Team et al., 2023; Touvron et al., 2023; Achiam __ reflects both the position and the underlying con-
+et al., 2023). A key component of their success __ text. This results in more expressive and flexible
+
+
+--- Page 2 ---
+
+positional representations that are conditioned on _is the embedding of the token at position ¢. The
+the input context and vary across attention heads. generalized phase term becomes:
+Unlike RoPE’s fixed sinusoidal formulation, m
+CARoPE learns a nonlinear transformation of the gh (m) = S- f(xy}, ,
+input embeddings to generate head-specific fre- t=1
+quency patterns, which are then integrated into ; ;
+the rotary positional mechanism. This context- where h indexes the attention head, and f(2+)n €
+aware extension enables richer, token-sensitive po- (0, 1) is a learned, bounded scalar frequency Spe~
+sition encoding without sacrificing the efficiency cific to head h and token wt This formulation
+and compatibility of the original RoPE framework. maintains the exponential dimension-wise progres-
+We assess the effectiveness of our approach across S109 of RoPE but allows the frequency to vary
+multiple benchmark datasets, employing GPT-2  2¢TOSS both tokens and heads, yielding context-
+variants for the standard next-token prediction task. @W@T© P hase accumulation. ; _
+CAROoPE consistently outperforms existing posi- The frequency modulation function / is imple-
+tional encoding methods, including RoPE, and mented as:
+achieves lower perplexity in generated sequences. Fla) = 1
+‘! ~~ softplus(a,W) + 1’
+2 Proposed Method
+a where W € R?*" projects the token embedding to
+We formulate CAROoPE as a gener alization Of Ro- hy scalar values, one per head. The softplus activa-
+tary Positional Embedding (RoPE), designed t0 tion ensures positivity, while the inverse squashing
+introduce context-dependent positional modulation maps outputs to the interval (0, 1), promoting sta-
+within the attention mechanism. While RoPE en- bility when raised to higher powers.
+codes relative position through fixed sinusoidal ro- After computin go) (m) for each position
+tations, CARoPE replaces these static frequencies h . P . o 9% . P ,
+. : : ead, and dimension, we construct sinusoidal com-
+with dynamic, token- and head-specific alterna- ;
+; ponents:
+tives.
+To motivate our method, we first reinterpret stan- cos ( gh? ( m)), sin ( gh (m)),
+dard RoPE through the lens of phase accumulation.
+In RoPE, the position-dependent rotation applied — which are then applied to the query and key vectors
+to each embedding pair is defined as: using the standard RoPE formulation.
+To preserve stability and enable efficient training,
+oi(m) =m-6;, we initialize CARoPE using the standard RoPE
+formulation. Since RoPE corresponds to a special
+where m is the sequence position and 4; = case of CAROPE. This initialization ensures the
+10000~"/4 is the fixed frequency assigned to the model begins with a valid and expressive positional
+i-th embedding pair in a d-dimensional space. This prior.
+can be reformulated as a cumulative sum:
+m 3 Experiment Setup
+di(m) = S> j. 3.1 Datasets
+= For training, we use the FineWeb dataset (Penedo
+Noting that 6; follows a geometric progression, the et al., 2024), a large-scale dataset (15 trillion to-
+phase term becomes: kens) for LLM pretraining, derived from 96 Com-
+mn monCrawl snapshots. FineWeb has been shown to
+i i produce better-performing LLMs than other open
+oi(m) = » A =m Hi, pretraining datasets (Penedo et al., 2024). More
+7 specifically, we use a 10B sample of the Fine Web-
+revealing that each rotational component increases — Edu dataset, which consists of 1.3T tokens from
+exponentially with dimension. educational web pages filtered from the Fine Web
+CAROoPE generalizes this formulation by replac- dataset. We allocate 9.9B tokens for training and
+ing the fixed base frequency 6; with a learned, 0.1B for evaluation. For evaluation, we use the test
+input-dependent function f(x;), where 2; € R? set of FineWeb-Edu.
+
+
+--- Page 3 ---
+
+GPT-Small models
+Sequence Length RoPE CARoPE  Learnable Sinusoidal
+512 21.31 21.23 21.90 22.14
+1024 56.61 21.39 - 166.18
+GPT-Tiny models
+Sequence Length RoPE CARoPE  Learnable Sinusoidal
+512 29.33 28.99 30.48 30.62
+1024 81.27 36.74 - 223.28
+Table 1: Perplexity comparison on the FineWeb-Edu-10B evaluation set. The first row reports results from GPT-
+Small models, and the second row shows results from GPT-Tiny models. All models were trained for 19k steps on
+the Fine Web-Edu-10B training set with a context length of 512.
+3.2 Settings 4 Results
+For all next-token prediction tasks, we use the GPT- Table 1 reports the perplexity of models trained
+2 variants (Brown et al., 2020). For the FineWeb- with sequence length of 512 and different positional
+Edu-10B dataset, we use its small version (12 lay- encoding strategies on the FineWeb-Edu-10B eval-
+ers, 10 heads, and a hidden dimension of 768) with —_yation set. Across both GPT-Small and GPT-Tiny
+124M parameters, and a tiny version of GPT-2 variants, CARoPE consistently outperforms RoPE,
+(44M parameters) with 6 layers, 8 heads, and a achieving notably lower perplexity, especially at
+hidden dimension of 512. The evaluation metric longer sequence lengths. For example, at a se-
+is perplexity (PPL), and we train the models with —_ quence length of 1024, CARoPE reduces perplex-
+sequence length of 512. All the models are trained ity by more than 60% compared to RoPE in the
+on two H100 GPUs with 80G GPU RAM. Train- — GPpT-Tiny model (36.74 vs. 81.27). This demon-
+ing settings are the same as those used forGPT-2 _ strates CARoPE’s ability to generalize better over
+(Radford et al., 2019). Gradients are updated after longer contexts.
+processing 524,288 tokens and vocab size 1s 50304. The results validate the effectiveness of dynamic,
+For training on the Fine Web-Edu-10B dataset, we —_ input-dependent frequency modulation in enhanc-
+run 19k steps (“1 epoch) with batch sizes of 64, — ing positional representation. Notably, CARoPE
+and 32 for the tiny, and small models, respectively. not only achieves better perplexity but also enables
+The learning rate starts at 0.0006, with alinear faster training, processing approximately 0.76 mil-
+warmup Over 750 steps, followed by cosine decay _Jion tokens per second compared to 0.63 million
+to a minimum of 0.00006. for RoPE in GPT-Small models.
+3.3 Baselines 5 Conclusion
+ve ene are vin method the following po- We presented CAROoPE, a context-aware exten-
+sitional encoding approaches: £ Rotary Positional Embeddings that jntro-
+Learnable (Vaswani, 2017); A trainable addi- vos eos eee SMCS NEN
+. _, . . uces input- and head-dependent frequency modu-
+tive positional encoding (APE) where each posi- . . .
+4 : : ; lation. By dynamically adapting to token content,
+tion is associated with a learned embedding. The . . ws
+- . : CARoPE improves the expressiveness of positional
+number of positions is fixed and predefined during . . a .
+
+_. encoding with minimal overhead. Our experiments
+training. ; ; demonstrate consistent gains over RoPE across
+Sinusoidal (Vaswani, 2017): A fixed APE . Cae ges
+
+; ; model sizes and sequence lengths, highlighting its
+used in early Transformer models (Vaswani, 2017; . .
+. : . effectiveness for enhancing Transformer-based lan-
+Baevski and Auli, 2018; Ott et al., 2018; Lewis
+guage models.
+et al., 2021).
+RoPE (Su et al., 2024): A non-learnable rela-
+tive positional encoding (RPE) widely adoptedin References
+LLMs such as GPT-2 (Brown et al., 2020), LLaMA Josh Achiam, Steven Adler, Sandhini Agarwal, Lama
+(Touvron et al., 2023), PaLM (Chowdhery et al., Ahmad, Ilge Akkaya, Florencia Leoni Aleman,
+2023), and Gemma (Team et al., 2024a,b). Diogo Almeida, Janko Altenschmidt, Sam Altman,
+
+
+--- Page 4 ---
+
+Shyamal Anadkat, et al. 2023. Gpt-4 technical report. Colin Raffel, Noam Shazeer, Adam Roberts, Katherine
+arXiv preprint arXiv:2303.08774. Lee, Sharan Narang, Michael Matena, Yanqi Zhou,
+Wei Li, and Peter J Liu. 2020. Exploring the lim-
+
+Alexei Baevski and Michael Auli. 2018. Adaptive input its of transfer learning with a unified text-to-text
+representations for neural language modeling. arXiv transformer. Journal of machine learning research,
+preprint arXiv: 1809. 10853. 21(140): 1-67.
+
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie Alex Sherstinsky. 2020. Fundamentals of recurrent
+Subbiah, Jared D Kaplan, Prafulla Dhariwal, Arvind neural network (rnn) and long short-term memory
+Neelakantan, Pranav Shyam, Girish Sastry, Amanda (stm) network. Physica D: Nonlinear Phenomena,
+Askell, et al. 2020. Language models are few-shot 404: 132306.
+learners. Advances in neural information processing Jianlin Su, Murtadha Ahmed, Yu Lu, Shengfeng Pan,
+systems, 33:1877-1901, Wen Bo, and Yunfeng Liu. 2024. Roformer: En-
+
+Aakanksha Chowdhery, Sharan Narang, Jacob Devlin, Newocomp ine 368:127063. Position embedding.
+Maarten Bosma, Gaurav Mishra, Adam Roberts, Paul >
+Barham, Hyung Won Chung, Charles Sutton, Sebas- Gemini Team, Rohan Anil, Sebastian Borgeaud,
+tian Gehrmann, et al. 2023. Palm: Scaling language Yonghui Wu, Jean-Baptiste Alayrac, Jiahui Yu,
+modeling with pathways. Journal of Machine Learn- Radu Soricut, Johan Schalkwyk, Andrew M Dai,
+ing Research, 24(240): 1-113. Anja Hauth, et al. 2023. Gemini: a family of
+
+highly capable multimodal models. arXiv preprint
+
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and arXiv:2312.11805.
+
+Kristina Toutanova. 2019. Bert: Pre-training of deep
+
+bidirectional transformers for language understand- _ Gemma Team, Thomas Mesnard, Cassidy Hardin,
+
+ing. In Proceedings of the 2019 conference of the Robert Dadashi, Surya Bhupatiraju, Shreya Pathak,
+
+North American chapter of the association for com- Laurent Sifre, Morgane Riviere, Mihir Sanjay Kale,
+
+putational linguistics: human language technologies, Juliette Love, et al. 2024a. Gemma: Open models
+
+volume I (long and short papers), pages 4171-4186. based on gemini research and technology. arXiv
+preprint arXiv:2403.08295.
+
+Jonas Gehring, Michael Auli, David Grangier, Denis .
+
+Yarats, and Yann N Dauphin. 2017. Convolutional se- Gemma ‘Team, Morgane Riviere, Shreya Pathak,
+quence to sequence learning. In International confer- Pier Giuseppe Sessa, Cassidy Hardin, Surya Bhupati-
+ence on machine learning, pages 1243-1252. PMLR. raju, Léonard Hussenot, Thomas Mesnard, Bobak
+
+Shahriari, Alexandre Ramé, et al. 2024b. Gemma 2:
+
+Mike Lewis, Shruti Bhosale, Tim Dettmers, Naman Improving op en language models at a practical size.
+Goyal, and Luke Zettlemoyer. 2021. Base layers: arXiv preprint arXiv:2408.00118.
+
+Simp lifying training of large, sp arse models. In In- Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+ternational Conference on Machine Learning, pages Martinet, Marie-Anne Lachaux, Timothée Lacroix,
+6265-6274. PMLR. Baptiste Roziére, Naman Goyal, Eric Hambro,
+. ; ; Faisal Azhar, et al. 2023. Llama: Open and effi-
+
+Yinhan Liu. 2019. — Roberta: A robustly opti- cient foundation language models. arXiv preprint
+mized bert pretraining approach. arXiv preprint arXiv:2302. 13971.
+arXiv: 1907.11692, 364.
+
+A Vaswani. 2017. Attention is all you need. Advances
+
+Myle Ott, Sergey Edunov, David Grangier, and Michael in Neural Information Processing Systems.
+
+Auli. 2018. Scaling neural machine translation.
+arXiv preprint arXiv: 1806.00187. Chulhee Yun, Srinadh Bhojanapalli, Ankit Singh
+Rawat, Sashank J Reddi, and Sanjiv Kumar.
+
+Guilherme Penedo, Hynek Kydliéek, Anton Lozhkov, 2019. Are transformers universal approximators of
+Margaret Mitchell, Colin Raffel, Leandro Von Werra, sequence-to-sequence functions? arXiv preprint
+Thomas Wolf, et al. 2024. The fineweb datasets: arXiv: 1912.10077.
+
+Decanting the web for the finest text data at scale.
+arXiv preprint arXiv:2406.17557.
+
+Ofir Press, Noah A Smith, and Mike Lewis. 2021.
+Train short, test long: Attention with linear biases
+enables input length extrapolation. arXiv preprint
+arXiv:2108. 12409.
+
+Alec Radford, Jeffrey Wu, Rewon Child, David Luan,
+Dario Amodei, Ilya Sutskever, et al. 2019. Language
+models are unsupervised multitask learners. OpenAI
+blog, 1(8):9.

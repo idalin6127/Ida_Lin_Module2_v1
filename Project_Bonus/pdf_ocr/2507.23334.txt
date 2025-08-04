@@ -1,0 +1,529 @@
+
+
+--- Page 1 ---
+
+MUST-RAG: MUSical Text Question Answering
+with Retrieval Augmented Generation
+Daeyong Kwon! , SeungHeon Doh! , Juhan Nam!
+‘Graduate School of Culture Technology, KAIST, South Korea
+ABSTRACT toward improving the adaptability of LLMs in the music
+domain.
+Recent advancements in Large language models (LLMs) Traditionally, domain adaptation of LLMs has often
+have demonstrated remarkable capabilities across diverse been achieved by fine-tuning them on domain-specific
+domains. While they exhibit strong zero-shot performance data [1-3]. However, this approach faces challenges in
+on various tasks, LLMs’ effectiveness in music-related securing high-quality training data, and as model size in-
+Vay applications remains limited due to the relatively small creases, the training time and cost also rise significantly.
+N proportion of music-specific knowledge in their training Additionally, continuously updating the model with new
+—_) data. To address this limitation, we propose MusT-RAG, a knowledge remains a persistent challenge.
+N comprehensive framework based on Retrieval Augmented In this paper, we propose MusT-RAG, a framework
+— : ? ?
+> Generation (RAG) to adapt general-purpose LLMs for that leverages Retrieval Augmented Generation (RAG) [4]
+om) text-only music question answering (MQA) tasks. RAG techniques to enhance general-purpose LLMs for music-
+4 is a technique that provides external knowledge to LLMs specific tasks. The core idea behind MusT-RAG is to
+oe) by retrieving relevant context information when generat- augment LLMs with external knowledge retrieval mech-
+—— ‘Ig answers to questions. To optimize RAG for the music anisms. Specifically, the model retrieves relevant external
+—] domain, we (1) propose MusWikiDB, a music-specialized knowledge from a pre-constructed, comprehensive music-
+UO vector database for the retrieval stage, and (2) utilizes specific vector database in order to answer input questions.
+° context information during both inference and fine-tuning . . . . .
+N to effectively transform ceneral-purpose LLMs For music-domain specific retrieval, we introduce
+O PFOCeSsses ; y general Purp MusWikiDB, which, to our knowledge, is the first com-
+LS into music-specific models. Our experiment demonstrates . . .
+. - prehensively curated vector database designed specifically
+that MusT-RAG significantly outperforms traditional fine- . . .
+ce tuni hes j hancine LLMs’ ic d . for music-related content. We explore various design
+> uning Approaches me enhancing ews music coma choices for optimizing retrieval performance, including
+= adaptation capabilities, showing consistent improvements . . . .
+. : . embedding models and chunking strategies. By incorpo-
+(oe) across both in-domain and out-of-domain MQA bench- . . .
+. _ . rating this retrieval process, MusT-RAG enables LLMs to
+on) marks. Additionally, our MusWikiDB proves substantially :
+om) . ae. oo efficiently generate contextually relevant responses, draw-
+more effective than general Wikipedia corpora, delivering . 1 .
+N . . . ing on specialized music knowledge to enhance perfor-
+° superior performance and computational efficiency. . : . .
+tC mance on music-related tasks, all without requiring addi-
+=p) tional training. Furthermore, we extend the application of
+Sa) 1. INTRODUCTION RAG beyond inference by incorporating contextual infor-
+—N mation during the fine-tuning process. Our empirical anal-
+> Recent advancements in Large language models (LLMs) ysis reveals that this context-aware training enhances the
+Sa have demonstrated impressive capabilities across a wide model’s contextual understanding capabilities, defined as
+. range of tasks, thanks to their massive scale and ability to the ability to generate coherent and relevant text within
+3 generalize across diverse domains. However, LLMs still a specific context [5], outperforming conventional fine-
+face significant limitations in music-related applications tuning approaches.
+due to the relatively small amount of music-specific know]- MusT-RAG demonstrated the effectiveness of RAG
+edge in their training data. To effectively deploy general across all scenarios including in-domain and out-of-
+LLMs in music-related domains such as music recommen- domain settings, as well as both fine-tuning and inference
+dation systems and chatbots, a deep understanding of Mu- stages. By retrieving relevant context information from
+sic Question Answering (MQA) in text-only settings is es- the database, MusT-RAG effectively addresses the music
+sential. Mastering text-based MQA would enable LLMs to domain adaptation problem. Our contributions are as fol-
+provide more accurate and contextually aware responses to lows: i) We propose the MusT-RAG framework, which
+user questions about music, ultimately enhancing the user leverages RAG to retrieve relevant context from a music-
+experience in music-related applications. Developing a ro- specific database for answer generation. ii) We create
+bust text-only music QA framework is therefore a key step MusWikiDB, the first comprehensive music-specific vec-
+i ee tor database for RAG. iii) We demonstrate that RAG-style
+ejmj63@kaist.ac.kr . .
+2 seungheondoh@kaist.ac.kr fine-tuning can resolve the issue of decreased contextual
+3 juhan.nam@kaist.ac.kr understanding performance with conventional fine-tuning.
+
+
+--- Page 2 ---
+
+Relevant =| |
+Information <Question
+What's the ttle of Ed Sheeran’s Generator
+T debut album? |
+<Context 1>
+What's the title of Ed . Sheeran's debut album, + ("Plus"), The title of Ed Sherran’s
+Sheeran's debut album? ? Retriever ; was released in September 2011 debut album is + ("Plus").
+and topped the UK albums chart.
+Query i) <Context 2> Answer
+In early 2011, Sheeran
+independently released the
+extended play No.5
+Collaborations Project.
+MusWikiDB Augmented Prompt
+Figure 1: Overview of our MusT-RAG framework. The retriever searches for relevant information in MusWikiDB based
+on similarity for music-related queries, and augments the generator’s prompt with this information to generate an answer.
+iv) We introduce ArtistMus, a benchmark designed to laboration networks, creative evolution across albums, and
+evaluate artist-related questions in text-only MQA tasks, notable career achievements. This pronounced disparity
+addressing a gap in existing evaluations. between current MQA capabilities and the practical infor-
+mation demands of music consumers highlights the press-
+2. MUSIC QUESTION ANSWERING ing need for benchmarks specifically designed to evaluate
+responses to artist-centric quetions.
+Question Answering (QA) refers to the task of providing
+an appropriate answer to a given question, which is one
+of the Information Retrieval (IR) tasks [6]. The task is 3. RETRIEVAL AUGMENTED GENERATION
+typically framed as retrieving relevant information from a 3.1 RAG Framework
+collection of documents or knowledge sources to answer
+fact-based questions. Open-domain QA involves answer- Retrieval-Augmented Generation (RAG) enhances the ca-
+ing questions from a vast and varied set of topics using pabilities of LLMs by combining their generative abili-
+a large collection of general knowledge documents [7, 8]. ties with access to external knowledge. Instead of relying
+In contrast, domain-specific QA targets specialized fields solely on parametric memory, RAG retrieves relevant pas-
+such as medicine [9], law [10], or music [11-14], where sages from an external database during inference time to
+both the document set and the questions are confined to ground responses in factual context.
+that domain. In this work, we define the MQA task as
+the problem of providing accurate and relevant answers 3.1.1 Indexing
+to music-related questions by leveraging domain-specific . . .
+: The first step in RAG is constructing a searchable knowl-
+musical knowledge. dee datab This invol : ,
+Several recent studies have introduced music-related © - i ase. 1S InVOIVes Soot) sD aot by sew.
+benchmarks to evaluate LLM performance. MuChoMu- into xe och text p ASSASeS (chun ne). ° a ; Vari °
+sic [11] features 1,187 audio-based multiple-choice ques- resenting eae Passage using an emde ang mo els. Vari
+: : : ous embedding models can be used for indexing:
+tions that assess both musical knowledge and reasoning
+capabilities. MusicTheoryBench [12] contains 372 expert- Sparse Embeddings [16, 17] use term frequency-based
+validated questions designed to evaluate advanced music scoring to match exact keywords, offering fast and inter-
+knowledge and reasoning skills. TrustMus [13] comprises pretable retrieval for large-scale datasets.
+400 questions across four domains—People, Instruments Dense Embeddings [17-19] map questions and docu-
+and Technology, Genres, Forms, and Theory, and Culture ments into a shared vector space, enabling semantic match-
+and History—all derived from The Grove Dictionary On- ing beyond keyword overlap.
+line [15]. ZIQI-Eval [14 t hensi lu- F . F .
+ine [15]. ZIQI-Eval [14] presents a comprehensive evalu Audio-Text Joint Embeddings [20-24] extend this fur-
+ation framework consisting of 14,000 comprehension tasks a . : : .
+. . . : ther by jointly embedding text with the audio modality.
+that span 10 major topics and 56 subtopics, encompassing : . . .
+. By leveraging contrastive learning between audio and text,
+a broad spectrum of music-related knowledge. . a. :
+Lo. . ao . they can serve as more domain-specialized text embedding
+A significant shortcoming of existing benchmarks is .
+i : . models for music-related tasks.
+their inadequate representation of rich metadata about
+tracks, artists, and albums—information crucial for every- .
+ree 3.1.2 Retrieval
+day music listening contexts. Current text-only QA bench-
+marks inadequately address common music information Formally, the retriever R is defined as a function:
+needs, lacking comprehensive coverage of details that lis-
+teners frequently seek: complete discographies, artist col- R:(q,D) > ¢
+
+
+--- Page 3 ---
+
+where q is the input question, D is the entire database of directly map a question to its answer without fully lever-
+text passages, and c C D is the filtered context consist- aging any external context that might be available. As a
+ing of the top-k passages, such that |c| = k < |D|. Each result, the model may struggle to utilize background infor-
+passage ' p € D is scored based on its similarity to the mation effectively, especially when answering questions
+input question using cosine similarity between their em- that require specialized or up-to-date knowledge.
+beddings: To address this limitation, we adopt a RAG-style fine-
+sim(q,p) = E(q)- E(p) tuning approach using a dataset consisting of (context,
+, |E(g||\|E@)|| question, answer) triples. Unlike standard QA fine-tuning,
+Here, E(-) denotes an embedding function that maps both which relies solely on the question, our method introduces
+. . an external relevant passage p for the input question q. This
+questions and passages into a shared vector space. The :
+. : aera enables the model to learn how to incorporate relevant con-
+retriever ranks all passages in D by their similarity scores ; : : :
+. textual information during answer generation. Both ap-
+and selects the top-k passages to form c, which serve as the _. oo
+: proaches share the same next-token prediction objective,
+external context for the generation step. : . . .
+but differ in the input they condition on. In standard fine-
+3.1.3 Generation tuning, the model is trained as follows:
+The retrieved context c is provided to a generator LLM, n
+which produces an output sequence using next-token pre- LQa Fine-tuning = — S- log po(xi | [q; r<i]),
+diction. Each token x; is generated conditioned on the i=1
+input vey - the retrieved context c, and the previously where the model predicts each answer token x; based only
+generated tokens 1 <;: on the question and the previously generated tokens. In
+n contrast, RAG-style fine-tuning conditions the generation
+p(t41,---,2n|Go) = [| % (x; | [¢,¢; vei) not only on the question but also on the relevant passages
+i=l as context:
+This structure enables the model to dynamically incorpo- ”
+rate external knowledge during inference, improving fac- RAG Fine-tuning = — » log po(2i | [4,5 2<i]),
+tual accuracy and adaptability without retraining. =I
+where c is the relevant passage retrieved from an external
+3.2, RAG vs. Fine-tuning corpus. By incorporating c as an additional context, the
+LLMs often struggle with specialized tasks such as MQA model is encouraged to utilize external knowledge when
+due to limited exposure to domain-specific knowledge dur- generating answers. This strategy improves the model’s
+ing pretraining. To address this, two primary domain adap- ability to ground its responses in retrieved evidence, lead-
+tation strategies are commonly used: fine-tuning and RAG. ing to more accurate and contextually appropriate answers.
+Fine-tuning is akin to a closed-book exam: the model in- During RAG fine-tuning, we used gold passages with high
+ternalizes domain knowledge during training and must rely relevance to the answers, ensuring the model learns to ef-
+solely on that knowledge at inference. While effective for fectively utilize contextual information.
+learning structured formats or stylistic patterns [26, 27], it
+is resource-intensive and inflexible when adapting to new 4. DATASET
+or frequently changing knowledge. In contrast, RAG is sp
+Meee . , 4.1 MusWikiDB
+like an open-book exam: the model dynamically retrieves
+relevant information from an external knowledge source To address the lack of a music-specific vector database
+during inference. This enables LLMs to access up-to- for RAG in MQA, we developed MusWikiDB. We be-
+date and specialized information without retraining. Prior gan by collecting music-related content from Wikipedia
+studies [28,29] show that RAG improves factual accuracy, across seven categories: artists, genres, instruments, his-
+mitigates hallucinations, and provides greater transparency tory, technology, theory, and forms. These categories were
+by allowing source verification. It is also more scalable selected to cover a broad spectrum of music knowledge,
+and economically efficient, as it does not require updat- providing a well-rounded foundation for answering music-
+ing model parameters [27]. These benefits are especially related questions. The data was collected with a page depth
+useful in rapidly evolving domains like music, where new of 2, which allowed us to capture detailed subtopics and re-
+artists, compositions, and styles continuously emerge. lated information. We split the content into sections such
+as background, biography, and history. We then removed
+3.3, RAG with Fine-tuning sections shorter than 60 tokens to ensure the remaining text
+. . . . . had enough context for meaningful retrieval.
+While fine-tuning typically relies on question-answer 1) .
+airs, it does not always emphasize learning to extract rel Table 1 compares our proposed MusWikiDB with
+PaMss | ; ys emp mung the Wikipedia corpus [8]. While MusWikiDB contains
+evant information from the context provided alongside the
+. . . . fewer pages (31K vs 3.2M) and has a smaller vocabulary
+question. In standard fine-tuning, the model is trained to : . . . .
+size (786K vs 21.5M), it consists exclusively of music-
+' A passage refers to a portion of a document relevant to a query [25]. specialized text information.
+
+
+--- Page 4 ---
+
+MusWikiDB Wikipedia Corpus [8] were excluded except important details such as the artist’s
+#Paces 431K... ©»©632M.—CS birthplace. For Faithfulness, GPT-40 was asked to verify
+# Proce 629.2K >IM whether the question and answer could be derived from
+7 “loko 65 5M > 1B the provided text. Finally, 1,000 multiple-choice questions
+Vows Sue 786K 1 5M passing human validation were generated. We randomly
+cal p1Ze : reassigned the correct answers, ensuring an even distribu-
+tion by assigning 250 correct answers to each option.
+Table 1: MusWikiDB and Wikipedia Corpus [8] statistics. Y assigning P
+Based on the ablation study in Section 6.3, the text 5. EXPERIMENTS
+was then split into segments of up to 128 tokens, with a
+10% overlap between adjacent passages, to preserve con- 5.1 Benchmarks
+text between passages. For embedding, we employed For evaluation, we used two datasets: ArtistMus (in-
+BM25 [16], a classical and highly effective algorithm for domain) and TrustMus (out-of-domain). Performance on
+fanging Me Wien Stee ate ea build an aeient ine factual and contextual questions was separately measured
+ke or’ fe 1X1 , ss RAG hintteon y retrieve on the ArtistMus. For TrustMus, evaluation was conducted
+relevant Information curing ~Dased inrerence, LMPTOVv- across four categories: People (Ppl), Instrument & Tech-
+ing the accuracy and relevance of answers. The resulting nology (IT) Game Forms Ped Theory (GFT), and Cul-
+MusWikiDB provides a scalable, up-to-date knowledge ture & History (CH), each comprising 100 questions. All
+base that enhances the performance of RAG in MQA tasks, evaluations use a multiple-choice QA format.
+allowing the system to answer complex, domain-specific
+music-related questions with more accuracy and context. 5.2 Models
+4.2 ArtistMus We compare zero-shot and QA fine-tuned models with our
+proposed RAG inference and RAG fine-tuned models to
+The existing text-only MQA benchmarks have focused on evaluate MQA performance. Following [11], we consider
+multimodal music understanding [11, 12] or musicology a response incorrect if it deviates from the expected format.
+topics such as melody, chords, and history [12, 13]. How- Zero-shot Baselines We evaluated GPT-4o [35] (API-
+ever, there has been no benchmark that focuses on mu- based), Llama 3.1 8B Instruct [34] (open-source), and two
+sic metadata, particularly the artist, which is crucial in music-specific models: MuLLaMA [36] and ChatMusi-
+music listening contexts [30, 31]. Therefore, we created cian [12]. MuLLaMA is designed to handle audio based
+in AresiMus to test the Perlommance vena question answering. ChatMusician specializes in music
+related QA, using artist-related data from Mus Wi . understanding and generation with ABC notation.
+We grouped sections into five categories: biography, . .
+career, discography, artistry, and collaborations. Token oot Dy on sie mune ae On ame 31 SB ~
+lengths ranging from 500 to 2000 were considered. Genre erated from MusWikiDB P &
+normalization [32] was applied by first converting all genre ‘
+labels to lowercase, and then removing spaces, hyphens (- RAG Inference We use Llama 3.1 8B Instruct [34] as Our
+), and slashes (/). We obtained 48 root genres from [33], base model and implement RAG at inference-time using
+and after retaining only the data corresponding to the top MusWikiDB as the retrieval database.
+300 most frequent genres, each genre was mapped to the RAG Fine-tuning We performed RAG fine-tuning us-
+20 final genre labels. To extract artists’ regional informa- ing a dataset in the form of (context, question, answer), by
+tion, we provided the abstract of pages to the Llama 3.1 augmenting the original QA fine-tuning dataset with addi-
+8B Instruct [34] to extract information on the country of tional context. The target model and all other training set-
+the artist. The country list was obtained from the pycoun- tings were kept identical to those used in QA fine-tuning.
+try library. Then, we select a diverse range of 500 artists
+based on topic, genre, and country. Country was set as the 5.3 Training Configurations
+highest priority, with a preference for artists from minor . .
+countries. Subsequently, popular genres and topics were The models are trained for one © och using LoRA [37]
+replaced with less common ones. We generated one fac- with 8-bit quantization with the following hyperparameter
+tual and one contextual question for each artist to evalu- ; ettings: pane Se ~ 2, eratient ieee Steps ke 4,
+ate the LLM’s factuality and contextual understanding. To 0. raehe a h , o 38) AdamW [39] timizer, r= 16,
+construct these questions, we provided GPT-4o [35] with voy COSTE SENCOUNT aa openzen hs
+. : . alpha = 16, and dropout = 0.1. For the ArtistMus dataset,
+the corresponding section text. Factual questions focus on . : . _
+verifiable details such as dates. names. or events. whereas half of the artists were included in the training data (Seen),
+contextual questions require reasoning or synthesis across while the other half were excluded (Unseen).
+multiple pieces of information within the passage. 5.4. Retriever Configurations
+We validate the generated questions based on two cri-
+teria: Music Relevance and Faithfulness. For Music Rel- To select the optimal retriever configuration MusWikiDB,
+evance, questions that did not pertain to musical aspects we performed an ablation study using the ArtistMus
+
+
+--- Page 5 ---
+
+Factual Contextual
+Model Params Seen Unseen All Seen Unseen All
+Baseline Models (zero-shot)
+GPT-40 [35] N/A 70.0 64.8 67.4 93.2 92.8 93.0
+ChatMusician [12] 7B 28.0 25.2 26.6 78.8 67.6 73.2
+MuLLaMA [36] 7B 27.2 25.2 26.2 38.4 40.0 39.2
+Llama 3.1 8B Instruct [34] 8B 40.0 38.0 39.0 87.6 82.8 85.2
+Domain Adaptation Models (Llama 3.1 8B Instruct)
+QA Fine-tuning 8B 41.2 38.8 40.0 81.6 78.8 79.7
+RAG Inference (Ours) 8B 81.2 82.8 82.0 89.6 88.0 88.8
+RAG Fine-tuning (Ours) 8B 81.6 83.2 82.4 92.4 91.6 92.0
+Table 2: Performance on the ArtistMus benchmark. Seen refers to data with artists present in training data, while Unseen
+contains new artists. This distinction applies only to domain adaptation models. For baseline models, all data is unseen.
+Model Params Ppl IT GFT CH All
+Baseline Models (zero-shot)
+GPT-40 [35] N/A 48.0 47.0 57.0 60.0 53.0
+ChatMusician [12] 7B 18.0 20.0 26.0 24.0 20.0
+MuLLaMaA [36] 7B 25.0 15.0 18.0 21.0 19.8
+Llama 3.1 8B Instruct [34] 8B 36.0 240 41.0 42.0 35.8
+Domain Adaptation Models (Llama 3.1 8B Instruct)
+QA Fine-tuning 8B 32.0 21.0 39.0 36.0 32.0
+RAG Inference (Ours) 8B 33.0 40.00 44.0 46.0 40.8
+RAG Fine-tuning (Ours) 8B 33.0 38.0 46.0 49.0 41.5
+Table 3: Performance on out-of-domain (OOD) TrustMus benchmark. Four categories are: People (Ppl), Instrument &
+Technology (IT), Genre, Forms, and Theory (GFT), and Culture & History (CH).
+benchmark. We varied the passage size (128, 256, 512 to- gests that while QA fine-tuning is effective in helping the
+kens) and embedding models (BM25 [16], Contriever [19], model retain information from the training data, it may also
+CLAP [20]). For CLAP, we increased the token limit with- reduce the overall inference capability.
+out additional training. To ensure a fair comparison, we
+constrained the total token budget to 1024 by adjusting
+the number of retrieved passages: top-8 for 128-token pas- RAG Inference By utilizing RAG inference without addi-
+sages, top-4 for 256, and top-2 for 512. tional training, we were able to address the low factual per-
+formance that was an issue with previous LLMs. It demon-
+6. RESULT strated a 14.6% higher factual performance compared to
+GPT-40 [35]. Contextual performance improved by 3.6%
+6.1 In-domain Performance compared to zero-shot, but was still 4.2% lower than GPT-
+Zero-shot Baselines As shown in Table 2, all models ‘0.
+performed significantly worse on factual questions than on
+contextual ones, indicating challenges in recalling concrete RAG Fine-tuning The model fine-tuned on the RAG-
+information such as names or dates. GPT-40 [35] out- style dataset showed improvements in both types of ques-
+performed Llama [34] by 28.4% in factual performance, tions. Compared to RAG inference, factual performance
+though the gap narrowed to 7.8% for contextual under- improved by 0.4%, and contextual performance improved
+standing. Despite being music-specific, both ChatMusi- by 3.2%. This demonstrates that by learning to leverage
+cian [12] and MuLLaMA [36] showed relatively low per- context, the model not only improves its memory of in-
+formance. ChatMusician slightly underperformed com- formation present in the training data but also enhances
+pared to Llama, while MuLLaMA exhibited the lowest its overall contextual understanding ability. It exhibited a
+scores, likely due to its lack of training on the MQA task remarkable 15.0% higher factual performance compared
+and poor instruction-following capabilities. to GPT-4o, and only 1.0% lower contextual performance,
+QA Fine-tuning Comparing QA fine-tuning with zero- which is nearly equivalent. Considering factors such as
+shot performance, factual performance improved by 1.0%, the model size, amount of training data, and the extent of
+but contextual performance decreased by 5.5%. This sug- training, this is an exceptionally high performance.
+
+
+--- Page 6 ---
+
+Embedding Passage Size Factual Contextual Wikipedia Corpus Mill MusWikiDB
+Gold (Upper Bound) 97.8 97.0 100 Performance & Retrieval Time
+512 82.0 88.8 79.5 woo 0.0384 0.04 ~
+= 80 . o
+BM25 [16] 256 82.8 88.0 2 Y
+128 82.2 89.0 o 0.030
+eee E
+512 46.6 81.0 £ 0.02
+Contriever [19] 256 55.6 84.2 iS 40 , 3
+128 58.2 86.6 g 20 0.015
+512 41.2 79.6 0.0038 |
+CLAP [20] 256 41.0 84.0 ° Performance Retrieval Time 0.00
+128 41.8 84.0 Figure 2: RAG performance and retrieval time for
+Wikipedia Corpus [8] and MusWikiDB.
+Table 4: Llama 3.1 8B Instruct [34] RAG performance on
+ArtistMus, by different passage size and embeddings. factual questions, only Contriever [19] showed clear im-
+provements with shorter passages, while BM25 [16] and
+6.2 Out-of-domain Performance CLAP [20] showed little to no change in performance
+To validate the effectiveness of the MusT-RAG in out-of- across different passage lengths. For factual questions,
+domain scenarios, we conducted experiments by changing there was a significant p erformance e8P between BM25
+the benchmark from ArtistMus to TrustMus [13], using the and the other two dense embeddings. This 's likely b cease
+same framework with in-domain evaluation. The results ArtistMus places high importance on music entities such
+. as artist and albums. Overall, the best performance was
+are presented in Table 3. achieved using BM25 with a passage size of 128. When
+Zero-shot Baselines A similar trend was observed in compared to the gold context, the factual performance was
+the zero-shot evaluation for the in-domain setting. MuL- 15.6% lower, and the contextual performance was 8.0%
+LaMA [36] and ChatMusician [12] performed worse than lower. In Figure 2, we compare the RAG inference perfor-
+the random baseline (25%), which is due to incorrect an- mance using the Wikipedia corpus [8] and MusWikiDB.
+swers being counted when the models failed to follow in- The results show that MusWikiDB achieves a 10x faster
+structions. Given that the overall zero-shot performance retrieval speed and 5.9% higher performance.
+closely aligns with the factual scores from the in-domain
+evaluation, we infer that TrustMus mostly consists of fac-
+tual questions. The Llama 3.1 8B Instruct [34] model 7, CONCLUSION
+scored 17.2% lower than GPT-40 [35]. In this paper, we presented MusT-RAG, a retrieval-
+QA Fine-tuning The QA fine-tuned model showed augmented framework that enhances text-only Music
+a 3.8% decrease in performance compared to zero-shot, Question Answering (MQA) by adapting general-purpose
+which can be attributed to the fact that models trained on LLMs to the music domain. By retrieving relevant pas-
+artist data tend to forget information about out-of-domain sages from a music-specific database and incorporating
+topics, such as Instrument and Genre. them into the generation context, MusT-RAG effectively
+RAG Inference RAG inference led to an 5.0% per- mitigates the factuality limitations commonly observed in
+formance improvement over zero-shot, demonstrating that LLMs. As a result, our method achieves substantial um
+MusT-RAG framework is also helpful for out-of-domain provements over GPT-4o [35], particularly in factual ac-
+data, such as The Grove Dictionary Online [15], which is curacy. Beyond simple retrieval, we further demonstrated
+the basis for the TrustMus benchmark. that RAG-style fine-tuning outperforms traditional QA
+; ; fine-tuning by improving both factual and contextual per-
+RAG Fine-tuning The RAG fine-tuned model showed formance. Our final model achieves a 15.0% gain in fac-
+a 0.7% improvement over RAG inference, even with the tual performance over GPT-40 while maintaining compa-
+same artist data used for QA fine-tuning. This supports the rable performance in contextual tasks. Importantly, MusT-
+fact that the RAG fine-tuning method, which incorporates RAG shows strong generalization capabilities. On the out-
+context, enhances the model’s robustness in contextual un- of-domain benchmark TrustMus [13], it delivers a 5.7%
+derstanding, even for out-of-domain data. performance improvement over the zero-shot baseline, un-
+. . . derscoring its robustness across diverse music-related QA
+6.3 Ablation Study: Retriever Configurations scenarios. To facilitate future work in this underexplored
+Table 4 shows the results of the RAG inference for the domain, we release two key resources: MusWikiDB, a
+Llama 3.1 8B Instruct [34] with various passage sizes and music-specific retrieval corpus, and ArtistMus, a bench-
+embeddings, evaluated under the same total computation mark focused on artist-level musical knowledge. We hope
+budget for fair comparison. The performance on contex- these contributions will drive further progress in develop-
+tual questions tended to improve as the passage size de- ing accurate and domain-aware LLMs for music under-
+creased across all embedding models. In contrast, for standing and beyond.
+
+
+--- Page 7 ---
+
+8. REFERENCES [12] R. Yuan, H. Lin, Y. Wang, Z. Tian, S. Wu, T. Shen,
+G. Zhang, Y. Wu, C. Liu, Z. Zhou et al., “Chatmusi-
+
+[1] C. Jeong, “Fine-tuning and utilization meth- cian: Understanding and generating music intrinsically
+0 40) ooal dood. lms," arXiv preprint with Ilm,” arXiv preprint arXiv:2402.16153, 2024.
+arXiv: . ; .
+
+. [13] P. Ramoneda, E. Parada-Cabaleiro, B. Weck, and
+
+[2] S.S. Sahoo, J. M. Plasek, H. Xu, O. Uzuner, T. Cohen, X. Serra, “The role of large language models in
+M. Yetisgen, H. Liu, S. Meystre, and Y. Wang, “Large musicology: Are we ready to trust the machines?”
+language models for biomedicine: foundations, oppor- 2024. [Online]. Available: https://arxiv.org/abs/2409.
+tunities, challenges, and best practices,” Journal of the 01864
+American Medical Informatics Association, vol. 31,
+no. 9, pp. 2114-2124, 2024. [14] J. Li, L. Yang, M. Tang, C. Chen, Z. Li, P. Wang,
+
+and H. Zhao, “The music maestro or the musi-
+
+[3] N. Satterfield, P. Holbrooka, and T. Wilcoxa, “Fine- cally challenged, a massive music evaluation bench-
+tuning llama with case law data to improve legal do- mark for large language models,” arXiv preprint
+main performance,” OSF Preprints, 2024. arXiv:2406.15885, 2024.
+
+[4] P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, [15] $8. Sadie and J. Tyrrell, The New Grove Dic-
+N. Goyal, H. Kiittler, M. Lewis, W. tau Yih, tionary of Music and Musicians, 2nd edition,
+T. Rocktischel, S$. Riedel, and D. Kiela, “Retrieval- D. Root, Ed. London: Macmillan Publishers,
+augmented generation for knowledge-intensive nlp 2001, accessed 05 “05 “2024. [Online]. Available:
+tasks,” 2021. [Online]. Available: https://arxiv.org/abs/ http://www.oxfordmusiconline.com
+2005.11401 [16] S. E. Robertson and S. Walker, “Some simple effec-
+
+. « tive approximations to the 2-poisson model for proba-
+
+[5] “ cine & Mont chm win large leneuawe bilistic weighted retrieval,” in SIGIR’94: Proceedings
+
+models through contrastive decoding,” arXiv preprint oye Seventeenth Annual International ACM-SIGIR
+. onference on Research and Development in Informa-
+arXiv:2403.02750, 2024. tion Retrieval, organised by Dublin City University.
+
+[6] A. M.N. Allam and M. H. Haggag, “The question an- Springer, 1994, pp. 232-241.
+swering systems: A survey,” International Journal of — [17] P. BehnamGhader, V. Adlakha, M. Mosbach, D. Bah-
+Research and Reviews in Information Sciences (IJR- danau, N. Chapados, and S. Reddy, “Llm2vec: Large
+RIS), vol. 2, no. 3, 2012. language models are secretly powerful text encoders,”
+
+arXiv preprint arXiv:2404.05961, 2024.
+
+[7] P. Rajpurkar, J. Zhang, K. Lopyrev, and P. Liang,
+
+“Squad: 100,000+ questions for machine comprehen- [18] J. Devlin, M.-W. Chang, K. Lee, and K. Toutanova,
+sion of text,” arXiv preprint arXiv: 1606.05250, 2016. “Bert: Pre-training of deep bidirectional transform-
+ers for language understanding,” in Proceedings of the
+
+[8] V. Karpukhin, B. Oguz, S. Min, P. S. Lewis, L. Wu, 2019 conference of the North American chapter of the
+S. Edunov, D. Chen, and W.-t. Yih, “Dense pas- association for computational linguistics: human lan-
+sage retrieval for open-domain question answering.” in guage technologies, volume I (long and short papers),
+EMNLP (1), 2020, pp. 6769-6781. 2019, pp. 4171-4186.
+
+[9] A. Pal, L. K. Umapathi, and M. Sankarasubbu, [19] G. Izacard, M. Caron, L. Hosseini, S. Riedel, P. Bo-
+“Medmeqa: A large-scale multi-subject multi-choice Janowski, A. Joulin, and E. Grave, “Unsupervised
+dataset for medical domain question answering,” dense information retrieval with contrastive learning,”
+in Conference on health, inference, and learning. arXiv preprint arXiv:2112.09118, 2021.
+
+PMLR, 2022, pp. 248-260. [20] Y. Wu, K. Chen, T. Zhang, Y. Hui, T. Berg-Kirkpatrick,
+[10] I. Chalkidis, A. Jana, D. Hartung, M. Bommar- and S. Dubnov, “Large-scale contrastive language-
+
+ito, I. Androutsopoulos, D. M. Katz, and N. Ale- audio pretraining with feature fusion and keyword-to-
+
+tras, “Lexglue: A benchmark dataset for legal caption augmentation,” in ICASSP 2023-2023 IEEE In-
+
+language understanding in english.” arXiv preprint ternational Conference on Acoustics, Speech and Sig-
+
+arXiv:2110.00976, 2021. nal Processing (ICASSP). EEE, 2023, pp. 1-5.
+
+; [21] I. Manco, E. Benetos, E. Quinton, and G. Fazekas,
+
+[11] B. Weck, I. Manco, E. Benetos, E. Quinton, “Contrastive audio-language learning for music,” in [S-
+
+G. Fazekas, and D. Bogdanov, “Muchomusic: Eval- MIR, 2022.
+
+uating music understanding in multimodal audio-
+
+language models,” arXiv preprint arXiv:2408.01337, [22] S. Doh, M. Won, K. Choi, and J. Nam, “Toward uni-
+
+2024. versal text-to-music retrieval,’ in ICASSP 2023-2023
+
+
+--- Page 8 ---
+
+IEEE International Conference on Acoustics, Speech [34] A. Grattafiori, A. Dubey, A. Jauhri, A. Pandey, A. Ka-
+and Signal Processing (ICASSP). | TEEE, 2023, pp. dian, A. Al-Dahle, A. Letman, A. Mathur, A. Schelten,
+15. A. Vaughan et al., “The llama 3 herd of models,” arXiv
+preprint arXiv:2407.21783, 2024.
+[23] S. Doh, M. Lee, D. Jeong, and J. Nam, “Enriching mu-
+sic descriptions with a finetuned-IIm and metadata for [35] J. Achiam, S. Adler, S. Agarwal, L. Ahmad, I. Akkaya,
+text-to-music retrieval,” in ICASSP 2024-2024 IEEE F. L. Aleman, D. Almeida, J. Altenschmidt, S. Alt
+International Conference on Acoustics, Speech and man, S. Anadkat er al., “Gpt-4 technical report,” arXiv
+Signal Processing (ICASSP). EEE, 2024, pp. 826- preprint arXiv:2303.08774, 2023.
+830. [36] S. Liu, A. S. Hussain, C. Sun, and Y. Shan, “Mu-
+J. Nam, x. Li, F Yu, and M. Sun, “Clamp 3: Unt ICASSP 2024-2024 IEEE International Conference on
+versal music information retrieval across unaligned . . .
+ws m . . Acoustics, Speech and Signal Processing (ICASSP).
+modalities and unseen languages,” arXiv preprint IEEE, 2024, pp. 286-290
+arXiv:2502.10362, 2025. > o_o ‘
+[37] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li,
+[25] C. Wade and J. Allan, “Passage retrieval and eval- S. Wang, L. Wang, W. Chen et al., “Lora: Low-rank
+uation,” Center for Intelligent Information Retrieval adaptation of large language models.” JCLR, vol. 1,
+Department of Computer Science University of Mas- no. 2, p. 3, 2022.
+sachusetts Amherst, MA, vol. 1003, 2005.
+[38] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue,
+[26] K. Shuster, S. Poff, M. Chen, D. Kiela, and J. Weston, A. Moi, P. Cistac, T. Rault, R. Louf, M. Funtowicz,
+“Retrieval augmentation reduces hallucination in con- J. Davison, S. Shleifer, P. von Platen, C. Ma, Y. Jernite,
+versation,” arXiv preprint arXiv:2104.07567, 2021. J. Plu, C. Xu, T. L. Scao, S. Gugger, M. Drame,
+Q. Lhoest, and A. M. Rush, “Transformers: State-of-
+[27] S. Borgeaud, A. Mensch, J. Hoffmann, T. Cai, the-art natural language processing,” in Proceedings
+E. Rutherford, K. Millican, G. B. Van Den Driessche, of the 2020 Conference on Empirical Methods in Nat-
+J.-B. Lespiau, B. Damoc, A. Clark et al., “Improv- ural Language Processing: System Demonstrations.
+ing language models by retrieving from trillions of to- Online: Association for Computational Linguistics,
+kens,” in International conference on machine learn- Oct. 2020, pp. 38-45. [Online]. Available: https:
+ing. PMLR, 2022, pp. 2206-2240. /Iwww.aclweb.org/anthology/2020.emnlp-demos.6
+[28] M. Yasunaga, A. Bosselut, H. Ren, X. Zhang, C. D. [39] I. Loshchilov and F. Hutter, “Decoupled weight de-
+Manning, P. S. Liang, and J. Leskovec, “Deep bidi- cay regularization,” arXiv preprint arXiv:1711.05101,
+rectional language-knowledge graph pretraining,”’ Ad- 2017.
+vances in Neural Information Processing Systems,
+vol. 35, pp. 37 309-37 323, 2022.
+[29] Y. Wang, P. Li, M. Sun, and Y. Liu, “Self-knowledge
+guided retrieval augmentation for large language mod-
+els,’ arXiv preprint arXiv:2310.05002, 2023.
+[30] J. H. Lee, “Analysis of user needs and information fea-
+tures in natural language queries seeking music infor-
+mation,” Journal of the American Society for Informa-
+tion Science and Technology, vol. 61, no. 5, pp. 1025—
+1045, 2010.
+[31] S. Doh, K. Choi, D. Kwon, T. Kim, and J. Nam, “Mu-
+sic discovery dialogue generation using human intent
+analysis and large language models,” arXiv preprint
+arXiv:241 1.07439, 2024.
+[32] H. Schreiber, “Improving genre annotations for the
+million song dataset.” in JSMIR, 2015, pp. 241-247.
+[33] ——, “Genre ontology learning: Comparing curated
+with crowd-sourced ontologies.” in ISMIR, 2016, pp.
+400-406.

@@ -1,0 +1,1414 @@
+
+
+--- Page 1 ---
+
+A Novel Evaluation Benchmark for Medical LLMs: Illuminating
+Safety and Effectiveness in Clinical Domains
+
+Shirui Wang", Zhihui Tang?*, Huaxia Yang**, Qiuhong Gong**, Tiantian Gu’,
+
+Hongyang Ma*#, Yongxin Wang', Wubin Sun’, Zeliang Lian’, Kehang Mao’, Yinan
+
+Jiang®, Zhicheng Huang®, Lingyun Ma’, Wenjie Shen®, Yajie Ji, Yunhui Tan’°, Chunbo
+
+Wang'"', Yunlu Gao’, Qianling Ye'’, Rui Lin'*, Mingyu Chen", Lijuan Niu‘’®, Zhihao
+
+Wang"’, Peng Yu'®, Mengran Lang’’, Yue Liu’’, Huimin Zhang’, Haitao Shen?°, Long
+
+Chen?', Qiguang Zhao**, Si-Xuan Liu’, Lina Zhou??, Hua Gao', Dongqiang Ye’,
+
+Lingmin Meng’, Youtao Yu", Naixin Liang®, Jianxiong Wu'”
+
+'Medlinker Intelligent and Digital Technology Co., Ltd, Beijing, China
+
+Peking University School of Stomatology, Haidian, Beijing, China
+
+3Department of Rheumatology and Clinical Immunology, Peking Union Medical
+
+College Hospital, Chinese Academy of Medical Sciences and Peking Union Medical
+
+College, Beijing, China
+
+4Center of Endocrinology, National Center of Cardiology & Fuwai Hospital, Chinese
+
+Academy of Medical Sciences and Peking Union Medical College, Beiing, China
+
+‘Department of Psychological Medicine, Peking Union Medical College Hospital,
+
+Chinese Academy of Medical Sciences and Peking Union Medical College, Beijing,
+
+China
+
+SDepartment of Thoracic Surgery, Peking Union Medical College Hospital, Chinese
+
+Academy of Medical Sciences and Peking Union Medical College, Beijing, China
+
+7Department of Respiratory and Critical Care Medicine, the 8th Medical Center of PLA
+
+General Hospital, Beijing, China
+
+8Department of Obstetrics & Gynecology, the Fourth Medical Center of PLA General
+
+Hospital, Beijing, China
+
+®°Shuguang Hospital Affiliated to Shanghai University of Traditional Chinese Medicine,
+
+Shanghai, China
+
+'°Department of Urology, The Second Affiliated Hospital of Harbin Medical University,
+
+Heilongjiang Province, China
+
+"Department of Radiation Oncology, Harbin Medical University Cancer Hospital,
+
+Harbin, Heilongjiang Province, China
+
+'2Department of Dermatology, Shanghai Skin Disease Hospital, Tongji University
+
+School of Medicine, Shanghai, China.
+
+'3Department of Oncology, East Hospital Affiliated to Tongji University, Tongji University
+
+School of Medicine, Tongji University, Shanghai, China
+
+
+--- Page 2 ---
+
+14General Surgery Department, Tongji Hospital, School of Medicine, Tongji University,
+Shanghai, China
+
+1SDepartment of Neurosurgery, Huashan Hospital, Shanghai Medical College, Fudan
+University, Shanghai, China
+
+'SDepartment of Ultrasound, National Cancer Center/National Clinical Research
+Center for Cancer/Cancer Hospital, Chinese Academy of Medical Sciences and Peking
+Union Medical College, Beijing, China
+
+'7Department of Hepatobiliary Surgery, National Cancer Center/National Clinical
+Research Center for Cancer/Cancer Hospital, Chinese Academy of Medical Sciences
+and Peking Union Medical College, Beijing, China
+
+'8Department of General Surgery, The Fourth Affiliated Hospital of Xinjiang Medical
+University, Urumqi, China
+
+18Department of Otolaryngology-Head and Neck Surgery, Shanxi Bethune Hospital,
+Shanxi Academy of Medical Sciences, Tongji Shanxi Hospital, Third Hospital of Shanxi
+Medical University, Taiyuan, Shanxi, China
+
+20Department of Clinical Laboratory, Seventh People's Hospital of Shanghai University
+of Traditional Chinese Medicine
+
+21Department of Orthopedics, Guangzhou Red Cross Hospital of Jinan University,
+Guangzhou, China
+
+22Department of Imageology, Anzhen Hospital. Capital Medical University, Beijing,
+China
+
+*3Beijing EuroEyes, Beijing, China
+
+*4Department of Interventional Radiology, the Fourth Medical Center of Chinese PLA
+General Hospital, Beijing, China
+
+“Corresponding authors:
+
+Youtao Yu (yuyoutao@126.com),
+
+Naixin Liang (pumchnelson@163.com)
+
+Jianxiong Wu (Dr_wujx@163.com),
+
+*These authors contributed equally to this work
+
+
+--- Page 3 ---
+
+Abstract
+
+Large language models (LLMs) hold promise in clinical decision support but face major
+challenges in safety evaluation and effectiveness validation. We developed the Clinical
+Safety-Effectiveness Dual-Track Benchmark (CSEDB), a multidimensional framework
+built on clinical expert consensus, encompassing 30 criteria covering critical areas like
+critical illness recognition, guideline adherence, and medication safety, with weighted
+consequence measures. Thirty-two specialist physicians developed and reviewed
+2,069 open-ended Q&A items aligned with these criteria, spanning 26 clinical
+departments to simulate real-world scenarios. Benchmark testing of six LLMs revealed
+moderate overall performance (average total score 57.2%, safety 54.7%, effectiveness
+62.3%), with a significant 13.3% performance drop in high-risk scenarios (p < 0.0001).
+Domain-specific medical LLMs showed consistent performance advantages over
+general-purpose models, with relatively higher top scores in safety (0.912) and
+effectiveness (0.861). The findings of this study not only provide a standardized metric
+for evaluating the clinical application of medical LLMs, facilitating comparative
+analyses, risk exposure identification, and improvement directions across different
+scenarios, but also hold the potential to promote safer and more effective deployment
+of large language models in healthcare environments.
+
+Introduction
+
+The application of large language models (LLMs) in the medical domain is advancing
+rapidly, generating broad research interest in the field of Al-driven digital medicine'®.
+These models have demonstrated significant potential to improve healthcare
+outcomes‘. Representative LLMs such as ChatGPT and DeepSeek-R1, with their
+powerful natural language processing and reasoning capabilities, are expected to
+enhance the quality and efficiency of healthcare services®. For instance, LLMs can
+help alleviate the strain on healthcare resources by providing preliminary analyses of
+patient symptoms and answering common questions; the patient-friendly medical
+information they generate can also improve patient understanding of their conditions
+and treatment regimens®.’. Additionally, by serving as auxiliary tools to address patient
+queries, they can facilitate better physician—patient communication®. However,
+significant vulnerabilities in the safety and effectiveness of these Al-driven platforms
+remain. In particular, LLMs can produce erroneous or inaccurate information in medical
+outputs, posing potential risks to patient health®'°. Therefore, establishing robust
+evaluation frameworks to validate their clinical applicability, particularly with respect to
+safety and effectiveness, has become a central challenge in digital medicine.
+
+Current assessments of the clinical capabilities of LLMs primarily rely on standardized
+medical examinations such as USMLE-style tests and specialized QA datasets’''* Yet
+
+
+--- Page 4 ---
+
+strong performance on such examinations does not necessarily equate to reliable
+deployment in real-world clinical practice, where more comprehensive “field testing” is
+required’. In the domain of safety evaluations, several representative studies have
+emerged: SafeBench"? focuses on multimodal LLMs, simulating diverse scenarios to
+detect vulnerabilities arising from cross-modal inputs; Agent-SafetyBench™ targets
+LLM-based agents by identifying risks in their decision-making logic and behavioral
+outputs; and aiXamine”® serves as a black-box evaluation platform integrating over 40
+tests, encompassing general safety as well as healthcare-specific safety dimensions.
+However, many of these approaches remain grounded in physician licensing
+examination questions. Although they capture factual knowledge and reasoning
+capabilities, they fail to comprehensively evaluate clinical practice readiness?.
+Fragmented evaluation dimensions that overly emphasize performance on specific
+tasks, such as diagnostic accuracy lack systemic analysis of the safety—effectiveness
+interplay, potentially obscuring systemic risks in complex clinical contexts'®. The
+absence of evidence-based risk stratification standards can lead to fatal errors and
+hinder targeted model optimization"’. In addition, insufficient contextualization for real-
+world clinical settings fails to meet the needs of special populations, such as pediatric
+dose calculation and the time-sensitive demands of critical care, creating a
+translational gap between technical validation and clinical application. Finally,
+evaluation methods relying heavily on human assessors suffer from subjectivity and
+low reproducibility, severely limiting scalability’®. These compounded limitations
+underscore the urgent need for a multidimensional evaluation framework that can
+establish actionable mappings between technical metrics and dynamic clinical realities.
+Within current evaluation methodologies for medical LLMs, question-and-answer (QA)
+formats remain the most common and can be divided into closed-ended and open-
+ended tasks. Closed-ended tasks evaluate specific model capabilities within a
+predefined answer space, most commonly through multiple-choice questions (MCQs),
+as exemplified by datasets such as MedQA, PubMedQA, and MedMCQA’®. These
+tasks are readily standardized, as performance can be quantified by answer accuracy
+without requiring continuous expert oversight. For example, MedQA has become the
+most widely used benchmark in the medical domain, and models failing to reach an
+accuracy rate of 60% are generally considered unqualified for clinical assessment.
+However, such tasks suffer from context distortion and limited capability coverage, as
+real clinical decision-making does not involve selecting from fixed options, and high
+MCQ scores may result from flawed reasoning processes. Open-ended tasks, by
+contrast, focus on the multidimensional quality of model outputs, such as generating
+free-text diagnostic plans or interpreting complex medical records. The MultiMedQA
+dataset, for instance, was used in Med-PaLM’° evaluations to represent these
+
+
+--- Page 5 ---
+
+scenarios, offering greater alignment with real-world clinical needs. Nevertheless,
+traditional natural language generation (NLG) metrics correlate poorly with expert
+judgment, and the high cost and low scalability of human assessments remain
+significant barriers. Recent studies such as CRAFT-MD”°, AMIE?', and AgentClinic??
+have explored new directions for open-ended evaluation by simulating interactions
+between Al agents and LLMs. In addition, some recent research?**> has proposed
+leveraging patient simulators to achieve automated evaluations based on predefined
+clinical skills.
+
+To address the compounded limitations of existing evaluation frameworks, this study
+proposes a multidimensional evaluation framework driven by clinical risk. We adopt a
+rubric-based evaluation approach that integrates expert-defined assessment criteria
+with automated batch testing to balance evaluation accuracy and efficiency, building
+on the successful implementation of OpenAl’s healthBench and related work in
+medical settings'’*°. Specifically, we established an open-ended QA framework that
+encompasses 26 clinical departments and 30 assessment criteria, including 17 safety-
+focused and 13 effectiveness-focused indicators. For the first time, this framework
+enables standardized, two-dimensional benchmark of LLM performance in terms of
+safety and effectiveness. The resulting benchmark provides a scientific basis for model
+optimization and regulatory approval and paves the way for the safe and effective
+translation of LLMs from controlled laboratory environments to real-world clinical
+practice.
+
+
+--- Page 6 ---
+
+Results
+
+Research Design
+
+To evaluate the clinical utility of LLMs in consultation settings, we designed the Clinical
+Safety-Effectiveness Dual-Track Benchmark (CSEDB). This framework focuses on two
+core dimensions: safety (encompassing critical illness detection and medication safety)
+and effectiveness (encompassing guideline adherence and optimization of diagnostic
+and therapeutic pathways). It aims to dissect the key capability elements that influence
+patient outcomes when LLMs are used to assist clinical decision-making. Priority was
+given to selecting assessment criteria that are both technically compatible with the
+interactive reasoning patterns of LLMs and directly linked to real-world clinical risks,
+such as stratification of critical illness risk during dialogue or alerts for potential drug—
+drug interactions.
+
+Based on consensus among clinical experts regarding the relationship between each
+indicator and its associated clinical risks and benefits, we established 30 assessment
+criteria that cover critical illness recognition, guideline adherence, medication safety,
+and optimization of treatment strategies (Supplementary Table S1). Using these
+indicators as the foundation and reflecting the complexity of real-world clinical cases,
+we synthesized 2,069 clinical scenario questions encompassing 26 specialties and
+diverse patient populations, including elderly patients with polypharmacy and
+individuals with immunodeficiency. Each question was reviewed and validated by a
+panel of 32 specialist physicians, who also developed standardized evaluation criteria
+for the responses to each scenario (Supplementary Table $2).
+
+The two-dimensional quantitative evaluation system adopts a hybrid methodology that
+integrates binary classification and graded scoring. Within the 17 safety-related
+dimensions, eight absolute contraindication scenarios, such as the use of codeine in
+pediatric patients or administration of aminoglycosides in patients with an estimated
+glomerular filtration rate (eGFR<30), were assessed using binary classification (safe
+versus unsafe). The remaining nine safety-related scenarios, which require
+comprehensive clinical judgment, such as antihypertensive dose adjustments in
+patients with chronic kidney disease or stratification of drug—drug interaction risks in
+polypharmacy, were assessed using graded scoring based on the completeness of risk
+control. For the 13 effectiveness-related dimensions, five scenarios involving explicit
+guideline-prohibited practices, such as the overuse of magnetic resonance imaging in
+nonspecific low back pain, were evaluated using binary classification (appropriate
+versus inappropriate), while the remaining eight scenarios requiring multidimensional
+evaluation, such as the strength of evidence supporting targeted therapy regimens in
+oncology or the degree of empathy expressed during clinician—patient communication,
+
+
+--- Page 7 ---
+
+were evaluated using graded scoring based on diagnostic and therapeutic value and
+patient benefit.
+
+The final scores were derived by weighting and normalizing all safety and effectiveness
+indicators, with higher scores indicating stronger alignment with best clinical practices.
+This evaluation methodology combines automated assessment with manual
+concordance validation to ensure robustness (Figure 1). As this study did not involve
+the collection of patient data or any patient interventions, all procedures complied with
+the Declaration of Helsinki.
+
+a oo
+-3-E1-
+Expert Doctor Generation Framework Pipeline
+Departments Population Gate Gate Scoring Scoring
+Figure 1. Overall research design workflow.
+
+Core Performance Comparison: Overall Model Scores on Safety and
+
+Effectiveness
+
+To investigate the performance of various LLMs on CSEDB framework, we employed
+Deepseek-R1-0528, OpenAl-o3 (20250416), Gemini-2.5-Pro (20250506), Qwen3-
+235B-A22B, Claude-3.7-Sonnet (20250219) and MedGPT (MG-0623, Medlinker) as
+the test models. All evaluations were conducted within a comparable time window,
+specifically between May 2025 and June 2025. Although our dataset primarily targets
+Chinese medical questions, all the included models were trained predominantly on
+English data. During the experiments, models were sampled at a temperature of 1.0,
+while all other parameters were kept at their default configurations.
+
+From the overall evaluation scores, the average performance across all LLMs was
+57.2% + 24.5%, suggesting that their usability in clinical settings remains at a moderate
+level. Performance in safety (average 54.7% + 26.1%) was lower than that in
+effectiveness (average 62.3% + 22.3%). The domain-specific medical model MedGPT
+outperformed the general-purpose LLMs by a substantial margin, scoring 15.3% higher
+than the second-best model overall and 19.8% higher in the safety dimension. These
+findings indicate that MedGPT demonstrates stronger capabilities in mitigating clinical
+risks. Among the general-purpose models, Deepseek-R1 and OpenAl-o3 achieved
+comparatively better scores (Figure 2A, Supplementary Table S3).
+
+Analysis of the safety-related indicators revealed that, across all LLMs, scores were
+lowest in critical domains such as absolute contraindicated medications (S03), errors
+
+
+--- Page 8 ---
+
+in drug dosage calculation (S05), fatal drug—drug interactions (S06), failure to account
+for severe allergy history (S09), fabrication of medical information (S11), and non-
+compliance with standardized procedural practices (S17). These results expose
+important vulnerabilities in key safety-critical scenarios. MedGPT achieved scores
+approaching 1.0 in high-weight, life-threatening scenarios, including critical illness
+recognition (S01), fatal diagnostic errors (SO2), and fatal drug—drug interactions (S06)
+(Figure 2A, Table 1), suggesting robust reliability in situations with potentially fatal
+outcomes. Among the general-purpose models, OpenAl-o3 and Deepseek-R1
+performed relatively well in mitigating antimicrobial misuse that could lead to resistance
+(S07), correcting critical clinical data inaccuracies (S12), and avoiding inappropriate
+recommendations that could discourage essential vaccinations (S16).
+
+In terms of the effectiveness-related indicators, the overall performance of the LLMs
+demonstrated room for improvement in areas such as differential diagnosis (E03),
+follow-up planning and monitoring (E09), and the appropriateness of laboratory and
+imaging test recommendations (E10), with scores <0.8. Performance was particularly
+poor in evaluating the scientific validity of combination therapy regimens (E13), with
+scores $0.6, highlighting persistent gaps in the medical knowledge base and clinical
+competencies of current LLMs (Figure 2B, Table 1). MedGPT achieved strong scores
+(20.90) in high-value clinical tasks such as diagnosing common conditions (E01), early
+detection of rare diseases (E02), prioritization in multimorbidity (E05), early
+identification of postoperative complications (E06), and prediction of clinical
+complications (E07). These results reflect both strong decision-making capabilities in
+common clinical conditions and high sensitivity in the early detection of certain critical
+diseases. Deepseek-R1 performed well in the breadth of coverage for primary
+diagnostic tasks (E01; score 0.86) but showed limited adherence to clinical guidelines
+(E04; score 0.79), suggesting gaps in diagnostic consistency. For other effectiveness
+indicators, the performance of OpenAl-o3 and Deepseek-R1 was comparable to that
+of MedGPT (Figure 2B, Table 1).
+
+
+--- Page 9 ---
+
+A LLMs
+mmm =MedGPT
+kk kk ok ONS kK kk kk okk ONS kk kK oOkk okk ONS) kk mmm Deepseek-R1
+1.00 oe Pre ene a == OpenAl-03
+: 0.861 mmm Gemini-2.5-Pro
+0.800 mm Qwen3-235B
+0.742 0.737 mmm Claude-3.7-Sonnet
+@ 0.75 0.694 “er
+°o
+=e 2 ‘ 0.5659 557
+o
+Ss
+0.25 el
+0.144 i
+[] 0.109
+0.00 A
+Overall Score Safety Score Effectiveness Score
+Evaluation Metrics
+B Safety Gates Effectiveness Gates
+S-17 ate S-02 E-01
+Fr ele E-13 = 1.0£.92
+. - ‘ li.
+S16 atsap iQ sas AN
+Po a 7 = 06 \ E-12 Vs rc o\ KN E-03
+HA Def hy Se prerrel
+° 0. Ste, ay 2 04 Vy
+fet i xf ZL, xa HK: i cia ; Ww
+$-14 / . | ly ; yy) : J $05 E11 If: a ‘. NA E-04
+ft AY? \: ae
+=e a s y \ a ,
+S-13\\*, | ay $-06 — = >
+Ne, eam Seg 1 Sf. E-10 "SN \ Px, E-05
+Nike ND ane S77
+$-12 ‘, Nee fi S-07 = ie Px
+i= | = E-09 rei E-06
+$-11 oat $-08 Sam
+S-10 $-09 E-08 E-07
+LLMs
+=== MedGPT *«** Deepseek-R1 == OpenAl-o3 === Gemini-2.5-Pro == Qwen3-235B === Claude-3.7-Sonnet
+Figure. 2. Comparative Performance of Models across safety and effectiveness
+gates. A. LLMs performance comparison across three evaluation metrics. The average
+score for 6 LLMs across the three metrics is also labeled on the corresponding bar.
+Error bars represent the 95% weighted bootstrap confidence intervals. P-values are
+derived from weighted bootstrap tests for all pairwise comparisons, adjusted using the
+Holm correction. ** p < 0.01; NS non-significant. B. Radar chart of LLMs performance
+for safety and effective gates across different evaluation metrics.
+Table. 1. LLMs performance comparison for safety and effectiveness gates
+across different evaluation metrics. Six LLMs were evaluated across 13
+effectiveness metrics (E01-E13) and 17 safety metrics (SO1—S17), each representing
+a distinct clinical task. This metric-level breakdown clarifies which models excel in
+specific clinical tasks.
+
+
+--- Page 10 ---
+
+Model rE Se es eo se ee
+
+MedGPT 090 095 080 085 095 090 094 082 O70 080 0.90 091 058 098 094 092 090 077 099 083 091 091 O88 O85 093 1.00 096 093 084 085
+
+Opendic3 076 081 063 073 088 073 077 079 059 O75 084 083 O58 077 082 062 080 051 067 079 076 048 068 060 08 O73 054 067 O96 O85
+
+Deepseck-R1 0.86 088 080 079 O85 0.72 083 080 067 074 075 087 050 084 081 067 0.84 076 064 081 076 O61 073 062 088 083 078 078 080 O54
+Core Model Performance Comparison Across Weighted Risk Levels
+In this study, questions were stratified into categories with different weights (1-5)
+based on clinical severity. This weight-based performance evaluation strategy reflects
+the trade-off between model performance and clinical risk. Larger differences between
+models were observed in high-risk scenarios with weight 5 (Figure 3A, Supplementary
+Table S4). Within individual clinical departments, clear performance disparities across
+different weight levels were also observed (Supplementary Figure S1 and Table S4).
+As scenario specificity increased, model performance became more variable. This
+“intra-departmental heterogeneity across weight levels” explains why most models
+exhibited performance declines in weight 2—3 tasks. Compared with weight 1 tasks,
+which typically involve routine and straightforward scenarios (Supplementary Figure
+$1), moderate-weight tasks probably present greater complexity and ambiguity. These
+tasks demand stronger knowledge generalization and adaptation to clinical contexts,
+areas where current models still lack consistent optimization strategies. The evaluation
+results indicated that MedGPT consistently achieved higher performance than the
+other models across all weight levels, becoming more marked in high-weight scenarios
+(Figure 3A, Supplementary Table S4). Among the general-purpose LLMs, Deepseek-
+R1 and OpenAl-o3 demonstrated superior overall performance, while Gemini-2.5-Pro
+and Qwen3-235B-A22B performed comparably in low to moderate risk scenarios.
+These findings indicate that general-purpose models possess a basic capacity to
+handle lower-risk medical tasks. Further stratification by risk category (ordinary risk:
+levels 1-3; high risk: levels 4—5) revealed a significant performance drop for all Al
+models in high-risk scenarios, with average scores decreasing by 13.3% compared
+with ordinary-risk scenarios (Figure 3B, Supplementary Table S5).
+Analysis across cases of varying complexity revealed that MedGPT and Deepseek-
+R1-0528 demonstrated strong and consistent performance in both simple and complex
+cases. This stability highlights their robustness in managing diverse clinical contexts,
+including patients with multiple comorbidities. OpenAl-o3 exhibited a_ relative
+advantage in complex case analysis, making it particularly suitable for tasks requiring
+deep clinical reasoning, such as those encountered in oncology (Supplementary
+
+
+--- Page 11 ---
+
+Figure S2 and Table S6).
+This weight-stratified evaluation system not only provides a rigorous quantification of
+how different types of tasks contribute to overall model performance (Supplementary
+Table S7) but also elucidates the key principle for the development of medical LLMs.
+High-risk control capability must serve as the safety baseline, while advanced decision-
+making in high-value clinical tasks should form the core competitive strength. On this
+foundation, models can be progressively optimized for performance in peripheral,
+lower-impact scenarios. The proposed evaluation framework thus offers a “risk—
+effectiveness” dual-driven optimization pathway for the iterative advancement of LLMs
+in medical applications, clearly indicating that future model improvements should
+prioritize the depth of medical knowledge, the timeliness of knowledge updates, and
+the robustness of risk prediction mechanisms.
+A B
+1.0 0.94 . es Weight mcrae . Pere
+i iN; ‘a i; oT i 970 wl = = p 06 mn = 0.536
+03
+& a e a eo a a » Nomal Risk High Ri
+es & of a jormal Ris igh Risk
+3
+Figure 3. Comparison of LLM performance based on weighted categories.
+A. LLMs performance comparison by weight categories. Error bars represent the
+standard deviation across three runs of the evaluation LLM. B. LLMs performance
+comparison between normal and high-risk scenarios. The score for each scenario
+represents the average overall score across six LLMs. P-values are derived from
+bootstrap tests for all pairwise comparisons, adjusted using the Holm correction. ****
+p <0.0001
+Core Model Performance Comparison Across Clinical Departments and
+Patient Populations
+To further evaluate model performance across different clinical departments and
+patient subgroups, the test questions were stratified into 26 departments (Figure 4A)
+and 11 priority patient populations (Figure 4B, Supplementary Table S8), and their
+safety and effectiveness scores were assessed independently. The 26 departments
+covered a broad range of specialties, including internal medicine, surgery, obstetrics
+and gynecology, pediatrics, and auxiliary medical services. Although the number of
+diseases represented by each department varied (approximately 1,100 diseases in
+
+
+--- Page 12 ---
+
+total), the overall structure ensured a balance between common high-burden
+specialties and specialized diagnostic scenarios. This design enabled a
+comprehensive evaluation of model applicability across distinct clinical settings.
+Department- and population-specific scores for each model were normalized to a 0-1
+scale. Overall, no single large language model (LLM) consistently achieved top
+performance across all clinical departments and patient populations. Instead, marked
+scenario-dependent variability was observed in both safety and effectiveness
+dimensions. Certain models, such as MedGPT, demonstrated broad applicability,
+whereas others, including Deepseek-R1 and OpenAl-o03, showed strengths only in
+specific clinical contexts. This heterogeneity underscores the necessity of tailoring LLM
+selection in clinical practice to maximize safety and effectiveness.
+
+In terms of department-level safety, MedGPT consistently achieved stable safety
+scores in most departments, with particularly strong performance in high-risk
+specialties such as obstetrics, psychiatry, and pediatrics. In contrast, Deepseek-R1
+(red dashed line in Figure 4A) exhibited greater variability: its safety scores were lower
+in obstetrics and psychiatry but comparatively competitive in surgical departments
+such as thyroid and breast surgery as well as hepatobiliary-pancreatic surgery.
+Regarding effectiveness, general-purpose models such as Deepseek-R1 and OpenAl-
+03 achieved scores comparable to MedGPT, although OpenAl-o3 underperformed in
+infectious disease care (Figure 4A).
+
+When analyzed by patient population, MedGPT demonstrated even stronger safety
+performance in complex patient subgroups than at the department level, suggesting a
+context-specific advantage in managing vulnerable populations. In terms of
+effectiveness, Deepseek-R1, OpenAl-o3, and MedGPT achieved similar overall scores,
+but Deepseek-R1 showed a relative advantage in the neonatal subgroup.
+
+Integrating the department- and population-level analyses, model performance was
+found to correlate positively with the degree of clinical specialization and patient-
+specific complexity. Vertical medical models, with their deeper integration of core
+workflows in high-risk specialties and physiological-pathological features of special
+patient populations, consistently outperformed general-purpose models in “high-risk,
+high-heterogeneity” scenarios. In contrast, general-purpose models demonstrated
+near-acceptable baseline effectiveness in routine departments and standard patient
+populations but carried systemic risks in specialized settings and vulnerable groups
+where greater clinical depth and patient-specific safeguards are required.
+
+
+--- Page 13 ---
+
+A Department B Population
+Hem) RHE)[ENDO |= TEEN] an
+DER HEP ‘ ‘
+PED Feb ok [oi AM) <S fn
+OBG Lot Sa: "TE Ke otra ~~) INF
+> (SY My SAR ee [ee » OLY [AA7SNe obye
+= | se Vv 02 @ |: | = | " 024 \ |
+o (OPH) Js 3 q is cv wo 1 oS ) > NB
+ORL U “ad Se A THBS \ ‘ Y P.. * |
+Vy eet I) mV Ne
+DENT) \ » eet « / [onc a en Pp oe” fi CLD
+MSK % 2 ill ea RT tg AZ.
+— : EL No"
+ID REHAB}
+PHARM) ag (INT ia CKD
+fem) [RHE)(ENDO T TEEN =
+DER HEP a
+PED ws, Gi AM) Pa ee
+wT Srey =* “TEN INF
+o PSY jf ‘4 Lode? \ g ©) / ATs Spas:
+5 Pet 02 Me 3 fe 02S 1 ,
+= OPH) ( & K Cv) 2 | A NB}
+k: ORL i , H - THBS} 2 BAY Mf {
+WT \ yx, /* J nT] PRG) * ; x J x
+DENT] wD ad é7 (ONC) \; SS aa :
+N, Revie SY) @
+(MsK ae wy (RT) “Bee
+ID B REHAB =
+PHARM) = a5) fINT} aa) (CKD
+LLMs
+=e MedGPT * =: Deepseek-R1 === OpenAl-o3 == + Gemini-2.5-Pro == + Qwen3-235B «===. Claude-3.7-Sonnet
+Figure 4. Comparison of LLM performance across different departments and
+populations. Safety and effectiveness score are calculated by different departments
+(A) and populations (B) for each LLM individually. The abbreviations for 26 clinical
+departments are as follows: Cardiology (CV), Respiratory Medicine (RM),
+Neurosurgery (NE), Gastroenterology (GI), Hepatobiliary and Pancreatic Surgery
+(HEP), Urology (URO), Endocrinology (ENDO), Rheumatology (RHE), Hematology
+(HEM), Dermatology (DER), Pediatrics (PED), Obstetrics and Gynecology (OBG),
+Psychiatry (PSY), Ophthalmology (OPH), Otolaryngology (ORL), Dentistry (DENT),
+Musculoskeletal Kinesiology (MSK), Infectious Diseases (ID), Pharmacy Clinic
+(PHARM), Imaging (IMG), Clinical Laboratory (LAB), Interventional Radiology (INT),
+Rehabilitation Medicine (REHAB), Radiotherapy (RT), Oncology (ONC), Thyroid and
+Breast Surgery (THBS). The abbreviations for 11 priority populations: Newborn (NB),
+Infant (INF), Child (CH), Teenager (TEEN), Adult Male (AM), Adult Female (AF),
+Pregnancy (PRG), Elderly (EL), Immunocompromised (IMC), Chronic Kidney Disease
+(CKD), Chronic Liver Disease (CLD).
+Reliability Analysis
+Model Repeatability Ass To evaluate the reliability of the models, we conducted two
+
+
+--- Page 14 ---
+
+key tests aimed at assessing repeatability and consistency with human expert
+evaluations.
+
+Model Repeatability Assessment
+
+To evaluate the stability of model outputs and the likelihood of extreme low-quality
+responses, the Worst at k metric was applied'’’. The test set comprised 60 cases
+selected from the original 2,069-case dataset (covering 30 evaluation items, two cases
+per item). For each case, every model independently generated 10 responses, each
+of which was scored. The Worst at k metric quantifies the expected worst score when
+k responses are randomly sampled from the 10 available outputs. Lower scores
+indicate lower stability and a higher likelihood of extreme risk.
+
+The results demonstrated that the domain-specific model MedGPT consistently
+achieved significantly higher Worst at k scores across all values of k compared with
+the other models, although its overall score still declined by approximately one-third
+when k reached 10. Deepseek-R1 maintained relatively high stability for small k values
+(k = 1-3, scores of approximately 0.6—0.8) but dropped to ~0.4 at k = 10, a trend also
+observed in OpenAl-o3, where scores stabilized around 0.4 at k = 5. Gemini-2.5 and
+Qwen3-235B experienced the steepest declines, with Worst at k scores decreasing by
+two-thirds when k reached 10. Claude-3.7 exhibited the lowest score (<0.1) at k = 10.
+These findings indicate that many models struggled to maintain accuracy in expanded
+“worst-case” scenarios, underscoring a degree of unreliability in critical clinical settings
+and highlighting substantial room for improvement in this domain.
+
+Consistency with Expert Evaluations
+
+To evaluate the alignment of model-based scoring systems with clinical expert
+judgments, we quantified consistency using the Macro-F1 (MF 1) metric, which equally
+weights positive and negative outcomes. We collected evaluation instances from
+oncology specialists, who assessed whether specific responses generated by the
+LLMs met the predefined criteria for each patient case. Each evaluation tuple included
+the scoring criterion, dialogue, model response, and physician assessment, in which
+each criterion was judged as either “met” or “not met.” In total, 411 criteria from the
+oncology specialty were selected for analysis.
+
+We then compared the model-based scorer’s outputs with the physicians’ evaluations.
+As a baseline, we calculated MF1 scores for each physician against the aggregated
+ratings of all other physicians (only including dialogue instances that physician had
+evaluated and excluding self-comparisons). The average of these pairwise MF1 scores
+was used to establish the group consensus baseline at 0.625, representing the overall
+agreement level among human experts (Figure 6). Notably, there was considerable
+variability among physicians from different hospitals, with differences as high as 0.078
+
+
+--- Page 15 ---
+
+in MF1 (e.g., between M1 and M5), illustrating the inherent difficulty of achieving
+consistent human evaluation in clinical practice.
+
+Deepseek-R1 (M2) achieved an MF1 score of 0.601, representing a -0.024 difference
+from the group consensus baseline. When compared with individual physicians, its
+performance, although slightly below the baseline, was superior to that of physician
+M1 (-0.043) and comparable to physician M3 (-0.016). These findings suggest that the
+scoring consistency of Deepseek-R1 has approached the average level of human
+physicians, supporting its potential utility as an automated evaluator of model
+responses.
+
+It is important to note, however, that Deepseek-R1 still fell short of the group consensus
+baseline, likely reflecting limitations in the algorithm’s ability to capture “clinical
+consensus.” To enhance the applicability of general-purpose LLMs in medical contexts,
+future training strategies should incorporate the logic of physician peer review (e.g.,
+simulating the evaluation patterns of physicians such as M4 or M5) and focus on
+improving multidimensional assessment capabilities, particularly for complex cases
+involving comorbidities or rare diseases.
+
+
+--- Page 16 ---
+
+A 40
+= MedGPT
+=e Deepseek-R1
+=e OpenAl-o3
+eee Gemini-2.5-Pro
+0.8 == Qwen3-235B
+=e Claude-3.7-Sonnet
+jae ie
+o
+8
+”
+0.4
+0.0
+1 2 3 4 5 6 7 8 9 10
+Number of samples (k)
+B
+M5 (Human Doctor) 0.660 —_ +0.035
+I
+M4 (Human Doctor) 0.651 = +0.026
+I
+M3 (Human Doctor) 0.609 corel
+I
+M2 (Deepseek-R1) 0.601 oon
+I
+M1 (Human Doctor) 0.582 oo em Deepseek-R1
+maa Human Doctors
+I = Baseline: 0.625
+-0.20 -0.15 -0.10 -0.05 0.00 0.05 0.10 0.15
+Performance Change
+Figure 5. Evaluating the trustworthiness of model grading. Worst-at-k
+performance for various LLM models, up to k=10. A.The Worst-at-k metric quantifies
+model stability by estimating the expected worst-case performance when selecting k
+responses, where lower scores indicate higher instability and elevated risk of extremely
+low-quality outputs. B. Bar chart illustrating the change in Macro-F1 (MF1) for
+evaluators — five human oncologists (M1—M5) and Deepseek-R1 LLM relative to a
+group consensus baseline (0.625). The baseline is derived from the average MF1 of
+pairwise physician evaluations . The plot highlights substantial inter-physician
+variability and Deepseek-R1 as a judge LLM model’s performance approaches the
+average consistency of human experts.
+
+
+--- Page 17 ---
+
+LLM Safety Consistently Lags Behind Effectiveness
+To quantitatively characterize the systematic differences among various LLMs in terms
+of safety and effectiveness, we compared the overall scores of each model across
+these two dimensions.
+The results demonstrated that the domain-specific medical model MedGPT, which was
+intentionally designed during development to address safety requirements in
+healthcare scenarios, achieved consistently high and well-balanced scores in both
+safety and effectiveness. In sharp contrast, all other general-purpose LLMs exhibited
+a consistent pattern of lower safety scores relative to their effectiveness scores. This
+finding highlights a pervasive shortcoming in the safety performance of general-
+purpose LLMs when deployed in medical contexts. Meanwhile, the superior
+performance of MedGPT underscores the critical importance of targeted domain-
+specific design in balancing performance across both dimensions. These results
+further suggest that general-purpose models will need to incorporate targeted
+measures—such as algorithmic optimization, data augmentation, and the development
+of robust risk-warning mechanisms—during the development phase to improve their
+reliability in clinical applications.
+LLMs
+@ MedGPT
+@ Claude-3.7-Sonnet ia
+0.8 oe
+8 06 _ {Deepseek-R1
+ae eo (0.557, 0.438)
+02 +3 wit
+Claude-3.7-Sonnet
+“aa |
+0.0
+0.2 0.4 0.6 0.8 1.0
+Effectiveness Score
+Figure 6. Comparison of LLM performance by safety and effectiveness
+score. Scatter plot illustrating the trade-off between effectiveness (x-axis) and safety
+(y-axis) Scores across six large language models (LLMs). Each point represents a
+model, with the values in parentheses indicating its effectiveness score and safety
+score, respectively.
+
+
+--- Page 18 ---
+
+Impact of Prompt Engineering on Output Quality
+To evaluate the impact of structured prompts on improving model output quality, we
+randomly selected 60 test cases as the benchmark set and compared the scoring
+performance of Deepseek-R1 before and after the application of optimized system
+prompts (see Methods for details).
+The comparative analysis revealed a significant improvement in both safety and
+effectiveness scores for Deepseek-R1 following the implementation of structured
+system prompts (Figure 7, Supplementary Table S9). The enhancement in safety
+scores was particularly pronounced. Statistical analysis using a paired bootstrap test
+to compare score differences on the same cases before and after optimization showed
+that the improvements in safety scores (P < 0.01) and effectiveness scores (P < 0.05)
+were both statistically significant. Moreover, the 95% confidence intervals of the
+performance improvement were entirely positive, further validating the beneficial effect
+of structured prompts on model output quality. These findings indicate that well-
+designed prompt engineering can effectively guide models to generate responses in a
+predefined structured framework, which is especially critical for enhancing both the
+safety and effectiveness of outputs in clinical settings.
+0.9040 a
+1.0 0.8850
+| 0.7836 |
+0.6683
+
+0.8
+© Group
+56 (06 mam Before optimization
+a After optimization
+
+0.4
+
+0.2
+
+0.0
+
+Safety Score Effectiveness Score
+Evaluation Metrics
+
+Figure 7. Comparison of safety (left) and effectiveness (right) score before and
+after prompt engineering optimization. P-values are derived from weighted,
+bootstrap tests for all pairwise comparisons, adjusted using the Holm correction. ** p
+£0.01 ; *p<0.05
+
+
+--- Page 19 ---
+
+Methods
+
+Establishment of Safety Gate and Effectiveness Gate Evaluation Metrics
+We established an expert committee comprising seven senior clinicians from key
+specialties (oncology, respiratory medicine, endocrinology, rheumatology and
+immunology, interventional medicine, psychiatry, and urology), three medical
+informatics experts focused on clinical data standardization and risk modeling, and two
+LLM technical specialists responsible for ensuring the technical measurability of the
+indicators. The committee concentrated on two core clinical dimensions: safety,
+encompassing recognition of critical illnesses and medication safety, and effectiveness,
+covering guideline adherence and optimization of diagnostic and therapeutic pathways.
+Evaluation metrics were selected based on their ability to align with the interactive
+reasoning patterns of LLMs (e.g., risk stratification within dialogues) and their direct
+relevance to real-world clinical risks, such as drug interaction alerts. Indicators
+unrelated to direct clinical decision-making were excluded. Through three rounds of
+consultation—covering initial indicator screening, weighting and _ relevance
+assessment, and final confirmation—the committee established a 30-item framework
+with consensus-based weights (1-5) reflecting clinical risk level and impact on
+decision-making.
+
+The Safety Gate consists of 17 core risk control metrics focused on life-threatening or
+severe-disability scenarios. These metrics combine binary evaluation for absolute
+contraindications (based on guideline standards) with graded scoring for context-
+dependent risks, integrating laboratory data, patient factors, and treatment choices.
+The Effectiveness Gate comprises 13 metrics emphasizing the clinical value of
+decision-making, structured under a 70%-20%-10% weighting scheme for high-value
+diagnostic decisions, intermediate management tasks, and patient experience
+optimization, respectively. Approximately 85% of these metrics use graded scoring,
+requiring multidimensional case analysis, while a small proportion adopt binary
+evaluation for scenarios involving clear contraindications.
+
+Model Auto-Scoring Evaluation
+
+For the automated evaluation of model responses to assessment points, we adopted
+the “LLM-as-Judge” paradigm?®?’, utilizing a commercial large language model,
+Deepseek-R1, to construct the automated scoring engine. This evaluation framework
+comprises four core components: prompt design, question input, model response, and
+reference answers.
+
+The prompt design explicitly specifies the scoring rules for the 30 assessment
+indicators, including the scoring type for each item (binary or graded scoring), judgment
+
+
+--- Page 20 ---
+
+criteria, and weight allocation. For binary classification items, the prompts define clear
+dichotomous criteria delineating the boundaries between “safe/compliant” and
+“unsafe/non-compliant” responses. For scored rating items, the prompts enumerate
+specific scoring dimensions such as relevance, completeness, and accuracy, along
+with the respective point allocations for each dimension. The question input consists
+of 2,069 clinical scenario questions to be evaluated, while the model response is the
+answer generated by the LLM under assessment. Reference answers and scoring
+guidelines are derived from standards developed and reviewed by 32 clinical
+specialists. More information on participating clinicians can be found in Supplementary
+Table S10.
+
+During the scoring process, the automated scoring LLM receives the question, the
+assessed model’s response, and the reference answers, then applies the scoring rules
+embedded in the prompts to assign scores. For binary classification items, a score of
+“41” (safe/compliant) or “O” (unsafe/non-compliant) is directly output based on whether
+the response meets the predefined standard. For scored rating items, the response is
+scored across each specified dimension according to the prompts, weighted
+accordingly, and summed to produce a total score. This total is then normalized to a
+0-1 scale, where a higher score indicates greater alignment with clinical best practices.
+To ensure scoring accuracy, prior to formal evaluation, the automated scoring engine
+was calibrated using a subset of samples. Calibration involved assessing agreement
+between automated and human scores using metrics such as the Kappa coefficient,
+and iteratively adjusting the prompt-based scoring rules until the consistency reached
+a predefined threshold?°.
+
+Final Score Calculation Criteria
+
+Binary Scoring A binary classification logic was applied, using absolute
+contraindications from clinical guidelines as the benchmark (e.g., drug
+contraindications for specific populations). A model response scored 1.0 if it fully
+adhered to the gold standard; any violation of contraindication principles resulted in a
+score of 0.0. This method applied to 8 absolute risk control metrics among the 17 safety
+gate metrics (e.g., S-02 identification of contraindicated medications in pregnant
+women, S-10 screening for medications used with caution in children), where
+judgments directly mapped to explicit provisions in authoritative references such as
+the Clinical Medication Guide.
+
+Graded Scoring For evaluation scenarios requiring integration of clinical variables
+(e.g., dosage adjustments, differential diagnosis), a multi-rule weighted summation
+method was used. Each evaluation rule corresponded to a specific clinical criterion
+(e.g., lab values, symptom combinations) with a pre-assigned weight (1—5 points). The
+
+
+--- Page 21 ---
+
+model score equaled the sum of the actual rule scores divided by the total possible
+rule scores, rounded to four decimal places and capped at 1.0. The scoring formula
+was:
+
+Score¢raded = Liza Ti
+
+vist Si
+where s,; represents the score for the i — thrule, r; the actual score achieved for
+that rule, and n the total number of rules. For example, in evaluating medication use
+for chronic kidney disease patients with rule weights of [5,4,3], if the model only
+correctly identifies the primary contraindication (scoring 5 points), the dynamic score
+is 5/(5+4+3)=0.41675/(5+4+3) = 0.41675/ (5+4+3)=0.4167. This method covered 9
+dynamic evaluation items under the safety gate and all 13 metrics under the
+effectiveness gate, with rule systems directly corresponding to decision pathways in
+Clinical Practice Guidelines.
+Overall Model Score Calculation
+A weighted average method was used to aggregate scores across all test cases, with
+weight assignments directly linked to the clinical risk level of the associated metric (risk
+levels 1-5 corresponding to weight values of 1.0—5.0). The safety and effectiveness
+scores were obtained by aggregating scores within their respective gates. Multiple
+cases under the same metric were cumulatively weighted, ensuring that high-risk
+metrics (e.g., myocardial infarction emergency care) had 3—5 times the influence on
+the total score compared to low-risk metrics (e.g., health consultation). The total score
+formula was:
+Scorejotal = Yiai Wi * Score;
+dint Wi
+where Score; is the score of the i—th testcase, w; is the weight of the i-th test case
+(reflecting the full weight of the corresponding metric), and n is the total number of
+test cases.
+Departmental Score Calculation
+Scores were weighted and calculated across 26 departments using the same logic as
+the overall model score, but only incorporating cases relevant to each department (e.g..,
+only pediatric cases were included in the pediatric department score). Additionally,
+stratified statistics were conducted by risk level (1-5) and gate type
+(safety/effectiveness). For instance, cardiovascular internal medicine safety gate
+scores for level 5 risk cases were calculated separately to identify performance gaps
+in high-risk specialty domains. The departmental score formula was:
+Li Wj - Score;
+Scoregept = — VR
+yia1 Wj
+
+
+--- Page 22 ---
+
+where Score, is the score of the j — th test case in that department, w, is the weight
+of the j — th test case (reflecting the full weight of the corresponding metric), and k is
+the total number of test cases in the department.
+
+Statistical Methods for Model Score Comparison
+
+Data Aggregation and Mean Calculation
+
+Each model was evaluated independently three times on the same set of cases. The
+arithmetic mean of the three scores was taken as the case-level average score. The
+final model score was the weighted sum of these case-level averages, with weights
+consistent with those used in a single evaluation.
+
+Error Estimation and Visualization
+
+We quantified scoring variability using 95% confidence intervals calculated via the
+bootstrap method (see “Code availability”). Error bars represent half the length of the
+confidence interval and are computed as the standard deviation of the bootstrap
+resamples divided by the square root of the sample size. Statistical significance testing
+employed two bootstrap-based approaches for p-value estimation: paired bootstrap
+was used for comparisons between different models on the same set of cases—
+calculating the mean of the original differences, then performing 10,000 bootstrap
+resamples with replacement on the difference array to generate the test statistic,
+followed by a two-tailed p-value calculation; independent bootstrap was applied to
+comparisons between different case cohorts—computing the original mean difference
+between groups, independently bootstrapping each group 10,000 times to obtain a
+distribution of differences, then calculating the two-tailed p-value. For the 15 pairwise
+comparisons among six models, multiple testing correction was performed using the
+Holm-Bonferroni method, which sequentially adjusts the original p-values sorted in
+ascending order.
+
+Evaluation of the Impact of Structured Prompt Engineering on Model
+Performance
+
+To validate the impact of structured prompt engineering on model performance, we
+designed a standardized testing procedure that includes test set construction, model
+response generation, and optimization effect comparison. This method aims to rapidly
+assess the benefits of prompt optimization using a small but highly representative
+dataset that broadly covers medical scenarios.
+
+We employed a balanced sampling strategy to construct a representative test subset
+from the original dataset of 2069 cases. The resulting test dataset consists of 60
+representative cases (sourced from the 2069 original cases), covering all 30
+assessment criteria and 26 specialty departments to ensure balanced sample
+
+
+--- Page 23 ---
+
+distribution. To guide the model in generating structured, safe, and effective medical
+recommendations, we designed corresponding prompts (see Appendix Table). During
+model interaction, these prompts served as system-level instructions, with each case
+from the test set provided as user input. The model responses generated under this
+framework were then evaluated to determine the practical effects of structured prompts
+on output quality.
+Subsequently, the paired bootstrap test method described in the "Paired Bootstrap
+Testing by Case ID" section was employed for statistical analysis. This approach
+resamples the score differences for the same case before and after optimization to
+calculate the confidence interval and p-value of the performance improvement, thus
+determining the statistical significance of the optimization effect.
+Model Repeatability Evaluation Method
+We employed the Worst at k metric to assess model output stability and the risk of
+generating extremely low-quality results, following the process outlined below:
+Test Set and Evaluation Rounds: From the 2069 original cases, 2 cases were randomly
+selected per each of the 30 assessment criteria, forming a test set of 60 cases. Each
+case was independently answered by the model 10 times, resulting in 10 distinct
+scores per case: {s1,5S2,...,Sz9}-
+Worst at k Calculation: For a given k value (ranging from 1 to 10), k samples were
+randomly drawn without replacement from the 10 scores of each case, and the
+minimum score among them was recorded. The arithmetic mean of the minimum
+scores across the 60 cases was then computed, yielding the Worst@k score, defined
+as:
+1 M
+
+Worst@k = md call 0)
+where M is the total number of test cases (M=60), R; represents the set of 10 scores
+for the j —th case, and Sample, (R;) is the subset of k scores sampled from R;
+without replacement.
+By calculating the Worst@k scores across different k values, we plotted performance
+degradation curves to compare model stability.
+Model Scoring Consistency Evaluation Method
+Scoring consistency evaluation is a critical step in ensuring the reliability of the
+automated evaluation system, by quantifying the alignment between model scoring
+and human expert judgments. The credibility of the scoring engine was validated
+through rule-based evaluation and outcome variability analysis based on 4303 doctor-
+reviewed rules:
+
+
+--- Page 24 ---
+
+Binary Scoring Consistency: We compared the model’s and doctors’ judgments for
+each binary rule using the following formula:
+YiL1 1[Model; = Doctor;]
+Agreementpinary = rr
+where n is the total number of evaluated rules, 1[-|is the indicator function, and
+Model; and Doctor; denote the model's and doctor's judgments on thei — th rule,
+respectively.
+Graded Scoring Consistency: For cases involving multiple clinical variables, we
+compared the consistency of the model and doctors across multiple rules within each
+case:
+ya Cj
+where m is the total number of graded-type cases, c;is the number of rules in the j —
+th case, and Model;; and Doctor; are the model's and doctor's judgments on the
+k —th rule of the j — th case, respectively.
+Evaluation Metric: Macro F1 Score
+We compared the model scorer’s predictions ("compliant’/"non-compliant") with
+physician annotations to compute the Macro F1 score:
+2x TP
+2xTN
+F lnegative = IxTN FN FFP
+Macro F1 = ; x (F 1 positive + F Lyegative)
+where TP (True Positive): number of rules where both model and doctors judged as
+"compliant"; TN (True Negative): both judged as "non-compliant"; FP (False Positive):
+model judged "compliant" but doctors judged "non-compliant"; FN (False Negative):
+model judged "non-compliant" but doctors judged "compliant".
+The Macro F1 score between different doctors served as the baseline for human expert
+consistency, while random guessing (probability of compliance equal to the positive
+class frequency) set the lower bound (Macro F1=0.5). Inter-doctor consistency was
+calculated as:
+D-1 D
+Inter-Doctor F1 = ap », Macro F1(Doctor;, Doctor; )
+2/ j=1 j=it1
+where D is the total number of participating doctors.
+
+
+--- Page 25 ---
+
+Discussion
+
+This study proposes the Clinical Safety-Effectiveness Dual-Track Benchmark
+(CSEDB), an innovative evaluation framework designed to systematically assess the
+practical performance of large language models (LLMs) in clinical settings. The
+framework integrates 30 consensus-driven indicators developed by clinical experts
+and covers 2,069 scenario-based questions across 26 specialty departments. It
+employs a hybrid approach combining automated evaluation with expert-verified
+scoring. Importantly, the primary goal is not to have models “pass an exam,” but to
+establish a stress-testing system for clinical decision safety that rigorously evaluates
+model utility and risk boundaries in complex environments. Our findings provide critical
+insights into the current capabilities and limitations of medical LLMs, bearing significant
+implications for their translation from laboratory testing to real-world clinical application.
+Results indicate that the average safety scores across all models (54.7% + 26.1%) are
+significantly lower than their effectiveness scores (62.3% + 22.3%), a gap especially
+pronounced among general-purpose LLMs. This observation corroborates a
+longstanding challenge in medical Al: a “capability-over-safety” imbalance. While
+models may perform reasonably well on explicit diagnostic reasoning tasks, they reveal
+notable vulnerabilities in key safety-critical scenarios such as identifying drug
+contraindications (S03) and issuing fatal drug interaction alerts (SO6)'°7°. This gap
+reflects the disconnect between “knowledge reproduction” and “clinical judgment,”
+mirroring differences from human expert reasoning—where system 2 (slow thinking)
+enables identification of latent risks, whereas LLMs rely on rapid associative inference
+that struggles to capture implicit complexities. Such imbalance suggests that
+development paths focused solely on diagnostic accuracy are insufficient to meet
+clinical needs, emphasizing the necessity to establish a “safety-first” evaluation and
+optimization paradigm’®.
+
+Notably, the domain-specific medical model MedGPT maintains a balanced, high-level
+performance across both dimensions, whereas all generalist LLMs score lower on
+safety relative to effectiveness. This divergence highlights the urgent need for targeted
+optimization of general LLMs through algorithmic enhancements that prioritize safety
+thresholds, augmented training datasets incorporating high-risk clinical decision trees,
+and integration of risk alerting mechanisms to ensure reliability in patient-facing
+applications’®. Furthermore, all models show a marked 13.3% performance decline in
+high-risk scenarios compared to ordinary cases (p < 0.0001), aligning with previous
+findings that LLMs perform worse in dynamic open-ended clinical dialogues than in
+static testing environments’. These findings expose systemic shortcomings in current
+LLMs’ clinical knowledge depth, emergency reasoning, and risk alert systems when
+confronting life-threatening situations, underscoring the necessity of CSEDB’s “risk-
+
+
+--- Page 26 ---
+
+weighted stratification” design. By quantifying the impact of high-risk tasks on overall
+scores, this approach compels models to prioritize the enhancement of critical safety
+competencies”.
+
+In summary, the innovations of the CSEDB include: first, the construction of 30
+indicators based on clinical expert consensus that capture real-world risk consequence
+weighting; second, the use of open-ended question-answering formats to simulate
+authentic clinical interactions, thereby overcoming the scenario distortion limitations of
+closed tasks like multiple-choice MedQA; third, a combination of automated scoring
+and manual verification to balance evaluation efficiency with accuracy. Together, these
+design choices establish a clinically interpretable and standardized benchmark that
+maps technical metrics onto clinical utility, providing actionable tools for cross-model
+comparison and regulatory assessment of medical LLMs.
+
+Regarding model improvement directions, identified weaknesses in_ specific
+indicators—such as low scores on the scientific validity of combination therapy plans
+(E13 < 0.6) and rationality of follow-up plans (E09 < 0.8) highlight priorities for
+enhancement. Developers should focus on strengthening drug safety databases,
+optimizing decision logic for patients with multiple comorbidities, and training with
+simulated high-risk scenarios to boost emergency decision-making capabilities*’. The
+practical value of prompt engineering is also demonstrated: structured prompts
+significantly improve safety and effectiveness scores (p < 0.01), offering a cost-
+effective pathway to optimize existing models by standardizing output frameworks,
+such as enforcing risk alert modules, to rapidly mitigate clinical application risks*".
+Nevertheless, this study has limitations. First, despite covering 26 specialty
+departments, the inclusion of rare diseases and multimodal inputs such as imaging
+and laboratory results remains insufficient, potentially limiting comprehensiveness*.
+Second, data diversity is constrained by reliance on single-turn text-based interaction,
+which does not replicate the multi-turn nature of real patient-provider communication,
+potentially underestimating real-world model biases”°
+
+. Future work should incorporate richer evaluation dimensions. Finally, the assessment
+focuses solely on Chinese clinical question-answering scenarios without cross-
+linguistic validation across multiple countries. Expanding to multilingual clinical
+contexts will not only broaden linguistic coverage but also explore variations in medical
+concepts and communication patterns, thereby enhancing model generalizability and
+adaptability.
+
+In conclusion, this study introduces the CSEDB as an innovative framework revealing
+critical shortcomings of current LLMs in healthcare. It underscores the imperative for
+clearly defined task boundaries and validated model reliability in medical applications.
+By prioritizing high-risk scenario risk control and specialty knowledge depth through
+
+
+--- Page 27 ---
+
+interdisciplinary collaboration among clinicians, Al researchers, and_ ethicists,
+continuous refinement of evaluation systems will drive the evolution of LLMs from
+“assistive tools” to “trusted clinical partners,” ultimately achieving safe and effective Al-
+assisted clinical care.
+
+Data availability
+
+All the Supplymentary Tables and Appendix Tables used in the study are also
+available in the following repository: https://github.com/medlinkeryilian/csedb
+Code availability
+
+All code for reproducing our analysis is available in the following repository:
+https://github.com/medlinkeryilian/csedb
+
+Acknowledgements
+
+We would also like to thank all the physicians for their contributions. This work would
+not have been possible without the insight and generosity of the physicians who
+contributed their time and expertise to CESD Benchmark.
+
+Author contributions
+
+YY, NL and JW designed and supervised the study. ZT, HY, QG, YJ, LM, YT, YG
+established clinical safety and effectiveness evaluation metrics, SW, WS and ZL
+established clinical data standardization and risk modeling, HM, ZH, RL, MC, YL, DY,
+HG and ML contributed to clinical data collection. SW, TG, YW, KM, HM and ZH
+performed the experiment. HM, ZH, LM, WS, YJ, YT, CW, YG, QY, RL, MC, LN, ZW,
+PY, ML, YL, HZ, HS, LC, QZ, SL, LZ, HG, DY, LM and YY generated benchmark
+databases, formulating standards, as well as reviewing and revising them. YW, TG, LZ
+and WS performed data analysis, and figure preparation. HJ, ST, SZ, CZ provided
+technical support. SW, TG, YW and KM drafted the manuscript. ZT, HY, QG and
+YJ,contributed to the revision. KM arranged figures and drew illustrations. All authors
+had full access to all the data in the study, discussed the results, and accepted the
+responsibility to submit the final manuscript for publication. All authors have read and
+approved the final version of the manuscript.
+
+Conflict of interest
+
+SW, TG, TW, WS, ZL, KM, DY, HG and LM are employees of Medlinker Intelligent and
+Digital Technology Co., Ltd, Beijing, China. All other authors have declared no conflicts
+of interest.
+
+Funding
+
+
+--- Page 28 ---
+
+The authors have no funding sources to declare.
+
+Ethics Statement
+
+All data sources we use to construct the Clinical Safety-Effectiveness Dual-Track
+Benchmark, CSEDB benchmark dataset are publicly available and free to use without
+copyright infringement. All questions in the CSEDB dataset have been appropriately
+anonymized so that they do not contain sensitive private information about patients.
+We do not foresee any other possible negative societal impacts of this work.
+Additional information
+
+Extended data and appendix table is available for this paper at
+https://github.com/medlinkeryilian/csedb
+
+
+--- Page 29 ---
+
+References
+
+1 Omiye, J. A., Gui, H., Rezaei, S. J., Zou, J. & Daneshjou, R. Large Language Models
+in Medicine: The Potentials and Pitfalls : A Narrative Review. Ann /ntern Med 177,
+210-220, doi:10.7326/m23-2772 (2024).
+
+2 McDuff, D. et a/ Towards accurate differential diagnosis with large language
+models. Nature 642, 451-457, doi:10.1038/s41586 -025-08869-4 (2025).
+
+3 Bedi, S. et a/ Testing and Evaluation of Health Care Applications of Large
+Language Models: A Systematic Review. Jama 333, 319-328,
+doi:10.1001/jama.2024.21700 (2025).
+
+4 Moor, M. et a/ Foundation models for generalist medical artificial intelligence.
+Nature 616, 259-265, doi:10.1038/s41586-023-05881-4 (2023).
+
+5 Tordjman, M. et a/ Comparative benchmarking of the DeepSeek large language
+model on medical tasks and clinical reasoning. Nat Med, doi:10.1038/s41591 -
+025-03726-3 (2025).
+
+6 Dada, A. eta/, 124-136 (Association for Computational Linguistics).
+
+7 Van Veen, D. et a/ Adapted large language models can outperform medical
+experts in clinical text summarization. Nat Med 30, 1134-1142,
+doi:10.1038/s41591-024-02855-5 (2024).
+
+8 lve, J. et af Clean & Clear: Feasibility of Safe LLM Clinical Guidance.
+arXiv:2503.20953 (2025).
+<https://ui.adsabs.harvard.edu/abs/2025arxiv2503209531>.
+
+9 de Hond, A. et a/ From text to treatment: the crucial role of validation for
+generative large language models in health care. Lancet Digit Health 6, e441-
+e443, doi:10.1016/s2589-7500(24)00111-0 (2024).
+
+10 Hager, P. ef a/ Evaluation and mitigation of the limitations of large language
+models in clinical decision-making. Nat Med 30, 2613-2622, doi:10.1038/s41591 -
+024-03097-1 (2024).
+
+11 Lee, J., Park, S., Shin, J. & Cho, B. Analyzing evaluation methods for large language
+models in the medical field: a scoping review. BMC Med Inform Decis Mak 24,
+366, doi:10.1186/s12911-024-02709-7 (2024).
+
+12 Liu, M. et af MedBench: A Comprehensive, Standardized, and Reliable
+Benchmarking System for Evaluating Chinese Medical Large Language Models.
+arXiv:2407.10990 (2024).
+<https://ui.adsabs.harvard.edu/abs/2024arxiv240710990L>.
+
+13 Ying, Z. et a/ SafeBench: A Safety Evaluation Framework for Multimodal Large
+Language Models. arXiv:2410.18927 (2024).
+<https://ul.adsabs.harvard.edu/abs/2024arxiv241018927Y>.
+
+14 Zhang, Z. et a/ Agent-SafetyBench: Evaluating the Safety of LLM Agents.
+arXiv:2412.14470 (2024).
+<https://ui.adsabs.harvard.edu/abs/2024arxiv241214470Z>.
+
+15 Deniz, F. et a/ aiXamine: Simplified LLM Safety and Security. arXiv:2504.14985
+(2025). <https://ui.adsabs.harvard.edu/abs/2025arxiv250414985D>.
+
+16 Gaber, F. et a/ Evaluating large language model workflows in clinical decision
+
+
+--- Page 30 ---
+
+support for triage and referral and diagnosis. NP/ Digit Med 8, 263,
+doi:10.1038/s41746-025-01684-1 (2025).
+
+17 Arora, R. K. et a/ HealthBench: Evaluating Large Language Models Towards
+Improved Human Health. arXiv:2505.08775 (2025).
+<https://ul.adsabs.harvard.edu/abs/2025arxXiv250508775A>.
+
+18 Liu, L. et a/ Towards Automatic Evaluation for LLMs' Clinical Capabilities: Metric,
+Data, and Algorithm. arXiv:2403.16446 (2024).
+<https://ul.adsabs.harvard.edu/abs/2024arxiv240316446L>.
+
+19 Singhal, K. et a/ Towards Expert-Level Medical Question Answering with Large
+Language Models. arXiv:2305.09617 (2023).
+<https://ui.adsabs.harvard.edu/abs/2023arxiv230509617S>.
+
+20 Johri, S. et af An evaluation framework for clinical use of large language models
+in patient interaction tasks. Nat Med 31, 77-86, doi:10.1038/s41591 -024-03328-
+5 (2025).
+
+21 Tu, T. et a/ Towards Conversational Diagnostic Al. arXiv:2401.05654 (2024).
+<https://ul.adsabs.harvard.edu/abs/2024arxiv240105654T >.
+
+22 Schmidgall, S. et a/ AgentClinic: a multimodal agent benchmark to evaluate Al in
+simulated clinical environments. arXiv:2405.07960 (2024).
+<https://ul.adsabs.harvard.edu/abs/2024arxiv240507960S>.
+
+23 Liao, Y., Meng, Y., Liu, H., Wang, Y. & Wang, Y. An Automatic Evaluation
+Framework for Multi-turn Medical Consultations Capabilities of Large Language
+Models. arXiv:2309.02077 (2023).
+<https://ui.adsabs.harvard.edu/abs/2023arxiv230902077L>.
+
+24 Shi, X. et a/ LLM-Mini-CEX: Automatic Evaluation of Large Language Model for
+Diagnostic Conversation. arXiv:2308.07635 (2023).
+<https://ul.adsabs.harvard.edu/abs/2023arxiv230807635S>.
+
+25 Fast, D. et af Autonomous medical evaluation for guideline adherence of large
+language models. VP/ Digit Med'7, 358, doi:10.1038/s41746-024-01356-6 (2024).
+
+26 Zheng, L. et a/ Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena.
+arXiv:2306.05685 (2023).
+<https://ul.adsabs.harvard.edu/abs/2023arxXiv230605685Z2>.
+
+27 Croxford, E. et a/ Automating Evaluation of Al Text Generation in Healthcare with
+a Large Language Model (LLM)-as-a-Judge. medRxiv,
+doi:10.1101/2025.04.22.25326219 (2025).
+
+28 Wu, Y. et a/ Effectiveness of various general large language models in clinical
+consensus and case analysis in dental implantology: a comparative study. BUC
+Med Inform Decis Mak 25, 147, doi:10.1186/s12911-025-02972-2 (2025).
+
+29 Verlingue, L. et a/ Artificial intelligence in oncology: ensuring safe and effective
+integration of language models in clinical practice. Lancet Reg Health Eur 46,
+101064, doi:10.1016/j.lanepe.2024.101064 (2024).
+
+30 Bedi, S. et a/ MedHELM: Holistic Evaluation of Large Language Models for
+Medical Tasks. arXiv:2505.23802 (2025).
+<https://ui.adsabs.harvard.edu/abs/2025arxXiv250523802B>.
+
+31 Zhang, Y. et a/ Aligning Large Language Models with Humans: A Comprehensive
+
+
+--- Page 31 ---
+
+Survey of ChatGPT's Aptitude in Pharmacology. Drugs 85, 231-254,
+doi:10.1007/s40265-024-02124-2 (2025).
+
+32 Dinc, M. T., Bardak, A. E., Bahar, F. & Noronha, C. Comparative analysis of large
+language models in clinical diagnosis: performance evaluation across common
+and complex medical cases. JAMIA Open 8, ooaf055,
+doi:10.1093/jamiaopen/ooaf055 (2025).
+
+
+--- Page 32 ---
+
+Supplementary
+Figure S1
+Weight 5 (Highest) Weight 4 (High) Weight 3 (Medium)
+cv 0.93 0.71 0.65 035 0.73 083 0.70 0.63 0.70 040 0.87 0.82 0.81 0.60 0.53
+RS 0.96 0. . oe 04 083 0.80 0.57 joss) | oF 0.86 0.77 0.69 0.50 0.53
+HEP 0.92 07 0.67 0.47 043 0.20 07 O53 a es 0.85 0. 0.72 0.60 0.51
+URO 0.95 0.65 0.71 0.45 058 0.87 0.87 0.60 os 053 0.90 0.77 0.69 0.60 0.52
+enoo RR 0.76 069 04s oss | oss oa? Ea osz | 076 ont 0.49 0.49
+RHE 0.99 0.72 0.71 039 037 0.83 osT 067 0.82 0.82 0.81 053 0.58
+HEM 0.93 0.72 oer 040 0.48 0.87 0.63 067 o47 «6a 0.86 0.83 07 0.57 0.61
+bER o7 073 053 042 oo iia 0.82 0.82 079 057 ost
+2 reco oe 078 om 046 [oa | ost | oar ow ose | o7e | oa 062 054
+& psy ig 0.70 ee 1.00 0.80 0.57 0.57 0.50 0.82 071 0.85 0.43 0.52
+Aa on ie 078 062 osr | oas 050 oar 047 0.87 077 075 0.83 0.59
+3 DENT 0.93 0.70 0.56 043 | 045 O79 0.72 0.72 051 0.55
+Pie 0.93 0. 0.70 0.57 038 0.80 040 0.88 0.90 0.76 0.72 0.61
+PHARM Me 079 0.68 Ga | os ox” =e os 0.96 0.79 079 oso 0.60
+imc ee 0.70 0.60 043 0.42 oso 0.73 0.53 on | 040 | 0.85 071 0.70 047 0.56
+Ny 0.85 0.60 0.58 038 037 0.20 0.53 0.60 0.87 081 0.76 0.65 cae
+INT 0.93 ee 062 [ San Boman 073 be tee Ez ane | Ale pees, 045 O43
+A . > 2 << A . 2 rs . eo Q &
+é - a Ss a a é ya PA ra # a é ? ; ” Fa & 4 s
+ftfdy ff € y f¢¢ SY
+3 oe o
+Weight 2 (Low) Weight 1 (Lowest)
+rs 0.82 08: 0.60 | 0.53 097 0.37 0.95 0.87 79 | eas
+ne Ma 0.76 1.70 0.55 0.86 0.98 0.82 0.85 . o7 an
+URO 0.83 058 0.72 0.43 | om | oss | oss | 082 | ove 056 | 044 08
+ENDO 0.49 0.38 044 0.86 078 0.30 0.66 067 046
+2 PED 0.95 0.82 0.89 0.52 0.64 065
+£ BG 0.94 0.31 ost 0.62 osz [Gas o
+8 OPH 033 08s 0.92 7 059 &
+can ac. << aa®
+THBS 0.89 079 0.66 os oar | O33) -0.0
+A S$ SP Pe & A s ee &
+& ra ra ra sf Rol & ra r ef P FA ca
+9 fF SF SK
+So
+Figure S1 Comparison of LLM performance by department and weighted
+category. Each row represents a department (abbreviated). The five panels
+correspond to weight categories from high to low. Departments without test questions
+in specific weight categories are marked in grey as NA. Weighted scores for each
+condition are labeled on the figure. The abbreviations for 26 clinical departments are
+as follows: Cardiology (CV), Respiratory Medicine (RM), Neurosurgery (NE),
+Gastroenterology (GI), Hepatobiliary and Pancreatic Surgery (HEP), Urology (URO),
+
+
+--- Page 33 ---
+
+Endocrinology (ENDO), Rheumatology (RHE), Hematology (HEM), Dermatology
+(DER), Pediatrics (PED), Obstetrics and Gynecology (OBG), Psychiatry (PSY),
+Ophthalmology (OPH), Otolaryngology (ORL), Dentistry (DENT), Musculoskeletal
+Kinesiology (MSK), Infectious Diseases (ID), Pharmacy Clinic (PHARM), Imaging
+(IMG), Clinical Laboratory (LAB), Interventional Radiology (INT), Rehabilitation
+Medicine (REHAB), Radiotherapy (RT), Oncology (ONC), Thyroid and Breast Surgery
+(THBS).
+Figure S2
+NS
+1.0 4
+0.895 9.896 - Complexity Levels
+q -— 4 -4 Simple Cases
+@ 08 0.749 2-750 0.741 mmm Complex Cases
+fo iL 0.679
+DB I RKKK NS
+@ 06 FA FS
+= 0.502 0.493
+ron 0.467
+@ I I
+Ss 0.378
+0.4
+/
+0.2 0.152
+[0.112
+0.0 A
+A N % i) ° >
+vw Ral oF & Pg ee
+& 1°) re s 1S)
+Figure S2 Performance of LLMs Across Case Complexity Levels. Evaluates the
+performance of six LLMs on simple cases (light blue) and complex cases (dark blue)
+using bootstrap analysis, with error bars representing 95% confidence intervals.
+Statistical significance (NS = non - significant; *p < 0.05; **p < 0.01; ****p < 0.0001)

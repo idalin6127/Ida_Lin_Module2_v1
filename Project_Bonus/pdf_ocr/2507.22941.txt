@@ -1,0 +1,777 @@
+
+
+--- Page 1 ---
+
+SigBERT: Combining Narrative Medical Reports and Rough
+Path Signature Theory for Survival Risk Estimation in
+Oncology
+Paul MINCHELLA!, Loic VERLINGUE?, Stéphane CHRETIEN?,
+Rémi VAUCHER?, Guillaume METZLER?
+
+Va ' SHAPE-Med@Lyon, 74 Boulevard du 11 novembre 1918, 69100 Villeurbanne,
+N minchellapaul@gmail.com
+—_) 2 Centre de Recherche en Cancérologie de Lyon, 19 Bd Jean XXIII, 69008 Lyon ,
+“ loic.verlingue@lyon.unicancer.fr
+
+5 3 Laboratoire ERIC, 5 avenue Pierre Mendes-France, 69676 Bron,
+= {stephane.chretien, r.vaucher, guillaume.metzler}.univ-lyon2.fr
+via)
+NX August 1, 2025
+_
+
+n
+
+(5) Abstract
+Led
+
+Electronic medical reports (EHR) contain a vast amount of information that can be leveraged
+
+— for machine learning applications in healthcare. However, existing survival analysis methods often
+
+> struggle to effectively handle the complexity of textual data, particularly in its sequential form. Here,
+— we propose SigBERT, an innovative temporal survival analysis framework designed to efficiently
+Tr process a large number of clinical reports per patient. SigBERT processes timestamped medical
+ON reports by extracting and averaging word embeddings into sentence embeddings. To capture temporal
+N dynamics from the time series of sentence embedding coordinates, we apply signature extraction from
+N rough path theory to derive geometric features for each patient, which significantly enhance survival
+model performance by capturing complex temporal dynamics. These features are then integrated
+-) into a LASSO-penalized Cox model to estimate patient-specific risk scores. The model was trained
+a) and evaluated on a real-world oncology dataset from the Léon Bérard Center corpus, with a C-index
+N score of 0.75 (sd 0.014) on the independent test cohort. SigBERT integrates sequential medical data
+
+> to enhance risk estimation, advancing narrative-based survival analysis.
++
+
+eH
+
+S
+
+1
+
+
+--- Page 2 ---
+
+1 Introduction
+
+1.1 Background
+
+Survival analysis plays a fundamental role in medicine (oncology, cardiology, nephrology, critical care,
+etc.) where predicting the prognosis of the patient is crucial to guide clinical decision-making. They
+help determine treatment strategies, assess the efficacy of therapeutic interventions, refine clinical trial
+eligibility criteria, aid in risk stratification and early intervention planning. The Cox Proportional Haz-
+ards model [7] has long been the gold standard since it was published in survival analysis due to its
+interpretability and effectiveness in identifying prognostic factors. One of its key advantages is its abil-
+ity to effectively account for censoring, which arises when the event of interest (e.g., death, relapse, or
+disease progression) has not yet occurred for certain patients by the end of the study period. Even
+without an observed event, censored patients provide valuable information by contributing to likelihood,
+as their recorded survival time improves risk estimation despite incomplete event data. This feature
+makes the model particularly robust in real-world clinical settings, where missing or censored data are
+very common. Over the past decade, more recent advances in survival analysis have explored neural
+network-based models, which offer a powerful alternative by capturing complex, non-linear relationships
+within patient data [15], [18].
+
+However, a key limitation of many survival models is their reliance on static patient snapshots rather
+than dynamic, time-dependent data. Integrating structured (e.g., biomarkers, lab tests) and unstructured
+data (e.g., clinical narratives) is crucial but intricate. Addressing these challenges requires advanced NLP
+methods for processing unstructured clinical narratives, along with statistical techniques to enhance
+predictive accuracy and clinical applicability.
+
+1.2 Related works
+Recent advancements in survival analysis have introduced dynamic models capable of integrating time-
+dependent patient data. Dynamic-DeepHit [I7] employs RNNs with attention mechanisms to process
+sequential biomarkers and treatments. Transformer-based approaches like BERTSurv [80] leverage pre-
+trained language models to extract survival-relevant features from unstructured clinical notes, enhancing
+survival prediction. Meanwhile, CoxSig [3] incorporates signature transforms and controlled differential
+equations to model time-dependent features.
+
+Model Paper Field & Datasets Model Architecture td-AUC
+
+. Oncology, narrative reports OncoBERT + Signature Yes, NLP with path signa- . .
+
+SigBERT (Ours) (Léon Bérard) + Cox LASSO tures 0.75 0.80 0.25
+
+MSK-CHORD Oncology, Real-world Random Survival Forest No, features at fixed time (0.58, 0.83]
+
+(MSK-CHORD) (RSF) point 8
+
++ Maintenance, synthetic + real | Cox model + Signature Yes, time-series encoded | .
+
+(NASA, Califrais) transforms with Signature | (0.74,0.87] | [0.09,0.15]
+
+BERTSurv ICU (MIMIC-IH, not ‘Transformer (BERT) Yes, from sequential clini- 0.7
+
+oncology) cal notes (NLP)
+Yes, sequential EHR .
+DySurv ICU (MIMIC-HI, elCU) CVAE + LSTM ~0.60 included
+(structured)
+
+Survival Seq2Seq | General (MIMIC-IV + Seq2Seq (GRU-D + ent ee ,
+
+synthetic) Attention) Yes, hospital time series [0.84, 0.91]
+Cystic Fibrosis (UK Registry) | Deep RNN + Temporal | Yes, repeated biomarker | 19 94 9.96) | td-AUC - |
+
+Attention vectors
+
+General + oncology (e.g., an - No, static baseline covari-
+
+DeepSurv [15 METABRIC) DNN with Cox PH loss ates [0.61, 0.86]
+
+Landmark Liver disease (PBC), Aging Landmark (Cox, RSF, Yes, repeated biomarker .
+
+Endpoint [10] (PAQUID) penalized) measures [0.73,0.87] | [0.076, 0.089]
+
+Penalized Reg. Neuromuscular (DMD, Penalized Cox + Mixed Yes, blood biomarker se- .
+Table 1: Overview of state-of-the-art survival models across domains. All reported metrics are taken
+from the original publications; no external re-evaluation was performed on our dataset.
+
+Table [I] provides a survey and summarizes the performance of several recent survival models across
+different medical domains and datasets, highlighting their architectural choices and whether they incorpo-
+rate sequential information. Our model SigBERT compares favorably with these methods. Specifically,
+it achieves a C-index of 0.75, a mean td-AUC of 0.794, and an IBS below 0.25 over 10 years-values
+that align well with or exceed several state-of-the-art models, such as CoxSig or Penalized Regression
+Calibration. While some deep learning approaches like Dynamic-DeepHit or Survival Seq2Seq achieve
+higher td-AUC, these results are often obtained on synthetic or ICU-based datasets with structured
+biomarker sequences, which differ substantially from our real-world oncology setting involving complex,
+
+2
+
+
+--- Page 3 ---
+
+unstructured textual data. It is also important to note that strict comparison remains challenging due to
+differing data modalities and availability, as most datasets used in these works are not publicly accessible
+or shareable due to clinical data protection policies. In contrast, our study demonstrates strong results
+on a large-scale real oncology dataset, highlighting the practical relevance and robustness of our method
+in operational conditions.
+
+1.3. Our Contributions
+
+Our approach contributes to survival analysis by leveraging rich representations from NLP-based em-
+beddings, combined with signature transforms to capture the temporal dynamics of patients’ follow-up,
+thus demonstrating the impact of unstructured clinical narratives in oncology risk estimation.
+
+Additionally, our pipeline supports multi-data integration, enabling future incorporation of structured
+patient data, such as tumor stage, demographic factors, and tumor topography. Moreover, the use of
+signature transforms allows us to process a very large number of clinical reports per patient without
+incurring a prohibitive computational cost. Unlike traditional models that struggle with long sequences
+due to high memory and time complexity, our method efficiently encodes all available follow-up data for
+each patient. Please refer to our GitHub repository at
+for access to the code. The notebook SigBERT_study.ipynb provides numerous complementary results.
+2 Method
+Our dataset consists of the following information: Each patient is associated with a set of medical
+reports, each recorded at a specific timestamp, providing a longitudinal sequence of textual data. In
+addition, we have access to each patient’s time in the study and event status, indicating whether the
+patient experienced the event of interest (e.g., death) or was censored. This forms the foundation for our
+survival analysis pipeline. One can refer to Figure [I] at any time for an overview of our global pipeline.
+
+Before computing embeddings, raw clinical reports are preprocessed to clean and standardize the
+textual data. The reports are loaded from structured files, with unnecessary columns removed. The
+text field (constituting the report at time t) is cleaned by stripping redundant metadata, such as the
+report source when it appears at the beginning. Duplicate reports are dropped to avoid repetition. In
+parallel, all date-related columns are converted to a consistent datetime format. This preprocessing step
+helps ensure the text input is clean and coherent, while preserving the temporal structure needed for
+downstream analysis.
+
+To process long clinical texts, we kept the entire content of each medical report without truncation.
+Note that OncoBERT [29], being a fine-tuned version of CamemBERT [20], inherits a maximum input
+length of 512 tokens due to its RoBERTa-based architecture. We will describe it in more detail in the
+following section. We did not apply any length filtering or summarization at this stage.
+
+Furthermore, to better simulate real-world clinical scenarios, we deliberately mask the last (at least)
+100 observed days from each patient’s record. This ensures that predictions rely on earlier medical data
+rather than immediate pre-mortem indicators, improving generalization for prospective survival analysis.
+2.1 Embeddings computation
+The first step of our pipeline involves transforming unstructured medical reports into numerical represen-
+tations using OncoBERT [29]. It is a CamemBERT-based language model fine-tuned on a large corpus
+of oncology-related clinical notes from Léon Bérard Center, making it particularly suited for extracting
+meaningful representations from oncology-specific narratives. This approach enables us to numerically
+encode the semantic information embedded in the textual data while preserving the rich clinical context
+contained within patient histories. We obtain a dictionary mapping each word (token) to its correspond-
+ing embedding vector within the learned (fine-tuned) vector space of dimension p = 768. It can be
+formally expressed as follows for a given patient i:
+
+{word, : Uw,, ---, wordy, : Uwy, }is
+where N; is the number of unique tokens in the medical report at time t.
+3
+
+
+--- Page 4 ---
+
+Step 1
+c - ; Word
+Patient EHR Event Time Event Patient Embeddings
+B., (Wr, Wr, hey
+: T; 3
+{Wj, ...,Wy,}
+rd ate Step 2
+Step 3
+: Compressed Pati Sentence
+atient :
+CUI Embeddings Embeddings
+— ” ieee
+: Z _ : p
+Dig = (Thy, BP) Veg = Vi Vtg
+Step 4 Step 5
+Patient Signature covariates Event bh eOxURCoS!
+Event
+U U
+Figure 1: Global Pipeline: A five-step approach for SigBERT. Step 1: Extract word embeddings
+from medical reports using OncoBERT. Step 2: Compute sentence embeddings by averaging word
+embeddings for each report. Step 3: Compress the sentence embeddings through a dimensionality
+reduction mapping. Step 4: Apply the signature transform to extract coefficients capturing temporal
+dynamics as covariates. Step 5: Use a Cox model with LASSO regularization to estimate risk scores.
+
+It is worth emphasizing that the superior performance of OncoBERT is consistent with expectations
+for a risk estimation task in oncology based on French clinical narratives. OncoBERT is a domain-
+specific language model fine-tuned on cancer-related French medical reports, and thus better captures
+the linguistic and clinical nuances of the data (including specialized oncology vocabulary and domain-
+specific phrasing). As such, it is not surprising that this specialized NLP model outperforms more generic
+approaches: for instance, Word2Vec-based embeddings [22], even with carefully tuned parameters, reach
+at most a concordance index of 0.6, while CamemBERT-based embeddings reach at most 0.7.
+
+We aim to aggregate these representations into a single vector per report, so that each patient’s
+medical record at time ¢ is captured as a meaningful numerical representation. Thus, we employ the
+Smooth Inverse Frequency (SIF) method proposed by [I], a robust unsupervised approach for computing
+sentence embeddings. For a arbitrary report s, its representation is given by:
+
+J muy rat &®
+Us = — ———  v ;
+°* Js] 2 fw) Fa
+where f(w) represents the frequency of a given word in the corpus, and a is a smoothing parameter
+(typically set to 1073).
+
+While it is common practice to use the CLS token output from BERT-based models to represent
+entire input sequences, we explored an alternative approach for encoding clinical reports. Although the
+CLS token was initially considered in our pipeline, we ultimately adopted the SIF method based on
+retrospective evaluation results and its strong theoretical foundations. Specifically, SIF-based sentence
+embeddings yielded consistently better predictive performance, including a higher C-index (0.75 vs.
+0.70), improved time-dependent AUC, and lower Brier Scores. We attribute these gains to the robustness
+of the SIF method, which re-weights and averages token-level embeddings to form a more stable and
+generalizable sentence-level representation.
+
+4
+
+
+--- Page 5 ---
+
+Moreover, SIF offers a practical advantage when handling long clinical texts: by aggregating token
+embeddings across the entire report - possibly by processing it in overlapping chunks - it allows us to
+capture information beyond the 512-token input limit inherent to BERT models. In contrast, the CLS
+token is extracted from a truncated version of the input (limited to 512 tokens) and its representation
+is tightly dependent on the pretraining and fine-tuning stages of the language model - whereas our
+OncoBERT model was not specifically optimized for the downstream use of CLS embeddings in survival
+prediction tasks.
+
+At this point, a patient 7 with N; clinical reports can be formally represented by a collection of
+p-dimensional time-indexed vectors as follows:
+
+(Up,5 ++. Yty,), e RN *?,
+We will define the signature transform in the following section, which is the mathematical framework
+used to extract features from time series for our survival model. For now, it is sufficient to note that
+for p time series and a given truncation level L, the number of signature coefficients to compute is given
+by a = O(p"). This quantity grows exponentially with respect to the number of channels (i.e.,
+time series dimensions) involved. For instance, with p = 768 and L = 3, this results in approximately
+4.5 x 108 coefficients, which is computationally intractable.
+
+We are thus compelled to reduce the dimensionality of the sentence embeddings. This requirement
+also brings significant advantages. The first is computational: reducing p greatly improves the numerical
+feasibility of downstream processing. The second is theoretical: the original embedding space of dimen-
+sion p may be projected into a lower-dimensional space of size p while retaining most of the information
+relevant to our prediction task, namely risk estimation. By applying a linear transformation, we can
+map the embeddings into this compressed space and carry out computations much more efficiently.
+
+A straightforward approach is to apply Principal Component Analysis (PCA) on all sentence em-
+beddings in the training set to obtain a compression matrix Reomp. From a linear algebra perspective,
+Reomp € R?*? is a projection matrix whose rows correspond to the top p principal components, i.e., the
+orthonormal directions that capture the highest variance in the original p-dimensional embedding space.
+Applying Reomp to each sentence embedding results in a lower-dimensional representation in R? that
+retains as much relevant information as possible in terms of variance. This baseline method is simple to
+implement, computationally efficient, and often yields satisfactory results in practice.
+
+We define the compressed vector as Us := Reomp * Us. This transformation preserves most of the
+semantic information while reducing the dimensionality of the paths from p = 768 to, for instance,
+p = 25. Then, a patient with N; reports can be formally represented by a family of p time series as
+follows:
+
+(T5---sTey,), ERM,
+
+The choice of this compression value is based on a retrospective study evaluating the trade-off between
+computational cost and the C-index achieved on the test set. By progressively increasing the compressed
+dimension (p = 10,15, 20, 25,30,...), we observed convergence of the C-index on the test set starting
+from p = 25. This value was identified as the optimal candidate, as it provides satisfactory performance
+while guaranteeing computational efficiency.
+
+2.2 Signature features extraction
+
+The signature of a path [5], adapted for rough path theory by Terry Lyons [19], provides a systematic
+method for encoding sequential data into geometric features, using iterated integrals. Consider a p-
+dimensional path (which means each coordinates form a path), denoted as v = (v',...,v?), defined
+over the interval [0,7]. For any integer k > 1, any sequence of indices 71,...,7, € {1,...,p}, any
+O<t1 <--+<t, < T, the iterated integral signature of v up to time ¢ € [0,7] is defined as:
+
+Swf) = | . | du;! ...du;z".
+O<t,<t 0<ti<te
+
+The collection of these features is organized in tensor form which uniquely encodes the path and is
+
+defined as: ti )
+k _ 41s sbk p\@k
+
+Sv) = (seo )rccatnettecany € (RI
+Thus, the truncated signature up to order L naturally belongs to the truncated tensor algebra T <4 (R?) =
+Dio (R?)®* of order L over R? :
+
+L
+S<"(v) = (S*(v)),, € TA" (RY).
+5
+
+
+--- Page 6 ---
+
+In addition to encoding temporal dynamics, this approach handles sequences of varying lengths and is
+invariant to translation and temporal reparameterization (see [6]), making it well-suited for patients with
+different study entry points and durations. Moreover, one of the most fundamental and computationally
+advantageous properties of the signature transform is Chen’s identity, which provides a recursive structure
+for computing signatures efficiently. Given two continuous paths X : [a,b] + R? and Y : [b,c] > R%,
+their concatenation is defined as the path X * Y : [a,c] > R®% such that:
+
+Xi, t € [a, DJ,
+
+(X*Y),= 20" [a,b]
+
+Xp +(¥;— Ys), t € [b,c].
+Chen’s identity states that the signature of a concatenated path can be factorized as the tensor product
+of the signatures of its subpaths:
+
+S(X *«Y) = S(X)@S(Y).
+
+This property is particularly useful in computational applications, as it allows for the efficient computa-
+tion of path signatures by processing segments separately and combining their signatures multiplicatively,
+rather than computing the full iterated integral from scratch.
+
+Finally, for a given patient 2, the set of extracted covariates over their follow-up period, is denoted
+
+S, = (5@,...,50D,..., 900, g(77)) ,
+i
+
+In order to ensure unicity of signature, the usual framework incorporates a monotonic component,
+especially time component.
+
+Thus, each patient’s time series has been transformed into a set of covariates, providing a structured
+approach to handling sequential data. This transformation enables the extraction of meaningful temporal
+features, paving the way for their integration into a regression-based survival model, such as the Cox
+Proportional Hazards model, to assess patient-specific risk factors.
+
+2.3. Survival Analysis Modelling
+Our choice to illustrate the impact of textual data focused on the model of [7], which accounts for
+censored patients, 7.e., those for whom the event of interest T (e.g., death, relapse) has not yet occurred.
+These observations still contribute to the likelihood estimation, helping to reduce bias and improve the
+robustness of predictions. The goal is to estimate the probability of a patient surviving beyond time
+t, noted as S(t | S) := P(T > t | S) when knowing their covariates S. This estimation relies on the
+key concept of instantaneous hazard rate h, which quantifies the infinitesimal probability of the event
+occurring at ¢ and is related to survival through the following equation:
+t
+
+S(t |S) = exp (- | h(s | 8) as) .
+
+Cox [7] proposed the generalized linear model:
+h(t |S) = ho(t)- exp (S- 8),
+
+where 3 € R? is the vector of parameters to be estimated, and ho is the baseline hazard, common to
+all patients, as estimated by [4]. We define 7 := S.- @, referred to as the risk score. Estimating 3
+involves managing a substantial number of covariates. As mentioned earlier, this is due to the signature
+transform, which generates a high-dimensional feature space: for p input channels and a truncation level
+L, the number of resulting signature coefficients scales as O(p”). Even after dimensionality reduction,
+the resulting covariate space remains large. To reduce the risk of overfitting and improve model stability,
+we apply the LASSO (Least Absolute Shrinkage and Selection Operator) regularization to the Cox model,
+as originally introduced in [28]:
+
+Aly
+
+B  €argmax log PL(@B) — Al|B]|1, (1)
+
+B
+where PL(Q) is the partial likelihood defined in [8], and \ > 0 the regularization parameter. ||(||1 is the
+é;-norm of the parameters 8. The impact of LASSO regularization is twofold: it shrinks some coeffi-
+cients towards zero, effectively removing less relevant covariates, and it selects only the most important
+6
+
+
+--- Page 7 ---
+
+predictors for survival, enhancing model stability. The objective function from to be minimized, with
+log applied, is explicitly formulated as:
+Pp
+(8) = > |SiB —log D> exp (S;8)] —A>7 dul.
+i:6;=1 GERi k=1
+This formulation provides an explicit likelihood function to be maximized algorithmically, with 6; €
+{0,1} determining whether an event (e.g., death) has been observed for patient 2, associated with study
+duration T;, and R; represents the risk set 7.e., set of individuals still at risk at time of T;, that is
+Ri = {7 : Tj > Ti}. Moreover, by enforcing sparsity, the LASSO-regularized Cox model significantly
+reduces the number of active covariates, leading to faster computational performance. This suggests
+that the model achieves a favorable balance between overfitting and underfitting, leveraging a compact
+and efficient representation of the risk factors while maintaining strong predictive power. Finally, the
+estimated risk score under LASSO regularization is obtained simply as the dot product:
+~ ah
+7=S-B .
+Consequently, our methodology assigns each patient - characterized by a series of medical reports - an
+estimated risk score 7, effectively capturing the temporal evolution of their clinical trajectory. This
+structured approach enables a comprehensive integration of narrative data into survival analysis.
+3 Experiments
+3.1 Cohort
+This study complies with the General Data Protection Regulation (GDPR) and falls within the scope
+of scientific research conducted in the legitimate interest of cancer research, in accordance with Articles
+6.1.f and 9.2.j of Regulation (EU) No. 2016/679. This project has been officially registered under the
+MR004 declaration (V3.2, 23/08/2021) at the Léon Bérard Center, ensuring compliance with legal and
+ethical standards for processing health data. The data have been carefully anonymized and can only be
+used within the framework of this study. No patient were opposed to this study. To ensure the reliability
+of our data, we selected a study cohort consisting of patients hospitalized - at least once - at the Léon
+Bérard Center from 2000 to 2024, with comprehensive follow-up throughout their medical care to ensure
+data completeness and accuracy.
+
+The dataset consists of a clean and structured text corpus containing 274,420 medical reports from
+7,121 patients, among whom 4,983 are deceased and 2,138 are censored. Reports mainly include consul-
+tation reports (63%) and hospital stay reports (32%). Each patient has an average of 39 medical reports
+(sd 25), reflecting the longitudinal nature of the dataset. The dataset covers all types of cancer, allowing
+for broad applicability of the survival analysis. The most prevalent cancer types include breast cancer
+(25%), gynecological cancers (9.7%), gastrointestinal cancers (8.6%), lung cancer (5.5%), prostate cancer
+(7%), endocrine tumors (4.6%), among others. The median survival time in the cohort is 1,024 days
+(approximately 2 years and 10 months) and the study period spans from 1997 to 2020, covering the 5th
+to 95th percentile of diagnosis dates.
+
+3.2. Hyperparameter Search
+
+Our experimental setup is designed to ensure reproducibility, robustness, and realistic evaluation in
+a complex real-world clinical context. We emphasize that our NLP model, OncoBERT - fine-tuned
+on oncology-specific clinical notes - is used as is throughout the study without further task-specific
+adaptation, thereby reflecting practical deployment scenarios. The survival model was trained on a co-
+hort of 3,560 patients (136,748 reports) and evaluated on a separate test set of 3,561 patients (137,672
+reports), using a structured and stratified train-test split to preserve temporal and distributional con-
+sistency. To calibrate the model, we conducted a grid search for the LASSO regularization parameter
+X within the range [0.001, 10], using a fixed step size of 0.001. We selected the value that maximized
+the cross-validation concordance index (C-index) averaged over five independent validation folds, within
+the training dataset. Our careful hyperparameter tuning, combined with a large dataset and relevant
+baseline comparisons, supports the reliability of our results and confirms the model’s ability to handle
+high-dimensional sequential text data.
+
+7
+
+
+--- Page 8 ---
+
+At this step, the longitudinal data were transformed using the signature method, effectively elimi-
+nating any temporal constraints that could arise when subdividing the dataset for cross-validation. The
+selection criterion aimed to maximize the C-index through five-fold cross-validation. Specifically, for
+each candidate value of A, the model was trained on a partition of the training cohort and evaluated on
+held-out subsets - within the training set -, maintaining equal proportions across folds.
+
+The optimal value was then chosen as the one yielding the highest mean C-index, promoting robust
+generalization and avoiding overfitting. This tuning process was crucial for balancing model sparsity and
+predictive accuracy.
+
+3.3. Performance Metrics
+The validation process involved random splitting, where the test set was divided into ten disjoint subsets.
+Model evaluation was then repeated independently on each of these subsets, allowing us to compute mean
+performance metrics along with their standard deviations. To ensure a comprehensive evaluation, we rely
+on well-established metrics: the concordance index (C-index), the time-dependent AUC and the Brier
+Score. These metrics collectively provide a robust assessment of the model’s predictive performance by
+capturing complementary aspects of survival prediction accuracy. The C-index, a fundamental metric
+in survival analysis introduced by [12], measures the proportion of concordant pairs among all possible
+pairs. Specifically, if patient 7 experiences the event before patient 2, then the model should assign a
+higher risk score to 7. It is expressed as followed:
+
+C-index — iy lyr, <7;} , Liay>ai} , i ,
+
+dig Linen} 95
+
+where T; and T; represent the observed survival times of patients i and j, respectively. The estimated
+risk scores assigned by the model to these patients are denoted as 7; and 7;. The indicator variable
+6; equals 1 if patient 7 experienced the event, and 0 otherwise. A C-index of 1 characterizes a perfect
+model, while a C-index of 0.5 corresponds to random performance. A C-index above 0.7 is generally
+considered satisfactory.
+
+Its time-dependent counterpart, the td-AUC, is defined and then integrated over the relevant time
+interval (see [16], [25]). It evaluates the model’s ability to discriminate between patients who experience
+an event at time t and those who survive beyond t. This allows for a more precise assessment of the
+model’s predictive power at different time points. By incorporating dynamic survival probabilities, the
+td-AUC provides a temporal perspective on model performance and is particularly valuable in contexts
+where the ability to predict risk evolves over time. It is defined as:
+
+AGo(t) = Vid Linea nse Mayoay 9)
+ii lynsey lyrj< . 6; (t)
+Finally, the function also provides a single summary measure that refers to the mean of the AUC(t)
+over the time range [7,72]:
+—____ 1 72 _ A
+G(71) _ G(t2) TL
+where G (t) is the Kaplan-Meier estimator of the survival function. This accounts for censoring and
+provides a single summary measure of model performance across the specified time interval.
+
+In recent years, growing attention has been paid to the calibration of survival models, not just their
+discriminative ability. While metrics such as the C-index remain central for assessing a model’s ability
+to rank individuals by risk, they do not capture whether predicted survival probabilities are well-aligned
+with observed outcomes. As a result, proper evaluation now typically includes both discrimination and
+calibration metrics, to ensure that models are not only capable of ranking patients but also of assigning
+realistic survival probabilities. Calibration error is quantified by the Brier Score (BS) that evaluates the
+accuracy of survival predictions by assessing how close the estimated survival probability is to the actual
+survival status of each individual (also see [16], [25]). With previous notations, and denoting V the set
+of individuals, the Brier Score can be expressed, at time t, as:
+
+A 2 A 2
+ns — 2 st (0 ~ St | X;)) ot (1 ~ St | X;))
+=r Ti<t} 94. tO 3 a | -
+Me | 8 Gn) oO Git)
+8
+
+
+--- Page 9 ---
+
+(a) ,, C-index as a function of Max Reports (smoothed) (b) Log (Study) Time Distribution by Risk Quartile for uncensored individuals
+
+0.74 9 8
+
+0.70 2
+
+: icterenca C-index (0.75) 5
+
+Max Number of Reports QI (Low) Risk Score Quartile a4
+
+Figure 2: (a) Test C-index progression as a function of the maximum number of known
+reports per patient; (b) Log-transformed study time distribution across risk quartiles. (a)
+The C-index starts at 0.63 with only two reports per patient and increases steadily, reaching 0.70 at 28
+reports and converging to 0.75 beyond 100 reports. This highlights how access to a richer medical history
+improves prediction, especially with reports closer to the event. (b) Boxplots illustrate the distribution
+of log-transformed survival times across predicted risk quartiles. Despite some natural overlap due to
+the complexity of survival data, a clear decreasing trend is observed: higher predicted risk scores align
+with shorter observed survival times. Both ANOVA and Kruskal-Wallis tests yield p-values below 107°,
+confirming the statistical significance of this separation.
+
+Similar to the td-AUC, the Integrated Brier Score (IBS) provides a global average measure of cali-
+bration over a predefined time range [71, T2], defined as:
+
+1 7"
+T2— 71 Jory
+
+A useful reference point for evaluating the BS (or the IBS) is the naive baseline, where the survival
+probability S(£) is set to a constant value of 0.5 for all individuals. In this case, the Brier Score simplifies
+to BS(t) = 0.25. Thus, a BS (or an IBS) below 0.25 is considered a good indicator of calibration.
+
+3.4 Experimental Results
+All our results are summarized in Table Our model achieves a mean C-index of 0.75 (sd 0.014)
+with a 95% confidence interval |0.7419, 0.7596] (calculated by Jackknife method [I1]), indicating good
+discriminative ability and suggesting the viability of our temporal approach.
+550
+is7 673
+C-index (mean) 0.75 (sd 0.014)
+Clo.95 for C-index [0.7419, 0.7596]
+Correlation log(Time) ~ Risk Pearson: -0.533 (sd 0.0359)
+O; ime) ~ 1S.
+. Spearman: -0.530 (sd 0.0459)
+Mean td-AUC over 10 years 0.794 (sd 0.029)
+3 years: 0.0532 (sd 0.0029)
+Integrated Brier Score 5 years: 0.1055 (sd 0.0062)
+10 years: 0.2183 (sd 0.0153)
+Table 2: Evaluation results for our pipeline.
+
+Figure |2| (a) illustrates the evolution of the C-index on the test set as a function of the number
+of known reports per patient. The evaluation starts with only two reports per patient, progressively
+incorporating one additional report at a time until the maximum available number is reached for each
+patient. The resulting monotonic increase in performance highlights the ability of the signature trans-
+form to effectively leverage sequential information, demonstrating its impact on improving the model’s
+
+9
+
+
+--- Page 10 ---
+
+predictive accuracy as more medical history is incorporated. This demonstrates that as the number of
+known time points increases, more information can be extracted, leading to a more accurate estimation
+of overall survival.
+
+The mean td-AUC over 10 years is 0.794 (sd 0.029), and the IBS remains below 0.25 up to 10 years,
+reaching 0.0532 (sd 0.0029) at 3 years, suggesting that the model maintains good predictive accuracy
+while ensuring proper calibration. These results align with state-of-the-art model performance while
+being obtained in a complex real-world clinical setting, reinforcing the credibility of our approach.
+
+The correlation between the logarithm of the time event for uncensored log(T) and the estimated
+risk score 7 is significantly negative (Pearson: -0.533, Spearman: -0.530, both with p-value < 107°),
+demonstrating that higher estimated risk scores are associated with shorter survival times. This reinforces
+the model’s ability to capture meaningful risk stratification.
+
+Figure |2| (b) further illustrates this relationship by displaying the distribution of log-transformed
+study durations across predicted risk quartiles. Despite some natural overlap due to the complexity of
+survival prediction, a clear trend emerges: Patients with shorter survival times tend to be classified into
+higher risk quartiles.
+
+Additionally, the model effectively handles a large number of clinical reports, leveraging more than
+100,000 medical documents for training and evaluation. The extensive dataset ensures robust perfor-
+mance assessment over numerous time points, highlighting the scalability and real-world applicability of
+our approach.
+
+To assess its added value, we compared it to several naive baseline methods. First, we considered us-
+ing only the last available clinical report for each patient, extracting its sentence embedding and feeding
+it directly into a Cox model; this resulted in a low C-index of 0.55. We then tested a simple average of
+all sentence embeddings per patient as input to the same model, which led to a slightly improved yet
+still unsatisfactory C-index of 0.57. Lastly, we evaluated the Cox-Time model [16], which incorporates
+temporal features directly as covariates; it achieved a C-index of 0.63. These results demonstrate that
+simplistic representations or direct time encodings are insufficient to accurately capture the temporal
+complexity of patient trajectories. In contrast, our method, grounded in rigorous mathematical fea-
+ture extraction, substantially improves performance, emphasizing the importance of modeling temporal
+dynamics with structured and principled approaches.
+
+Our project relies on several specialized packages to ensure efficiency and accuracy throughout the
+pipeline. SIF [I] implements the smooth inverse frequency method for computing sentence embeddings.
+The extraction of path signatures, a core component of our feature representation, is performed using
+iisignature [26], which exploits Chen’s identity for efficient computation of iterated-integral signatures.
+For the survival model, we employ skg1m [2], a high-performance package designed for generalized linear
+models, allowing efficient LASSO-penalized Cox regression. The estimation of survival functions, risk
+scores, and baseline hazards is handled through lifelines [9], which provides a comprehensive frame-
+work for survival analysis. Finally, we use sksurv [23] to compute key evaluation metrics, such as the
+concordance index, time-dependent AUC, and Brier Score, supporting rigorous model assessment.
+
+Furthermore, the use of compression, LASSO regularization, and Chen’s identity for signatures en-
+ables efficient training and inference, requiring only a few minutes once word embeddings are extracted,
+highlighting another unique advantage of our model.
+
+4 Conclusion
+
+Our model SigBERT highlights the potential of leveraging sequential textual data for survival analysis
+in oncology by introducing a structured and reproducible pipeline. Indeed, the judicious combination of
+a fine-tuned NLP model, signature transforms to capture the temporal progression of patient follow-ups,
+and a Cox model with LASSO regularization leads to consistent and promising results. These findings
+pave the way for extending the model to the entire patient database, enabling broader generalization of
+the approach.
+
+Among the limitations of our study, one key constraint lies in the necessity of compressing the original
+high-dimensional embeddings before applying the signature transform. Without this step, the number of
+coefficients to compute becomes prohibitively large, rendering the approach computationally intractable.
+While this compression might initially seem restrictive, it opens an interesting avenue of research into
+the sparsity and intrinsic geometry of the embedding space. It suggests that only a carefully selected
+subset or combination of embedding dimensions may be sufficient for effective risk estimation and survival
+prediction.
+
+Another important consideration is the dependency on OncoBERT, which, although specifically fine-
+tuned for our oncology dataset, can in principle be replaced with other natural language models. Fur-
+
+10
+
+
+--- Page 11 ---
+
+thermore, our model is currently best suited to data collected at the Léon Bérard Center, where follow-up
+medical reports are systematically available. A more thorough assessment of the model’s generalizability
+will require applying it to sequential textual data from patients in other institutions and clinical settings.
+To date, we have not benchmarked alternative language models on this specific survival task, which is
+partly due to the novelty of our approach (combining NLP embeddings with signature transforms and
+Cox survival modeling). As such, our pipeline represents a first step toward this direction, and future
+work will be needed to assess the impact of alternative embedding strategies within this framework.
+
+A key avenue for improvement lies in integrating tabular and sequential data alongside textual em-
+beddings. In future work, we plan to systematically compare different survival models to assess their
+relative performance. While we employed the Cox LASSO model due to its strong empirical results
+in our experiments, a broader benchmarking study is required. This will involve evaluating alternative
+approaches such as Random Survival Forests, Cox Neural Networks, and Cox Elastic Net, among others.
+Establishing a standardized comparison framework will allow us to identify the most robust and inter-
+pretable survival models for oncology risk estimation. Finally, by combining narrative and structured
+data - such as patient characteristics, disease features, and biological markers -, we aim to develop a
+multimodal survival model capable of providing more personalized and accurate oncology care.
+Acknowledgments. This study was funded by SHAPE-Med@Lyon.
+
+Disclosure of Interests. The other authors declare no potential conflicts of interest.
+References
+[1] Arora, S., Liang, Y., Ma, T.: A simple but tough-to-beat baseline for sentence embeddings. In:
+International Conference on Learning Representations (ICLR) (2017), published as a conference
+paper at ICLR 2017
+[2] Bertrand, Q., Klopfenstein, Q., Bannier, P.-A., Gidel, G., Massias, M.: Beyond L1: Faster and
+better sparse models with skglm. In: NeurIPS (2022)
+[3] Bleistein, L., Nguyen, V.T., Fermanian, A., Guilloux, A.: Dynamical survival analysis with con-
+trolled latent states (2024). arXiv:2401.17077 [stat.ML]. https://arxiv.org/abs/2401.17077
+[4] Breslow, N.E.: Contribution to the discussion of the paper by D. R. Cox. Journal of the Royal
+Statistical Society: Series B (Methodological) 34(2), 216-217 (1972)
+[5] Chen, K.T.: Iterated integrals and exponential homomorphisms. Proceedings of the London Math-
+ematical Society 3(4), 502-512 (1954)
+[6] Chevyrev, I., Kormilitzin, A.: A primer on the signature method in machine learning (2025).
+arXiv:1603.03788 [stat-ML]. https: //arxiv.org/abs/1603.03788
+[7] Cox, D.R.: Regression models and life-tables. Journal of the Royal Statistical Society: Series B
+(Methodological) 34(2), 187-202 (1972). https: //doi-org/10.1111/j.2517-6161.1972.tb00899.x
+[8] Cox, D.R.: Partial likelihood. Biometrika 62(2), 269-276 (1975).
+https: //doi.org/10.1093 /biomet /62.2.269
+[9] Davidson-Pilon, C.: lifelines: Survival analysis in Python. Journal of Open Source Software 4(40),
+1317 (2019). https://doi.org/10.21105/joss.01317
+[10] Devaux, A., Genuer, R., Peres, K., Proust-Lima, C.: Individual dynamic prediction of clinical end-
+point from large dimensional longitudinal biomarker history: a landmark approach. BMC Medical
+Research Methodology 22(1), 188 (2022). https: //doi.org/10.1186/s12874-022-01660-3
+[11] Efron, B.: The Jackknife, the Bootstrap and Other Resampling Plans. CBMS-NSF Regional Confer-
+ence Series in Applied Mathematics, vol. 38. SIAM (1982). https: //doi.org/10.1137/1.9781611970319
+[12] Harrell, F.E., Califf, R.M., Pryor, D.B., Lee, K.L., Rosati, R.A.: Evaluating the yield of medical
+tests. Journal of the American Medical Association 247(18), 2543-2546 (1982)
+[13] Jee, J., Fong, C., Pichotta, K., et al.: Automated real-world data integration improves cancer
+outcome prediction. Nature 636, 728-736 (2024). https: //doi.org/10.1038/s41586-024-08167-5
+11
+
+
+--- Page 12 ---
+
+[14] Kaplan, E.L., Meier, P.: Nonparametric estimation from incomplete observations. Journal of the
+American Statistical Association 53(282), 457-481 (1958). https://doi.org/10.2307/2281868
+
+[15] Katzman, J.L., Shaham, U., Cloninger, A., Bates, J., Jiang, T., Kluger, Y.: DeepSurv: personal-
+ized treatment recommender system using a Cox proportional hazards deep neural network. BMC
+Medical Research Methodology 18(1) (2018). https://doi-org/10.1186/s12874-018-0482-1
+
+[16] Kvamme, H., Borgan, @., Scheel, I.: Time-to-event prediction with neural networks and Cox regres-
+sion. Journal of Machine Learning Research 20(116), 1-30 (2019). http://jmlr.org/papers/v20/18-
+424 html
+
+[17] Lee, C., Yoon, J., van der Schaar, M.: Dynamic-DeepHit: A deep learning approach for dynamic
+survival analysis with competing risks based on longitudinal data. IEEE Transactions on Biomedical
+Engineering (2019). https: //par.nsf.gov/servlets /purl/10099761
+
+[18] Lee, C., Zame, W.R., Yoon, J., van der Schaar, M.: DeepHit: A deep learning approach to survival
+analysis with competing risks. In: Proceedings of the Thirty-Second AAAI Conference on Artificial
+Intelligence (AAAI-18), pp. 2314-2321. AAAT Press (2018), Section: Discriminative Performance
+
+[19] Lyons, T.J.: Differential equations driven by rough signals. Revista Matematica Iberoamericana
+14(2), 215-310 (1998)
+
+[20] Martin, L., Muller, B., Ortiz Suarez, P.J., Dupont, Y., Romary, L., de la Clergerie, E., Seddah,
+D., Sagot, B.: CamemBERT: a tasty French language model. In: Proceedings of the 58th Annual
+Meeting of the Association for Computational Linguistics. Association for Computational Linguistics
+(2020). https: //doi.org/10.18653 /v1/2020.acl-main.645
+
+[21] Mesinovic, M., Watkinson, P., Zhu, T.: DySurv: dynamic deep learning model for
+survival analysis with conditional variational inference (2024). arXiv:2310.18681 [cs.LG].
+https: //arxiv.org/abs/2310.18681
+
+[22] Mikolov, T., Chen, K., Corrado, G., Dean, J.: Efficient estimation of word representations in vector
+space (2013). arXiv:1301.3781 [cs.CL]. https: //arxiv.org/abs/1301.3781
+
+[23] Pélsterl, S.: scikit-survival: A library for time-to-event analysis built on top of scikit-learn. Journal
+of Machine Learning Research 21(212), 1-6 (2020). http://jmlr.org/papers/v21/20-729.html
+
+[24] Pourjafari, E., Ziaei, N., Rezaei, M.R., Sameizadeh, A., Shafiee, M., Alavinia, M., Abolghasemian,
+M., Sajadi, N.: Survival Seq2Seq: A survival model based on sequence to sequence architecture
+(2022). arXiv:2204.04542 [cs.LG]. https: //arxiv.org/abs/2204.04542
+
+[25] Polsterl, S.: Evaluating survival models (2019). https://k-d-w.org/blog/2019/05/evaluating-
+survival-models /
+
+[26] Reizenstein, J., Graham, B.: The iisignature library: Efficient calculation of iterated-integral signa-
+tures and log signatures (2018). arXiv:1802.08252 [cs.DS]. https://arxiv.org/abs/1802.08252
+
+[27] Signorelli, M., Spitali, P., Szigyarto, C.A., Tsonaka, R.: Penalized regression calibration: A method
+for the prediction of survival outcomes using complex longitudinal and high-dimensional data. Statis-
+tics in Medicine 40(27), 6178-6196 (2021). https://doi.org/10.1002/sim.9178
+
+[28] Tibshirani, R.: The Lasso method for variable selection in the Cox model. Statistics in Medicine
+16(4), 385-395 (1997). https: //doi.org/10.1002/(SICT)1097-0258(19970228) 16:4<385::AID-
+SIM380>3.0.CO;2-3
+
+[29] Vienne, R., Filori, Q., Susplugas, V., Crochet, H., Verlingue, L.: Abstract 3475: Prediction of
+nausea or vomiting, and fatigue or malaise in cancer care. Cancer Research 84, 3475-3475 (2024).
+https: / /doi.org/10.1158 /1538-7445.AM2024-3475
+
+[30] Zhao, Y., Hong, Q., Zhang, X., Deng, Y., Wang, Y., Petzold, L.: BERTSurv: BERT-based
+survival models for predicting outcomes of trauma patients (2021). arXiv:2103.10928 |cs.AlI].
+https: //arxiv.org/abs/2103.10928
+
+12
