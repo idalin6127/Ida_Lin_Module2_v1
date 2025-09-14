@@ -43,11 +43,33 @@ It builds a complete pipeline covering **web scraping → PDF OCR → audio tran
 
 ---
 
+## 🔥 Architecture / Workflow Diagram 
+flowchart LR
+  A[arXiv pages/PDFs/YouTube audio] --> B[Scrape/Capture]
+  B --> C[OCR (PDF/images)]
+  B --> D[ASR (Whisper)]
+  C --> E[Cleaning/PII removal]
+  D --> E
+  E --> F[MinHash Dedup]
+  F --> G[Unified Clean Corpus (JSON/JSONL/TXT)]
+
+---
+
 ## 📂 Deliverables
 - `arxiv_clean.json`: cleaned abstract dataset  
 - `pdf_ocr/`: batch OCR outputs from arXiv PDFs  
 - `talks_transcripts.jsonl`: ASR transcripts with timestamps  
 - `clean_corpus.txt` + `stats.md`: final cleaned corpus and dataset statistics (token counts, removal percentages, etc.)  
+
+---
+
+
+## 🔥 How to Run / Quick Start 
+pip install -r requirements.txt
+python scrape_arxiv.py --category cs.CL --out arxiv_raw.json
+python ocr_pdfs.py --in ./pdfs --out ./pdf_ocr
+python transcribe_whisper.py --urls urls.txt --out talks_transcripts.jsonl
+python clean_merge.py --abstracts arxiv_raw.json --pdf ./pdf_ocr --asr talks_transcripts.jsonl --out clean_corpus.txt
 
 ---
 
@@ -67,3 +89,7 @@ It builds a complete pipeline covering **web scraping → PDF OCR → audio tran
 
 ---
 
+## 🚀 Future Improvements
+Better layout OCR；speaker diarization；language ID improvements；heuristics/rules for domain filtering。
+
+---
